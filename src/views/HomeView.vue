@@ -81,7 +81,7 @@ export default defineComponent({
         } else {
           emailError.value = response.data.message;
         }
-      } catch (error) {
+      } catch (error: any) {
         if (error.response && error.response.data) {
           emailError.value = error.response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
         } else {
@@ -93,8 +93,8 @@ export default defineComponent({
     };
 
     const clearMessage = () => {
-      emailError.value = null;
-      successMessage.value = null;
+      emailError.value = '';
+      successMessage.value = '';
     };
 
     return {
