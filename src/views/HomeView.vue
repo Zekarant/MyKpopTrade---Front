@@ -1,22 +1,23 @@
 <template>
   <main>
-    <div class="container-custom">
-      <div class="d-flex flex-column justify-content-center w-50 position-relative">
-        <div class="d-flex align-items-center position-absolute top-0 start-0 p-3">
+    <div class="d-flex align-items-center position-absolute top-0 start-0 p-3 p-md-5 pt-4 logo-container">
           <img src="@/assets/images/logo.png" class="logo-img" alt="Logo" />
           <span class="main-title ms-3">
             MyKpop <br />Trade
           </span>
         </div>
+    <div class="container-custom">
+      <div class="d-flex flex-column justify-content-center w-50 position-relative">
 
-        <div class="ms-5">
-          <h1 class="mt-3 text-center text-uppercase fw-bold">
+
+        <div class="ms-lg-5 ms-md-5">
+          <h1 class="mt-3 text-md-center text-start text-uppercase fw-bold">
             Ouverture prochainement
           </h1>
           <hr>
           <p class="text-justify">MyKpopTrade est un site de vente et d'échange de cartes de K-Pop. Pour
             l'instant, le projet est en cours de construction. Si vous souhaitez être au courant de l'avancée du projet,
-            n'hésitez pas à renseigner votre mail ci-dessous !</p>
+            n'hésitez pas à renseigner votre mail ci-dessous !</p>
           <form @submit.prevent="submitForm" class="d-flex flex-column">
             <div class="input-group mb-3">
               <span class="input-group-text bg-white border-0">
@@ -196,4 +197,39 @@ input::placeholder {
 .text-success {
   color: #28a745;
 }
+@media only screen and (max-width: 600px) {
+
+  .logo-container {
+    position: relative !important;
+  }
+
+
+
+
+  .container-custom {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;  // Centre les éléments pour mieux gérer l'espace
+    height: auto;         // Ajuste la hauteur automatiquement
+  }
+
+  .image-column {
+    width: 100%;          // S'assure que le conteneur de l'image occupe toute la largeur
+    display: flex;
+    justify-content: center;
+  }
+
+  .image-column img {
+    max-width: 100%;      // Limite la largeur de l'image au parent
+    height: auto;         // Maintient le ratio d'aspect
+    max-height: 50vh;     // Limite la hauteur pour éviter de prendre trop de place
+    object-fit: contain;  // S'assure que l'image s'ajuste bien dans son conteneur
+  }
+  .w-50{
+    width: 100% !important;
+  }
+}
+
+/****** Responcive ******/
 </style>
+
