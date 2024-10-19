@@ -1,15 +1,13 @@
 <template>
   <main>
     <div class="d-flex align-items-center position-absolute top-0 start-0 p-3 p-md-5 pt-4 logo-container">
-          <img src="@/assets/images/logo.png" class="logo-img" alt="Logo" />
-          <span class="main-title ms-3">
-            MyKpop <br />Trade
-          </span>
-        </div>
+      <img src="@/assets/images/logo.png" class="logo-img" alt="Logo" />
+      <span class="main-title ms-3">
+        MyKpop <br />Trade
+      </span>
+    </div>
     <div class="container-custom">
       <div class="d-flex flex-column justify-content-center w-50 position-relative">
-
-
         <div class="ms-lg-5 ms-md-5">
           <h1 class="mt-3 text-md-center text-start text-uppercase fw-bold">
             Ouverture prochainement
@@ -43,7 +41,7 @@
           </form>
         </div>
       </div>
-      <div class="image-column">
+      <div class="image-column ms-3">
         <img src="@/assets/images/image.png" class="w-100" alt="Image Kpop Exchange" />
       </div>
     </div>
@@ -68,7 +66,7 @@ export default defineComponent({
       isSubmitting.value = true;
 
       try {
-        const response = await axios.post('http://mykpoptrade-back/index.php', {
+        const response = await axios.post('https://mykpoptrade.com/index.php', {
           email: email.value,
         }, {
           headers: {
@@ -197,6 +195,7 @@ input::placeholder {
 .text-success {
   color: #28a745;
 }
+
 @media only screen and (max-width: 600px) {
 
   .logo-container {
@@ -209,27 +208,27 @@ input::placeholder {
   .container-custom {
     display: flex;
     flex-direction: column-reverse;
-    align-items: center;  // Centre les éléments pour mieux gérer l'espace
-    height: auto;         // Ajuste la hauteur automatiquement
+    align-items: center; // Centre les éléments pour mieux gérer l'espace
+    height: auto; // Ajuste la hauteur automatiquement
   }
 
   .image-column {
-    width: 100%;          // S'assure que le conteneur de l'image occupe toute la largeur
+    width: 100%; // S'assure que le conteneur de l'image occupe toute la largeur
     display: flex;
     justify-content: center;
   }
 
   .image-column img {
-    max-width: 100%;      // Limite la largeur de l'image au parent
-    height: auto;         // Maintient le ratio d'aspect
-    max-height: 50vh;     // Limite la hauteur pour éviter de prendre trop de place
-    object-fit: contain;  // S'assure que l'image s'ajuste bien dans son conteneur
+    max-width: 100%; // Limite la largeur de l'image au parent
+    height: auto; // Maintient le ratio d'aspect
+    max-height: 50vh; // Limite la hauteur pour éviter de prendre trop de place
+    object-fit: contain; // S'assure que l'image s'ajuste bien dans son conteneur
   }
-  .w-50{
+
+  .w-50 {
     width: 100% !important;
   }
 }
 
 /****** Responcive ******/
 </style>
-
