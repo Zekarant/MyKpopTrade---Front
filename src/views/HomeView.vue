@@ -51,7 +51,6 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
-import axiosInstance from './config/axiosConfig';
 
 
 export default defineComponent({
