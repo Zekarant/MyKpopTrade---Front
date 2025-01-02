@@ -1,0 +1,65 @@
+/* Styles pour les tablettes en mode portrait (largeur maximale de 768 pixels) */
+@media (max-width: 769px) {
+  /* Vos styles CSS pour les tablettes en mode portrait ici */
+  .display_phone_tablette{
+    display: block !important;
+
+  }
+  .display_flex_phone_tablette{
+    display: flex !important;
+  }
+  .display_no_tablette{
+    display: none;
+  }
+  body {
+    font-size: 16px; /* Exemple : ajuster la taille de la police pour les tablettes */
+  }
+  
+
+  /* Autres styles spécifiques aux tablettes en mode portrait */
+}
+
+/* Styles pour les tablettes en mode paysage (largeur maximale de 1024 pixels) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Vos styles CSS pour les tablettes en mode paysage ici */
+  body {
+    font-size: 18px; /* Exemple : ajuster la taille de la police pour les tablettes en mode paysage */
+  }
+  .display_no_tablette{
+    display: none;
+  }
+  /* Autres styles spécifiques aux tablettes en mode paysage */
+}
+
+/* Styles pour les iPad standard en mode portrait (largeur de 768 pixels et hauteur de 1024 pixels) */
+@media (width: 768px) and (height: 1024px) and (orientation: portrait) {
+  /* Vos styles CSS pour les iPad en mode portrait ici */
+  
+}
+
+/* Styles pour les iPad Pro en mode portrait (largeur de 1024 pixels et hauteur de 1366 pixels) */
+@media (width: 1024px) and (height: 1366px) and (orientation: portrait) {
+  /* Vos styles CSS pour les iPad Pro en mode portrait ici */
+}
+
+/* Styles pour les tablettes Android en mode portrait (largeur maximale de 768 pixels) */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Vos styles CSS pour les tablettes Android en mode portrait ici */
+}
+
+/* Styles pour les tablettes Android en mode paysage (largeur maximale de 1024 pixels) */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+  /* Vos styles CSS pour les tablettes Android en mode paysage ici */
+}
+
+/* Styles communs à toutes les tablettes (ajustements généraux) */
+@media (max-width: 1023px) {
+  /* Styles généraux pour toutes les tablettes ici */
+  .display_no_tablette{
+    display: none;
+  }
+ 
+}
+
+
+/* Autres règles CSS pour les tablettes (formats spécifiques) */

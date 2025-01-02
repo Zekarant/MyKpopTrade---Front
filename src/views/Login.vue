@@ -48,9 +48,30 @@
   </main>
   </template>
   <script>
-  export default {
+  import { defineComponent, ref } from 'vue';
+  import axios from 'axios';
+  import { useRouter } from 'vue-router';
+
+  export default defineComponent ({
     name: "Login",
-  };
+    setup() {
+      const router = useRouter();
+
+      const login = async () => {
+
+        var verif_login = true;
+        if(verif_login){
+          router.push('/adherents/dashboard');
+
+        }
+      }
+      return {
+        login
+      };
+    }
+
+
+  });
   </script>
 <style lang="scss" scoped>
 .container-custom {
@@ -140,7 +161,10 @@ input::placeholder {
 }
 
 @media only screen and (max-width: 600px) {
-
+  .image-column.ms-3 {
+    margin-left: 0px !important;
+    padding-bottom: 20px;
+  }
   .logo-container {
     position: relative !important;
   }
