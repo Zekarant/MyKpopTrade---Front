@@ -52,6 +52,7 @@
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 
+
 export default defineComponent({
   name: 'HomeView',
   setup() {
@@ -66,7 +67,7 @@ export default defineComponent({
       isSubmitting.value = true;
 
       try {
-        const response = await axios.post('https://mykpoptrade.com/index.php', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/add-email`, {
           email: email.value,
         }, {
           headers: {
@@ -75,11 +76,11 @@ export default defineComponent({
         });
 
 
-        if (response.data.success) {
-          successMessage.value = response.data.message;
+        if (response.status === 201) {
+          successMessage.value = 'Email ajouté avec succès';
           email.value = ''; // Réinitialiser le champ email
         } else {
-          emailError.value = response.data.message;
+          emailError.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
         }
       } catch (error: any) {
         if (error.response && error.response.data) {
