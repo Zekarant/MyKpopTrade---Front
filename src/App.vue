@@ -4,8 +4,29 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 </script>
-<style lang="css">
+<style lang="scss">
 * {
   font-family: "Plus Jakarta Sans", sans-serif;
+  
+}
+:root {
+  --primary-color: #121212;
+  --danger-light-color: #FFD6C7;
+  --danger-color: #B73A4E;
+  --success-color: #3DCC6A;
+  --success-light-color: #B3F9B5;
+  --secondary-color: #6c757d;
+  --bg-color: #f8f9fa;
+  --text-color: #121212;
+}
+.btn-primary{
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 </style>
