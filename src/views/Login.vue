@@ -27,7 +27,7 @@
               placeholder="Mot de passe" required />
             </div>
             <button class="btn-primary" @click="login" aria-label="login"  variant="primary">Se connecter</button>
-
+            <a class="registerBtn" href="register">Pas de compte ?</a>
             <div v-if="emailError || successMessage || passwordError"
               :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage, 'alert-danger': emailError }]"
               role="alert">
@@ -55,6 +55,9 @@
   export default defineComponent ({
     name: "Login",
     setup() {
+      const email = ref('');
+ 
+      
       const router = useRouter();
 
       const login = async () => {
@@ -74,6 +77,10 @@
   });
   </script>
 <style lang="scss" scoped>
+.registerBtn{
+  width: 100%;
+  text-align:center
+}
 .container-custom {
   display: flex;
   justify-content: space-between;

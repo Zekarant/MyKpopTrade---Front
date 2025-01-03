@@ -1,11 +1,15 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+
 import './css/main.css'
 import './css/responsive/phone.css'
 import './css/responsive/tablette.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'material-design-icons-iconfont/dist/material-design-icons.css';
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import App from './App.vue'
 import router from './router'

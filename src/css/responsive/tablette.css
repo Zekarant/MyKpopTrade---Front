@@ -58,8 +58,140 @@
   .display_no_tablette{
     display: none;
   }
- 
-}
+    /*********** Menu *************/
 
+    .bloc-data {
+      margin-left: 0px !important;
+      margin-right: 0px !important;
+      border-radius: 0px !important;
+      padding-top: 25px;
+    }
+  
+    .contain_menu_mobile{
+      /*height: 30px;*/
+      box-shadow: rgba(26, 26, 27, 0.941) -17px 0px 40px 0px;
+      background: white;
+    }
+    .btnResponsiveMenu{
+      position: relative;
+      right: 10px; 
+      /* top: 7px; */
+      display: flex;
+      /* align-items: center; */
+      justify-content: end;
+      /*position: absolute;
+      right: 10px;
+      top: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;*/
+    }
+    .main-menu {
+      width: 0; 
+      height: 100vh; 
+      background-color: #fff; 
+      position: fixed;
+      top: 0;
+      left: 0;
+      transition: width 0.3s ease; 
+      border-radius: 0;
+      text-align: center;
+      overflow:visible;
+   
+      .btnMenuSide{
+        padding-left: 8px;
+      }
+      
+    }
+    .show-menu {
+      width: 100vw;  
+    }
+    .no-menu{
+      width: 0 !important; 
+      display: none !important;
+      transition: display 0.3s ease; 
+  
+    }
+    .btnMenuSide:hover{
+      background-color: var(--tertiary);
+      color: white !important;
+      border-radius: 0;
+      width: 80% !important;
+      position: relative;
+      border-radius: 10px;
+      margin-right: 10%;
+      margin-left: 10%;
+  
+      .nav-text{
+          color: white !important;
+  
+      }
+      .containerItemSideMenu{
+          color: white !important;
+      }
+    }
+    .main-menu:hover, nav.main-menu.expanded{
+      width: 100vw !important;
+      .nav-text{
+        display: block;
+      }
+    }
+  
+    .main-menu li {
+      position:relative;
+      display:block;
+      width:calc(60px - 45px);
+      margin-left: 0;
+      margin-top: 10px;
+      width:100%;
+  }
+    
+    .main-menu li>a {
+      position:relative;
+      display:inline-block;
+      border-collapse:collapse;
+      border-spacing:0;
+      color:#999;
+      font-size: 14px;
+      text-decoration:none;
+      -webkit-transform:translateZ(0) scale(1,1);
+      -webkit-transition:all .1s linear;
+      transition:all .1s linear;
+      width:100%;
+  
+    }
+  
+    .main-menu .nav-icon {
+      position:relative;
+      display:table-cell;
+      width:60px;
+      height:36px;
+      text-align:center;
+      vertical-align:middle;
+      font-size:18px;
+    }
+  
+    .main-menu .nav-text {
+      display: block;
+      position:relative;
+      vertical-align:middle;
+      left: 0;
+      text-align: center;
+      width: 100%;
+    }
+  
+    .main-menu>ul {
+      position: absolute;
+      left: 0;
+      width: 80%;
+      text-align: center;
+      margin-left: 10%;
+      margin-right: 10%;
+    }
+    /******************************/
+    .area{
+      padding-top: 0% !important;
+    }
+}
 
 /* Autres règles CSS pour les tablettes (formats spécifiques) */

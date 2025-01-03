@@ -43,9 +43,9 @@ import type { RouteRecordNameGeneric } from 'vue-router';
                     },            
                     {
                     label: 'Ma collection',
-                    icon: '<i class="bi bi-person-arms-up"></i>',
-                    active: this.verifBtn('Base'),
-                    page: 'Base',
+                    icon: '<i class="bi bi-collection"></i>',
+                    active: this.verifBtn('collection'),
+                    page: 'collection',
 
                     }
                 ],
@@ -84,6 +84,9 @@ import type { RouteRecordNameGeneric } from 'vue-router';
 
 </script>
 <style>
+    .contain_menu_mobile{
+
+    }
     .main-menu{
         position: fixed;
     }

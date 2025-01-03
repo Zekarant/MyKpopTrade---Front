@@ -15,6 +15,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@c': fileURLToPath(new URL('./src/components', import.meta.url)),
       '@c_a': fileURLToPath(new URL('./src/components/adherents', import.meta.url)),
+      '@p_v': fileURLToPath(new URL('./src/views/adherents', import.meta.url)),
       '@p': fileURLToPath(new URL('./src/pages', import.meta.url)),    
       '@css': fileURLToPath(new URL('./src/css', import.meta.url)),
     }
