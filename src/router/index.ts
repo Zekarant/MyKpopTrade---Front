@@ -4,6 +4,7 @@ import Register from '../views/Register.vue';
 import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
+import profile from '@p_v/profile.vue';
 
 
 const routes = [
@@ -24,15 +25,22 @@ const routes = [
     path: '/adherents/dashboard', 
     name: 'dashboard',
     component: Dashboard 
-  },  { 
+  },  
+  { 
     path: '/adherents/collection', 
     name: 'collection',
     component: Collection 
   },
+  { 
+    path: '/adherents/profile', 
+    name: 'profile',
+    component: profile 
+  },
   {
     path: '/test', 
     name: 'test',
-    component: Test }
+    component: Test 
+  }
 
 ];
 

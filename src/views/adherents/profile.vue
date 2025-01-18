@@ -1,5 +1,5 @@
 <template>
-    <main>
+    <main >
         <Nav_bar></Nav_bar>        
 
     </main>
@@ -11,13 +11,13 @@
 
 
   export default defineComponent({
-    name: 'dashboard',
+    name: 'profile',
     components: {
         Nav_bar
     },
     setup() {
     return {
-        
+  
     };
   },
   })

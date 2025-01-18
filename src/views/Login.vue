@@ -64,8 +64,8 @@
 
         var verif_login = true;
         if(verif_login){
+          sessionStorage.setItem('token','')
           router.push('/adherents/dashboard');
-
         }
       }
       return {

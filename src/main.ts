@@ -15,7 +15,7 @@ import App from './App.vue'
 import router from './router'
 import Grid from './components/grid.vue';
 import Card from './components/card.vue';
-import left_menu from './components/adherents/left_menu.vue';
+import nav_bar from './components/adherents/nav_bar.vue';
 
 const app = createApp(App)
 
@@ -24,6 +24,6 @@ app.use(router)
 
 app.component("Grid", Grid);
 app.component("Card", Card);
-app.component("left_menu", left_menu);
+app.component("nav_bar", nav_bar);
 
 app.mount('#app')

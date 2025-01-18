@@ -14,16 +14,16 @@
               <span class="input-group-text bg-white border-0">
                 <i class="material-icons">account_circle</i>
               </span>
-              <input type="name" v-model="name" class="form-control border-0" :class="{ 'is-invalid': nameError }"
-                placeholder="Votre nom" required />
+              <input type="name" v-model="username" class="form-control border-0" :class="{ 'is-invalid': nameError }"
+                placeholder="Votre pseudo" required />
             </div>
-            <div class="input-group mb-3">
+            <!--<div class="input-group mb-3">
               <span class="input-group-text bg-white border-0">
                 <i class="material-icons">account_circle</i>
               </span>
               <input type="name" v-model="firstname" class="form-control border-0" :class="{ 'is-invalid': firstnameError }"
                 placeholder="Votre prénom" required />
-            </div>
+            </div>-->
             <div class="input-group mb-3">
               <span class="input-group-text bg-white border-0">
                 <i class="material-icons">local_phone</i>
@@ -53,7 +53,7 @@
               placeholder="Confirmer votre mot de passe" required />
             </div>
             <div style="color:red; text-align:center">
-                {{ emailError || passwordError  || nameError || firstnameError  || telError }}
+                {{ emailError || passwordError  || nameError  || telError || errorBase }}
             </div>
             <div v-if="successMessage" :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage}]">
                 {{ successMessage }}
@@ -80,11 +80,14 @@
     name: "Register",
     setup() {
       const router = useRouter();
-      const name = ref('');
+      const errorBase = ref('');
+      const successMessage = ref('');
+      
+      const username = ref('');
       const nameError = ref('');
       
-      const firstname = ref('');
-      const firstnameError = ref('');
+      /*const firstname = ref('');
+      const firstnameError = ref('');*/
       
       const tel = ref('');
       const telError = ref('');
@@ -99,21 +102,23 @@
 
       const register = async () => {
         nameError.value = '';
-        firstnameError.value = '';
+        successMessage.value = '';
+        
+        //firstnameError.value = '';
         telError.value = '';
         emailError.value = '';
         passwordError.value = '';
 
 
         var verif_register = true;
-        if(name.value == '' || name.value.length < 5) {
+        if(username.value == '' || username.value.length < 5) {
           verif_register = false;
-          nameError.value  = 'Le nom doit être plus long';
+          nameError.value  = 'Le pseudo doit être plus long';
         }
-        if(firstname.value == '' || firstname.value.length < 5) {
+        /*if(firstname.value == '' || firstname.value.length < 5) {
           verif_register = false;
           firstnameError.value  = 'Le prénom doit être plus long';
-        } 
+        } */
         if(tel.value == '' || tel.value.length < 5) {
           verif_register = false;
           telError.value  = 'Le numéro de téléphone est invalide';
@@ -126,59 +131,50 @@
         
         if(password.value == '' || password_confirm.value == '') {
           verif_register = false;
-          firstnameError.value  = 'Le mot de passe ne peut pas être vide';
+          passwordError.value  = 'Le mot de passe ne peut pas être vide';
         } 
-        console.log(firstnameError);
-        if(password_confirm.value != password.value){
+        /*if(password_confirm.value != password.value){
           verif_register = false;
           passwordError.value = "Les mots de passe sont différents";
-        }
+        }*/
 
         if(verif_register){
-          try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
-              email: email.value,
-              firstname: firstname.value,
-              name: name.value,
-              numberPhone: tel.value,
-              password: password.value,
-              confirmPassword: password_confirm.value
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+            email: email.value,
+            //firstname: firstname.value,
+            username: username.value,
+            numberPhone: tel.value,
+            password: password.value,
+            confirmPassword: password_confirm.value
               
-            }, {
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-
-            if (response.status === 201) {
-              successMessage.value = 'Inscription réussie !';
-              setTimeout(() => {
-                router.push('/adherents/dashboard');
-              }, 1000);
-
-            } else {
-              emailError.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
+          }, {
+            headers: {
+              'Content-Type': 'application/json'
             }
-          } catch (error) {
-            if (error.response && error.response.data) {
-              emailError.value = error.response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
-            } else {
-              emailError.value = 'Une erreur est survenue. Veuillez réessayer.';
-            }
-          } 
+          });
+          if (response.status === 201) {
+            successMessage.value = 'Inscription réussie !';
+            setTimeout(() => {
+              router.push('/login');
+            }, 1000);
+          } else {
+            successMessage.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
+          }
         }
       }
       return {
         register,
         passwordError,
-        name,
+        username,
         nameError,
-        firstname,
-        firstnameError,
+        //firstname,
+        //firstnameError,
         tel,
         telError,
         email,
         emailError,
+        errorBase,
+        successMessage,
         password,
         password_confirm,
         
