@@ -32,7 +32,7 @@ const routes = [
     component: Collection 
   },
   { 
-    path: '/adherents/profile', 
+    path: '/adherents/profile:id', 
     name: 'profile',
     component: profile 
   },

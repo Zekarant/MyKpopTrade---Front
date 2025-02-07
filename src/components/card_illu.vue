@@ -12,7 +12,7 @@
   <script lang="ts">
   export default {
 
-    name: "Card",
+    name: "card_illu",
 
     props: {
         frontImage: {
@@ -45,6 +45,7 @@
     width: 100%;
     height: 100%;
     position: relative;
+    background: var(--primary-color);
   }
   
   .card_ill {

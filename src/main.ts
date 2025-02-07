@@ -10,20 +10,26 @@ import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { func } from "./function";
 
 import App from './App.vue'
 import router from './router'
 import Grid from './components/grid.vue';
-import Card from './components/card.vue';
+import card_illu from './components/card_illu.vue';
 import nav_bar from './components/adherents/nav_bar.vue';
+import banner from './components/adherents/banner.vue';
+import segment_profil from './components/adherents/segment_profil.vue';
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.config.globalProperties.$func = func;
 
 app.component("Grid", Grid);
-app.component("Card", Card);
+app.component("card_illu", card_illu);
 app.component("nav_bar", nav_bar);
+app.component("banner", banner);
+app.component("segment_profil", segment_profil);
 
 app.mount('#app')

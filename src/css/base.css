@@ -10,11 +10,16 @@
   --success-color: #3DCC6A;
   --success-light-color: #B3F9B5;
   --secondary-color: #6c757d;
+  --secondary-color-tint: #D2D6DE;
+  --secondary-color-shade: #566573;
+
   --bg-color: #f8f9fa;
   --text-color: #121212;
+  --blue: #73A4DC;
 }
 .btn-primary{
-  background-color: var(--primary-color);
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;
@@ -22,4 +27,12 @@
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
+}
+.btn-primary:hover{
+  border-color: var(--primary-color) !important;
+  background: none !important;
+  color: var(--primary-color) !important;
+}
+.bold{
+  font-weight: bold;
 }

@@ -15,7 +15,9 @@
     font-size: 16px; /* Exemple : ajuster la taille de la police pour les tablettes */
   }
   
-
+  .col-0{
+    display: none;
+  }
   /* Autres styles spécifiques aux tablettes en mode portrait */
 }
 
@@ -54,6 +56,7 @@
 
 /* Styles communs à toutes les tablettes (ajustements généraux) */
 @media (max-width: 1023px) {
+
   /* Styles généraux pour toutes les tablettes ici */
   .display_no_tablette{
     display: none;

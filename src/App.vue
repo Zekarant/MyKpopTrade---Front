@@ -2,7 +2,10 @@
   <RouterView />
 </template>
 <script setup lang="ts">
+import './css/main.css'
+
 import { RouterView } from 'vue-router'
+
 </script>
 <style lang="scss">
 @font-face {

@@ -51,6 +51,7 @@
   import { defineComponent, ref } from 'vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
+  import Cookies from 'js-cookie';
 
   export default defineComponent ({
     name: "Login",
@@ -64,7 +65,8 @@
 
         var verif_login = true;
         if(verif_login){
-          sessionStorage.setItem('token','')
+          Cookies.set('PHPSESSID', 'token', { expires: 1 })
+
           router.push('/adherents/dashboard');
         }
       }

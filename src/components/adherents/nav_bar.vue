@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import type { RouteRecordNameGeneric } from 'vue-router';
-
+import { useRoute, useRouter } from "vue-router";
 
     export default {
         name: "left_menu",
@@ -42,7 +42,7 @@ import type { RouteRecordNameGeneric } from 'vue-router';
                     label: 'Menu',
                     icon: '<i class="bi bi-house"></i>',
                     active: this.verifBtn('dashboard'),
-                    page: 'Dashboard',
+                    page: 'dashboard',
 
                     },            
                     {
@@ -56,20 +56,33 @@ import type { RouteRecordNameGeneric } from 'vue-router';
                 showFullMenu:false    
             };
         },
+        setup() {
+            const route = useRoute();
+            const router = useRouter();
+
+            const id = route.params.id; // Récupère l'ID passé en paramètre
+            return {
+                route,
+                router,
+                id
+            };
+        },
         mounted() {
-            this.currentRoute = this.$route.name as string;
+            this.currentRoute = this.route.name as string;
         },
         methods: {
             verifBtn(btn:RouteRecordNameGeneric){                
-                if( this.$route.name == btn)
+                if( this.route.name == btn)
                 {
                     return true;
                 }
                 return false;
             },
             navPage(page:RouteRecordNameGeneric){
+                
                 this.closeMenu();
-                this.$router.push({ name: page });
+                this.router.push({ name: page , params: { id: 0 }});
+
             },
             devMenu(){
                 this.showFullMenu = true;
@@ -84,7 +97,7 @@ import type { RouteRecordNameGeneric } from 'vue-router';
     };
 
 </script>
-<style>
+<style lang="scss" scoped>
 * {
   box-sizing: border-box;
 }
@@ -134,15 +147,20 @@ body {
 }
 
 .nav > .nav-links-first {
-  display: inline;
-  float: right;
-  font-size: 18px;
-  width:25%;
+    z-index: 9;
+    display: inline;
+    float: right;
+    font-size: 18px;
+    width:48%;
+    height: 100%;
+    background: white;
 }
 .nav > .nav-links-center {
-    width:50%;
+    width:5%;
     display: flex;
     align-items: center;
+    height: 100%
+
 }
 .add_post{
     display: block;
@@ -154,6 +172,8 @@ body {
 }
 .nav > .nav-links-end {
   width:25%;
+  height: 100%
+
 }
 
 .nav > .nav-links-first > a {
