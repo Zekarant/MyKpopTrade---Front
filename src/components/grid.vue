@@ -16,7 +16,7 @@
             <div style="padding-bottom: 8px;padding-left: 5px;">
                 <div class="name"><a href="#">{{ data.title }}</a></div>
                 <div class="state">
-                    <span>{{ data.state }}</span>            
+                    <span>{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>            
                 </div>
                 <div class="shop">
                     <span>€ {{ data.price }}</span>            
@@ -47,6 +47,7 @@
         props: {
             dataList: {
                 type: Array as () => Array<{
+                    condition: any;
                     isAvailable: any; id: number; title: string; state: string; price: number; isReserved: boolean; images: string[] 
 }>,
                 required: true,
@@ -261,7 +262,12 @@
     }
     @media (max-width:720px){
         .container{
-            grid-template: auto / repeat(2, 1fr)
+            grid-template: auto / repeat(2, 1fr);
+            width: 96vw;
+            margin-right: 0px;
+            padding-right: 0px;
+            margin-left: 0px;
+            padding-left: 0px;
         }
         .card{
             margin-left: auto; 

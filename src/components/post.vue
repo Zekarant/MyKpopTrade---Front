@@ -26,20 +26,27 @@
                         </div>
                 </div>
                 <div class="post_card_detail">
-                    <b style="font-size:medium; color: var(--blue); margin-bottom: 20px;">{{ dataPost.title }} </b>
-                    <br>
-                    <b style="font-size: small;">Description : </b>
-                    <br>
-                    <div class="post_description">
-                        <p>{{ dataPost.description }}</p>
+                    <div style="display: flex;">
+                        <b >{{ dataPost.title }} </b>
+                        <b class="price">
+                            {{ dataPost.price }} {{ currencySymbol }}
+                        </b>
                     </div>
+                   <div class="description_container">
+                        <b class="post_description_label">Description : </b>
+                        <br>
+                        <div class="post_description">
+                            <p>{{ dataPost.description }}</p>
+                        </div>
+                    </div>
+              
                     <div class="list_detail">
                         <div class="bloc_detail condition">
                             <div>
                                 <p>État :</p>
                             </div>
                             <div>
-                                <p>{{ dataPost.condition }}</p>
+                                <p>{{ dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1) }}</p>
                             </div>
                         </div>
                         <div class="bloc_detail category">
@@ -85,7 +92,7 @@
                             </div>
                         </div>
                     </div>
-                    <div style="margin-top: 10px;">
+                    <div style="margin-top: 15px;">
                         <div class="type_content">
                             {{ dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1) }}
                         </div>
@@ -123,7 +130,7 @@
         },
         props: {
             dataPost: {
-                type: Object,
+                type: Object as () => { currency: string; [key: string]: any },
                 required: true,
             },
             dataUser: {
@@ -153,6 +160,16 @@
                 ? `${baseUrl}${this.dataSeller.profilePicture}`
                 : null;
             },
+            currencySymbol() {
+                const symbols = {
+                    EUR: '€',
+                    USD: '$',
+                    KRW: '₩',
+                    JPY: '¥',
+                    GBP: '£',
+                };
+                return symbols[this.dataPost.currency as keyof typeof symbols] || ''; // Retourne le symbole ou une chaîne vide si non défini
+            },
         },
         methods: {
             toggleMenu(event: Event){
@@ -177,6 +194,18 @@
         top: 0;
         z-index: 9;
         
+    }
+    .post_card_detail{
+        display: block;
+        margin-bottom: auto;
+    }
+    .post_card_detail .price{
+        margin-left: auto;
+    }
+    .post_card_detail b{
+        font-size:medium; 
+        color: var(--blue); 
+        margin-bottom: 20px;
     }
     .banner_reserved .state{
         color: white;
@@ -234,7 +263,12 @@
         background: var(--primary-color);
     }
     .post_card_content{
+        height: 100%;
         width: 50%;
+        flex-direction: column; 
+        display: flex;
+        justify-content: space-between;
+        overflow-x: scroll;
     }
     .post_card_content_header, .post_card_content_header div{
         display: flex;
@@ -274,10 +308,15 @@
         align-items: center;
         cursor: pointer;
     }
-
+    .description_container{
+        margin-top: 10px;
+        border-bottom: 1px solid var(--secondary-color-tint);
+    }
+    .post_description_label{
+        font-size: small;
+    }
     .post_description{
         font-size: small;
-        border-bottom: 1px solid var(--secondary-color-tint);
         padding-bottom: 15px;
     }
     .list_detail{
@@ -288,6 +327,8 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 10px; 
         width: 100%;
+        margin-top: 10px;
+        font-size: small;
     }
     .bloc_detail p{
         margin-bottom: 0px;
@@ -309,14 +350,77 @@
         vertical-align: middle;
         display: flex
     }
-    @media (max-width:980px){
+    .post_card_content_footer {
+        display: flex;
+        flex-direction: row; 
+        justify-content: center; 
+        align-items: center; 
+        margin: 10px;
+        font-size: small;
+    }
+
+    .post_card_content_footer button{
+        margin: 1%;
+        font-size: small;
+        width: 30%;
 
     }
-    @media (max-width:720px){
-
+    @media (max-width:980px){
+        .container_detail_card .card{
+            flex-direction: column-reverse;
+        }
+    }
+    @media (max-width:820px){
+        .post_card_content{
+            width: 100%;
+        }
+        .illustration{
+            width: 100%;
+            height: 50%;
+        }
+        .container_detail_card{
+            height: 90%;
+        }
     }
     @media (max-width:550px){
-
+        .container_detail_card .card {
+            overflow-y: scroll;
+            display: flex;
+            flex-wrap: nowrap; 
+            white-space: nowrap; 
+            width: 100%;    
+        }
+        .post_card_content{
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+        .container_detail_card{
+            width: 90%;
+        }
+        .post_description {
+            font-size: small;
+            padding-bottom: 15px;
+            overflow-wrap: break-word; 
+            word-wrap: break-word; 
+            white-space: normal; 
+            max-height: 100%; 
+            overflow-y: auto; 
+        }
+        .post_card_detail div{
+            flex-direction: column;
+        }
+        .post_card_detail b{
+            margin-bottom: 0px;
+        }
+        .post_card_detail .price{
+            margin-left: 0px;
+        }
+        .post_card_content_footer{
+            flex-direction: column;
+        }
+        .post_card_content_footer button{
+            width: 100%;
+        }
     }
   </style>
   

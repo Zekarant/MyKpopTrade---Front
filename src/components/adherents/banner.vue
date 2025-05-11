@@ -40,10 +40,6 @@
                                 <i class="bi bi-three-dots-vertical"></i>
                                 <div v-if="isMenuVisible" class="dropdown-menu">
                                     <ul v-if="admin">
-                                        <li @click="editProfile">
-                                            <i class="bi bi-pencil me-2"></i>
-                                            Modifier mon profil
-                                        </li>
                                         <li @click="openSettings">
                                             <i class="bi bi-gear me-2"></i> Paramètres
                                         </li>
@@ -227,6 +223,7 @@
 .background{
     background: var(--primary-color);
     width:100%;
+    max-width: 100vw;
     height:50%;
 }
 .picture{
@@ -365,16 +362,20 @@ button.btn.btn-outline:hover {
     }
     .profil{
         position: relative;
-        width: 100%;
+        width: 100vw;
         padding-top: calc(calc(130px + 5%) / 2);
     }
     .row_profil{
         height: auto !important;
+        width: 100vw !important;
     }
     .row_name{
         width: 100%;
     }
   
+    .row-banner{
+        width: 100% !important;
+    }
     .subscription, .more_content, .nickname, .identifier{
         text-align: center;
     }

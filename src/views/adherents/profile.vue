@@ -11,7 +11,9 @@
 
               <br>
               <Grid style="width: 100%;" v-if="partView === 'post'" :admin="myProfile" :dataUser="profilInfo" :dataList="dataCardList"></Grid>
-
+              <div style="width: 100%;" v-if="partView === 'about'">
+                
+              </div>
             </div>
             <div class="col-0 col-xs-0 col-md-0 col-lg-2"></div>
         </div>
@@ -139,6 +141,9 @@
  @media (max-width: 769px) {
   .row-banner{
     height: auto;
+  }
+  .row_profil_content{
+    width: 100vw;
   }
  }
  @media only screen and (max-width: 1024px) {

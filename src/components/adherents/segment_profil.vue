@@ -68,4 +68,18 @@
     border-bottom: 2px solid ;
     border-color: var(--blue);
 }
+@media (max-width:820px){
+    .btn-group{
+        width: 100vw;
+    }
+    .content{
+        width: 100vw;
+    }
+    .content .row .col-12{
+        width: 100vw !important;
+    }
+    .content .row {
+        width: 100%;
+    }
+}
 </style>

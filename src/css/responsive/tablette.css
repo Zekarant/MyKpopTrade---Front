@@ -18,6 +18,11 @@
   .col-0{
     display: none;
   }
+  .row>* {
+    padding-right: 0px !important;
+    width: 100% !important;
+  }
+
   /* Autres styles spécifiques aux tablettes en mode portrait */
 }
 

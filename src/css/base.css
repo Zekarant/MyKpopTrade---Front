@@ -69,6 +69,16 @@
   font-size: 1rem;
   cursor: pointer;
 }
+.btn-blue-outline:hover{
+  background-color: var(--blue)!important;
+  border-color: var(--blue) !important;
+  color: white !important;
+  border: 2px solid var(--blue) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
 .btn-danger-outline:hover{
   background-color: var(--danger-color) !important;
   border-color: var(--danger-color) !important;
@@ -115,4 +125,7 @@
 }
 .bold{
   font-weight: bold;
+}
+.btn{
+  max-width: 100vw;
 }
