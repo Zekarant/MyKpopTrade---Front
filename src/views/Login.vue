@@ -14,10 +14,10 @@
           <form @submit.prevent="submitForm" class="d-flex flex-column">
             <div class="input-group mb-3">
               <span class="input-group-text bg-white border-0">
-                <i class="material-icons">mail</i>
+                <i class="material-icons">person</i>
               </span>
-              <input type="email" v-model="email" class="form-control border-0" :class="{ 'is-invalid': emailError }"
-                placeholder="Votre mail" required />
+              <input type="text" v-model="username" class="form-control border-0" :class="{ 'is-invalid': ErroruserName }"
+                placeholder="Votre identifiant" required />
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text bg-white border-0">
@@ -27,15 +27,17 @@
               placeholder="Mot de passe" required />
             </div>
             <button class="btn-primary" @click="login" aria-label="login"  variant="primary">Se connecter</button>
-            <a class="registerBtn" href="register">Pas de compte ?</a>
-            <div v-if="emailError || successMessage || passwordError"
-              :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage, 'alert-danger': emailError }]"
+            <a class="registerBtn btn-primary-outline" href="register">S'inscire</a>
+            <a style="text-align: center;" href="forgot_psw">Mot de passe oublié</a>
+            <br>
+            <div v-if="ErroruserName || successMessage || passwordError"
+              :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage, 'alert-danger': ErroruserName }]"
               role="alert">
               <i class="material-icons me-3">
-                {{ emailError | passwordError ? 'error' : 'check' }}
+                {{ ErroruserName | passwordError ? 'error' : 'check' }}
               </i>
               <div>
-                {{ emailError || passwordError || successMessage }}
+                {{ ErroruserName || passwordError || successMessage }}
               </div>
             </div>
           </form>
@@ -56,22 +58,72 @@
   export default defineComponent ({
     name: "Login",
     setup() {
-      const email = ref('');
- 
+      const username = ref('');
+      const password = ref('');
+      const passwordError = ref('');
+      const ErroruserName = ref('');
+      const usernameError = ref('');
+      const errorBase = ref('');
+      const successMessage = ref('');
+      
       
       const router = useRouter();
 
       const login = async () => {
-
         var verif_login = true;
-        if(verif_login){
-          Cookies.set('PHPSESSID', 'token', { expires: 1 })
 
-          router.push('/adherents/dashboard');
+        if(username.value == '' || username.value.length < 5) {
+          verif_register = false;
+          ErroruserName.value  = 'Le pseudo doit être plus long';
+        } else {
+          ErroruserName.value = '';
+        }
+        if(password.value == '') {
+          verif_register = false;
+          passwordError.value  = 'Le mot de passe ne peut pas être vide';
+        } else {
+          passwordError.value = '';
+        }
+        if(verif_login){
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+              identifier: username.value,
+              password: password.value,
+          }, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(response => {
+              console.log(response);
+              if (response.status === 200) {
+              console.log(response);
+                console.log(response.data.accessToken);
+              Cookies.set('PHPSESSID', response.data.accessToken, { expires: 15 / 1440 });
+              Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
+              router.push('/adherents/dashboard');
+            } else {
+              ErroruserName.value = response.data.message;
+            }
+          }).catch(error => {
+            console.log(error);
+            ErroruserName.value = error.response.data.message;
+
+          });
+
+
+
+
+
         }
       }
       return {
-        login
+        login,
+        passwordError,
+        username,
+        ErroruserName,
+        errorBase,
+        successMessage,
+        password,
+        
       };
     }
 
@@ -81,7 +133,9 @@
 <style lang="scss" scoped>
 .registerBtn{
   width: 100%;
-  text-align:center
+  text-align:center;
+  margin-top: 10px;
+  text-decoration: none;
 }
 .container-custom {
   display: flex;

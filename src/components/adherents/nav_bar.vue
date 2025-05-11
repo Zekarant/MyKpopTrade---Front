@@ -16,10 +16,10 @@
                     K-TRADE
                 </span>
             </div>
-            <a v-on:click="navPage(menu.page)" :class="{ active: menu.active }"  v-for="menu in itemMenu" href="#">{{menu.label}}</a>
-            <a class="btn_add_mobile" href="#">Vendre</a>
+            <a v-on:click="navPage(menu.page, menu.parameter)" :class="{ active: menu.active }"  v-for="menu in itemMenu" href="#">{{menu.label}}</a>
+            <a @click="togglePopup" class="btn_add_mobile" href="#">Vendre</a>
         </div>
-        <div class="nav-links-center">
+        <div @click="togglePopup" class="nav-links-center">
             <img src="@/assets/images/add.svg" class="add_post" alt="add post" />
         </div>
         <div class="nav-links-end">
@@ -36,6 +36,7 @@ import { useRoute, useRouter } from "vue-router";
         name: "left_menu",
         data() {
             return {
+                
                 currentRoute: '',
                 itemMenu: [
                     {
@@ -43,6 +44,7 @@ import { useRoute, useRouter } from "vue-router";
                     icon: '<i class="bi bi-house"></i>',
                     active: this.verifBtn('dashboard'),
                     page: 'dashboard',
+                    parameter: null
 
                     },            
                     {
@@ -50,6 +52,9 @@ import { useRoute, useRouter } from "vue-router";
                     icon: '<i class="bi bi-collection"></i>',
                     active: this.verifBtn('profile'),
                     page: 'profile',
+                    parameter: 'me'
+                    },
+                    {
 
                     }
                 ],
@@ -78,10 +83,10 @@ import { useRoute, useRouter } from "vue-router";
                 }
                 return false;
             },
-            navPage(page:RouteRecordNameGeneric){
+            navPage(page:RouteRecordNameGeneric, parameter: any){
                 
                 this.closeMenu();
-                this.router.push({ name: page , params: { id: 0 }});
+                this.router.push({ name: page , params: { id: parameter }});
 
             },
             devMenu(){
@@ -89,6 +94,9 @@ import { useRoute, useRouter } from "vue-router";
             },
             closeMenu(){
                 this.showFullMenu = false;
+            },
+            togglePopup() {
+                this.$emit('toggle-popup-add');
             },
         
         

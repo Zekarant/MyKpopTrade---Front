@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
+import forgot_psw from '../views/forgot_psw.vue';
 import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
@@ -32,16 +33,16 @@ const routes = [
     component: Collection 
   },
   { 
-    path: '/adherents/profile:id', 
+    path: '/adherents/profile/:id', 
     name: 'profile',
     component: profile 
   },
   {
-    path: '/test', 
-    name: 'test',
-    component: Test 
+    path: '/forgot_psw', 
+    name: 'forgot_psw',
+    component: forgot_psw 
   }
-
+  
 ];
 
 

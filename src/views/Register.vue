@@ -61,7 +61,7 @@
 
             
             <button class="btn-primary" @click="register" aria-label="register"  variant="primary">S'inscrire</button>
-            <a class="loginBtn" href="login">Se connecter</a>
+            <a class="loginBtn btn-primary-outline" href="login">Se connecter</a>
           </form>
         </div>
       </div>
@@ -139,7 +139,7 @@
         }*/
 
         if(verif_register){
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
             email: email.value,
             //firstname: firstname.value,
             username: username.value,
@@ -151,15 +151,21 @@
             headers: {
               'Content-Type': 'application/json'
             }
-          });
-          if (response.status === 201) {
+          }).then(response => {
+            if (response.status === 201) {
             successMessage.value = 'Inscription réussie !';
             setTimeout(() => {
               router.push('/login');
             }, 1000);
           } else {
-            successMessage.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
+            emailError.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
           }
+          }).catch(error => {
+            emailError.value = error.response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
+
+          });
+
+
         }
       }
       return {
@@ -187,7 +193,9 @@
 <style lang="scss" scoped>
 .loginBtn{
   width: 100%;
-  text-align:center
+  text-align:center;
+  text-decoration: none;
+  margin-top: 10px;
 }
 .form_content{
   margin-top: 4em; 

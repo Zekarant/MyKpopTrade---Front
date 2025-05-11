@@ -1,22 +1,22 @@
 <template>
     <main >
-        <Nav_bar></Nav_bar>        
+        <Nav_bar @toggle-popup-add="showPopup"></Nav_bar>        
         <div class="row row_profil_content">
             <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
             <div class="col-12 col-xs-12 col-md-12 col-lg-8 ">
               <div class="row row-banner">
-                <banner></banner>     
+                <banner :profilInfo="profilInfo" :admin="myProfile"></banner>     
               </div>
-              <div class="row">
-                <segment_profil @partDisplayed="changePart"></segment_profil>  
-              </div>
+              <segment_profil @partDisplayed="changePart"></segment_profil>  
+
               <br>
-              <Grid style="width: 100%;" v-if="partView === 'post'" :dataList="dataCardList"></Grid>
+              <Grid style="width: 100%;" v-if="partView === 'post'" :admin="myProfile" :dataUser="profilInfo" :dataList="dataCardList"></Grid>
 
             </div>
             <div class="col-0 col-xs-0 col-md-0 col-lg-2"></div>
         </div>
 
+        <popup_add_item v-if="isPopupVisible" @close="isPopupVisible=false"></popup_add_item>
 
     </main>
   </template>
@@ -29,6 +29,8 @@
     import Grid from '@/components/grid.vue';
     import Cookies from "js-cookie";
     import { useRoute } from "vue-router";
+    import axios from 'axios';
+    import Popup_add_item from '@/components/popup_add_item.vue';
 
   export default defineComponent({
     name: 'profile',
@@ -36,78 +38,96 @@
         Nav_bar,
         banner,
         segment_profil,
-        Grid
+        Grid,
+        Popup_add_item
     },
     mounted() {
       this.verifSession();
-
+      this.getInfoProfil();
+      this.getInventory();
     },
     setup() {
         const partView = ref('post');
         const route = useRoute();
         const id = route.params.id; // Récupère l'ID passé en paramètre
+        const myProfile = ref(false); 
 
         function changePart(part: string) {
           partView.value = part;
         }
-        const dataCardList = ref([
-        {
-                name: "Name Card",
-                imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",
-                imgBack: "https://files.a-fa.tw/images/card_back.jpg",
-                price: 5.5,
-                state: 'Neuf'
-
-            },
-            {
-                name: "Name Card",
-                imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",
-                imgBack: "https://files.a-fa.tw/images/card_back.jpg",
-                price: 5.5,
-                state: 'Bon état'
-
-            },
-            {
-                name: "Name Card",
-                imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",
-                imgBack: "https://files.a-fa.tw/images/card_back.jpg",
-                price: 5.5,
-                state: 'Bon état'
-
-            },
-            {
-                name: "Name Card",
-                imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",
-                imgBack: "https://files.a-fa.tw/images/card_back.jpg",
-                price: 5.5,
-                state: 'Bon état'
-            },
-            {
-                name: "Name Card",
-                imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",
-                imgBack: "https://files.a-fa.tw/images/card_back.jpg",
-                price: 5.5,
-                state: 'Bon état'
-
-            },
-        ]);
+        if (id === 'me') {
+            myProfile.value = true;
+        }
+        var profilInfo = ref([])
+        const dataCardList = ref([]);
         return {
-            dataCardList,
-            partView,
-            changePart,
-            route,
-            id
+          dataCardList,
+          profilInfo,
+          partView,
+          changePart,
+          route,
+          id,
+          myProfile
         };
+    },
+    data() {
+      return {
+        isPopupVisible: false, 
+      };
     },
     methods: {
       verifSession(){
-        console.log("fonction pour vérifier si le token est le même que le token enregistré");
         const PHPSESSID = Cookies.get('PHPSESSID');
         console.log(PHPSESSID);
         if(!PHPSESSID){
           this.$func.logout();
         }
-      }
+      },
+      async getInfoProfil(){
+        const PHPSESSID = Cookies.get('PHPSESSID');
+        await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+            }
+          }).then(response => {
+
+          if (response.status === 200) {
+            this.profilInfo = response.data.user;
+          }
+          }).catch(error => {
+            if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+              this.$func.logout();
+            }
+            console.log(error);
+          });
+
+  
+      },
+      async getInventory(){
+        const PHPSESSID = Cookies.get('PHPSESSID');
+        ///api/products/inventory/me?status=available
+        await axios.get(`${import.meta.env.VITE_API_URL}/api/products/inventory/me`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+          }
+        }).then(response => {
+          if (response.status === 200) {
+            this.dataCardList = response.data.products;
+
+          }
+        }).catch(error => {
+          if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+            this.$func.logout();
+          }
+        });
+      },
+      showPopup() {
+        this.isPopupVisible = true; // Affiche la popup
+      },
     },
   })
   </script>

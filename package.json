@@ -23,6 +23,7 @@
     "js-cookie": "^3.0.5",
     "material-design-icons-iconfont": "^6.7.0",
     "pinia": "^2.2.4",
+    "swiper": "^11.2.6",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
@@ -44,7 +45,7 @@
     "jsdom": "^25.0.1",
     "npm-run-all2": "^6.2.3",
     "prettier": "^3.3.3",
-    "sass": "^1.80.1",
+    "sass": "^1.87.0",
     "typescript": "~5.5.4",
     "vite": "^5.4.9",
     "vitest": "^2.1.2",

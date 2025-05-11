@@ -21,6 +21,16 @@
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
   color: #fff;
+  border: 2px solid var(--primary-color) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn-danger{
+  background-color: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  color: #fff;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -28,10 +38,80 @@
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
 }
+.btn-danger:hover{
+  background-color: white !important;
+  border-color: white !important;
+  color:  var(--danger-color) !important;
+  border: 2px solid var(--danger-color) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+.btn-danger-outline{
+  background-color: white !important;
+  border-color: var(--danger-color) !important;
+  color: var(--danger-color) !important;
+  border: 2px solid var(--danger-color) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn-blue-outline{
+  background-color: white !important;
+  border-color: var(--blue) !important;
+  color: var(--blue) !important;
+  border: 2px solid var(--blue) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn-danger-outline:hover{
+  background-color: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  color:  white !important;
+  border: 2px solid var(--danger-color) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn-success{
+  background-color: var(--success-color) !important;
+  border-color: var(--success-color) !important;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
 .btn-primary:hover{
+  background-color: white !important;
   border-color: var(--primary-color) !important;
-  background: none !important;
   color: var(--primary-color) !important;
+  border: 2px solid var(--primary-color) !important;
+}
+.btn-primary-outline{
+  background-color: white !important;
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) ;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  border: 2px solid var(--primary-color) !important;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+.btn-primary-outline:hover{
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
 }
 .bold{
   font-weight: bold;
