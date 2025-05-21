@@ -52,6 +52,19 @@
               <input type="password" v-model="password_confirm" class="form-control border-0" :class="{ 'is-invalid': passwordError }"
               placeholder="Confirmer votre mot de passe" required />
             </div>
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="privacyPolicy"
+                v-model="acceptPolicy"
+                :class="{ 'is-invalid': policyError }"
+                required
+              />
+              <label class="form-check-label" for="privacyPolicy">
+                J'accepte la <a href="/politique-confidentialite" target="_blank">politique de confidentialité et le traitement des données</a>
+              </label>
+            </div>
             <div style="color:red; text-align:center">
                 {{ emailError || passwordError  || nameError  || telError || errorBase }}
             </div>
@@ -99,6 +112,8 @@
       const password = ref('');
       const password_confirm = ref('');
       const passwordError = ref('');
+      const acceptPolicy = ref(false);
+      const policyError = ref('');
 
       const register = async () => {
         nameError.value = '';
@@ -114,6 +129,11 @@
         if(username.value == '' || username.value.length < 5) {
           verif_register = false;
           nameError.value  = 'Le pseudo doit être plus long';
+        }
+        policyError.value = '';
+        if (!acceptPolicy.value) {
+          policyError.value = 'Vous devez accepter la politique de confidentialité.';
+          return;
         }
         /*if(firstname.value == '' || firstname.value.length < 5) {
           verif_register = false;
@@ -145,7 +165,10 @@
             username: username.value,
             numberPhone: tel.value,
             password: password.value,
-            confirmPassword: password_confirm.value
+            confirmPassword: password_confirm.value, 
+            privacyPolicy:verif_register,
+            dataProcessing: verif_register,
+            marketing: verif_register
               
           }, {
             headers: {
@@ -183,6 +206,7 @@
         successMessage,
         password,
         password_confirm,
+        acceptPolicy,
         
       };
     }
@@ -287,7 +311,17 @@ input::placeholder {
 .text-success {
   color:  var(--success-color);
 }
+.form-check-input {
+  accent-color: var(--primary-color); /* Pour la plupart des navigateurs modernes */
+  width: 1.2em;
+  height: 1.2em;
+}
 
+/* Pour un style plus personnalisé si besoin */
+.form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
 @media only screen and (max-width: 600px) {
   .image-column.ms-3 {
     margin-left: 0px !important;

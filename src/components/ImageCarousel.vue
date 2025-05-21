@@ -2,7 +2,7 @@
     <swiper
         :navigation="true" :pagination="true" :modules="modules">
     <swiper-slide v-for="(image, index) in images" :key="index">
-      <img style="width: 100%;" :src="image" alt="Slide image" />
+      <img style="width: 100%; height: 100%; object-fit: contain;" :src="image" alt="Slide image" />
     </swiper-slide>
     </swiper>
   </template>

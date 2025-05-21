@@ -24,8 +24,8 @@
             </div>
         </div>
     </div>
-    <div v-if="stateCardPost" class="post-overlay" @click.self="closePost">
-        <post :dataUser="dataUser" :dataPost="dataCardPost" />
+    <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
+        <post @sold="onsold" :dataUser="dataUser" :dataPost="dataCardPost" />
     </div>
 </template>
   
@@ -81,6 +81,9 @@
                     this.stateCardPost = true;
                 }
               
+            },
+            onsold() {
+                this.stateCardPost = false;
             },
             closePost() {
                 this.stateCardPost = false;

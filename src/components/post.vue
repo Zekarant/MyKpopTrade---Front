@@ -16,11 +16,16 @@
                     <div class="col-md-1 more_content" @click="toggleMenu($event)">
                         <i class="bi bi-three-dots-vertical"></i>
                             <div v-if="isMenuVisible" class="dropdown-menu">
-                                <ul>
+                                <ul style="width: 100%;">
                                     <li>
-                                        <i class="bi bi-pencil me-2"></i>
+                                        <i class="bi bi-signal me-2"></i>
                                         Signaler
                                     </li>
+                                    <li @click="deletePopup()">
+                                        <i v-if="isRoot" class="bi bi-cart-check-fill me-2"></i>
+                                        Vendu
+                                    </li>
+                                    
                                 </ul>
                             </div>
                         </div>
@@ -113,6 +118,16 @@
         </div>
 
     </div>
+    <!--------- Popup ---------->
+    <div v-if="showSoldPopup "class="popup-overlay">
+        <div class="popup-content">
+            <p>Voulez-vous vraiment mettre cet article comme vendu ?</p>
+            <div class="popup-buttons-footer">
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="deletePopup">Annuler</button>
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sold(dataPost._id, dataSeller._id)">Vendu</button>
+            </div>
+        </div>
+    </div>
 </template>
   
 
@@ -121,7 +136,8 @@
     import axios from 'axios';
     import card_illu from '../components/card_illu.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
-    
+    import postService from '@/services/post.js';
+
     export default defineComponent({
         name: "post",
         components: {
@@ -142,12 +158,17 @@
             return {
                 dataSeller: {} as Record<string, any>,
                 isMenuVisible: false,
+                isRoot: false,
+                showSoldPopup: false,
             };
         },
         mounted() {
             console.log(this.dataPost);
+            console.log(this.dataUser);
+            
             if(this.dataUser) {
                 this.dataSeller = this.dataUser;
+                this.isRoot = true;
             }else{
                 this.dataSeller = this.dataPost.seller;
             }
@@ -170,12 +191,26 @@
                 };
                 return symbols[this.dataPost.currency as keyof typeof symbols] || ''; // Retourne le symbole ou une chaîne vide si non défini
             },
+       
         },
         methods: {
             toggleMenu(event: Event){
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;
             },
+            deletePopup(){
+                this.showSoldPopup = !this.showSoldPopup;
+            },
+            async sold(id: any,userId: any){
+                const response = await postService.sold(userId,id);
+                console.log(response);
+
+                if (response) {
+                    console.log(response);
+                    this.showSoldPopup = false;
+                    this.$emit('sold');
+                }
+            }
         },
         watch: {
             dataPost(newValue, oldValue) {
@@ -201,11 +236,12 @@
     }
     .post_card_detail .price{
         margin-left: auto;
-    }
-    .post_card_detail b{
         font-size:medium; 
         color: var(--blue); 
         margin-bottom: 20px;
+    }
+    .post_card_detail b{
+    
     }
     .banner_reserved .state{
         color: white;

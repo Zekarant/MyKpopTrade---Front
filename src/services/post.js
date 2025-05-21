@@ -49,13 +49,33 @@ export default {
 
   },
 
-  // Mettre à jour un post
-  updatePost(id, data) {
-    return apiClient.put(`/posts/${id}`, data);
-  },
+ sold: async (idUser, id) => {
+    try{
+      await axios.post(`${API_URL}/api/products/`+id+'/sold/', {
+        buyerId: idUser
+      }, {
+        headers: {
+          Authorization: `Bearer ${PHPSESSID}`,
+          "Content-Type": "application/json"
+        }
+      }).then(response => {
+          if (response.status === 200) {
+            return true;
+          } else {
+            return false;
+          }
+      }).catch(error => {
+        console.log(error);
+        return false;
+  
+      });
+      return true;
 
-  // Supprimer un post
-  deletePost(id) {
-    return apiClient.delete(`/posts/${id}`);
-  }
+    }catch (error) {
+      console.error('Erreur lors de la modifcation du posts :', error);
+      throw error;
+    }
+
+
+  },
 };

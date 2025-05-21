@@ -2,11 +2,11 @@
     <div @click="closeMenu" class="content">
         <div class="background"></div>
         <div @click="triggerFileInput"  v-if="admin" class="picture">
-            <img v-if="profilInfo.profilePicture" :src="profilePictureUrl || undefined" alt="Profile Picture" />
+            <img v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />
             <div v-else class="empty-profile">
                 <i class="bi bi-camera"></i>
             </div>
-            <i  v-if="profilInfo.profilePicture" @click="deletePicturePopup($event)" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
+            <i  v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" @click="deletePicturePopup($event)" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
             <input type="file" ref="fileInput" @change="updatePicture" accept="image/*" style="display: none;" />
         </div>
         <div  v-else class="picture">
@@ -67,14 +67,14 @@
 
     <!--------- Popup ---------->
     <div v-if="showDeletePictureConfirmation "class="popup-overlay">
-    <div class="popup-content">
-        <p>Voulez-vous vraiment supprimer votre photo de profil ?</p>
-        <div class="popup-buttons-footer">
-            <button class="btn btn-primary-outline" @click="deletePicturePopup">Annuler</button>
-            <button class="btn btn-danger" @click="confirmDeletePicture">Supprimer</button>
+        <div class="popup-content">
+            <p>Voulez-vous vraiment supprimer votre photo de profil ?</p>
+            <div class="popup-buttons-footer">
+                <button class="btn btn-primary-outline" @click="deletePicturePopup">Annuler</button>
+                <button class="btn btn-danger" @click="confirmDeletePicture">Supprimer</button>
+            </div>
         </div>
     </div>
-</div>
 </template>
 
 
@@ -149,7 +149,7 @@
                     }).then(response => {
 
                     if (response.status === 200) {
-                        this.profilInfo.profilePicture = URL.createObjectURL(file);
+                        this.profilInfo.profilePicture = response.data.profilePicture;
 
                     }
                     }).catch(error => {
@@ -188,10 +188,15 @@
         },
         computed: {
             profilePictureUrl() {
+                if(this.profilInfo.profilePicture == 'https://mykpoptrade.com/images/avatar-default.png'){
+                    return 'https://mykpoptrade.com/images/avatar-default.png';
+                }else{
                 const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
                 return this.profilInfo.profilePicture
                 ? `${baseUrl}${this.profilInfo.profilePicture}`
                 : null;
+                }
+          
             },
         },
         props: {
