@@ -9,7 +9,7 @@
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
     import Nav_bar from '@/components/adherents/nav_bar.vue';
-    import Popup_add_item from '@/components/popup_add_item.vue';
+    import Popup_add_item from '@/components/adherents/popup_add_item.vue';
 
 
   export default defineComponent({

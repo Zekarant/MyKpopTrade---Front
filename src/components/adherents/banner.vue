@@ -21,7 +21,7 @@
                             <div class="nickname_block">
                                 <span class="nickname_text_field">Surnom</span>
                             </div>
-                            <div v-if="profilInfo.isIdentityVerified" class="img_certif_container">
+                            <div v-if="profilInfo.isSellerVerified" class="img_certif_container">
                                 <img src="@/assets/images/certif.svg">
                             </div>
                         </div>
