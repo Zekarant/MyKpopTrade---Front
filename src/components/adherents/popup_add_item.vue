@@ -14,9 +14,9 @@
           <div>
           <label for="images">Images</label>
           <div class="image-preview-container">
-            <div v-for="(image, index) in formData.images" :key="index" class="image-preview">
+            <div v-for="(image, index) in imagesPreview" :key="index" class="image-preview">
               <img :src="image" alt="Aperçu de l'image" />
-              <button  type="button" @click="removeImage(index)">Supprimer</button>
+              <i  @click="removeImage(index)" class="bi bi-trash delete_img"></i>
             </div>
           </div>
           <input type="file" id="imageUpload" @change="handleImageUpload" accept="image/*" hidden />
@@ -110,7 +110,8 @@
 
   export default defineComponent({
     name: 'PopupAddItem',
-    setup() {
+    setup(props, { emit }) {
+      const imagesPreview = ref<string[]>([]);
 
       const formData = ref({
         title: '',
@@ -123,7 +124,7 @@
         kpopGroup: '',
         kpopMember: '',
         albumName: '',
-        images: [],
+        images: [] as File[],
         shippingOptions: {
           worldwide: false,
           nationalOnly: false,
@@ -132,22 +133,24 @@
         },
       });
       const handleImageUpload = (event: Event) => {
-      const files = (event.target as HTMLInputElement).files;
-      if (files) {
-        Array.from(files).forEach((file) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (file) {
+          formData.value.images.push(file);
+  
           const reader = new FileReader();
+       
           reader.onload = (e) => {
             if (e.target?.result) {
-              //formData.value.images.push(e.target.result as string);
+              imagesPreview.value.push(e.target.result as string);
             }
           };
           reader.readAsDataURL(file);
-        });
-      }
+        }
     };
 
     const removeImage = (index: number) => {
       formData.value.images.splice(index, 1);
+      imagesPreview.value.splice(index, 1);
     };
 
     const triggerFileInput = () => {
@@ -159,10 +162,15 @@
       const save = async () => {
         const response = await postService.createPost(formData.value);
         console.log(response);
+        
+        if (response) {
+          emit('close');
+        }
       };
   
       return {
         formData,
+        imagesPreview,
         handleImageUpload,
         removeImage,
         triggerFileInput,
@@ -235,7 +243,17 @@
   justify-content: center;
   align-items: center;
 }
-
+.delete_img{
+  position: absolute; 
+  right: 5px; 
+  top: 0px; 
+  color: white;  
+  border-radius: 4px; 
+  cursor: pointer;
+}
+.delete_img:hover{
+  color: var(--primary-color);  
+}
 .image-preview img {
   max-width: 100%;
   max-height: 100%;

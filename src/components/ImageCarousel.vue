@@ -1,7 +1,7 @@
 <template>
-    <swiper
+    <swiper v-if="images && images.length > 0"
         :navigation="true" :pagination="true" :modules="modules">
-    <swiper-slide v-for="(image, index) in images" :key="index">
+    <swiper-slide v-for="(image, index) in imagesWithDomain" :key="index">
       <img style="width: 100%; height: 100%; object-fit: contain;" :src="image" alt="Slide image" />
     </swiper-slide>
     </swiper>
@@ -42,6 +42,14 @@
           modules: [Navigation, Pagination, A11y],
         };
       },
+      computed: {
+        imagesWithDomain() {
+          const baseUrl = import.meta.env.VITE_API_URL; // ou ton domaine en dur si besoin
+          return this.images.map(img =>
+            img.startsWith('http') ? img : `${baseUrl}${img}`
+          );
+        }
+      }
     };
   </script>
 <style lang="scss" scoped>
@@ -62,6 +70,6 @@
     }
 
     .sample-slider [class^="swiper-button-"]{
-   color: yellow;
-}
+      color: yellow;
+    }
 </style>

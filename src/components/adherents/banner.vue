@@ -1,12 +1,22 @@
 <template>
     <div @click="closeMenu" class="content">
-        <div class="background"></div>
+        <div v-if="admin" class="background" @click="triggerFileInputBanner">
+            <img v-if="profilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
+            <div v-else class="background"></div>
+            <i  v-if="profilInfo.profileBanner" @click="deletePicturePopup($event,'banner')" style="position: absolute; right: 5px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
+            <input type="file" ref="fileInputbanner" @change="updatePictureBanner" accept="image/*" style="display: none;" />
+        </div>
+        <div v-else class="background">
+            <img v-if="profilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
+            <div v-else class="background"></div>
+        </div>
+
         <div @click="triggerFileInput"  v-if="admin" class="picture">
             <img v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />
             <div v-else class="empty-profile">
                 <i class="bi bi-camera"></i>
             </div>
-            <i  v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" @click="deletePicturePopup($event)" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
+            <i  v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" @click="deletePicturePopup($event,'profil')" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
             <input type="file" ref="fileInput" @change="updatePicture" accept="image/*" style="display: none;" />
         </div>
         <div  v-else class="picture">
@@ -66,12 +76,13 @@
 
 
     <!--------- Popup ---------->
-    <div v-if="showDeletePictureConfirmation "class="popup-overlay">
+    <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" class="popup-overlay">
         <div class="popup-content">
             <p>Voulez-vous vraiment supprimer votre photo de profil ?</p>
             <div class="popup-buttons-footer">
-                <button class="btn btn-primary-outline" @click="deletePicturePopup">Annuler</button>
-                <button class="btn btn-danger" @click="confirmDeletePicture">Supprimer</button>
+                <button class="btn btn-primary-outline" @click="deletePicturePopup($event, 'null')">Annuler</button>
+                <button v-if="showDeletePictureConfirmation" class="btn btn-danger" @click="confirmDeletePicture">Supprimer</button>
+                <button v-if="showDeletePictureBannerConfirmation" class="btn btn-danger" @click="confirmDeleteBanner">Supprimer</button>
             </div>
         </div>
     </div>
@@ -91,6 +102,7 @@
                 isYouProfil: false,
                 isMenuVisible: false,
                 showDeletePictureConfirmation: false, 
+                showDeletePictureBannerConfirmation: false,
 
             };
         },
@@ -128,6 +140,40 @@
                 const fileInput = this.$refs.fileInput as HTMLInputElement;
                 fileInput.click();
             },
+            triggerFileInputBanner() {
+                const fileInput = this.$refs.fileInputbanner as HTMLInputElement;
+                fileInput.click();
+            },
+            async updatePictureBanner(event: Event) {
+                const file = (event.target as HTMLInputElement).files?.[0];
+          
+                if (file) {
+                    var formData = new FormData();
+
+                    formData.append('profileBanner', file);
+
+                    const PHPSESSID = Cookies.get('PHPSESSID');
+                    console.log(formData);
+                    await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, formData, {
+                        headers: {
+                        'Content-Type': 'multipart/form-data.',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                        }
+                    }).then(response => {
+
+                    if (response.status === 200) {
+                        this.profilInfo.profileBanner = response.data.profileBanner;
+
+                    }
+                    }).catch(error => {
+                        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.logout();
+                        }
+                        console.log(error);
+                    });
+                }
+            },
             async updatePicture(event: Event) {
                 const file = (event.target as HTMLInputElement).files?.[0];
           
@@ -163,9 +209,33 @@
             editProfile() {
                 this.modify = true;
             },
-            deletePicturePopup(event: Event){
+            deletePicturePopup(event: Event,type: string) {
                 event.stopPropagation();
-                this.showDeletePictureConfirmation = !this.showDeletePictureConfirmation;
+                if(type == 'null'){
+                    this.showDeletePictureConfirmation = false;
+                    this.showDeletePictureBannerConfirmation = false;
+                }else if(type == 'banner'){
+                    this.showDeletePictureBannerConfirmation = !this.showDeletePictureBannerConfirmation;
+                }else if(type == 'profil'){
+                    this.showDeletePictureConfirmation = !this.showDeletePictureConfirmation;
+                }
+            },
+            confirmDeleteBanner(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, {
+                    headers: {
+                        'Authorization': `Bearer ${PHPSESSID}`,
+                    },
+                }).then(() => {
+                    this.profilInfo.profileBanner = null;
+                    this.showDeletePictureBannerConfirmation = false; 
+                })
+                .catch((error) => {
+                    console.error(error);
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.logout();
+                    }
+                });
             },
             confirmDeletePicture() {
                 const PHPSESSID = Cookies.get('PHPSESSID');
@@ -196,6 +266,13 @@
                 ? `${baseUrl}${this.profilInfo.profilePicture}`
                 : null;
                 }
+          
+            },
+            banneerictureUrl() {
+                const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
+                return this.profilInfo.profileBanner
+                ? `${baseUrl}${this.profilInfo.profileBanner}`
+                : null;
           
             },
         },
@@ -230,6 +307,12 @@
     width:100%;
     max-width: 100vw;
     height:50%;
+    position: relative;
+}
+.background img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .picture{
     height: 130px;

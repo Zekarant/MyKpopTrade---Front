@@ -59,11 +59,34 @@
                 <div class="col-xs-0 col-md-0 col-lg-2"></div>
 
               </div>
+              <div  v-if="partView === 'review'">
+                <div class="row row_profil_content">
+                  <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
+                  <div class="col-12 col-xs-12 col-md-12 col-lg-8 ">
+                    <div class="review_gen" style="width: 100%;">
+                      <div>
+                        <Filter_review></Filter_review>  
+                        <i style="color: #FFD485;margin-left: 8px; vertical-align: super;" class="bi bi-star-fill"></i>
+                        <div style="display: inline-block;vertical-align: super;">{{ reviews.stats.averageRating }} ({{ reviews.stats.totalRatings }})</div>
+                      </div>
+                      
+                    </div>
+                    <div class="separator"></div>
+                    <div class="list_review">
+                      <Review_card :review="rating" v-for="rating in reviews.ratings"></Review_card>  
+
+                    </div>
+
+                  </div>
+                  <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
+                </div>
+              </div>
+
             </div>
             <div class="col-0 col-xs-0 col-md-0 col-lg-2"></div>
         </div>
 
-        <popup_add_item v-if="isPopupVisible" @close="isPopupVisible=false"></popup_add_item>
+        <popup_add_item v-if="isPopupVisible" @close="closePopup"></popup_add_item>
 
     </main>
   </template>
@@ -78,6 +101,8 @@
     import { useRoute } from "vue-router";
     import axios from 'axios';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
+    import Filter_review from '@/components/filter_review.vue';
+    import Review_card from '@/components/review_card.vue';
 
   export default defineComponent({
     name: 'profile',
@@ -86,7 +111,9 @@
         banner,
         segment_profil,
         Grid,
-        Popup_add_item
+        Popup_add_item,
+        Filter_review,
+        Review_card
     },
     mounted() {
       this.verifSession();
@@ -110,9 +137,7 @@
         const id = route.params.id; // Récupère l'ID passé en paramètre
         const myProfile = ref(false); 
 
-        function changePart(part: string) {
-          partView.value = part;
-        }
+
         if (id === 'me') {
             myProfile.value = true;
         }
@@ -122,7 +147,6 @@
           dataCardList,
           profilInfo,
           partView,
-          changePart,
           route,
           id,
           myProfile
@@ -132,9 +156,24 @@
       return {
         isPopupVisible: false, 
         isBtnSaveVisible: false, 
+        reviews: {
+          stats: {
+            averageRating: 0,
+            totalRatings: 0
+          },
+          ratings: []
+        },
       };
     },
     methods: {
+      changePart(part: string){
+        this.partView = part;
+
+        if(part === 'review'){
+          this.getReviex();
+        }
+
+      },
       verifSession(){
         const PHPSESSID = Cookies.get('PHPSESSID');
         console.log(PHPSESSID);
@@ -191,6 +230,33 @@
         console.log('update');
         this.isBtnSaveVisible = true;
       },
+      async getReviex(){
+        const PHPSESSID = Cookies.get('PHPSESSID');
+        try {
+          await axios.get(
+            `${import.meta.env.VITE_API_URL}/api/profiles/ratings/`+this.profilInfo._id,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${PHPSESSID}`
+              }
+            }
+          ).then(response => {
+            if (response.status === 200) {
+              this.reviews = response.data;
+            }
+          }).catch(error => {
+            if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+              this.$func.logout();
+            }
+            console.log(error);
+          });
+
+        } catch (error) {
+          // Optionnel : afficher un message d'erreur
+          console.error(error);
+        }
+      },
       async saveProfile() {
         const PHPSESSID = Cookies.get('PHPSESSID');
         try {
@@ -213,6 +279,10 @@
           // Optionnel : afficher un message d'erreur
           console.error(error);
         }
+      }, 
+      closePopup() {
+        this.isPopupVisible = false; 
+        this.getInventory(); // Recharge l'inventaire après la fermeture de la popup
       }
     },
   })
@@ -277,6 +347,15 @@
     margin-right: 8px;
     width: 50%;
   }
+  .review_gen{
+
+  }
+  .separator{
+    width: 100%;
+    height: 0.5px;
+    background-color: var(--secondary-color-tint);
+  }
+
 @media (max-width: 769px) {
   .row-banner{
     height: auto;
