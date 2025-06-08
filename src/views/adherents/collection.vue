@@ -13,10 +13,13 @@
     components: {
     },
     setup() {
-    return {
-  
-    };
-  },
+      return {
+    
+      };
+    },
+    mounted() {
+      this.$func.verifSession();
+    },
   })
   </script>
   

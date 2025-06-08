@@ -19,6 +19,7 @@
       Popup_add_item
     },
     mounted() {
+      this.$func.verifSession();
     },
     setup() {
       return {

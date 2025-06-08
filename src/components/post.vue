@@ -15,7 +15,7 @@
                     </div>
                     <div class="col-md-1 more_content" @click="toggleMenu($event)">
                         <i class="bi bi-three-dots-vertical"></i>
-                            <div v-if="isMenuVisible" class="dropdown-menu">
+                        <div v-if="isMenuVisible" class="dropdown-menu">
                                 <ul style="width: 100%;">
                                     <li>
                                         <i class="bi bi-signal me-2"></i>
@@ -27,8 +27,8 @@
                                     </li>
                                     
                                 </ul>
-                            </div>
                         </div>
+                    </div>
                 </div>
                 <div class="post_card_detail">
                     <div style="display: flex;">
@@ -303,7 +303,6 @@
         width: 50%;
         flex-direction: column; 
         display: flex;
-        justify-content: space-between;
         overflow-x: scroll;
     }
     .post_card_content_header, .post_card_content_header div{
@@ -393,6 +392,9 @@
         align-items: center; 
         margin: 10px;
         font-size: small;
+        position: absolute;
+        width: 47%;
+        bottom: 0px;
     }
 
     .post_card_content_footer button{
@@ -416,6 +418,10 @@
         }
         .container_detail_card{
             height: 90%;
+        }
+        .post_card_content_footer{
+            position: relative;
+            width: auto;
         }
     }
     @media (max-width:550px){
@@ -453,6 +459,8 @@
         }
         .post_card_content_footer{
             flex-direction: column;
+            position: relative;
+            width: auto;
         }
         .post_card_content_footer button{
             width: 100%;

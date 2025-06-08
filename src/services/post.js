@@ -18,9 +18,7 @@ export default {
   },
 
   // Créer un post
-  createPost: async (postData) => {
-    console.log('postData', postData.title);
-    
+  createPost: async (postData) => {    
     var data = new FormData();
     data.append('title', postData.title);
     data.append('description', postData.description);

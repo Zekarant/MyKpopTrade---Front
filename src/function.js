@@ -7,7 +7,7 @@ export const func = {
       console.log('logout');
       try {
         const refreshToken = Cookies.get('refreshToken');
-
+        const PHPSESSID = Cookies.get('PHPSESSID');
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
             refreshToken: refreshToken,
         }, {
@@ -26,10 +26,40 @@ export const func = {
         }
         router.push('/login');
       } catch (error) {
-        router.push('/login');
-        
+        console.error('Erreur lors de la déconnexion :', error);
       }
 
 
+    },
+    verifSession: async () => {
+      const PHPSESSID = Cookies.get('PHPSESSID');
+      console.log(PHPSESSID);
+      if(!PHPSESSID){
+        this.$func.logout();
+      }else{
+        try {
+          const refreshToken = Cookies.get('refreshToken');
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/refresh-token`, {
+            refreshToken: refreshToken,
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${PHPSESSID}`
+            }
+          });
+          console.log(response.status);
+
+          if(response.status === 200) {
+            Cookies.set('PHPSESSID', response.data.accessToken, { expires: 1 });
+            Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
+          }else{
+            console.log(response);
+            this.$func.logout();
+          }
+          } catch (error) {
+            console.error('Erreur lors de la déconnexion :', error);
+          }
+        }
+        return;
     },
  }

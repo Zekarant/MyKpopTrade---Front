@@ -73,7 +73,7 @@
                     </div>
                     <div class="separator"></div>
                     <div class="list_review">
-                      <Review_card :review="rating" v-for="rating in reviews.ratings"></Review_card>  
+                      <Review_card class="card_review" :review="rating" v-for="rating in reviews.ratings" ></Review_card>  
 
                     </div>
 
@@ -116,9 +116,10 @@
         Review_card
     },
     mounted() {
-      this.verifSession();
-      this.getInfoProfil();
-      this.getInventory();
+      this.$func.verifSession().then(() => {
+        this.getInfoProfil();
+        this.getInventory();
+      });
     },
     computed: {
       memberSinceFormatted() {
@@ -175,11 +176,7 @@
 
       },
       verifSession(){
-        const PHPSESSID = Cookies.get('PHPSESSID');
-        console.log(PHPSESSID);
-        if(!PHPSESSID){
-          this.$func.logout();
-        }
+        this.$func.verifSession();
       },
       async getInfoProfil(){
         const PHPSESSID = Cookies.get('PHPSESSID');
@@ -196,7 +193,7 @@
           }
           }).catch(error => {
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-              this.$func.logout();
+              this.$func.verifSession();
             }
             console.log(error);
           });
@@ -219,7 +216,7 @@
           }
         }).catch(error => {
           if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-            this.$func.logout();
+            this.$func.verifSession();
           }
         });
       },
@@ -247,7 +244,7 @@
             }
           }).catch(error => {
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-              this.$func.logout();
+              this.$func.verifSession();
             }
             console.log(error);
           });
@@ -354,6 +351,14 @@
     width: 100%;
     height: 0.5px;
     background-color: var(--secondary-color-tint);
+  }
+  .list_review{
+    margin-top: 20px;
+    width: 65%;
+  }
+  .list_review .card_review{
+    height: 60%;
+    max-height: 200px;
   }
 
 @media (max-width: 769px) {

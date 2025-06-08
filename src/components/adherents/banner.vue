@@ -76,14 +76,24 @@
 
 
     <!--------- Popup ---------->
-    <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" class="popup-overlay">
-        <div class="popup-content">
-            <p>Voulez-vous vraiment supprimer votre photo de profil ?</p>
+    <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" @click="closePopup()" class="popup-overlay">
+        <div @click="$event.stopPropagation()" class="popup-content">
+            <p>Voulez-vous vraiment supprimer votre photo ?</p>
             <div class="popup-buttons-footer">
                 <button class="btn btn-primary-outline" @click="deletePicturePopup($event, 'null')">Annuler</button>
                 <button v-if="showDeletePictureConfirmation" class="btn btn-danger" @click="confirmDeletePicture">Supprimer</button>
                 <button v-if="showDeletePictureBannerConfirmation" class="btn btn-danger" @click="confirmDeleteBanner">Supprimer</button>
             </div>
+        </div>
+    </div>
+        <div v-if="showSetting" class="popup-overlay" @click="closePopup()">
+        <div @click="$event.stopPropagation()" class="popup-content">
+            <div>
+                <div>Changer le mot de passe <i class="bi bi-chevron-compact-right" style="zoom: 1.3; vertical-align:sub;"></i></div>
+                <div>Email vérifié <span v-if="emailRequest" class="emailRequestSuccess">Email de vérification envoyé</span>  <button @click="verifEmail()" class="btn-primary btnRequestEmail" v-else-if="!profilInfo.isEmailVerified && !emailRequest">Vérifier l'email</button><i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isEmailVerified" class="bi bi-check-lg valid"></i></div>
+                
+            </div>
+            
         </div>
     </div>
 </template>
@@ -103,22 +113,17 @@
                 isMenuVisible: false,
                 showDeletePictureConfirmation: false, 
                 showDeletePictureBannerConfirmation: false,
+                showSetting: false,
+                emailRequest: false,
 
             };
         },
         setup() {
             const route = useRoute();
             const router = useRouter();
-
-
-
-            const openSettings = () => {
-
-            };
             return {
                 route,
                 router,
-                openSettings,
             };
         },
         mounted() {
@@ -135,6 +140,14 @@
             },
             closeMenu(){
                 this.isMenuVisible = false;
+            },
+            closePopup(){
+                this.showDeletePictureConfirmation = false;
+                this.showDeletePictureBannerConfirmation = false;
+                this.showSetting = false;
+            },
+            openSettings(){
+                this.showSetting = true;
             },
             triggerFileInput() {
                 const fileInput = this.$refs.fileInput as HTMLInputElement;
@@ -162,13 +175,13 @@
                         }
                     }).then(response => {
 
-                    if (response.status === 200) {
-                        this.profilInfo.profileBanner = response.data.profileBanner;
+                        if (response.status === 200) {
+                            this.profilInfo.profileBanner = response.data.profileBanner;
 
-                    }
+                        }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.logout();
+                            this.$func.verifSession();
                         }
                         console.log(error);
                     });
@@ -200,7 +213,7 @@
                     }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.logout();
+                            this.$func.verifSession();
                         }
                         console.log(error);
                     });
@@ -233,7 +246,7 @@
                 .catch((error) => {
                     console.error(error);
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.logout();
+                        this.$func.verifSession();
                     }
                 });
             },
@@ -250,10 +263,35 @@
                 .catch((error) => {
                     console.error(error);
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.logout();
+                        this.$func.verifSession();
+
                     }
                 });
             },
+            async verifEmail(){
+    
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                    await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
+                        email: this.profilInfo.email,
+                    }, {
+                        headers: {
+                        'Content-Type': 'multipart/form-data.',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                        }
+                    }).then(response => {
+
+                        if (response.status === 200) {
+                            this.emailRequest = true;
+                    
+                        }
+                    }).catch(error => {
+                        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                            this.$func.verifSession();
+                        }
+                    });
+            
+            }
             
         },
         computed: {
@@ -436,7 +474,14 @@ button.btn.btn-outline:hover {
 .dropdown-menu li:hover {
   background-color: var(--secondary-color-tint);
 }
-
+.valid, .emailRequestSuccess{
+    color: var(--success-color);
+}
+.btnRequestEmail{
+    margin-left: 10px;
+    font-size: small;
+    padding: 4px;
+}
 @media (max-width: 768px) {
     .picture{
         top: 15%;
