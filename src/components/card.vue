@@ -1,27 +1,27 @@
 <template>
     <div class="card">
-            <div class="back" href="#">
-                <div v-if="admin && !data.isAvailable" class="banner_draft">
-                    <div class="state_draft">Brouillon</div>
-                </div>
-                <div v-else-if="data.isReserved" class="banner_reserved">
-                    <div class="state_reserved">Réservé</div>
-                </div>
-                <!--<card_illu class="screen" :frontImage="data.imgFront" :backImage="data.imgBack"></card_illu>-->
-                <ImageCarousel class="screen"  :images="data.images" />
-
+        <div class="back" href="#">
+            <div v-if="admin && !data.isAvailable" class="banner_draft">
+                <div class="state_draft">Brouillon</div>
             </div>
-            <div style="padding-bottom: 8px;padding-left: 5px;">
-                <div class="name"><a href="#">{{ data.title }}</a></div>
-                <div class="state">
-                    <span>{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>            
-                </div>
-                <div class="shop">
-                    <span>€ {{ data.price }}</span>            
-                </div>
+            <div v-else-if="data.isReserved" class="banner_reserved">
+                <div class="state_reserved">Réservé</div>
+            </div>
+            <!--<card_illu class="screen" :frontImage="data.imgFront" :backImage="data.imgBack"></card_illu>-->
+            <ImageCarousel class="screen"  :images="data.images" />
+
+        </div>
+        <div style="padding-bottom: 8px;padding-left: 5px;">
+            <div class="name"><a href="#">{{ data.title }}</a></div>
+            <div class="state">
+                <span>{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>            
+            </div>
+            <div class="shop">
+                <span>€ {{ data.price }}</span>            
             </div>
         </div>
-  </template>
+    </div>
+</template>
   
   <script lang="ts">
     import ImageCarousel from '../components/ImageCarousel.vue';

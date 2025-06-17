@@ -28,14 +28,34 @@
                         <div class="name_user_label">Nom d'utilisateur</div>
                         <div class="birthday_label"></div>
                         <div class="country_residence_label" v-if="profilInfo.location">Lieux de résidence</div>
+                        <div class="instagram_label">Instagram</div>
+                        <div class="twitter_label">Twitter</div>
+                        <div class="discord_label">Discord</div>
                       </div>
                       <div class="col-6 col-xs-6 col-md-6 col-lg-2 info_user">
                         <div class="name_value"></div>
                         <div class="name_user_value">{{ profilInfo.username }}</div>
                         <div class="birthday_value"></div>
-                        <div class="country_residence_value" v-if="profilInfo.location && !myProfile">{{ profilInfo.location }}</div>
-                        <div class="country_residence_value" v-if="myProfile"><input style="border: none;" :value="profilInfo.location" v-model="profilInfo.location"></div>
+                        <div class="country_residence_value" >
+                          <div v-if="profilInfo.location && !myProfile">{{ profilInfo.location }}</div>
+                          <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.location" v-model="profilInfo.location">
+                        </div>
+
+                        <div class="instagram_value">                          
+                          <div v-if="profilInfo.socialLinks.instagram && !myProfile">{{ profilInfo.socialLinks.instagram }}</div>
+                          <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.instagram" v-model="profilInfo.socialLinks.instagram">
+                        </div>
+                        <div class="twitter_value">
+                          <div v-if="profilInfo.socialLinks.twitter && !myProfile">{{ profilInfo.socialLinks.twitter }}</div>
+                          <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.twitter" v-model="profilInfo.socialLinks.twitter">
+                        </div>
+                        <div class="discord_value">
+                          <div v-if="profilInfo.socialLinks.discord && !myProfile">{{ profilInfo.socialLinks.discord }}</div>
+                          <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.discord" v-model="profilInfo.socialLinks.discord">
+                        </div>
+
                       </div>
+                      
                     </div>
                   </div>
 
@@ -52,7 +72,8 @@
                     <!--<div style="display: inline-block;">Compte certifié depuis Mois Année.</div>--->
                   </div>
                   <br>
-                  <button class="btnSave btn btn-primary" v-if="isBtnSaveVisible" @click="saveProfile">Enregistrer</button>                  </div>
+                  <button class="btnSave btn btn-primary" v-if="isBtnSaveVisible" @click="saveProfile">Enregistrer</button>                  
+                </div>
     
                 </div>
 
@@ -261,7 +282,8 @@
             `${import.meta.env.VITE_API_URL}/api/profiles/me`,
             {
               bio: this.profilInfo.bio,
-              location: this.profilInfo.location
+              location: this.profilInfo.location,
+              socialLinks: this.profilInfo.socialLinks,
             },
             {
               headers: {

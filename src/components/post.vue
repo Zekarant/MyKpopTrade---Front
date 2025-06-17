@@ -2,6 +2,7 @@
    <div class="container_detail_card">
         <div  class="card">
             <div class="post_card_content">
+                <i style="position: absolute; top: 5px; right: 5px; width: 20px; zoom: 1.5; z-index: 3; color: var(--primary-color);" @click="closePost()" class="bi bi-x-lg display_phone_tablette"></i>
                 <div class="post_card_content_header">
                     <div class="userPicture">
                         <img :src="profilePictureUrl || undefined">
@@ -21,7 +22,7 @@
                                         <i class="bi bi-signal me-2"></i>
                                         Signaler
                                     </li>
-                                    <li @click="deletePopup()">
+                                    <li @click="hidePopup()">
                                         <i v-if="isRoot" class="bi bi-cart-check-fill me-2"></i>
                                         Vendu
                                     </li>
@@ -123,7 +124,7 @@
         <div class="popup-content">
             <p>Voulez-vous vraiment mettre cet article comme vendu ?</p>
             <div class="popup-buttons-footer">
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="deletePopup">Annuler</button>
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="hidePopup">Annuler</button>
                 <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sold(dataPost._id, dataSeller._id)">Vendu</button>
             </div>
         </div>
@@ -198,7 +199,7 @@
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;
             },
-            deletePopup(){
+            hidePopup(){
                 this.showSoldPopup = !this.showSoldPopup;
             },
             async sold(id: any,userId: any){
@@ -210,7 +211,10 @@
                     this.showSoldPopup = false;
                     this.$emit('sold');
                 }
-            }
+            },
+            closePost() {
+                this.$emit('closePost');
+            },
         },
         watch: {
             dataPost(newValue, oldValue) {

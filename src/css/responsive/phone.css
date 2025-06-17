@@ -1,36 +1,41 @@
 
 /* Styles pour les téléphones en mode portrait (largeur maximale de 480 pixels) */
 @media (max-width: 480px) {
-   
-    .display_phone{
-      display: block !important;
+  .display_phone{
+    display: block !important;
 
-    }
-    .no_phone{
-      display: none !important;
-
-    }
-    
-
-    /* Vos styles CSS pour les téléphones en mode portrait ici */
   }
+  .no_phone{
+    display: none !important;
+
+  }
+
+
+}
+@media (max-width: 768px) {
+  .popup-overlay{
+    padding-left: 0px !important;
+  } 
+
+}
+
   
   /* Styles pour les téléphones en mode paysage (largeur maximale de 767 pixels) */
   @media (min-width: 481px) and (max-width: 767px) {
-    /* Vos styles CSS pour les téléphones en mode paysage ici */
+    /* styles CSS pour les téléphones en mode paysage ici */
   }
   
   /* Styles pour les iPhone 6, 7 et 8 (largeur de 375 pixels) en mode portrait */
   @media (max-width: 375px) and (min-height: 667px) {
-    /* Vos styles CSS pour les iPhone 6, 7 et 8 en mode portrait ici */
+    /* styles CSS pour les iPhone 6, 7 et 8 en mode portrait ici */
   }
   
   /* Styles pour les iPhone X, XS, 11 Pro (largeur de 375 pixels) en mode portrait */
   @media (max-width: 375px) and (min-height: 812px) {
-    /* Vos styles CSS pour les iPhone X, XS, 11 Pro en mode portrait ici */
+    /* styles CSS pour les iPhone X, XS, 11 Pro en mode portrait ici */
   }
   
   /* Styles pour les téléphones Android avec une largeur de 360 pixels */
   @media (max-width: 360px) {
-    /* Vos styles CSS pour les téléphones Android avec une largeur de 360 pixels ici */
+    /*  styles CSS pour les téléphones Android avec une largeur de 360 pixels ici */
   }

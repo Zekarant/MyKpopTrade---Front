@@ -1,9 +1,10 @@
 <template>
    <div class="container">
+    
         <card :data="data" v-on:click="openPostInfo(index)" v-for="(data, index) in dataList"></card>
     </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @sold="onsold" :dataUser="dataUser" :dataPost="dataCardPost" />
+        <post @closePost="closePost" @sold="onsold" :dataUser="dataUser" :dataPost="dataCardPost" />
     </div>
 </template>
   

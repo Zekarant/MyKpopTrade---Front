@@ -1,5 +1,5 @@
 <template v-if="!review.isHidden">
-    <div class="container_detail_card">
+    <div @click="closeMenu" class="container_detail_card">
         <div style="font-size: small;">Posté le {{ formatDate(review.createdAt) }}</div>
         <div class="card">
             <div class="review_card_content">
@@ -81,6 +81,10 @@
                 this.isMenuVisible = !this.isMenuVisible;
                 console.log(this.isMenuVisible);
 
+            },
+            closeMenu() {
+                this.isMenuVisible = false;
+                this.showSoldPopupReview = false;
             },
             signalReview(event: MouseEvent) {
                 console.log("Signal review clicked");

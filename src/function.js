@@ -62,4 +62,22 @@ export const func = {
         }
         return;
     },
+    showToastSuccess(message) {
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-success';
+      alert.innerText = message;
+      document.body.appendChild(alert);
+      setTimeout(() => {
+        alert.remove();
+      }, 3000);
+    },
+    showToastError(message) {
+      const alert = document.createElement('div');
+      alert.className = 'alert error-alert';
+      alert.innerText = message;
+      document.body.appendChild(alert);
+      setTimeout(() => {
+        alert.remove();
+      }, 3000);
+    }
  }

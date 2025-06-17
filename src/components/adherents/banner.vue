@@ -29,7 +29,7 @@
                     <div class="container_nickname col-md-4">
                         <div class="nickname">
                             <div class="nickname_block">
-                                <span class="nickname_text_field">Surnom</span>
+                                <span class="nickname_text_field">{{ profilInfo.username }}</span>
                             </div>
                             <div v-if="profilInfo.isSellerVerified" class="img_certif_container">
                                 <img src="@/assets/images/certif.svg">
@@ -75,7 +75,7 @@
     </div>
 
 
-    <!--------- Popup ---------->
+    <!--------- Popup Supression ---------->
     <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" @click="closePopup()" class="popup-overlay">
         <div @click="$event.stopPropagation()" class="popup-content">
             <p>Voulez-vous vraiment supprimer votre photo ?</p>
@@ -86,16 +86,181 @@
             </div>
         </div>
     </div>
-        <div v-if="showSetting" class="popup-overlay" @click="closePopup()">
+    <div v-if="showDeletePaypalPopup" @click="closePopup()" class="popup-overlay">
         <div @click="$event.stopPropagation()" class="popup-content">
-            <div>
-                <div>Changer le mot de passe <i class="bi bi-chevron-compact-right" style="zoom: 1.3; vertical-align:sub;"></i></div>
-                <div>Email vérifié <span v-if="emailRequest" class="emailRequestSuccess">Email de vérification envoyé</span>  <button @click="verifEmail()" class="btn-primary btnRequestEmail" v-else-if="!profilInfo.isEmailVerified && !emailRequest">Vérifier l'email</button><i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isEmailVerified" class="bi bi-check-lg valid"></i></div>
+            <p>Voulez-vous vraiment supprimer cet email Paypal ?</p>
+            <div class="popup-buttons-footer">
+                <button class="btn btn-primary-outline" @click="closePopup()">Annuler</button>
+                <button class="btn btn-danger" @click="deletePaypal">Supprimer</button>
+            </div>
+        </div>
+    </div>
+        <!--------- Popup Paramètre ---------->
+        <div v-if="showSetting" class="popup-overlay" @click="closePopup()">
+            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
+                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
+                <div style="position: relative;">
+                    <div class="setting_item"   @click="changePswdPopup()">Changer le mot de passe <i class="bi bi-chevron-compact-right chevron-setting"></i></div>
+                    <div class="setting_item"  @click="getVerifIdentityState">
+                        <span>Identité vérifiée</span>
+                        <i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isIdentityVerified" class="bi bi-check-lg valid"></i>
+                        <i style="zoom: 1.5; vertical-align:sub; color:red; margin-left: 10px;" v-else-if="profilInfo.verificationLevel == 'none'" class="bi bi-x-lg"></i>
+                        <i v-if="!profilInfo.isIdentityVerified" class="bi bi-chevron-compact-right chevron-setting"></i>
+                    </div>
+                    <div class="setting_item">
+                        <span>Email vérifié </span>
+                        <span v-if="emailRequest" class="emailRequestSuccess">Email de vérification envoyé</span>  
+                        <button @click="verifEmail()" class="btn-primary btnRequestEmail" v-else-if="!profilInfo.isEmailVerified && !emailRequest">Vérifier l'email</button>
+                        <i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isEmailVerified" class="bi bi-check-lg valid"></i>
+                    </div>
+
+                    <div class="setting_item" style="display:flex;align-items: center;">
+                        <span>Téléphone</span> 
+                        <div style="display: flex;"  >
+                            <i v-if="profilInfo.isPhoneVerified || codeRequest"  style="zoom: 1.5; vertical-align:sub; margin-right: 10px;" class="bi bi-check-lg valid"></i>
+                            <input v-if="!telRequest || codeRequest" type="tel" style="margin-left: 10px;" id="phone" @input="isBtnSaveTelVisible=true" v-model="phoneNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
+                            
+                            <button @click="saveTel" class="btn-primary btnRequestPhone" v-if="isBtnSaveTelVisible">Enregistrer</button>                   
+                        </div>
+                        <div class="telRequestSuccess" v-if="telRequest && !codeRequest">
+                            <span >Veuillez entrer le code :</span>
+                            <div>
+                                <input placeholder="code" v-model="phoneCode" type="number"> 
+                                <button @click="verifCodeTel()" class="btn-primary btnRequestTel" >Vérifier le téléphone</button>
+                            </div>
+
+                        </div> 
+                        <button v-else-if="!profilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-primary btnRequestTel" >Vérifier le téléphone</button>
+
+    
+                    </div>
+                    <div class="setting_item" style="display:flex;align-items: center;">
+                        <span style="margin-right: 10px;">Email Paypal</span> 
+                        <div style="display: flex;">
+                            <input @input="saveMailPaypal = true" type="email" id="phone" v-model="emailPaypal">    
+                            <div style="position: absolute; right: 15px;">
+                                <button @click="savePaypal" class="btn-primary btnRequestEmail" v-if="saveMailPaypal">Enregistrer</button>                   
+                                <button @click="showDeletePaypalPopup = true; showSetting = false" class="btn-danger btnRequestEmail" v-if="profilInfo.paypalEmail">Supprimer</button>   
+                            </div>   
+                            
+                        </div>
+
+                    </div>
+                    <div class="setting_item">
+                        <span>
+                            Autoriser les messages directs
+                        </span>
+                        <label class="switch">
+                            <input @change="changeAllowDirectMessages" type="checkbox" v-model="profilInfo.preferences.allowDirectMessages">
+                            <span class="slider"></span>
+                        </label>
+                        
+                    </div>
+                    <div class="setting_item">
+                        <button style="width: 100%;" class="btn-primary-outline" @click="exportUserData">Exporter mes données</button>
+                    </div>
+                    <div class="setting_item" v-if="!profilInfo.anonymized">
+                        <button style="width: 100%;" class="btn-primary-outline" @click="anonymizePopup = true">Anonymiser mes données</button>
+                    </div>                    
+                    <div v-if="profilInfo.accountStatus = 'active'" class="setting_item">
+                        <button style="width: 100%;" class="btn-danger" @click="showDeleteAccount = true">Supprimer votre compte</button>
+                    </div>
+                    <!--<button class="btnSave btn btn-primary" v-if="isBtnSaveVisible" @click="saveSettings">Enregistrer</button>   -->               
+
+                </div>
                 
+            </div>
+        </div>
+        <!--------- Popup changer mdp ---------->
+        <div v-if="showSettingPswd" class="popup-overlay" @click="closePopup()">
+            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
+                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
+                <h5 style="margin-bottom: 20px;">Changer votre mot de passe</h5>
+                <div style="margin-bottom: 20px;">
+                    <input type="password" v-model="currentPassword" placeholder="Ancien mot de passe" class="form-control mb-2">
+                    <input type="password" v-model="newPassword" placeholder="Nouveau mot de passe" class="form-control mb-2">
+                    <input type="password" v-model="confirmPassword" placeholder="Confirmer le mot de passe" class="form-control mb-2">
+                </div>
+                <button class="btnSave btn btn-primary" @click="saveSettingsPswd">Changer votre mot de passe</button>                  
+
             </div>
             
         </div>
-    </div>
+        <!--------- Popup anonymiser les données ---------->
+        <div v-if="anonymizePopup" class="popup-overlay" @click="closePopup()">
+            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
+                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
+                <h5 style="margin-bottom: 20px;">Voulez-vous anonymiser vos données ?</h5>
+                <div style="display: flex;">
+                    <button style="margin: 10px;" class="btn btn-primary-outline" @click="anonymizePopup = false">Annuler</button>                  
+                    <button style="margin: 10px;" class="btn btn-primary" @click="confirmAnonymize">Confirmer</button>  
+                </div>
+                
+
+            </div>
+            
+        </div>
+        <!--------- Popup supprimer compte ---------->
+        <div v-if="showDeleteAccount" class="popup-overlay" @click="closePopup()">
+            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
+                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
+                <h5 style="margin-bottom: 20px;">Veuillez entrer votre mot de passe pour confimer la suppression</h5>
+                <div style="margin-bottom: 20px;">
+                    <input type="password" v-model="passwordForConfirm" placeholder="mot de passe" class="form-control mb-2">
+                </div>
+                <div style="display: flex;">
+                    <button style="margin: 10px;" class="btnSave btn btn-danger-outline" @click="showDeleteAccount = false">Annuler</button>                  
+                    <button style="margin: 10px;" class="btnSave btn btn-danger" @click="requestAccountDeletion">Supprimer le compte</button>      
+                </div>
+            </div>
+            
+        </div>
+        <!--------- Popup vérifier identitée ---------->
+        <div v-if="verifIdentityPopup" class="popup-overlay" @click="closePopup()">
+            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
+                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
+                <div v-if="!verification"><!-- Si aucune demande en cours -->
+                    <select class="select-primary" v-model="documentType" name="documentType" id="documentType">
+                        <option value="id_card">Carte d'identitée</option>
+                        <option value="passport">Passport</option>
+                        <option value="driver_license">Permis de conduire</option>
+                    </select>
+                    <div class="file-input-container" @click="triggerFileInputIdentity">
+                        <img v-if="!pictureDocumentPreview" style="height: 150px; " 
+                        class="imgcenter" src="../../assets/images/camera-white.svg" >
+                        <img v-else style="height: 150px; " 
+                        class="imgcenter" :src="pictureDocumentPreview" >
+                        <input style="display: none;" ref="fileInputIdentity" type="file" accept="image/*"  @change="updatePictureDocument"  />
+                    </div>
+                    <label style="margin-top: 10px;" for="terms">J'autorise le traitement de mes données</label>
+                    <input style="margin-left: 5px; vertical-align: sub;" class="cheeckbox-primary" v-model="consentUseData" type="checkbox" id="terms" required>
+                    <button style="margin-top: 10px;"  v-if="consentUseData && documentIamge"  class="btn btn-primary imgcenter" @click="verifIdentity">Vérifier mon identitée</button>      
+                </div>
+                <div v-else>
+                    <div v-if="!verification.userVerification.isVerified && verification.verification. status == 'pending'">
+                        <div style="text-align: center; margin-bottom: 5px;">
+                            Demande soumise le {{ formatDate(verification.verification.submittedAt) }}
+                        </div>
+                        <button class="btn btn-primary-outline" @click="stopVerifIdentity">
+                            Annuler la demande
+                        </button>
+                    </div>
+                    <div v-else-if="verification.verification.status == 'rejected'">
+                        <div style="text-align: center; margin-bottom: 5px; font-weight: bold; color: var(--danger-color);">
+                            Demande rejetée : {{ verification.verification.rejectionReason }}
+                        </div>
+                        <button class="btn btn-danger-outline" @click="verification=null">
+                            Renvoyer une demande
+                        </button>
+                    </div>
+                </div>
+                
+
+            </div>
+
+            
+        </div>
+        
 </template>
 
 
@@ -111,10 +276,33 @@
                 modify: false,
                 isYouProfil: false,
                 isMenuVisible: false,
+                verifIdentityPopup: false,
                 showDeletePictureConfirmation: false, 
                 showDeletePictureBannerConfirmation: false,
                 showSetting: false,
+                showSettingPswd: false,
                 emailRequest: false,
+                telRequest: false,
+                codeRequest: false,
+                isBtnSaveVisible:false,
+                isBtnSaveTelVisible: false,
+                showDeleteAccount: false,
+                anonymizePopup:  false,
+                anonymize:  false,
+                saveMailPaypal:  false,
+                consentUseData: false,
+                showDeletePaypalPopup: false,
+                documentIamge: null as File | null,
+                pictureDocumentPreview: '',
+                phoneNumber: "",
+                emailPaypal: "",
+                phoneCode: "",
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+                passwordForConfirm: '',
+                documentType:'id_card', // Type de document pour la vérification d'identité
+                verification: null as any,
 
             };
         },
@@ -132,21 +320,43 @@
             if(this.route.name =='profile' && id == '0'){
                 this.isYouProfil = true;
             }
+           
         },
+
         methods: {
             toggleMenu(event: Event){
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;
             },
+            triggerFileInputIdentity() {
+                (this.$refs.fileInputIdentity as HTMLImageElement)?.click();
+            },
             closeMenu(){
                 this.isMenuVisible = false;
+            },
+            formatDate(dateString: String) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+                });
             },
             closePopup(){
                 this.showDeletePictureConfirmation = false;
                 this.showDeletePictureBannerConfirmation = false;
                 this.showSetting = false;
+                this.showSettingPswd = false;
+                this.showDeleteAccount = false;
+                this.verifIdentityPopup = false;
+                this.anonymizePopup = false;
+                this.showDeletePaypalPopup = false;
+                
             },
             openSettings(){
+                this.phoneNumber = this.profilInfo.phoneNumber || '';
+                this.emailPaypal = this.profilInfo.paypalEmail || '';
                 this.showSetting = true;
             },
             triggerFileInput() {
@@ -166,7 +376,6 @@
                     formData.append('profileBanner', file);
 
                     const PHPSESSID = Cookies.get('PHPSESSID');
-                    console.log(formData);
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
@@ -268,31 +477,393 @@
                     }
                 });
             },
+            async getVerifIdentityState(){
+                if(!this.profilInfo.isIdentityVerified){
+                    this.verifIdentityPopup = true;
+                    try {
+                        const PHPSESSID = Cookies.get('PHPSESSID');
+                        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
+                            headers: {
+                                'Authorization': `Bearer ${PHPSESSID}`
+                            }
+                        });
+                        console.log(response.data.message);
+                        console.log(response.status);
+                        console.log(response.data.code);
+                        if (response.status === 200) {
+                            this.verification = response.data;
+                        }else{
+                            if(response.data.message == "Token invalide" || response.data.code == "TOKEN_EXPIRED"){
+                                this.$func.verifSession();
+                            }
+                        }
+                    } catch (error) {
+                        if (axios.isAxiosError(error) && error.response) {
+                            if(error.response.status === 404){
+                                this.verification = null;
+                            }
+                        } else {
+                            console.log(error);
+                        }
+
+                    }
+                }
+            },
+            stopVerifIdentity(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                axios.delete(`${import.meta.env.VITE_API_URL}/api/verification/identity/cancel`, {
+                    headers: {
+                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+
+                    if (response.status === 200) {
+                        this.$func.showToastSuccess(response.data.message);
+                        this.verifIdentityPopup = false;
+                        this.showSetting = true;
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                    this.$func.showToastError(error.response.data.message);
+
+                });
+            },
+            verifIdentity(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                var data = new FormData();
+                data.append('documentType',  this.documentType);
+                data.append('consentGiven',  String(this.consentUseData));
+                if (this.documentIamge) {
+                    data.append('document', this.documentIamge);
+                }
+                axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity`, data, {
+                    headers: {
+                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+
+                    if (response.status === 201) {
+                        this.verifIdentityPopup = false;
+                        this.showSetting = true;
+                        this.$func.showToastSuccess(response.data.message);
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                    this.$func.showToastError(error.response.data.message);
+
+                });
+            },
             async verifEmail(){
     
                 const PHPSESSID = Cookies.get('PHPSESSID');
-                    await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
-                        email: this.profilInfo.email,
-                    }, {
-                        headers: {
-                        'Content-Type': 'multipart/form-data.',
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
+                    email: this.profilInfo.email,
+                }, {
+                    headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+
+                    if (response.status === 200) {
+                        this.emailRequest = true;
+                        this.$func.showToastSuccess(response.data.message);
+
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                });
+            
+            },
+            async verifTel(){
+    
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-phone-verification`, {
+                    phoneNumber: this.phoneNumber,
+                }, {
+                    headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+
+                    if (response.status === 200) {
+                        this.telRequest = true;
+                        this.$func.showToastSuccess(response.data.message);
+
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                });
+            
+            },
+            async verifCodeTel(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-phone`, {
+                    code: String(this.phoneCode),
+                }, {
+                    headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+
+                    if (response.status === 200) {
+                        this.codeRequest = true;
+                    
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                });
+            },
+            async changeAllowDirectMessages() {
+                const PHPSESSID = Cookies.get('PHPSESSID');
+
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, 
+                {
+                    preferences: {
+                        allowDirectMessages: this.profilInfo.allowDirectMessages
+                    },
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
 
                         }
-                    }).then(response => {
-
+                }).then(response => {
+                        console.log(response);
                         if (response.status === 200) {
-                            this.emailRequest = true;
-                    
+                            this.$func.showToastSuccess(response.data.message);
+                            //Sucess Message
                         }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
                             this.$func.verifSession();
                         }
                     });
+            },
+            changeSettings(){
+                this.isBtnSaveVisible = !this.isBtnSaveVisible;
+            },
+            saveTel(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+
+                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, 
+                {
+                    phoneNumber: this.phoneNumber
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                        }
+                }).then(response => {
+                    if (response.status === 200) {
+                        this.$func.showToastSuccess(response.data.message);
+                        this.isBtnSaveTelVisible = false;
+                        this.telRequest = false;
+                        this.codeRequest = false;
+                        this.phoneCode = '';
+                        this.profilInfo.isPhoneVerified = false; // Met à jour l'état de vérification du téléphone
+                
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }
+                });
+            },
+            changePswdPopup(){
+                this.showSetting = false
+                this.showSettingPswd = true
+            },
+            async saveSettingsPswd(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`, 
+                {
+                    currentPassword: this.currentPassword,
+                    newPassword: this.newPassword,
+                    confirmPassword: this.confirmPassword
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                        }
+                }).then(response => {
+                    console.log(response);
+                    if (response.status === 200) {
+                        this.showSettingPswd = false;
+                        this.showSetting = true;
+                        this.$func.showToastSuccess(response.data.message);
+
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }else{
+                        this.$func.showToastError(error.response.data.message);
+                    }
+                });
             
+            }, 
+            async exportUserData() {
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                try {
+                    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/data-export`, {
+                        headers: {
+                            'Authorization': `Bearer ${PHPSESSID}`
+                        }
+                    });
+                    // Création du blob et téléchargement
+                    const dataStr = JSON.stringify(response.data, null, 2);
+                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'export-mykpoptrade.json';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    this.$func.showToastError("Erreur lors de l'export des données.");
+                    console.error(error);
+                }
+            },
+            requestAccountDeletion() {
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/delete-account`, {
+                    headers: {
+                        'Authorization': `Bearer ${PHPSESSID}`
+                    },data: {
+                        password: this.passwordForConfirm  
+                    }
+                }).then(response => {
+                    this.$func.showToastSuccess(response.data.message);
+                    this.showDeleteAccount = false;
+                    this.$func.logout();
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }else{
+                        this.$func.showToastError(error.response.data.message);
+                    }
+                    this.showDeleteAccount = false;
+
+                });
+            },
+            confirmAnonymize(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+                axios.post(`${import.meta.env.VITE_API_URL}/api/users/me/anonymize`, {
+                    "confirmation": true
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${PHPSESSID}` 
+                    }
+                }).then(response => {
+                    this.$func.showToastSuccess(response.data.message);
+                    this.anonymizePopup = false;
+
+            
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }else{
+                        this.$func.showToastError(error.response.data.message);
+                    }
+                });
+            },
+            deletePaypal(){
+                const PHPSESSID = Cookies.get('PHPSESSID');
+
+                axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    },
+                    data: {
+                        paypalEmail: this.emailPaypal
+                    }
+                }).then(response => {
+                    if (response.status === 200) {
+                        this.$func.showToastSuccess(response.data.message);
+                        this.saveMailPaypal = false;
+                        this.emailPaypal = '';
+                        this.profilInfo.paypalEmail = '';
+                        this.showDeletePaypalPopup = false;
+
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }else{
+                        this.$func.showToastError(error.response.data.message);
+                        this.saveMailPaypal = false;
+                    }
+                });
+            },
+            savePaypal(){
+                
+                const PHPSESSID = Cookies.get('PHPSESSID');
+
+                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
+                {
+                    paypalEmail: this.emailPaypal
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+                    }
+                }).then(response => {
+                    console.log(response);
+                    if (response.status === 200) {
+                        this.$func.showToastSuccess(response.data.message);
+                        this.saveMailPaypal = false;
+                        this.profilInfo.paypalEmail = this.emailPaypal;
+                    }
+                }).catch(error => {
+                    if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+                        this.$func.verifSession();
+                    }else{
+                        this.$func.showToastError(error.response.data.message);
+                        this.saveMailPaypal = false;
+                    }
+                });
+            },
+            updatePictureDocument(event: Event) {
+                const file = (event.target as HTMLInputElement).files?.[0];
+                if (file) {
+                    this.documentIamge = file;
+                    const reader = new FileReader();
+       
+                    reader.onload = (e) => {
+                        if (e.target?.result) {
+                            this.pictureDocumentPreview =  e.target.result as string;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
-            
         },
         computed: {
             profilePictureUrl() {
@@ -476,11 +1047,45 @@ button.btn.btn-outline:hover {
 }
 .valid, .emailRequestSuccess{
     color: var(--success-color);
+    margin-left: 15px;
+}
+.valid, .telRequestSuccess{
+    color: var(--success-color);
+    margin-left: 15px;
 }
 .btnRequestEmail{
-    margin-left: 10px;
+    font-size: small;
+    padding: 4px;margin-left: 5px;
+}
+.btnRequestPhone{
     font-size: small;
     padding: 4px;
+    position: absolute;
+    right: 15px;
+}
+.btnRequestTel{
+    font-size: small;
+    padding: 4px;
+    position: absolute;
+    right: 15px;
+}
+.btnSave{
+    margin-top:10px
+}
+.file-input-container {
+    margin-top: 10px;
+    border: dashed 2px var(--secondary-color);
+    background: rgb(221, 221, 221);
+    cursor: pointer;
+}
+.chevron-setting{
+    zoom: 1.3; 
+    vertical-align:sub; 
+    position: absolute; 
+    right: 15px;
+}
+.setting_item{
+    margin-top: 10px;
 }
 @media (max-width: 768px) {
     .picture{
@@ -511,6 +1116,11 @@ button.btn.btn-outline:hover {
     }
     .subscription, .more_content, .nickname, .identifier{
         text-align: center;
+    }
+    .more_content{
+        width: auto !important;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 

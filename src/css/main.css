@@ -75,3 +75,27 @@
   .dropdown-menu li:hover {
     background-color: var(--secondary-color-tint);
   }
+  .display_phone_tablette{
+    display: none;
+  }
+  .alert{
+    position: fixed !important;
+    z-index: 9999;
+    display: block;
+    right: 11px;
+    bottom: 10px;
+  }
+  .alert-success {
+    background-color: var(--success-color);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+  .error-alert {
+    background-color: var(--danger-color) !important;
+    color: white !important;
+    padding: 10px !important;
+    border-radius: 5px !important;
+    margin-bottom: 15px !important;
+  }

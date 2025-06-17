@@ -31,7 +31,7 @@
   background-color: var(--danger-color) !important;
   border-color: var(--danger-color) !important;
   color: #fff;
-  border: none;
+  border: 2px solid var(--danger-color) !important;
   padding: 0.5rem 1rem;
   border-radius: 5px;
   font-size: 1rem;
@@ -128,4 +128,75 @@
 }
 .btn{
   max-width: 100vw;
+}
+
+
+/********$ toggle **********/
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+.switch input:checked + .slider {
+  background-color: var(--primary-color);
+}
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.cheeckbox-primary {
+  accent-color: var(--primary-color); /* Pour la plupart des navigateurs modernes */
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+/* Pour un style plus personnalisé si besoin */
+.cheeckbox-primary:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.select-primary {
+  appearance: none;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  background: #fff;
+  padding: 6px 12px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.select-primary:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(129,154,87,0.15); /* adapte la couleur si besoin */
+}
+.select-primary option {
+  color: var(--primary-color);
 }
