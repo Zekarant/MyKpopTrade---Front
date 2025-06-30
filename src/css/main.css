@@ -99,3 +99,9 @@
     border-radius: 5px !important;
     margin-bottom: 15px !important;
   }
+  .filter_mobile{
+    display: none;
+  }
+.filter_mobile.show ~ .nav-btn {
+  display: none !important;
+}

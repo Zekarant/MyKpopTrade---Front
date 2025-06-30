@@ -3,10 +3,15 @@
         <div  class="card">
             <div class="post_card_content">
                 <i style="position: absolute; top: 5px; right: 5px; width: 20px; zoom: 1.5; z-index: 3; color: var(--primary-color);" @click="closePost()" class="bi bi-x-lg display_phone_tablette"></i>
-                <div class="post_card_content_header">
-                    <div class="userPicture">
+                <div @click="viewUser()" class="post_card_content_header">
+                    <div v-if="profilePictureUrl" class="userPicture">
                         <img :src="profilePictureUrl || undefined">
                     </div>
+                    <div v-else>
+                        {{ dataSeller.username ? dataSeller.username.charAt(0).toUpperCase() : '' }}
+
+                    </div>
+
                     <div>
                         <div class="identifier">@{{ dataSeller.username }}</div>
 
@@ -18,12 +23,12 @@
                         <i class="bi bi-three-dots-vertical"></i>
                         <div v-if="isMenuVisible" class="dropdown-menu">
                                 <ul style="width: 100%;">
-                                    <li>
+                                    <li v-if="!isRoot" @click="showPopupReport=true">
                                         <i class="bi bi-signal me-2"></i>
                                         Signaler
                                     </li>
-                                    <li @click="hidePopup()">
-                                        <i v-if="isRoot" class="bi bi-cart-check-fill me-2"></i>
+                                    <li v-if="isRoot" @click="hidePopup()">
+                                        <i class="bi bi-cart-check-fill me-2"></i>
                                         Vendu
                                     </li>
                                     
@@ -115,7 +120,14 @@
                     <div class="state">Réservé</div>
                 </div>
                 <ImageCarousel :images="dataPost.images" />
+                <button v-if="!isRoot && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="like">
+                    <i class="bi bi-heart imgcenter"></i>
+                </button>
+                <button v-if="!isRoot && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="like">
+                    <i style="color:var(--danger-color)" class="bi bi-heart-fill imgcenter"></i>
+                </button>
             </div>
+
         </div>
 
     </div>
@@ -129,6 +141,8 @@
             </div>
         </div>
     </div>
+    <report_card @closeReport="showPopupReport = false" :type="'product'" :id="dataPost._id" v-if="showPopupReport"></report_card>
+
 </template>
   
 
@@ -136,14 +150,18 @@
     import { defineComponent, ref } from 'vue';
     import axios from 'axios';
     import card_illu from '../components/card_illu.vue';
+    import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
     import postService from '@/services/post.js';
+    import { useRoute, useRouter } from "vue-router";
+    import Cookies from 'js-cookie';
 
     export default defineComponent({
         name: "post",
         components: {
             card_illu,
-            ImageCarousel
+            ImageCarousel,
+            report_card
         },
         props: {
             dataPost: {
@@ -161,26 +179,46 @@
                 isMenuVisible: false,
                 isRoot: false,
                 showSoldPopup: false,
+                isFav: false,
+                showPopupReport: false,
+            };
+        },
+        setup(){
+            const myId = Cookies.get('id_user');
+            const route = useRoute();
+            const router = useRouter();
+
+            const id = route.params.id; // Récupère l'ID passé en paramètre
+            return {
+                route,
+                router,
+                id,
+                myId
             };
         },
         mounted() {
             console.log(this.dataPost);
             console.log(this.dataUser);
             
-            if(this.dataUser) {
-                this.dataSeller = this.dataUser;
-                this.isRoot = true;
+            if(this.dataSeller._id==this.myId) {
+                if (this.dataUser) {
+                    this.dataSeller = this.dataUser;
+                    this.isRoot = true;
+                }
             }else{
                 this.dataSeller = this.dataPost.seller;
             }
+            console.log(this.isRoot);
             console.log(this.dataSeller);
         },
         computed: {
+            
             profilePictureUrl() {
                 const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
+
                 return this.dataSeller.profilePicture
                 ? `${baseUrl}${this.dataSeller.profilePicture}`
-                : null;
+                : false;
             },
             currencySymbol() {
                 const symbols = {
@@ -212,9 +250,39 @@
                     this.$emit('sold');
                 }
             },
+            async addFav(id: any){
+                await postService.addFavorite(id).then(addFavorite => {                
+                    this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
+                    let fav = sessionStorage.getItem('favorites');
+                    let favArray = fav ? JSON.parse(fav) : [];
+                    favArray.products.push(this.dataPost);
+                    sessionStorage.setItem('favorites', JSON.stringify(favArray));
+                    this.isFav = true;
+                });;
+            },
+            async rmFav(id: any){
+                await postService.addFavorite(id).then(addFavorite => {                
+                    this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
+                    let fav = sessionStorage.getItem('favorites');
+                    let favArray = fav ? JSON.parse(fav) : [];
+                    favArray.products.push(this.dataPost);
+                    sessionStorage.setItem('favorites', JSON.stringify(favArray));
+                    this.isFav = true;
+                });;
+            },
+            
+            /*verifFav(id){
+                let fav = sessionStorage.getItem('favorites');
+                let favArray = fav ? JSON.parse(fav) : [];
+                console.log(favArray);
+            },*/
             closePost() {
                 this.$emit('closePost');
             },
+            viewUser(){
+                this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
+            }, 
+      
         },
         watch: {
             dataPost(newValue, oldValue) {
@@ -277,6 +345,21 @@
         justify-content: center;
         background: black;
         position: relative;
+    }
+    .like{
+        position: absolute;
+        right: 10px;
+        z-index: 9;
+        top: 10px;
+        background: white;
+        border-radius: 30px;    
+        width: 45px;
+        height: 45px;
+        border: none;
+    }
+    i.bi.bi-heart::before{    
+        height: 100%;
+        width: 100%;
     }
     .card .screen {
         display: block;
@@ -407,6 +490,7 @@
         width: 30%;
 
     }
+
     @media (max-width:980px){
         .container_detail_card .card{
             flex-direction: column-reverse;

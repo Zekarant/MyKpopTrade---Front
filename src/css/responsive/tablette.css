@@ -23,6 +23,17 @@
     width: 100% !important;
   }
 
+  /* Filtres posts*/
+  .filter_mobile{
+    display: block;
+  }
+  .filter-list{
+    display: none !important;
+    z-index: 99;
+  }
+  .filter-list.show{
+    display: block !important;
+  }
   /* Autres styles spécifiques aux tablettes en mode portrait */
 }
 

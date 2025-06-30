@@ -19,7 +19,7 @@
                     <i @click="toggleMenu($event)" style="position: absolute; right: 0px;top: 10px; cursor: pointer;" class="bi bi-three-dots-vertical"></i>
                     <div v-if="isMenuVisible" class="dropdown-menu">
                     <ul style="width: 100%;">
-                        <li @click="signalReview($event)">
+                        <li @click="showPopupReport = true">
                             <i class="bi bi-signal me-2"></i>
                                 Signaler
                             </li>
@@ -37,21 +37,14 @@
         </div>
     </div>
     <!--------- Popup ---------->
-    <div v-if="showSoldPopupReview" class="popup-overlay">
-        <div class="popup-content">
-            <p>Voulez-vous signaler cet avis ?</p>
-            <textarea class="inputReason" v-model="signalReason" type="text" placeholder="Raison du signalement"></textarea>
-            <div class="popup-buttons-footer">
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="closePopup">Annuler</button>
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sendSignal(signalReason)">Signaler</button>
-            </div>
-        </div>
-    </div>
+    <report_card @closeReport="showPopupReport = false" :type="'rating'" :id="review._id" v-if="showPopupReport"></report_card>
+
 
 </template>
   
   <script lang="ts">
     import ImageCarousel from '../components/ImageCarousel.vue';
+    import report_card from '../components/report_card.vue';
     import axios from 'axios';
     import Cookies from "js-cookie";
 
@@ -59,7 +52,9 @@
 
         name: "review_card",
         components: {
-            ImageCarousel
+            ImageCarousel,
+            report_card
+
         },
         props: {
             review: {
@@ -70,8 +65,9 @@
         data() {
             return {
                 isMenuVisible: false,
-                showSoldPopupReview: false,
+                showPopupReview: false,
                 signalReason: '', 
+                showPopupReport:false
 
             };
         },
@@ -84,19 +80,10 @@
             },
             closeMenu() {
                 this.isMenuVisible = false;
-                this.showSoldPopupReview = false;
-            },
-            signalReview(event: MouseEvent) {
-                console.log("Signal review clicked");
-
-                event.stopPropagation();
-                this.isMenuVisible = !this.isMenuVisible;
-                this.showSoldPopupReview = !this.showSoldPopupReview;
-                console.log(this.isMenuVisible);
-                console.log(this.showSoldPopupReview);
+                this.showPopupReview = false;
             },
             closePopup() {
-                this.showSoldPopupReview = false;
+                this.showPopupReview = false;
             },
             async sendSignal(reason: string) {
                 const PHPSESSID = Cookies.get('PHPSESSID');
@@ -240,13 +227,24 @@
     @media (max-width:820px){
         .review_card_content{
             width: 100%;
+            height: auto;
         }
         .illustration{
             width: 100%;
-            height: 50%;
+            height: 30vh;      // 30% de la hauteur de la fenêtre (ou adapte à 30% du parent si besoin)
+            max-height: 30%;
+            min-height: 100px;
         }
         .container_detail_card{
             height: 90%;
+        }
+        .review_card_content, .container_detail_card .card, .review_text{
+            overflow: hidden;
+        }
+        .container_detail_card .card {
+            flex-direction: column-reverse;
+            height: auto !important;
+            min-height: 0;
         }
     }
     @media (max-width:550px){

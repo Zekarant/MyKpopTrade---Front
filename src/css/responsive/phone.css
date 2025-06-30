@@ -13,9 +13,22 @@
 
 }
 @media (max-width: 768px) {
+  
   .popup-overlay{
     padding-left: 0px !important;
   } 
+  .search-bar-container{
+    flex-direction: column;
+  }
+  .search-bar-container .search-btn{
+    width: 300px;
+    margin-top: 5px;
+    margin-right: 5px;
+    margin-left: 5px;
+  }
+  .load-more .btn{
+    width: 80%;
+  }
 
 }
 

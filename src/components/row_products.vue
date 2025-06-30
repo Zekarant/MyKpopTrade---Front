@@ -1,30 +1,23 @@
 <template>
-    <div class="container">
+   <div class="container">
+    
         <card :data="data" v-on:click="openPostInfo(index)" v-for="(data, index) in dataList"></card>
     </div>
-    <div v-if="pagination.page != pagination.pages" class="load-more"  @click="loadMore()">
-        <button class="btn btn-primary-outline imgcenter">Charger plus</button> 
-    </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @closePost="closePost" @sold="onsold" :dataUser="dataUser" :dataPost="dataCardPost" />
+        <post @closePost="closePost" :dataPost="dataCardPost" />
     </div>
 </template>
   
 
 <script lang="ts">
     import { defineComponent, ref } from 'vue';
-    import type { RouteRecordNameGeneric } from 'vue-router';
-    import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import card_illu from '../components/card_illu.vue';
     import post from '../components/post.vue';
     import card from '../components/card.vue';
-    import postService from '../services/post.js';
-
-
 
     export default defineComponent({
-        name: "Grid",
+        name: "row_products",
         components: {
             card_illu,
             post,
@@ -32,45 +25,17 @@
         },
         props: {
             dataList: {
-                type: Array as () => Array<{
-                    condition: any;
-                    isAvailable: any; id: number; title: string; state: string; price: number; isReserved: boolean; images: string[] 
-}>,
-                required: true,
+                type: Array as () => Array<Record<string, any>>,
+                required: true, // au lieu de true
+                default: () => []
             },
-            dataUser: {
-                type: Object,
-                required: false,
-            },
-            admin: {
-                type: Boolean,
-                required: false,
-                default: false,
-            },
-            pagination: {
-                type: Object,
-                required: false,
-                default: () => ({
-                    limit: 1,
-                    page: 1,
-                    pages: 1,
-                    total: 10,
-                }),
-            }
         },
         setup() {
-            const router = useRouter();
             var dataCardPost: any = null;
             var stateCardPost = ref(false);
             return {
                 dataCardPost,
                 stateCardPost,
-                router
-            };
-        },
-        data() {
-            return {
-
             };
         },
         methods: {
@@ -85,18 +50,14 @@
                 }
               
             },
-            onsold() {
-                this.stateCardPost = false;
-            },
+
             closePost() {
                 this.stateCardPost = false;
             },
-            loadMore(){
-                sessionStorage.setItem('posts_str', JSON.stringify(this.dataList));
-                sessionStorage.setItem('pagination_str', JSON.stringify(this.pagination));
-                this.router.push({ name: 'searchList', query: { event: 'morePage'} });
-            }
-            
+        },
+        mounted() {
+            // Vous pouvez ajouter des actions à effectuer lors du montage du composant
+            console.log('Row products component mounted',this.dataList);
         },
     });
 
@@ -124,16 +85,30 @@
         text-align: center;
     }
     .container {
-        display: grid;
-        grid-template: auto / repeat( 4, 1fr );
-        //grid-gap: 2rem;
+        display: flex;
+        flex-wrap: nowrap;           // Empêche le retour à la ligne
+        overflow-x: auto;            // Active le scroll horizontal
         align-items: center;
-        justify-self: center;
         max-width: 990px;
         width: 100%;
+        gap: 1rem;                   // Espace entre les éléments (optionnel)
+        padding-bottom: 8px;         // Pour éviter que la scrollbar ne cache le contenu
+        scrollbar-width: thin;       // Scrollbar fine sur Firefox
     }
-    
 
+    /* Pour un meilleur rendu sur Chrome */
+    .container::-webkit-scrollbar {
+        height: 8px;
+    }
+    .container::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+
+    /* Optionnel : largeur minimale pour chaque carte */
+    .container > * {
+        min-width: 220px;
+    }
     .post-overlay {
         position: fixed;
         top: 0;
@@ -156,9 +131,7 @@
         max-height: 90%;
         overflow-y: auto;
     }
-    .load-more{
-        display: flex;
-    }
+
     @media (max-width:980px){
     .container{
         grid-template: auto / repeat(auto, 1fr)

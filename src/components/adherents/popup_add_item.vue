@@ -158,25 +158,29 @@
       fileInput.click();
     };
 
-  
-      const save = async () => {
-        const response = await postService.createPost(formData.value);
-        console.log(response);
-        
-        if (response) {
-          emit('close');
-        }
-      };
-  
       return {
         formData,
         imagesPreview,
         handleImageUpload,
         removeImage,
         triggerFileInput,
-        save,
       };
     },
+    methods:{
+      async save(){
+        const response = await postService.createPost(this.formData);
+        console.log(response);
+        
+        if (response) {
+          this.$func.showToastSuccess('Produit créé avec succès !');
+
+          this.$emit('close');
+        }else{
+          this.$func.showToastError('Erreur lors de la création du produit.');
+
+        }
+      }
+    }
   });
   </script>
   

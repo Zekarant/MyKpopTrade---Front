@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
+    "@primeuix/themes": "^1.1.2",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
@@ -22,10 +23,13 @@
     "i18next": "^23.16.0",
     "js-cookie": "^3.0.5",
     "material-design-icons-iconfont": "^6.7.0",
+    "mitt": "^3.0.1",
     "pinia": "^2.2.4",
+    "primevue": "^4.3.5",
     "swiper": "^11.2.6",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vue3-lottie": "^3.3.1"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
@@ -47,8 +51,8 @@
     "prettier": "^3.3.3",
     "sass": "^1.87.0",
     "typescript": "~5.5.4",
-    "vite": "^5.4.9",
-    "vitest": "^2.1.2",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4",
     "vue-tsc": "^2.1.6"
   }
 }

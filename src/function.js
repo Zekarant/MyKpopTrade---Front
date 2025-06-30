@@ -26,16 +26,18 @@ export const func = {
         }
         router.push('/login');
       } catch (error) {
-        console.error('Erreur lors de la déconnexion :', error);
+        router.push('/login');
+        Cookies.remove('PHPSESSID');
+        document.cookie = 'PHPSESSID=; expires=expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        Cookies.remove('refreshToken');
       }
 
 
     },
     verifSession: async () => {
       const PHPSESSID = Cookies.get('PHPSESSID');
-      console.log(PHPSESSID);
       if(!PHPSESSID){
-        this.$func.logout();
+        func.logout();
       }else{
         try {
           const refreshToken = Cookies.get('refreshToken');
@@ -47,8 +49,6 @@ export const func = {
               'Authorization': `Bearer ${PHPSESSID}`
             }
           });
-          console.log(response.status);
-
           if(response.status === 200) {
             Cookies.set('PHPSESSID', response.data.accessToken, { expires: 1 });
             Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
@@ -79,5 +79,5 @@ export const func = {
       setTimeout(() => {
         alert.remove();
       }, 3000);
-    }
+    }, 
  }

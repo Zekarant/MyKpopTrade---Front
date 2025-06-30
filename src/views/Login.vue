@@ -54,6 +54,7 @@
   import axios from 'axios';
   import { useRouter } from 'vue-router';
   import Cookies from 'js-cookie';
+  import postService from '../services/post';
 
   export default defineComponent ({
     name: "Login",
@@ -95,11 +96,12 @@
           }).then(response => {
               console.log(response);
               if (response.status === 200) {
-              console.log(response);
-                console.log(response.data.accessToken);
               Cookies.set('PHPSESSID', response.data.accessToken, { expires: 15 / 1440 });
-              Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
+              Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 })
+              Cookies.set('id_user', response.data.user.id, { expires: 1 });
+              sessionStorage.removeItem('favorites');
               router.push('/adherents/dashboard');
+
             } else {
               ErroruserName.value = response.data.message;
             }

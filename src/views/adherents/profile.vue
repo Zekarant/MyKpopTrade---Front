@@ -82,8 +82,8 @@
               </div>
               <div  v-if="partView === 'review'">
                 <div class="row row_profil_content">
-                  <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
-                  <div class="col-12 col-xs-12 col-md-12 col-lg-8 ">
+                  <div class="col-0 col-xs-0 col-md-0 col-lg-1 "></div>
+                  <div class="col-12 col-xs-12 col-md-12 col-lg-10 ">
                     <div class="review_gen" style="width: 100%;">
                       <div>
                         <Filter_review></Filter_review>  
@@ -93,13 +93,18 @@
                       
                     </div>
                     <div class="separator"></div>
-                    <div class="list_review">
-                      <Review_card class="card_review" :review="rating" v-for="rating in reviews.ratings" ></Review_card>  
-
+                    <div class="review_content" style="display: flex;" v-for="(rating, index) in reviews.ratings">
+                      <div class="list_review">
+                        <Review_card class="card_review" :review="rating" ></Review_card>  
+                      </div>
+                      <div class="list_review_response">
+                        <response_review :review="rating" :index="index" @update-review="handleUpdateReview"></response_review>
+                      </div>
                     </div>
 
+
                   </div>
-                  <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
+                  <div class="col-0 col-xs-0 col-md-0 col-lg-1 "></div>
                 </div>
               </div>
 
@@ -124,6 +129,7 @@
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
+    import response_review from '@/components/response_review.vue';
 
   export default defineComponent({
     name: 'profile',
@@ -134,14 +140,45 @@
         Grid,
         Popup_add_item,
         Filter_review,
-        Review_card
+        Review_card, 
+        response_review
     },
+
     mounted() {
+      
       this.$func.verifSession().then(() => {
-        this.getInfoProfil();
-        this.getInventory();
+        const id = this.route?.params?.id;
+        if (id === 'me') {
+          // Logique pour "mon profil"
+          this.myProfile = true;
+          this.getInfoProfil();
+          this.getInventory();
+        } else if (id) {
+          // Logique pour un autre profil (par exemple, charger un autre utilisateur)
+          this.myProfile = false;
+          const userId = Array.isArray(id) ? id[0] : id;
+          this.getInfoUser(userId); // ou une méthode adaptée pour un autre utilisateur
+        }
       });
     },
+    watch: {
+    'route.params.id': {
+      immediate: false,
+      handler(newId, oldId) {
+        if (newId !== oldId) {
+          if (newId === 'me') {
+            this.myProfile = true;
+            this.getInfoProfil();
+            this.getInventory();
+          } else if (newId) {
+            this.myProfile = false;
+            const userId = Array.isArray(newId) ? newId[0] : newId;
+            this.getInfoUser(userId);
+          }
+        }
+      }
+    }
+  },
     computed: {
       memberSinceFormatted() {
         if (!this.profilInfo.createdAt) return '';
@@ -183,7 +220,7 @@
             averageRating: 0,
             totalRatings: 0
           },
-          ratings: []
+          ratings: [] as any[]
         },
       };
     },
@@ -200,6 +237,7 @@
         this.$func.verifSession();
       },
       async getInfoProfil(){
+        console.log('getInfoProfil');
         const PHPSESSID = Cookies.get('PHPSESSID');
         await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
             headers: {
@@ -221,10 +259,34 @@
 
   
       },
-      async getInventory(){
+      getInfoUser(user: string){
         const PHPSESSID = Cookies.get('PHPSESSID');
-        ///api/products/inventory/me?status=available
-        await axios.get(`${import.meta.env.VITE_API_URL}/api/products/inventory/me`, {
+
+        axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/user/`+user, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+
+          }
+        }).then(response => {
+          if (response.status === 200) {
+            this.profilInfo = response.data.profile;
+            this.getInventory(this.profilInfo.id);
+          }
+        }).catch(error => {
+          if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
+            this.$func.verifSession();
+          }
+        });
+      },
+      async getInventory(idUser=null){
+        let url = '/api/products/inventory/me';
+        if(idUser != null){
+          url = '/api/products/inventory/user/'+idUser;
+        }
+        const PHPSESSID = Cookies.get('PHPSESSID');
+
+        await axios.get(`${import.meta.env.VITE_API_URL}`+url, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
@@ -302,6 +364,15 @@
       closePopup() {
         this.isPopupVisible = false; 
         this.getInventory(); // Recharge l'inventaire après la fermeture de la popup
+      },
+      handleUpdateReview({ review, index }: { review: any; index: number }) {
+        if (Array.isArray(this.reviews.ratings) && this.reviews.ratings.length > index) {
+          console.log(this.reviews.ratings[index]);
+          console.log(index);
+          console.log(review);
+          console.log(this.reviews.ratings[index]);
+          this.reviews.ratings[index] = review;
+        }
       }
     },
   })
@@ -378,12 +449,29 @@
     margin-top: 20px;
     width: 65%;
   }
+  .list_review_response{
+    position: relative;
+    margin-top: 20px;
+    width: 35%;
+  }
   .list_review .card_review{
     height: 60%;
     max-height: 200px;
   }
 
 @media (max-width: 769px) {
+  .review_content{
+    flex-direction: column;
+  }
+  .responseReviewContent{
+    position: static;
+  }
+  .list_review{
+    width: 100%;
+  }
+  .list_review_response{
+    width: 100%;
+  }
   .row-banner{
     height: auto;
   }

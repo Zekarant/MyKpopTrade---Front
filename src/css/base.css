@@ -12,7 +12,9 @@
   --secondary-color: #6c757d;
   --secondary-color-tint: #D2D6DE;
   --secondary-color-shade: #566573;
-
+  --light-color: #f1f3f5;
+  --light-color-shade: #D6DBE0;
+  
   --bg-color: #f8f9fa;
   --text-color: #121212;
   --blue: #73A4DC;

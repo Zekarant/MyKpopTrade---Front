@@ -20,7 +20,10 @@
             <input type="file" ref="fileInput" @change="updatePicture" accept="image/*" style="display: none;" />
         </div>
         <div  v-else class="picture">
-            <img v-if="profilInfo.profilePicture" :src="profilInfo.profilePicture" alt="Profile Picture" />
+            <img v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />           
+            <div v-else class="empty-profile">
+                <i class="bi bi-camera"></i>
+            </div>
         </div>
         <div class="profil">
             <div class="row row_profil" style="height: 100%; ">
@@ -317,7 +320,7 @@
         mounted() {
             const id = this.route.params.id; // Récupère l'ID passé en paramètre
             //récupérer l'id dans l'url et vérifier l'id de l'user si est pareille que l'id en session 
-            if(this.route.name =='profile' && id == '0'){
+            if(this.route.name =='profile' && id == 'me'){
                 this.isYouProfil = true;
             }
            
@@ -336,7 +339,7 @@
             },
             formatDate(dateString: String) {
                 if (!dateString) return '';
-                const date = new Date(dateString);
+                const date = new Date(dateString.toString());
                 return date.toLocaleDateString('fr-FR', {
                 day: '2-digit',
                 month: 'long',

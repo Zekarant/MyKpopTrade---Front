@@ -96,6 +96,12 @@ import { useRoute, useRouter } from "vue-router";
             verifBtn(btn:RouteRecordNameGeneric){                
                 if( this.route.name == btn)
                 {
+                    if (btn === 'profile') {
+                        if (this.route.params?.id === 'me' || this.route.params?.parameter === 'me') {
+                            return true;
+                        }
+                        return false;
+                    }
                     return true;
                 }
                 return false;
@@ -103,7 +109,10 @@ import { useRoute, useRouter } from "vue-router";
             navPage(page:RouteRecordNameGeneric, parameter: any){
                 
                 this.closeMenu();
-                this.router.push({ name: page , params: { id: parameter }});
+                setTimeout(() => {
+                    this.router.push({ name: page , params: { id: parameter }});
+                }, 0);
+
 
             },
             devMenu(){
@@ -172,7 +181,7 @@ body {
 }
 
 .nav > .nav-links-first, .nav > .nav-links-end {
-    z-index: 9;
+    z-index: 8;
     display: inline;
     float: right;
     font-size: 18px;
@@ -227,7 +236,7 @@ body {
 @media (max-width:600px) {
     
     .nav {
-        z-index: 9;
+        z-index: 8;
     }
     .nav > .nav-btn {
         display: inline-block;
@@ -265,7 +274,7 @@ body {
         left: 0px;
         text-align: center;
         padding-bottom: 60px; 
-        z-index: 10;
+        z-index: 9;
         background: #fff;
     }
     .nav > .nav-links-end {
