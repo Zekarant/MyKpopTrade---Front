@@ -12,10 +12,13 @@
         <div>
           <!-- Grid annonce Favoris -->
           <div v-if="productFavorites.products.length > 0" class="container titleCateg">Tes favoris</div>
-          <Grid :pagination="productFavorites.pagination" :dataList="productFavorites.products"></Grid>
+          <row_products @voirPlus="loadMore" :moreBtn="true" :pagination="productFavorites.pagination" :dataList="productFavorites.products"></row_products>
           <!-- Grid annonce autre -->
-          <div class="container titleCateg">Recommandé pour toi</div>
-          <Grid  :pagination="paginationTab" :dataList="dataCardList"></Grid>
+          <div v-if="productRecommendations.length > 0" class="container titleCateg">Recommandé pour toi</div>
+          <Grid :moreBtn="true" :pagination="paginationTab" :dataList="productRecommendations"></Grid>
+            <!-- Grid annonce autre -->
+          <div v-if="dataCardList.length > 0"  class="container titleCateg">Fil d'actu</div>
+          <Grid :moreBtn="true" :pagination="paginationTab" :dataList="dataCardList"></Grid>
         </div>
 
 
@@ -24,7 +27,7 @@
   
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
-
+    import { useRouter } from "vue-router";
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
@@ -45,12 +48,12 @@
     },
     mounted() {
       this.$func.verifSession().then(() => {
-        this.getPosts(12);
+
         this.getFav();
-        /*postService.getRecommendations().then((products) => {
-          console.log(products);
-          this.productRecommendations = products;
-        })*/
+        this.getRecommendations();
+
+        this.getPosts(12);
+
       });
      
 
@@ -60,8 +63,10 @@
 
     },
     setup() {
+      const router = useRouter();
+
       return {
-          
+          router
       };
     },
     data(): { 
@@ -69,7 +74,7 @@
       dataCardList: any[],
       paginationTab: any[],
       productRecommendations: any[],
-      productFavorites: { pagination: any[]; products: any[]; }
+      productFavorites: { pagination: []; products: []; }
     } {
       return {
         isPopupVisible: false, 
@@ -84,7 +89,10 @@
         this.isPopupVisible = true; // Affiche la popup
       },
       getRecommendations(){
-
+        postService.getRecommendations().then((products) => {
+          console.log(products);
+          this.productRecommendations = products;
+        });
       },
       getPosts(limit = 12) {
         postService.getPosts(limit).then((posts) => {
@@ -95,19 +103,21 @@
         });
       },
       getFav(){
-        const PHPSESSID = Cookies.get('PHPSESSID');
-        const API_URL = import.meta.env.VITE_API_URL;
-        axios.get(`${API_URL}/api/products/inventory/favorites/`, {
-          headers: {
-            Authorization: `Bearer ${PHPSESSID}`,
-            "Content-Type": "application/json"
-          }
-        }).then((response) => {
-          sessionStorage.removeItem('favorites');
-          this.productFavorites = response.data;
-          sessionStorage.setItem('favorites', JSON.stringify(this.productFavorites));
+        postService.getFavorites(10).then((posts) => {
+          this.productFavorites = posts;
+        }).catch((error) => {
+          console.error('Erreur lors de la récupération des posts:', error);
         });
-        
+      },
+      loadMore({ products, pagination, type }: { products: any[]; pagination: any[], type: '' }) {
+        sessionStorage.setItem('posts_str', JSON.stringify(products));
+        sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
+        const combined = this.$func.buildCombinedSlug('', 'more'+type);
+
+        this.router.push({
+            name: 'searchList',
+            params: { combined }
+        });
       }
     },
   })

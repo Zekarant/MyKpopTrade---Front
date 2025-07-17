@@ -80,4 +80,37 @@ export const func = {
         alert.remove();
       }, 3000);
     }, 
+    buildCombinedSlug(query, event) {
+      const combined = [query, event].filter(Boolean).join('-');
+      return combined;
+    },
+    renderUserAvatar(dataUser) {
+      const { username, profilePicture } = dataUser;
+      console.log(dataUser);
+      if (profilePicture && profilePicture.trim() !== "" &&  profilePicture.trim() !== "https://mykpoptrade.com/images/avatar-default.png") {
+        return `
+           <img src="${import.meta.env.VITE_API_URL}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" />
+        `;
+      } else {
+        const firstLetter = username?.charAt(0).toUpperCase() || "?";
+        return `
+          <div style="
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+          ">
+            ${firstLetter}
+          </div>
+        `;
+      }
+    }
+
  }

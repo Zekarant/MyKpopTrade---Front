@@ -24,7 +24,7 @@
 </template>
   
   <script lang="ts">
-    import ImageCarousel from '../components/ImageCarousel.vue';
+    import ImageCarousel from '@/components/ImageCarousel.vue';
 
     export default {
 

@@ -25,8 +25,15 @@
             <a @click="togglePopup" class="btn_add_mobile" href="#">Vendre</a>
 
             <!--<a v-on:click="navPage(menu.page, menu.parameter)" :class="{ active: menu.active }"  v-for="menu in itemMenuEnd" href="#">{{menu.label}}</a>-->
-            <a v-on:click="$func.logout()" class="logout" href="#">Déconnexion</a>
-
+            <div class="userPictureContent" v-if="profilePicture">
+                <div @click="logoutPpopup = !logoutPpopup" class="userPicture" v-html="profilePicture"></div>
+                <a v-on:click="$func.logout()" class="logout_picture_btn" href="#">Déconnexion</a>
+            </div>
+            <a v-else v-on:click="$func.logout()" class="logout" href="#">Déconnexion</a>
+            <div class="logout_popup" v-if="logoutPpopup">
+                <a v-on:click="$func.logout()" class="logout" href="#">Déconnexion</a>
+            </div>
+            
         </div>
     </div>
 </template>
@@ -34,12 +41,14 @@
 
 <script lang="ts">
 import type { RouteRecordNameGeneric } from 'vue-router';
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router"; 
+import usersService from '../../services/users';
 
     export default {
         name: "left_menu",
         data() {
             return {
+                logoutPpopup:false,
                 menuOpen: false,
                 currentRoute: '',
                 itemMenu: [
@@ -75,6 +84,8 @@ import { useRoute, useRouter } from "vue-router";
 
                     }
                 ],
+                dataUser:[],
+                htmlImgProfile: '',
                 showFullMenu:false    
             };
         },
@@ -90,7 +101,29 @@ import { useRoute, useRouter } from "vue-router";
             };
         },
         mounted() {
-            this.currentRoute = this.route.name as string;
+        },
+        computed: {
+            profilePicture() {
+                console.log(this.htmlImgProfile);
+                if(this.htmlImgProfile != ''){
+                    return this.htmlImgProfile;
+                }else{
+                    usersService.getMyInformation().then((data) => {
+                        this.dataUser = data.profile;
+                        console.log(this.dataUser);
+                        if(this.dataUser){
+                            this.htmlImgProfile = this.$func.renderUserAvatar(this.dataUser);
+                        }else{
+                            return false;
+                        }
+                    }).catch((error) => {
+                        console.error('Error fetching user information:', error);
+                        return false;
+                    });
+                    
+                }
+
+            },
         },
         methods: {
             verifBtn(btn:RouteRecordNameGeneric){                
@@ -124,7 +157,7 @@ import { useRoute, useRouter } from "vue-router";
             togglePopup() {
                 this.$emit('toggle-popup-add');
             },
-        
+
         
         },
 
@@ -188,6 +221,7 @@ body {
     width:47%;
     height: 100%;
     background: white;
+
 }
 .nav > .nav-links-end {
     text-align: end;
@@ -228,11 +262,48 @@ body {
 .nav > .nav-links-end > a.logout{
     color: var(--danger-color) ;
 }
+.logout_picture_btn{
+    display: none;
+    color: var(--danger-color) ;
 
+}
 .nav > #nav-check {
   display: none;
 }
+.userPictureContent{
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.userPicture{
+    display: block;
+    margin-left: auto;
+    cursor: pointer;
+}
+.logout_popup{
+    position: absolute;
+    top: 45px;
+    right: 0px;
+    background: white;
+    padding: 10px;
+    /* border-radius: 2px; */
+    box-shadow: #62626269 0px 2px 2px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
 
+}
+.logout_popup > a {
+    color: var(--danger-color) ;
+    text-decoration: none;
+}
+.logout_popup:hover > a {
+    color: white ;
+    text-decoration: none;
+}
+.logout_popup:hover{
+    background: var(--danger-color) ;
+}
 @media (max-width:600px) {
     
     .nav {
@@ -329,7 +400,15 @@ body {
         min-height: 100vh;
         position: fixed;
     }
-
+    .logout_picture_btn{
+        display: block;
+    }
+    .userPicture{
+        display: none;
+    }
+    .userPictureContent{
+        display: block;
+    }
 
 }
 

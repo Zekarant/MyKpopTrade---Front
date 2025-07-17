@@ -41,16 +41,16 @@
                           <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.location" v-model="profilInfo.location">
                         </div>
 
-                        <div class="instagram_value">                          
-                          <div v-if="profilInfo.socialLinks.instagram && !myProfile">{{ profilInfo.socialLinks.instagram }}</div>
+                        <div  class="instagram_value">                          
+                          <div v-if="profilInfo.socialLinks && profilInfo.socialLinks.instagram && !myProfile">{{ profilInfo.socialLinks.instagram }}</div>
                           <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.instagram" v-model="profilInfo.socialLinks.instagram">
                         </div>
                         <div class="twitter_value">
-                          <div v-if="profilInfo.socialLinks.twitter && !myProfile">{{ profilInfo.socialLinks.twitter }}</div>
+                          <div v-if="profilInfo.socialLinks && profilInfo.socialLinks.twitter && !myProfile">{{ profilInfo.socialLinks.twitter }}</div>
                           <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.twitter" v-model="profilInfo.socialLinks.twitter">
                         </div>
                         <div class="discord_value">
-                          <div v-if="profilInfo.socialLinks.discord && !myProfile">{{ profilInfo.socialLinks.discord }}</div>
+                          <div v-if="profilInfo.socialLinks && profilInfo.socialLinks.discord && !myProfile">{{ profilInfo.socialLinks.discord }}</div>
                           <input @change="info_update()" v-if="myProfile" style="border: none;" :value="profilInfo.socialLinks.discord" v-model="profilInfo.socialLinks.discord">
                         </div>
 
@@ -200,8 +200,11 @@
         if (id === 'me') {
             myProfile.value = true;
         }
-        var profilInfo = ref({} as { username?: string; [key: string]: any })
+        var profilInfo = ref({
+          
+        } as { username?: string; [key: string]: any })
         const dataCardList = ref([]);
+        console.log(profilInfo)
         return {
           dataCardList,
           profilInfo,
@@ -233,9 +236,6 @@
         }
 
       },
-      verifSession(){
-        this.$func.verifSession();
-      },
       async getInfoProfil(){
         console.log('getInfoProfil');
         const PHPSESSID = Cookies.get('PHPSESSID');
@@ -249,6 +249,13 @@
 
           if (response.status === 200) {
             this.profilInfo = response.data.user;
+            if(!this.profilInfo.socialLinks){
+              this.profilInfo.socialLinks = {
+                instagram: '',
+                twitter: '',
+                discord: ''
+              }
+            }
           }
           }).catch(error => {
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -462,6 +469,12 @@
 @media (max-width: 769px) {
   .review_content{
     flex-direction: column;
+  }
+  .description_user{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 90%;
   }
   .responseReviewContent{
     position: static;

@@ -43,13 +43,41 @@ const routes = [
     path: '/forgot_psw', 
     name: 'forgot_psw',
     component: forgot_psw 
-  }, {
-    path: '/searchList', 
-    name: 'searchList',
-    component: searchList,
-    props: true
+  },
+{
+  path: '/search-:combined?',
+  name: 'searchList',
+  component: searchList,
+  props: (route: { params: { combined: any; }; }) => {
+    const combined = route.params.combined || '';
+    const parts = combined.split('-');
 
-  }, {
+    let query = '';
+    let event = '';
+
+    if (combined === '') {
+      query = '';
+      event = '';
+    } else if (parts.length === 1) {
+      // Une seule partie => soit query soit event
+      // Tu peux définir une liste des events connus pour distinguer
+      const knownEvents = ['morePage', 'search', 'morePageFavorites'];
+      if (knownEvents.includes(parts[0])) {
+        query = '';
+        event = parts[0];
+      } else {
+        query = parts[0];
+        event = '';
+      }
+    } else {
+      // 2 parties ou plus
+      query = parts[0] || '';
+      event = parts[parts.length - 1] || '';
+    }
+
+    return { query, event };
+  }
+},{
     path: '/searchList_bis', 
     name: 'searchList_bis',
     component: searchList_bis,

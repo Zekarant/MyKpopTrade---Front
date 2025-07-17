@@ -43,8 +43,13 @@
         },
         methods: {
             onSearch() {
-                //eventBus.emit('show-loader');
-                this.router.push({ name: 'searchList', query: { event: 'search', query:this.searchQuery} });
+
+                const combined = this.$func.buildCombinedSlug(this.searchQuery, 'search');
+
+                this.router.push({
+                    name: 'searchList',
+                    params: { combined }
+                });
             },
         }
     }

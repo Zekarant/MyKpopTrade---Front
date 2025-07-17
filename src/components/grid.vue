@@ -2,24 +2,21 @@
     <div class="container">
         <card :data="data" v-on:click="openPostInfo(index)" v-for="(data, index) in dataList"></card>
     </div>
-    <div v-if="pagination.page != pagination.pages" class="load-more"  @click="loadMore()">
+    <div v-if="pagination.page != pagination.pages && moreBtn" class="load-more"  @click="loadMore()">
         <button class="btn btn-primary-outline imgcenter">Charger plus</button> 
     </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @closePost="closePost" @sold="onsold" :dataUser="dataUser" :dataPost="dataCardPost" />
+        <post @closePost="closePost" @sold="onsold" :dataUser="dataUser" :idPost="dataCardPost._id" />
     </div>
 </template>
   
 
 <script lang="ts">
     import { defineComponent, ref } from 'vue';
-    import type { RouteRecordNameGeneric } from 'vue-router';
-    import { useRoute, useRouter } from "vue-router";
-    import axios from 'axios';
-    import card_illu from '../components/card_illu.vue';
-    import post from '../components/post.vue';
-    import card from '../components/card.vue';
-    import postService from '../services/post.js';
+    import { useRouter } from "vue-router";
+    import card_illu from '@/components/card_illu.vue';
+    import post from '@/components/post.vue';
+    import card from '@/components/card.vue';
 
 
 
@@ -28,7 +25,7 @@
         components: {
             card_illu,
             post,
-            card
+            card        
         },
         props: {
             dataList: {
@@ -56,6 +53,10 @@
                     pages: 1,
                     total: 10,
                 }),
+            },
+            moreBtn:{
+                type: Boolean,
+                required: false,
             }
         },
         setup() {
@@ -94,7 +95,12 @@
             loadMore(){
                 sessionStorage.setItem('posts_str', JSON.stringify(this.dataList));
                 sessionStorage.setItem('pagination_str', JSON.stringify(this.pagination));
-                this.router.push({ name: 'searchList', query: { event: 'morePage'} });
+                const combined = this.$func.buildCombinedSlug('', 'morePage');
+
+                this.router.push({
+                    name: 'searchList',
+                    params: { combined }
+                });
             }
             
         },

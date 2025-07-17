@@ -8,7 +8,7 @@
     </div>
     <div class="container-custom">
       <div class="d-flex flex-column justify-content-center w-50 position-relative">
-        <div class="ms-lg-5 ms-md-5">
+        <div class="imgcenter column_form">
 
     
           <form @submit.prevent="submitForm" class="d-flex flex-column">
@@ -160,8 +160,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 50%;
 }
-
+.column_form{
+  width: 65%;
+}
 .image-column img {
   max-height: 90vh;
   object-fit: contain;
@@ -226,6 +229,9 @@ input::placeholder {
 }
 
 @media only screen and (max-width: 600px) {
+  .column_form{
+    width: 100%;
+  }
   .image-column.ms-3 {
     margin-left: 0px !important;
     padding-bottom: 20px;

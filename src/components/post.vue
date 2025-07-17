@@ -4,13 +4,8 @@
             <div class="post_card_content">
                 <i style="position: absolute; top: 5px; right: 5px; width: 20px; zoom: 1.5; z-index: 3; color: var(--primary-color);" @click="closePost()" class="bi bi-x-lg display_phone_tablette"></i>
                 <div @click="viewUser()" class="post_card_content_header">
-                    <div v-if="profilePictureUrl" class="userPicture">
-                        <img :src="profilePictureUrl || undefined">
-                    </div>
-                    <div v-else>
-                        {{ dataSeller.username ? dataSeller.username.charAt(0).toUpperCase() : '' }}
-
-                    </div>
+                    <div class="userPicture" v-html="profilePictureUrl"></div>
+       
 
                     <div>
                         <div class="identifier">@{{ dataSeller.username }}</div>
@@ -57,7 +52,9 @@
                                 <p>État :</p>
                             </div>
                             <div>
-                                <p>{{ dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1) }}</p>
+                                <p>
+                                {{ dataPost.condition ? (dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1)) : '' }}
+                                </p>
                             </div>
                         </div>
                         <div class="bloc_detail category">
@@ -92,7 +89,7 @@
                                 <p>{{ dataPost.albumName }}</p>
                             </div>
                         </div>
-                        <div class="bloc_detail shippingOptions">
+                        <div  v-if="dataPost.shippingOptions" class="bloc_detail shippingOptions">
                             <div>
                                 <p>Livraison :</p>
                             </div>
@@ -105,7 +102,7 @@
                     </div>
                     <div style="margin-top: 15px;">
                         <div class="type_content">
-                            {{ dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1) }}
+                        {{ dataPost.type ? (dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1)) : '' }}                        
                         </div>
                     </div>
                 </div>
@@ -164,17 +161,17 @@
             report_card
         },
         props: {
-            dataPost: {
-                type: Object as () => { currency: string; [key: string]: any },
-                required: true,
-            },
             dataUser: {
                 type: Object,
                 required: false,
             },
+            idPost:{
+                type: Number,
+            }
         },
         data() {
             return {
+                dataPost: {} as Record<string, any>,
                 dataSeller: {} as Record<string, any>,
                 isMenuVisible: false,
                 isRoot: false,
@@ -196,10 +193,9 @@
                 myId
             };
         },
-        mounted() {
-            console.log(this.dataPost);
-            console.log(this.dataUser);
-            
+        async mounted() {
+            await this.getData();
+
             if(this.dataSeller._id==this.myId) {
                 if (this.dataUser) {
                     this.dataSeller = this.dataUser;
@@ -212,13 +208,9 @@
             console.log(this.dataSeller);
         },
         computed: {
-            
-            profilePictureUrl() {
-                const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
 
-                return this.dataSeller.profilePicture
-                ? `${baseUrl}${this.dataSeller.profilePicture}`
-                : false;
+            profilePictureUrl() {
+                return this.$func.renderUserAvatar(this.dataSeller);
             },
             currencySymbol() {
                 const symbols = {
@@ -233,6 +225,13 @@
        
         },
         methods: {
+            async getData() {
+
+                const response = await postService.getPost(this.idPost);
+                this.dataPost = response.product;
+                this.isFav = response.isFavorite;
+                console.log(this.isFav);
+            },
             toggleMenu(event: Event){
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;
@@ -253,29 +252,16 @@
             async addFav(id: any){
                 await postService.addFavorite(id).then(addFavorite => {                
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
-                    let fav = sessionStorage.getItem('favorites');
-                    let favArray = fav ? JSON.parse(fav) : [];
-                    favArray.products.push(this.dataPost);
-                    sessionStorage.setItem('favorites', JSON.stringify(favArray));
                     this.isFav = true;
                 });;
             },
             async rmFav(id: any){
                 await postService.addFavorite(id).then(addFavorite => {                
-                    this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
-                    let fav = sessionStorage.getItem('favorites');
-                    let favArray = fav ? JSON.parse(fav) : [];
-                    favArray.products.push(this.dataPost);
-                    sessionStorage.setItem('favorites', JSON.stringify(favArray));
+                    this.$func.showToastSuccess('Supprimé de mes favoris');
                     this.isFav = true;
                 });;
             },
             
-            /*verifFav(id){
-                let fav = sessionStorage.getItem('favorites');
-                let favArray = fav ? JSON.parse(fav) : [];
-                console.log(favArray);
-            },*/
             closePost() {
                 this.$emit('closePost');
             },
@@ -399,17 +385,7 @@
         margin: 15px;
     }
 
-    .userPicture img{
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        background-color: var(--primary-color);
-        border-radius: 3px;
-    }
-    .userPicture{
-        height: 40px;
-        width: 40px;
-    }
+
     .img_certif_container{
         display: inline-block;
         width: 10px;

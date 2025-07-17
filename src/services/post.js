@@ -34,8 +34,22 @@ export default {
   },
 
   // Récupérer un post par ID
-  getPost(id) {
-    return apiClient.get(`/posts/${id}`);
+  async getPost(id) {
+    try {
+      const response = await axios.get(`${API_URL}/api/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${PHPSESSID}`,
+          "Content-Type": "application/json"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+        func.verifSession();
+      }
+      console.error('Erreur lors de la recherche :', error);
+      throw error;
+    }
   },
 
   // Créer un post
@@ -121,7 +135,8 @@ export default {
   },
   search: async (query,maxPrice=null, minPrice=null, type = null) => {
     let tabParam = {
-      search: query
+      search: query,
+      limit: 12
     }
     if(minPrice && minPrice !== 'null'){
       tabParam['minPrice'] = minPrice;
@@ -143,6 +158,9 @@ export default {
       });
       return response.data;
     } catch (error) {
+        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+          func.verifSession();
+        }
       console.error('Erreur lors de la recherche :', error);
       throw error;
     }
@@ -181,48 +199,58 @@ export default {
     }
     
   },
-  getFavorites: async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/products/inventory/favorites/`, {
+  async getFavorites(limit = 20, page = 1)  {
+    try{
+      const response = await axios.get(`${API_URL}/api/products/inventory/favorites`, {
+        params: {
+          limit: limit,
+          page: page
+        },
         headers: {
           Authorization: `Bearer ${PHPSESSID}`,
           "Content-Type": "application/json"
         }
+        
       });
       return response.data;
+
+      
+    }catch (error) {
+      if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+        func.verifSession();
+      }
+      throw error;
+
+    }
+  },
+  getRecommendations: async function ()  {
+    let tabRecommendations = [];
+
+    try {
+      await axios.get(`${API_URL}/api/products/recommendations/`, {
+        headers: {
+          Authorization: `Bearer ${PHPSESSID}`,
+          "Content-Type": "application/json"
+        }
+      }).then(response => {
+        response.data.products.forEach(async productFav => {
+          tabRecommendations.push(productFav);
+        })
+      }).catch(error => {
+        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+          func.verifSession();
+        }
+        return tabRecommendations;
+      });;
+
     } catch (error) {
       if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
         func.verifSession();
       }
-      console.error('Erreur lors de la recherche :', error);
-      throw error;
+
     }
+    return tabRecommendations;
 
-  },
-  getRecommendations: async function ()  {
-      let productFavorites = await this.getFavorites();
-      let tabRecommendations = [];
-      productFavorites.products.forEach(async product => {
-        try {
-          const response = await axios.get(`${API_URL}/api/products/recommendations/`+product._id, {
-            headers: {
-              Authorization: `Bearer ${PHPSESSID}`,
-              "Content-Type": "application/json"
-            }
-          });
-
-          response.data.products.forEach(async productFav => {
-            tabRecommendations.push(productFav);
-
-          })
-
-        } catch (error) {
-          if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-            func.verifSession();
-          }
-        }
-      });
-      return tabRecommendations;
 
   }, 
 
