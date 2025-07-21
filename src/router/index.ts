@@ -9,6 +9,7 @@ import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
 import messaging from '@p_v/messaging.vue';
+import add_poste from '@p_v/add_poste.vue';
 
 
 const routes = [
@@ -88,6 +89,12 @@ const routes = [
     path: '/messaging', 
     name: 'messaging',
     component: messaging,
+    props: true
+
+  },{
+    path: '/adherents/new', 
+    name: 'add_poste',
+    component: add_poste,
     props: true
 
   }
