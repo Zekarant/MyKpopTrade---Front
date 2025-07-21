@@ -28,9 +28,10 @@ import filter_review from './components/filter_review.vue';
 import response_review from './components/response_review.vue';
 import card from './components/card.vue';
 import Vue3Lottie from 'vue3-lottie'
-import Aura from '@primeuix/themes/aura/theme.css';
-import Slider from 'primevue/slider';
 import PrimeVue from 'primevue/config';
+import Aura from '../node_modules/@primevue/themes/aura';
+
+import Slider from 'primevue/slider';
 
 const app = createApp(App)
 
