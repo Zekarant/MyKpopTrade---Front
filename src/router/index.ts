@@ -8,6 +8,7 @@ import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
+import messaging from '@p_v/messaging.vue';
 
 
 const routes = [
@@ -81,6 +82,12 @@ const routes = [
     path: '/searchList_bis', 
     name: 'searchList_bis',
     component: searchList_bis,
+    props: true
+
+  },{
+    path: '/messaging', 
+    name: 'messaging',
+    component: messaging,
     props: true
 
   }

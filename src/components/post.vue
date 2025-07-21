@@ -106,10 +106,10 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="!dataPost.isReserved" class="post_card_content_footer">
+                <div v-if="!dataPost.isReserved && !isRoot" class="post_card_content_footer">
                     <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button">Faire une offre</button>
                     <button class="btn-blue-outline" type="button">Acheter</button>
-                    <button class="btn-blue-outline" type="button">Envoyer un message</button>
+                    <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
                 </div>
             </div>
             <div class="illustration">
@@ -128,6 +128,9 @@
         </div>
 
     </div>
+    <!--------- Popup Pour envoyer un message ---------->
+    <send_message :id_user="dataSeller._id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
+
     <!--------- Popup ---------->
     <div v-if="showSoldPopup "class="popup-overlay">
         <div class="popup-content">
@@ -149,6 +152,8 @@
     import card_illu from '../components/card_illu.vue';
     import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
+    import send_message from '../components/adherents/send_message.vue';
+    
     import postService from '@/services/post.js';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
@@ -158,7 +163,8 @@
         components: {
             card_illu,
             ImageCarousel,
-            report_card
+            report_card,
+            send_message
         },
         props: {
             dataUser: {
@@ -174,10 +180,11 @@
                 dataPost: {} as Record<string, any>,
                 dataSeller: {} as Record<string, any>,
                 isMenuVisible: false,
-                isRoot: false,
+                isRoot: true,
                 showSoldPopup: false,
                 isFav: false,
                 showPopupReport: false,
+                popupMessage: false
             };
         },
         setup(){
@@ -195,18 +202,25 @@
         },
         async mounted() {
             await this.getData();
+            console.log(this.dataUser);
+            console.log(this.dataPost);
 
-            if(this.dataSeller._id==this.myId) {
-                if (this.dataUser) {
-                    this.dataSeller = this.dataUser;
-                    this.isRoot = true;
-                }
+            if (this.dataUser) {
+                this.dataSeller = this.dataUser;
             }else{
+                this.isRoot = false;
                 this.dataSeller = this.dataPost.seller;
             }
-            console.log(this.isRoot);
+            if(this.dataSeller.id==this.myId) {
+                if (this.dataUser) {
+                    this.isRoot = true;
+                }else{
+                    this.isRoot = false;
+                }
+            }
             console.log(this.dataSeller);
         },
+
         computed: {
 
             profilePictureUrl() {
@@ -268,6 +282,9 @@
             viewUser(){
                 this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
             }, 
+            openMessagePopup(){
+                this.popupMessage = !this.popupMessage;
+            }
       
         },
         watch: {

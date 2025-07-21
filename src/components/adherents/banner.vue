@@ -63,7 +63,7 @@
                         <br>
                         <div class="row">
                             <div class="col-md-7">
-                                <button v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
+                                <button @click="openMessagePopup" v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
                             </div>
                             <div class="col-md-5">
                                 <button v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-primary">Suivre</button>
@@ -77,7 +77,9 @@
         </div>
     </div>
 
-
+    
+    <!--------- Popup Pour envoyer un message ---------->
+    <send_message :id_user="profilInfo.id" :pseudo_user="profilInfo.username" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
     <!--------- Popup Supression ---------->
     <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" @click="closePopup()" class="popup-overlay">
         <div @click="$event.stopPropagation()" class="popup-content">
@@ -271,7 +273,7 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
-
+    import send_message from './send_message.vue';
     export default {
         name: "banner",
         data() {
@@ -306,8 +308,13 @@
                 passwordForConfirm: '',
                 documentType:'id_card', // Type de document pour la vérification d'identité
                 verification: null as any,
+                popupMessage: false,
 
             };
+        },
+        components: {
+            send_message,
+          
         },
         setup() {
             const route = useRoute();
@@ -866,6 +873,9 @@
                     };
                     reader.readAsDataURL(file);
                 }
+            },
+            openMessagePopup(){
+                this.popupMessage = !this.popupMessage;
             }
         },
         computed: {

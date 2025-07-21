@@ -68,6 +68,11 @@ import usersService from '../../services/users';
                     parameter: 'me'
                     },
                     {
+                        label: 'Messagerie',
+                        icon: '<i class="bi bi-envelope"></i>',
+                        active: this.verifBtn('messaging'),
+                        page: 'messaging',
+                        parameter: 'me'
 
                     }
                 ],
@@ -101,16 +106,18 @@ import usersService from '../../services/users';
             };
         },
         mounted() {
+            window.addEventListener('click', this.handleWindowClick);
+        },
+        beforeUnmount() {
+            window.removeEventListener('click', this.handleWindowClick);
         },
         computed: {
             profilePicture() {
-                console.log(this.htmlImgProfile);
                 if(this.htmlImgProfile != ''){
                     return this.htmlImgProfile;
                 }else{
                     usersService.getMyInformation().then((data) => {
                         this.dataUser = data.profile;
-                        console.log(this.dataUser);
                         if(this.dataUser){
                             this.htmlImgProfile = this.$func.renderUserAvatar(this.dataUser);
                         }else{
@@ -126,6 +133,19 @@ import usersService from '../../services/users';
             },
         },
         methods: {
+            handleWindowClick(event: MouseEvent) {
+                if (this.logoutPpopup) {
+                    // On vérifie si le clic est à l'extérieur de la popup et de l'avatar
+                    const popup = this.$el.querySelector('.logout_popup');
+                    const avatar = this.$el.querySelector('.userPicture');
+                    if (
+                        popup && !popup.contains(event.target as Node) &&
+                        avatar && !avatar.contains(event.target as Node)
+                    ) {
+                        this.logoutPpopup = false;
+                    }
+                }
+            },
             verifBtn(btn:RouteRecordNameGeneric){                
                 if( this.route.name == btn)
                 {
