@@ -175,7 +175,8 @@ import usersService from '../../services/users';
                 this.showFullMenu = false;
             },
             togglePopup() {
-                this.$emit('toggle-popup-add');
+                this.router.push({ name: 'add_poste' });
+                //this.$emit('toggle-popup-add');
             },
 
         
@@ -251,16 +252,18 @@ body {
     width:5%;
     display: flex;
     align-items: center;
-    height: 100%
+    height: 100%;
 
 }
 .add_post{
     display: block;
     margin-right:auto;
     margin-left:auto;
+    cursor: pointer;
 }
 .btn_add_mobile{
     display:none !important;
+    cursor: pointer;
 }
 
 
