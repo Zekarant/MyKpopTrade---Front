@@ -2,7 +2,7 @@
     <div class="container">
         <card :data="data" v-on:click="openPostInfo(index)" v-for="(data, index) in dataList"></card>
     </div>
-    <div v-if="pagination.page < pagination.pages && moreBtn" class="load-more"  @click="loadMore()">
+    <div v-if="dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more"  @click="loadMore()">
         <button class="btn btn-primary-outline imgcenter">Charger plus</button> 
     </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >

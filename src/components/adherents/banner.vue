@@ -385,11 +385,11 @@
 
                     formData.append('profileBanner', file);
 
-                    const PHPSESSID = Cookies.get('PHPSESSID');
+                    const sessionToken = Cookies.get('sessionToken');
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                     }).then(response => {
@@ -416,12 +416,12 @@
 
                     formData.append('profilePicture', file);
                     console.log('Contenu de FormData :', Array.from(formData.entries()));
-                    const PHPSESSID = Cookies.get('PHPSESSID');
+                    const sessionToken = Cookies.get('sessionToken');
                     console.log(formData);
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                     }).then(response => {
@@ -453,10 +453,10 @@
                 }
             },
             confirmDeleteBanner(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`,
+                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
                     this.profilInfo.profileBanner = null;
@@ -470,10 +470,10 @@
                 });
             },
             confirmDeletePicture() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`,
+                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
                     this.profilInfo.profilePicture = null; // Supprime localement l'image
@@ -491,10 +491,10 @@
                 if(!this.profilInfo.isIdentityVerified){
                     this.verifIdentityPopup = true;
                     try {
-                        const PHPSESSID = Cookies.get('PHPSESSID');
+                        const sessionToken = Cookies.get('sessionToken');
                         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
                             headers: {
-                                'Authorization': `Bearer ${PHPSESSID}`
+                                'Authorization': `Bearer ${sessionToken}`
                             }
                         });
                         console.log(response.data.message);
@@ -520,10 +520,10 @@
                 }
             },
             stopVerifIdentity(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/verification/identity/cancel`, {
                     headers: {
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -542,7 +542,7 @@
                 });
             },
             verifIdentity(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 var data = new FormData();
                 data.append('documentType',  this.documentType);
                 data.append('consentGiven',  String(this.consentUseData));
@@ -551,7 +551,7 @@
                 }
                 axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity`, data, {
                     headers: {
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -571,13 +571,13 @@
             },
             async verifEmail(){
     
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
                     email: this.profilInfo.email,
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -596,13 +596,13 @@
             },
             async verifTel(){
     
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-phone-verification`, {
                     phoneNumber: this.phoneNumber,
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -620,13 +620,13 @@
             
             },
             async verifCodeTel(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-phone`, {
                     code: String(this.phoneCode),
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -642,7 +642,7 @@
                 });
             },
             async changeAllowDirectMessages() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, 
                 {
@@ -652,7 +652,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -671,7 +671,7 @@
                 this.isBtnSaveVisible = !this.isBtnSaveVisible;
             },
             saveTel(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, 
                 {
@@ -679,7 +679,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -703,7 +703,7 @@
                 this.showSettingPswd = true
             },
             async saveSettingsPswd(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`, 
                 {
@@ -713,7 +713,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -734,11 +734,11 @@
             
             }, 
             async exportUserData() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 try {
                     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/data-export`, {
                         headers: {
-                            'Authorization': `Bearer ${PHPSESSID}`
+                            'Authorization': `Bearer ${sessionToken}`
                         }
                     });
                     // Création du blob et téléchargement
@@ -759,10 +759,10 @@
                 }
             },
             requestAccountDeletion() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/delete-account`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`
+                        'Authorization': `Bearer ${sessionToken}`
                     },data: {
                         password: this.passwordForConfirm  
                     }
@@ -781,12 +781,12 @@
                 });
             },
             confirmAnonymize(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.post(`${import.meta.env.VITE_API_URL}/api/users/me/anonymize`, {
                     "confirmation": true
                 }, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}` 
+                        'Authorization': `Bearer ${sessionToken}` 
                     }
                 }).then(response => {
                     this.$func.showToastSuccess(response.data.message);
@@ -802,13 +802,13 @@
                 });
             },
             deletePaypal(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
                     },
                     data: {
                         paypalEmail: this.emailPaypal
@@ -833,7 +833,7 @@
             },
             savePaypal(){
                 
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
                 {
@@ -841,7 +841,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {

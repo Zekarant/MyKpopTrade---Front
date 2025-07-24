@@ -7,36 +7,36 @@ export const func = {
       console.log('logout');
       try {
         const refreshToken = Cookies.get('refreshToken');
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
             refreshToken: refreshToken,
         }, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PHPSESSID}`
+            'Authorization': `Bearer ${sessionToken}`
 
           }
         });
         console.log(response.status);
 
         if(response.status === 200) {
-          Cookies.remove('PHPSESSID');
-          document.cookie = 'PHPSESSID=; expires=expires=Thu, 01 Jan 1970 00:00:01 GMT';
+          Cookies.remove('sessionToken');
+          document.cookie = 'sessionToken=; expires=expires=Thu, 01 Jan 1970 00:00:01 GMT';
           Cookies.remove('refreshToken');
         }
         router.push('/login');
       } catch (error) {
         router.push('/login');
-        Cookies.remove('PHPSESSID');
-        document.cookie = 'PHPSESSID=; expires=expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        Cookies.remove('sessionToken');
+        document.cookie = 'sessionToken=; expires=expires=Thu, 01 Jan 1970 00:00:01 GMT';
         Cookies.remove('refreshToken');
       }
 
 
     },
     verifSession: async () => {
-      const PHPSESSID = Cookies.get('PHPSESSID');
-      if(!PHPSESSID){
+      const sessionToken = Cookies.get('sessionToken');
+      if(!sessionToken){
         func.logout();
       }else{
         try {
@@ -46,11 +46,11 @@ export const func = {
           }, {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${PHPSESSID}`
+              'Authorization': `Bearer ${sessionToken}`
             }
           });
           if(response.status === 200) {
-            Cookies.set('PHPSESSID', response.data.accessToken, { expires: 1 });
+            Cookies.set('sessionToken', response.data.accessToken, { expires: 1 });
             Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
           }else{
             console.log(response);

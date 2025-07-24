@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { func } from '@/function.js';
 
-const PHPSESSID = Cookies.get('PHPSESSID');
+const sessionToken = Cookies.get('sessionToken');
 const idUser = Cookies.get('id_user');
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -11,7 +11,7 @@ export default {
     try {
       const response = await axios.get(`${API_URL}//api/profiles/user/${name}`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       });
@@ -31,7 +31,7 @@ export default {
     try {
       const response = await axios.get(`${API_URL}/api/profiles/me`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       });

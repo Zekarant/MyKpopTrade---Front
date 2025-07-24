@@ -96,7 +96,7 @@
           }).then(response => {
               console.log(response);
               if (response.status === 200) {
-              Cookies.set('PHPSESSID', response.data.accessToken, { expires: 15 / 1440 });
+              Cookies.set('sessionToken', response.data.accessToken, { expires: 15 / 1440 });
               Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 })
               Cookies.set('id_user', response.data.user.id, { expires: 1 });
               sessionStorage.removeItem('favorites');

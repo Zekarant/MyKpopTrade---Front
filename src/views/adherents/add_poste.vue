@@ -144,6 +144,7 @@
 
     // Import Swiper Vue.js components
     import { Swiper, SwiperSlide } from 'swiper/vue';
+    import { useRoute, useRouter } from "vue-router";
 
     // Import Swiper styles
     import 'swiper/css';
@@ -179,6 +180,7 @@
     },
     setup(props, { emit }) {
       const imagesPreview = ref<string[]>([]);
+        const router = useRouter();
 
       const formData = ref({
         title: '',
@@ -227,6 +229,7 @@
     
       return {
         formData,
+        router,
         imagesPreview,
         handleImageUpload,
         removeImage,
@@ -238,12 +241,12 @@
             const response = await postService.createPost(this.formData);
             console.log(response);
             
-            if (response) {
-            this.$func.showToastSuccess('Produit créé avec succès !');
+            if (response == 'ok') {
+                this.$func.showToastSuccess('Produit créé avec succès !');
+                this.router.push({ name: 'profile' , params: { id: 'me' }});
 
-            this.$emit('close');
             }else{
-            this.$func.showToastError('Erreur lors de la création du produit.');
+                this.$func.showToastError(response.message || 'Erreur lors de la création du produit');
 
             }
         },

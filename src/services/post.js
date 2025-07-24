@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { func } from '@/function.js';
 
-const PHPSESSID = Cookies.get('PHPSESSID');
+const sessionToken = Cookies.get('sessionToken');
 const idUser = Cookies.get('id_user');
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,7 +19,7 @@ export default {
           type: type
         },
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       });
@@ -38,7 +38,7 @@ export default {
     try {
       const response = await axios.get(`${API_URL}/api/products/${id}`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       });
@@ -53,50 +53,47 @@ export default {
   },
 
   // Créer un post
-  createPost: async (postData) => {    
-    var data = new FormData();
-    data.append('title', postData.title);
-    data.append('description', postData.description);
-    data.append('price', postData.price);
-    data.append('currency', postData.currency);
-    data.append('condition', postData.condition);
-    data.append('category', postData.category);
-    data.append('type', postData.type);
-    data.append('kpopGroup', postData.kpopGroup);
-    data.append('kpopMember', postData.kpopMember);
-    data.append('albumName', postData.albumName);
-    postData.images.forEach((file) => {
-      data.append('productImages', file); 
+  createPost: async (postData) => {
+  const data = new FormData();
+  data.append('title', postData.title);
+  data.append('description', postData.description);
+  data.append('price', postData.price);
+  data.append('currency', postData.currency);
+  data.append('condition', postData.condition);
+  data.append('category', postData.category);
+  data.append('type', postData.type);
+  data.append('kpopGroup', postData.kpopGroup);
+  data.append('kpopMember', postData.kpopMember);
+  data.append('albumName', postData.albumName);
+  postData.images.forEach((file) => {
+    data.append('productImages', file);
+  });
+  data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
+
+  try {
+    console.log('sessionToken', sessionToken);
+    const response = await axios.post(`${API_URL}/api/products`, data, {
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+      },
     });
-    data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
-    try{
-      console.log('PHPSESSID', PHPSESSID);
-      await axios.post(`${API_URL}/api/products`, data, {
-        headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
-        }
-      }).then(response => {
-          if (response.status == 201 || response.status == 200) {
-            return true;
-          }else {
-            return false;
-          }
 
-      }).catch(error => {
-        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-          func.verifSession();
-        }
-        return false;
-      });
-      return true;
-
-    }catch (error) {
-      console.error('Erreur lors de la récupération des posts :', error);
-      throw error;
+    if (response.status === 201 || response.status === 200) {
+      return 'ok';
+    } else {
+      return response;
     }
 
+  } catch (error) {
+    const res = error.response;
 
-  },
+    if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+      func.verifSession();
+    }
+
+    return res.data;
+  }
+},
   updateImagesPost: async (images) => {
     images.forEach(image => {
       
@@ -110,7 +107,7 @@ export default {
         buyerId: idUser
       }, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       }).then(response => {
@@ -152,7 +149,7 @@ export default {
       const response = await axios.get(`${API_URL}/api/products`, {
         params: tabParam,
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       });
@@ -172,7 +169,7 @@ export default {
         buyerId: idUser
       }, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       }).then(response => {
@@ -207,7 +204,7 @@ export default {
           page: page
         },
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
         
@@ -229,7 +226,7 @@ export default {
     try {
       await axios.get(`${API_URL}/api/products/recommendations/`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/json"
         }
       }).then(response => {

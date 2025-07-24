@@ -13,7 +13,7 @@
   <script lang="ts">
     import axios from 'axios';
     import Cookies from "js-cookie";
-    const PHPSESSID = Cookies.get('PHPSESSID');
+    const sessionToken = Cookies.get('sessionToken');
     const id_user = Cookies.get('id_user');
 
     export default {
@@ -48,7 +48,7 @@
                     response: this.textResponse
                 }, {
                     headers: {
-                    Authorization: `Bearer ${PHPSESSID}`,
+                    Authorization: `Bearer ${sessionToken}`,
                     }
                 }).then(response => {
                     if (response.status == 201 || response.status == 200) {
@@ -73,7 +73,7 @@
                         response: this.textResponse
                     }, {
                         headers: {
-                        Authorization: `Bearer ${PHPSESSID}`,
+                        Authorization: `Bearer ${sessionToken}`,
                         }
                     }).then(response => {
                         if (response.status == 201 || response.status == 200) {
@@ -92,7 +92,7 @@
                 }else{
                     axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${this.review._id}/response`, {
                         headers: {
-                            'Authorization': `Bearer ${PHPSESSID}`,
+                            'Authorization': `Bearer ${sessionToken}`,
                         },
                     }).then((response) => {
                         if (response.status == 201 || response.status == 200) {
