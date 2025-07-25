@@ -84,7 +84,13 @@
                     total: 10,
                 }),
             },
+            moreBtn: {
+                type: Boolean,
+                default: false
+            }
         },
+        emits: ['voirPlus'], 
+        
         data() {
           return {
 

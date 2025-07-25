@@ -29,7 +29,7 @@ onUnmounted(() => {
 <style lang="scss">
 @font-face {
     font-family: "Sora";
-    src: url('~@/assets/fonts/Sora/Sora-VariableFont_wght.ttf');
+    src: url('@/assets/fonts/Sora/Sora-VariableFont_wght.ttf');
 }
 body{
   font-family: "Sora", serif;

@@ -4,7 +4,6 @@ import router from './router'
 
 export const func = {
     logout: async () => {
-      console.log('logout');
       try {
         const refreshToken = Cookies.get('refreshToken');
         const sessionToken = Cookies.get('sessionToken');
@@ -17,7 +16,6 @@ export const func = {
 
           }
         });
-        console.log(response.status);
 
         if(response.status === 200) {
           Cookies.remove('sessionToken');
@@ -53,7 +51,6 @@ export const func = {
             Cookies.set('sessionToken', response.data.accessToken, { expires: 1 });
             Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 });
           }else{
-            console.log(response);
             this.$func.logout();
           }
           } catch (error) {
@@ -86,7 +83,6 @@ export const func = {
     },
     renderUserAvatar(dataUser) {
       const { username, profilePicture } = dataUser;
-      console.log(dataUser);
       if (profilePicture && profilePicture.trim() !== "" &&  profilePicture.trim() !== "https://mykpoptrade.com/images/avatar-default.png") {
         return `
            <img src="${import.meta.env.VITE_API_URL}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" />
