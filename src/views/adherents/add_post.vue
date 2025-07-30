@@ -127,7 +127,11 @@
                 <input type="number" id="shippingCost" v-model="formData.shippingOptions.shippingCost" step="0.01" />
                 </div>
             </div>
-            <div class="popup-buttons-footer">
+            
+            <div v-if="isModyfy" class="popup-buttons-footer">
+                <button class="btn-primary" type="submit">Modifier</button>
+            </div>
+            <div v-else class="popup-buttons-footer">
                 <button class="btn-primary" type="submit">Publier</button>
             </div>
 
@@ -156,100 +160,156 @@
     import axios from "axios";
 
   export default defineComponent({
-    name: 'add_poste',
+    name: 'add_post',
     components: {
         Nav_bar,
         Popup_add_item,
         Swiper,
         SwiperSlide,
     },
-    mounted() {
-      this.$func.verifSession().then(() => {
-
-
-    });
-     
-
+    props: {
+        postData: {
+            type: String,
+            default: ''
+        }
     },
     data(): { 
       isDragOver: boolean;
     } {
       return {
-        isDragOver: false
+        isDragOver: false,
       };
     },
-    setup(props, { emit }) {
-      const imagesPreview = ref<string[]>([]);
+    mounted() {
+        this.$func.verifSession().then(() => {
+
+        });
+    },
+
+    setup(props) {
+        const imagesPreview = ref<string[]>([]);
         const router = useRouter();
 
-      const formData = ref({
-        title: '',
-        description: '',
-        price: null,
-        currency: 'EUR',
-        condition: 'new',
-        category: '',
-        type: 'photocard',
-        kpopGroup: '',
-        kpopMember: '',
-        albumName: '',
-        images: [] as File[],
-        shippingOptions: {
-          worldwide: false,
-          nationalOnly: false,
-          localPickup: false,
-          shippingCost: null,
-        },
-      });
-      const handleImageUpload = (event: Event) => {
-        const file = (event.target as HTMLInputElement).files?.[0];
-        if (file) {
-          formData.value.images.push(file);
-  
-          const reader = new FileReader();
-       
-          reader.onload = (e) => {
-            if (e.target?.result) {
-              imagesPreview.value.push(e.target.result as string);
+        const formData = ref({
+            title: '',
+            description: '',
+            price: null,
+            currency: 'EUR',
+            condition: 'new',
+            category: '',
+            type: 'photocard',
+            kpopGroup: '',
+            kpopMember: '',
+            albumName: '',
+            images: [] as File[],
+            shippingOptions: {
+                worldwide: false,
+                nationalOnly: false,
+                localPickup: false,
+                shippingCost: null,
+            },
+        });
+
+        const route = useRoute();
+        let postDataObjet: any = null;
+        const isModyfy = ref(false);
+
+        // Get data from query params instead of props
+        const postDataFromQuery = route.query.postData as string;
+        
+        if(postDataFromQuery && postDataFromQuery !== ''){
+            try {
+                postDataObjet = JSON.parse(postDataFromQuery);
+                isModyfy.value = true;
+            } catch (error) {
+                console.error('Error parsing postData:', error);
             }
-          };
-          reader.readAsDataURL(file);
         }
-    };
 
-    const removeImage = (index: number) => {
-      formData.value.images.splice(index, 1);
-      imagesPreview.value.splice(index, 1);
-    };
 
-    const triggerFileInput = () => {
-      const fileInput = document.getElementById('imageUpload') as HTMLInputElement;
-      fileInput.click();
-    };
-    
-      return {
-        formData,
-        router,
-        imagesPreview,
-        handleImageUpload,
-        removeImage,
-        triggerFileInput,
-      };
-    },
-    methods:{
-        async save(){
-            const response = await postService.createPost(this.formData);
+        if (postDataObjet) {
+            formData.value = { ...formData.value, ...postDataObjet };
+            postDataObjet.images.forEach(image => {
+                let API_URL = import.meta.env.VITE_API_URL;
+                let imgTmp = API_URL+image;
+                imagesPreview.value.push(imgTmp);
+            });
+        }
+        console.log(formData.value);
+
+        const handleImageUpload = (event: Event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (file) {
+                formData.value.images.push(file);
+  
+                const reader = new FileReader();
+       
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        imagesPreview.value.push(e.target.result as string);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const removeImage = (index: number) => {
+            formData.value.images.splice(index, 1);
+            imagesPreview.value.splice(index, 1);
+        };
+
+        const triggerFileInput = () => {
+            const fileInput = document.getElementById('imageUpload') as HTMLInputElement;
+            fileInput.click();
+        };
+
+        const save = async () => {
+            var response = null;
+            if(isModyfy){
+                response = await postService.updatePost(postDataObjet._id,formData.value);
+            }else{
+                response = await postService.createPost(formData.value);
+            }
             console.log(response);
             
             if (response == 'ok') {
-                this.$func.showToastSuccess('Produit créé avec succès !');
-                this.router.push({ name: 'profile' , params: { id: 'me' }});
-
-            }else{
-                this.$func.showToastError(response.message || 'Erreur lors de la création du produit');
-
+                // Note: $func is not available in setup, you'll need to handle this differently
+                // this.$func.showToastSuccess('Produit créé avec succès !');
+                router.push({ name: 'profile' , params: { id: 'me' }});
+            } else {
+                // this.$func.showToastError(response.message || 'Erreur lors de la création du produit');
             }
-        },
+        };
+
+        const readFiles = (files: any) => {
+            const file = files[0];
+            if (file) {
+                formData.value.images.push(file);
+    
+                const reader = new FileReader();
+        
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        imagesPreview.value.push(e.target.result as string);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    
+        return {
+            formData,
+            router,
+            imagesPreview,
+            handleImageUpload,
+            removeImage,
+            triggerFileInput,
+            isModyfy,
+            save,
+            readFiles,
+        };
+    },
+    methods:{
         onDragOver() {
             this.isDragOver = true;
         },
@@ -260,21 +320,6 @@
             const files = event.dataTransfer?.files;
             this.isDragOver = false;
             this.readFiles(files);
-        },
-        readFiles(files: any) {
-            const file = files[0];
-            if (file) {
-            this.formData.images.push(file);
-    
-            const reader = new FileReader();
-        
-            reader.onload = (e) => {
-                if (e.target?.result) {
-                    this.imagesPreview.push(e.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
-            }
         },
     }
   });
@@ -451,4 +496,3 @@
     }
 }
 </style>
-  

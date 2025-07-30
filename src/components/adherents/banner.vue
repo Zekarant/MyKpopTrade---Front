@@ -40,7 +40,7 @@
                         </div>
                         <div class="identifier">@{{ profilInfo.username }}</div>
                     </div>
-                    <div class="container_infos col-md-6">
+                    <div class="container_infos col-md-7">
                         <div class="row">
                             <div class="col-md-5 subscription">
                                 <span class="bold">00</span> Abonnements
@@ -49,10 +49,10 @@
                                 <span class="bold">00</span> Abonnés
 
                             </div>
-                            <div class="col-md-1 more_content" @click="toggleMenu($event)">
+                            <div v-if="admin" class="col-md-1 more_content" @click="toggleMenu($event)">
                                 <i class="bi bi-three-dots-vertical"></i>
                                 <div v-if="isMenuVisible" class="dropdown-menu">
-                                    <ul v-if="admin">
+                                    <ul >
                                         <li @click="openSettings">
                                             <i class="bi bi-gear me-2"></i> Paramètres
                                         </li>
@@ -70,7 +70,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="container_infos col-md-2"></div>
+                    <div class="container_infos col-md-1"></div>
                 </div>
 
             </div>
@@ -273,6 +273,7 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
+    import { PDFExportService } from '../../services/PDFExportService';
     import send_message from './send_message.vue';
     export default {
         name: "banner",
@@ -327,7 +328,7 @@
         mounted() {
             const id = this.route.params.id; // Récupère l'ID passé en paramètre
             //récupérer l'id dans l'url et vérifier l'id de l'user si est pareille que l'id en session 
-            if(this.route.name =='profile' && id == 'me'){
+            if(id == 'me'){
                 this.isYouProfil = true;
             }
            
@@ -743,7 +744,19 @@
                     });
                     // Création du blob et téléchargement
                     const dataStr = JSON.stringify(response.data, null, 2);
-                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const pdfExporter = new PDFExportService();
+                    const sections = [
+                        { key: 'user', label: 'Informations Utilisateur', color: [46, 125, 50] },
+                        { key: 'products', label: 'Posts/Articles', color: [231, 76, 60] },
+                        { key: 'orders', label: 'Commandes/Achats', color: [155, 89, 182] },
+                        { key: 'messages', label: 'Messages/Conversations', color: [52, 152, 219] },
+                        { key: 'favorites', label: 'Favoris/Liste de souhaits', color: [241, 196, 15] },
+                        { key: 'reviews', label: 'Avis/Evaluations', color: [230, 126, 34] },
+                        { key: 'settings', label: 'Parametres/Preferences', color: [149, 165, 166] }
+                    ];
+                    pdfExporter.createPDF(response.data,'MyKPopTrade - Export des Données',sections);
+
+                    /*const blob = new Blob([dataStr], { type: "application/json" });
                     const url = URL.createObjectURL(blob);
 
                     const link = document.createElement('a');
@@ -752,7 +765,7 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(url);*/
                 } catch (error) {
                     this.$func.showToastError("Erreur lors de l'export des données.");
                     console.error(error);
@@ -876,7 +889,8 @@
             },
             openMessagePopup(){
                 this.popupMessage = !this.popupMessage;
-            }
+            },
+         
         },
         computed: {
             profilePictureUrl() {

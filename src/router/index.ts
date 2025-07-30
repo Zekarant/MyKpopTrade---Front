@@ -9,7 +9,7 @@ import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
 import messaging from '@p_v/messaging.vue';
-import add_poste from '@p_v/add_poste.vue';
+import add_post from '@p_v/add_post.vue';
 
 
 const routes = [
@@ -29,6 +29,11 @@ const routes = [
   { 
     path: '/adherents/dashboard', 
     name: 'dashboard',
+    component: Dashboard 
+  },  
+    { 
+    path: '/adherents/', 
+    name: 'adherents',
     component: Dashboard 
   },  
   { 
@@ -93,8 +98,14 @@ const routes = [
 
   },{
     path: '/adherents/new', 
-    name: 'add_poste',
-    component: add_poste,
+    name: 'add_post',
+    component: add_post,
+    props: true
+
+  },{
+    path: '/adherents/modify', 
+    name: 'modify_post',
+    component: add_post,
     props: true
 
   }

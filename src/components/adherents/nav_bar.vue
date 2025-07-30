@@ -175,7 +175,7 @@ import usersService from '../../services/users';
                 this.showFullMenu = false;
             },
             togglePopup() {
-                this.router.push({ name: 'add_poste' });
+                this.router.push({ name: 'add_post' });
                 //this.$emit('toggle-popup-add');
             },
 

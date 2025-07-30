@@ -47,12 +47,12 @@ import Cookies from 'js-cookie';
 export default defineComponent ({
  name: "forgot_psw",
  setup() {
-   const email = ref('');
-   const errorBase = ref('');
-   const successMessage = ref('');
+   var email = ref('');
+   var errorBase = ref('');
+   var successMessage = ref('');
    
    
-   const router = useRouter();
+   var router = useRouter();
 
    const reset = async () => {
      var verif_login = true;

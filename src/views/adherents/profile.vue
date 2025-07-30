@@ -191,10 +191,10 @@
       }
     },
     setup() {
-        const partView = ref('post');
+        var partView = ref('post');
         const route = useRoute();
         const id = route.params.id; // Récupère l'ID passé en paramètre
-        const myProfile = ref(false); 
+        var myProfile = ref(false); 
 
 
         if (id === 'me') {
@@ -203,7 +203,7 @@
         var profilInfo = ref({
           
         } as { username?: string; [key: string]: any })
-        const dataCardList = ref([]);
+        var dataCardList = ref([]);
         console.log(profilInfo)
         return {
           dataCardList,

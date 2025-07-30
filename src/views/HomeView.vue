@@ -56,10 +56,10 @@ import axios from 'axios';
 export default defineComponent({
   name: 'HomeView',
   setup() {
-    const email = ref('');
-    const emailError = ref('');
-    const successMessage = ref('');
-    const isSubmitting = ref(false);
+    var email = ref('');
+    var emailError = ref('');
+    var successMessage = ref('');
+    var isSubmitting = ref(false);
 
     const submitForm = async () => {
       emailError.value = '';

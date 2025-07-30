@@ -55,48 +55,117 @@ export default {
       throw error;
     }
   },
+  async deletePost(id) {
+    try {
+      const response = await axios.delete(`${API_URL}/api/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${getSessionToken()}`,
+          "Content-Type": "application/json"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+        func.verifSession().then(() => {
+          this.deletePost(id);
+        });
+      }
+      console.error('Erreur lors de la recherche :', error);
+      throw error;
+    }
+  },
 
   // Créer un post
   createPost: async (postData) => {
-  const data = new FormData();
-  data.append('title', postData.title);
-  data.append('description', postData.description);
-  data.append('price', postData.price);
-  data.append('currency', postData.currency);
-  data.append('condition', postData.condition);
-  data.append('category', postData.category);
-  data.append('type', postData.type);
-  data.append('kpopGroup', postData.kpopGroup);
-  data.append('kpopMember', postData.kpopMember);
-  data.append('albumName', postData.albumName);
-  postData.images.forEach((file) => {
-    data.append('productImages', file);
-  });
-  data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
-
-  try {
-    const response = await axios.post(`${API_URL}/api/products`, data, {
-      headers: {
-        Authorization: `Bearer ${getSessionToken()}`,
-      },
+    const data = new FormData();
+    data.append('title', postData.title);
+    data.append('description', postData.description);
+    data.append('price', postData.price);
+    data.append('currency', postData.currency);
+    data.append('condition', postData.condition);
+    data.append('category', postData.category);
+    data.append('type', postData.type);
+    data.append('kpopGroup', postData.kpopGroup);
+    data.append('kpopMember', postData.kpopMember);
+    data.append('albumName', postData.albumName);
+    postData.images.forEach((file) => {
+      data.append('productImages', file);
     });
+    data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
 
-    if (response.status === 201 || response.status === 200) {
-      return 'ok';
-    } else {
-      return response;
+    try {
+      const response = await axios.post(`${API_URL}/api/products`, data, {
+        headers: {
+          Authorization: `Bearer ${getSessionToken()}`,
+        },
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        return 'ok';
+      } else {
+        return response;
+      }
+
+    } catch (error) {
+      const res = error.response;
+
+      if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+
+        func.verifSession();
+      }
+
+      return res.data;
+    }
+},
+  updatePost: async (id, postData) => {
+    var data = {
+      title: postData.title,
+      description: postData.description,
+      price: postData.price,
+      currency: postData.currency,
+      condition: postData.condition,
+      category: postData.category,
+      type: postData.type,
+      kpopGroup: postData.kpopGroup,
+      kpopMember: postData.kpopMember,
+      albumName: postData.albumName,
+      shippingOptions: postData.shippingOptions,
+      productImages: []
+    };
+
+    if(postData.productImages && postData.productImages.length > 0) {
+      postData.productImages.forEach((file) => {
+        data.productImages.push(file);
+      });
+    }else{
+      postData.images.forEach((file) => {
+        data.productImages.push(file);
+      });
     }
 
-  } catch (error) {
-    const res = error.response;
+    try {
+      const response = await axios.put(`${API_URL}/api/products/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${getSessionToken()}`,
+        },
+      });
 
-    if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+      if (response.status === 201 || response.status === 200) {
+        return 'ok';
+      } else {
+        return response;
+      }
 
-      func.verifSession();
+    } catch (error) {
+      const res = error.response;
+
+      if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+
+        func.verifSession();
+      }
+
+      return res.data;
     }
-
-    return res.data;
-  }
 },
   updateImagesPost: async (images) => {
     images.forEach(image => {

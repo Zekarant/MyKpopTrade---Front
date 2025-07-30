@@ -59,13 +59,13 @@
   export default defineComponent ({
     name: "Login",
     setup() {
-      const username = ref('');
-      const password = ref('');
-      const passwordError = ref('');
-      const ErroruserName = ref('');
-      const usernameError = ref('');
-      const errorBase = ref('');
-      const successMessage = ref('');
+      var passwordError = ref('');
+      var username = ref('');
+      var password = ref('');
+      var ErroruserName = ref('');
+      var usernameError = ref('');
+      var errorBase = ref('');
+      var successMessage = ref('');
       
       
       const router = useRouter();
