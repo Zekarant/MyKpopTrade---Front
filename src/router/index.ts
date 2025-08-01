@@ -16,33 +16,33 @@ const routes = [
     name: 'home',
     component: () => import('../views/HomeView.vue')
   },
-  { path: '/login', 
+  { path: '/login',
     name: 'login',
-    component: Login 
+    component: Login
   },
-  { path: '/register', 
+  { path: '/register',
     name: 'register',
-    component: Register 
-  },
-  { 
-    path: '/adherents/dashboard', 
-    name: 'dashboard',
-    component: Dashboard 
-  },  
-  { 
-    path: '/adherents/collection', 
-    name: 'collection',
-    component: Collection 
-  },
-  { 
-    path: '/adherents/profile/:id', 
-    name: 'profile',
-    component: profile 
+    component: Register
   },
   {
-    path: '/forgot_psw', 
+    path: '/adherents/dashboard',
+    name: 'dashboard',
+    component: Dashboard
+  },
+  {
+    path: '/adherents/collection',
+    name: 'collection',
+    component: Collection
+  },
+  {
+    path: '/adherents/profile/:id',
+    name: 'profile',
+    component: profile
+  },
+  {
+    path: '/forgot_psw',
     name: 'forgot_psw',
-    component: forgot_psw 
+    component: forgot_psw
   },
 {
   path: '/search-:combined?',
@@ -78,13 +78,45 @@ const routes = [
     return { query, event };
   }
 },{
-    path: '/searchList_bis', 
+    path: '/searchList_bis',
     name: 'searchList_bis',
     component: searchList_bis,
     props: true
 
+  },
+  {
+    path: '/messages',
+    name: 'messages',
+    component: () => import('@/views/messaging/MessagesView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Messages'
+    },
+    children: [
+      {
+        path: '',
+        name: 'messages-list',
+        component: () => import('@/components/messaging/ConversationList.vue')
+      },
+      {
+        path: ':id',
+        name: 'conversation',
+        component: () => import('@/components/messaging/ConversationDetail.vue'),
+        props: true
+      }
+    ]
+  },
+  {
+    path: '/negotiate/:productId',
+    name: 'negotiate',
+    component: () => import('@/views/messaging/NegotiateView.vue'),
+    props: true,
+    meta: {
+      requiresAuth: true,
+      title: 'Négocier'
+    }
   }
-  
+
 ];
 
 
