@@ -56,6 +56,7 @@
         text-decoration: none;
         transition: all 0.3s;
         border: none;
+        cursor: pointer;
     }
     .card:hover {
     box-shadow: 0 0 0 1px #d2d2d22b, 

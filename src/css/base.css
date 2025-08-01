@@ -38,18 +38,12 @@
   border-radius: 5px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
 }
 .btn-danger:hover{
   background-color: white !important;
   border-color: white !important;
   color:  var(--danger-color) !important;
   border: 2px solid var(--danger-color) !important;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
 }
 .btn-danger-outline{
   background-color: white !important;
@@ -109,6 +103,7 @@
   color: var(--primary-color) !important;
   border: 2px solid var(--primary-color) !important;
 }
+
 .btn-primary-outline{
   background-color: white !important;
   border-color: var(--primary-color) !important;

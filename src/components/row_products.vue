@@ -29,8 +29,8 @@
         <div class="custom-swiper-next">
             <i class="bi bi-chevron-right chevron-bold"></i>        
         </div>
-        <swiper-slide class="voir-plus-slide">
-            <button v-if="pagination.page < pagination.pages " class="voir-plus-btn" @click="onVoirPlus">Voir plus</button>
+        <swiper-slide v-if="pagination.page < pagination.pages " class="voir-plus-slide">
+            <button class="voir-plus-btn" @click="onVoirPlus">Voir plus</button>
         </swiper-slide>
     </swiper>
 
@@ -84,7 +84,13 @@
                     total: 10,
                 }),
             },
+            moreBtn: {
+                type: Boolean,
+                default: false
+            }
         },
+        emits: ['voirPlus'], 
+        
         data() {
           return {
 

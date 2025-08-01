@@ -26,6 +26,14 @@
                                         <i class="bi bi-cart-check-fill me-2"></i>
                                         Vendu
                                     </li>
+                                    <li v-if="isRoot" @click="showDeletePopup = !showDeletePopup">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Supprimer
+                                    </li>
+                                    <li v-if="isRoot" @click="modifyPost">
+                                        <i class="bi bi-pen me-2"></i>
+                                        Modifier
+                                    </li>
                                     
                                 </ul>
                         </div>
@@ -106,10 +114,10 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="!dataPost.isReserved" class="post_card_content_footer">
+                <div v-if="!dataPost.isReserved && !isRoot" class="post_card_content_footer">
                     <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button">Faire une offre</button>
                     <button class="btn-blue-outline" type="button">Acheter</button>
-                    <button class="btn-blue-outline" type="button">Envoyer un message</button>
+                    <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
                 </div>
             </div>
             <div class="illustration">
@@ -128,6 +136,9 @@
         </div>
 
     </div>
+    <!--------- Popup Pour envoyer un message ---------->
+    <send_message :id_user="dataSeller._id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
+
     <!--------- Popup ---------->
     <div v-if="showSoldPopup "class="popup-overlay">
         <div class="popup-content">
@@ -138,6 +149,17 @@
             </div>
         </div>
     </div>
+    <!--------- Popup Suppression ---------->
+    <div v-if="showDeletePopup "class="popup-overlay">
+        <div class="popup-content">
+            <p>Voulez-vous vraiment supprimer cet article  ?</p>
+            <div class="popup-buttons-footer">
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="hidePopup">Annuler</button>
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="deletePost(dataPost._id)">Supprimer</button>
+            </div>
+        </div>
+    </div>
+    
     <report_card @closeReport="showPopupReport = false" :type="'product'" :id="dataPost._id" v-if="showPopupReport"></report_card>
 
 </template>
@@ -149,6 +171,8 @@
     import card_illu from '../components/card_illu.vue';
     import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
+    import send_message from '../components/adherents/send_message.vue';
+    
     import postService from '@/services/post.js';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
@@ -158,7 +182,8 @@
         components: {
             card_illu,
             ImageCarousel,
-            report_card
+            report_card,
+            send_message
         },
         props: {
             dataUser: {
@@ -174,10 +199,12 @@
                 dataPost: {} as Record<string, any>,
                 dataSeller: {} as Record<string, any>,
                 isMenuVisible: false,
-                isRoot: false,
+                isRoot: true,
                 showSoldPopup: false,
+                showDeletePopup: false,
                 isFav: false,
                 showPopupReport: false,
+                popupMessage: false
             };
         },
         setup(){
@@ -195,18 +222,25 @@
         },
         async mounted() {
             await this.getData();
+            console.log(this.dataUser);
+            console.log(this.dataPost);
 
-            if(this.dataSeller._id==this.myId) {
-                if (this.dataUser) {
-                    this.dataSeller = this.dataUser;
-                    this.isRoot = true;
-                }
+            if (this.dataUser) {
+                this.dataSeller = this.dataUser;
             }else{
+                this.isRoot = false;
                 this.dataSeller = this.dataPost.seller;
             }
-            console.log(this.isRoot);
+            if(this.dataSeller.id==this.myId) {
+                if (this.dataUser) {
+                    this.isRoot = true;
+                }else{
+                    this.isRoot = false;
+                }
+            }
             console.log(this.dataSeller);
         },
+
         computed: {
 
             profilePictureUrl() {
@@ -249,6 +283,24 @@
                     this.$emit('sold');
                 }
             },
+            async deletePost(id: any){
+                const response = await postService.deletePost(id);
+                console.log(response);
+
+                if (response) {
+                    console.log(response);
+                    this.showSoldPopup = false;
+                    this.$emit('sold');
+                }
+            },
+            modifyPost(){
+                this.router.push({
+                    name: 'modify_post',
+                    query: {
+                        postData: JSON.stringify(this.dataPost)
+                    }
+                });
+            },
             async addFav(id: any){
                 await postService.addFavorite(id).then(addFavorite => {                
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
@@ -268,6 +320,9 @@
             viewUser(){
                 this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
             }, 
+            openMessagePopup(){
+                this.popupMessage = !this.popupMessage;
+            }
       
         },
         watch: {

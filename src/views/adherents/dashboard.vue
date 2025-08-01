@@ -48,10 +48,8 @@
     },
     mounted() {
       this.$func.verifSession().then(() => {
-
         this.getFav();
         this.getRecommendations();
-
         this.getPosts(12);
 
       });
@@ -90,7 +88,6 @@
       },
       getRecommendations(){
         postService.getRecommendations().then((products) => {
-          console.log(products);
           this.productRecommendations = products;
         });
       },

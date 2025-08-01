@@ -40,7 +40,7 @@
                         </div>
                         <div class="identifier">@{{ profilInfo.username }}</div>
                     </div>
-                    <div class="container_infos col-md-6">
+                    <div class="container_infos col-md-7">
                         <div class="row">
                             <div class="col-md-5 subscription">
                                 <span class="bold">00</span> Abonnements
@@ -49,10 +49,10 @@
                                 <span class="bold">00</span> Abonnés
 
                             </div>
-                            <div class="col-md-1 more_content" @click="toggleMenu($event)">
+                            <div v-if="admin" class="col-md-1 more_content" @click="toggleMenu($event)">
                                 <i class="bi bi-three-dots-vertical"></i>
                                 <div v-if="isMenuVisible" class="dropdown-menu">
-                                    <ul v-if="admin">
+                                    <ul >
                                         <li @click="openSettings">
                                             <i class="bi bi-gear me-2"></i> Paramètres
                                         </li>
@@ -63,21 +63,23 @@
                         <br>
                         <div class="row">
                             <div class="col-md-7">
-                                <button v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
+                                <button @click="openMessagePopup" v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
                             </div>
                             <div class="col-md-5">
                                 <button v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-primary">Suivre</button>
                             </div>
                         </div>
                     </div>
-                    <div class="container_infos col-md-2"></div>
+                    <div class="container_infos col-md-1"></div>
                 </div>
 
             </div>
         </div>
     </div>
 
-
+    
+    <!--------- Popup Pour envoyer un message ---------->
+    <send_message :id_user="profilInfo.id" :pseudo_user="profilInfo.username" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
     <!--------- Popup Supression ---------->
     <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" @click="closePopup()" class="popup-overlay">
         <div @click="$event.stopPropagation()" class="popup-content">
@@ -271,7 +273,8 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
-
+    import { PDFExportService } from '../../services/PDFExportService';
+    import send_message from './send_message.vue';
     export default {
         name: "banner",
         data() {
@@ -306,8 +309,13 @@
                 passwordForConfirm: '',
                 documentType:'id_card', // Type de document pour la vérification d'identité
                 verification: null as any,
+                popupMessage: false,
 
             };
+        },
+        components: {
+            send_message,
+          
         },
         setup() {
             const route = useRoute();
@@ -320,7 +328,7 @@
         mounted() {
             const id = this.route.params.id; // Récupère l'ID passé en paramètre
             //récupérer l'id dans l'url et vérifier l'id de l'user si est pareille que l'id en session 
-            if(this.route.name =='profile' && id == 'me'){
+            if(id == 'me'){
                 this.isYouProfil = true;
             }
            
@@ -378,11 +386,11 @@
 
                     formData.append('profileBanner', file);
 
-                    const PHPSESSID = Cookies.get('PHPSESSID');
+                    const sessionToken = Cookies.get('sessionToken');
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                     }).then(response => {
@@ -409,12 +417,12 @@
 
                     formData.append('profilePicture', file);
                     console.log('Contenu de FormData :', Array.from(formData.entries()));
-                    const PHPSESSID = Cookies.get('PHPSESSID');
+                    const sessionToken = Cookies.get('sessionToken');
                     console.log(formData);
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                     }).then(response => {
@@ -446,10 +454,10 @@
                 }
             },
             confirmDeleteBanner(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`,
+                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
                     this.profilInfo.profileBanner = null;
@@ -463,10 +471,10 @@
                 });
             },
             confirmDeletePicture() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`,
+                        'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
                     this.profilInfo.profilePicture = null; // Supprime localement l'image
@@ -484,10 +492,10 @@
                 if(!this.profilInfo.isIdentityVerified){
                     this.verifIdentityPopup = true;
                     try {
-                        const PHPSESSID = Cookies.get('PHPSESSID');
+                        const sessionToken = Cookies.get('sessionToken');
                         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
                             headers: {
-                                'Authorization': `Bearer ${PHPSESSID}`
+                                'Authorization': `Bearer ${sessionToken}`
                             }
                         });
                         console.log(response.data.message);
@@ -513,10 +521,10 @@
                 }
             },
             stopVerifIdentity(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/verification/identity/cancel`, {
                     headers: {
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -535,7 +543,7 @@
                 });
             },
             verifIdentity(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 var data = new FormData();
                 data.append('documentType',  this.documentType);
                 data.append('consentGiven',  String(this.consentUseData));
@@ -544,7 +552,7 @@
                 }
                 axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity`, data, {
                     headers: {
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -564,13 +572,13 @@
             },
             async verifEmail(){
     
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
                     email: this.profilInfo.email,
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -589,13 +597,13 @@
             },
             async verifTel(){
     
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-phone-verification`, {
                     phoneNumber: this.phoneNumber,
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -613,13 +621,13 @@
             
             },
             async verifCodeTel(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-phone`, {
                     code: String(this.phoneCode),
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -635,7 +643,7 @@
                 });
             },
             async changeAllowDirectMessages() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, 
                 {
@@ -645,7 +653,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -664,7 +672,7 @@
                 this.isBtnSaveVisible = !this.isBtnSaveVisible;
             },
             saveTel(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, 
                 {
@@ -672,7 +680,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -696,7 +704,7 @@
                 this.showSettingPswd = true
             },
             async saveSettingsPswd(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`, 
                 {
@@ -706,7 +714,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                         }
                 }).then(response => {
@@ -727,16 +735,28 @@
             
             }, 
             async exportUserData() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 try {
                     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/data-export`, {
                         headers: {
-                            'Authorization': `Bearer ${PHPSESSID}`
+                            'Authorization': `Bearer ${sessionToken}`
                         }
                     });
                     // Création du blob et téléchargement
                     const dataStr = JSON.stringify(response.data, null, 2);
-                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const pdfExporter = new PDFExportService();
+                    const sections = [
+                        { key: 'user', label: 'Informations Utilisateur', color: [46, 125, 50] },
+                        { key: 'products', label: 'Posts/Articles', color: [231, 76, 60] },
+                        { key: 'orders', label: 'Commandes/Achats', color: [155, 89, 182] },
+                        { key: 'messages', label: 'Messages/Conversations', color: [52, 152, 219] },
+                        { key: 'favorites', label: 'Favoris/Liste de souhaits', color: [241, 196, 15] },
+                        { key: 'reviews', label: 'Avis/Evaluations', color: [230, 126, 34] },
+                        { key: 'settings', label: 'Parametres/Preferences', color: [149, 165, 166] }
+                    ];
+                    pdfExporter.createPDF(response.data,'MyKPopTrade - Export des Données',sections);
+
+                    /*const blob = new Blob([dataStr], { type: "application/json" });
                     const url = URL.createObjectURL(blob);
 
                     const link = document.createElement('a');
@@ -745,17 +765,17 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(url);*/
                 } catch (error) {
                     this.$func.showToastError("Erreur lors de l'export des données.");
                     console.error(error);
                 }
             },
             requestAccountDeletion() {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/delete-account`, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}`
+                        'Authorization': `Bearer ${sessionToken}`
                     },data: {
                         password: this.passwordForConfirm  
                     }
@@ -774,12 +794,12 @@
                 });
             },
             confirmAnonymize(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 axios.post(`${import.meta.env.VITE_API_URL}/api/users/me/anonymize`, {
                     "confirmation": true
                 }, {
                     headers: {
-                        'Authorization': `Bearer ${PHPSESSID}` 
+                        'Authorization': `Bearer ${sessionToken}` 
                     }
                 }).then(response => {
                     this.$func.showToastSuccess(response.data.message);
@@ -795,13 +815,13 @@
                 });
             },
             deletePaypal(){
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
                     },
                     data: {
                         paypalEmail: this.emailPaypal
@@ -826,7 +846,7 @@
             },
             savePaypal(){
                 
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
 
                 axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
                 {
@@ -834,7 +854,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
                     }
                 }).then(response => {
@@ -866,7 +886,11 @@
                     };
                     reader.readAsDataURL(file);
                 }
-            }
+            },
+            openMessagePopup(){
+                this.popupMessage = !this.popupMessage;
+            },
+         
         },
         computed: {
             profilePictureUrl() {

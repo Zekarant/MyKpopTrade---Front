@@ -15,7 +15,7 @@
         Grid,
     },
     setup() {
-        const dataCardList = ref([
+        var dataCardList = ref([
         {
                 name: "Name Card",
                 imgFront: "https://cdn.shopify.com/s/files/1/0469/3927/5428/products/txt-lucky-draw-unit-photocard-temptation-nolae-822501_400x400.jpg?v=1701359489",

@@ -86,7 +86,7 @@
                 this.showPopupReview = false;
             },
             async sendSignal(reason: string) {
-                const PHPSESSID = Cookies.get('PHPSESSID');
+                const sessionToken = Cookies.get('sessionToken');
                 let id_review = this.review._id;
                 let data = {
                     'reason': reason,
@@ -94,7 +94,7 @@
                 
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${id_review}/report`, data, {
                     headers: {
-                    Authorization: `Bearer ${PHPSESSID}`,
+                    Authorization: `Bearer ${sessionToken}`,
                     }
                 }).then(response => {
                     if (response.status == 201 || response.status == 200) {

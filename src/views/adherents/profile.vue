@@ -191,10 +191,10 @@
       }
     },
     setup() {
-        const partView = ref('post');
+        var partView = ref('post');
         const route = useRoute();
         const id = route.params.id; // Récupère l'ID passé en paramètre
-        const myProfile = ref(false); 
+        var myProfile = ref(false); 
 
 
         if (id === 'me') {
@@ -203,7 +203,7 @@
         var profilInfo = ref({
           
         } as { username?: string; [key: string]: any })
-        const dataCardList = ref([]);
+        var dataCardList = ref([]);
         console.log(profilInfo)
         return {
           dataCardList,
@@ -238,11 +238,11 @@
       },
       async getInfoProfil(){
         console.log('getInfoProfil');
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
         await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+              'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
             }
           }).then(response => {
@@ -267,12 +267,12 @@
   
       },
       getInfoUser(user: string){
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
 
         axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/user/`+user, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+            'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
           }
         }).then(response => {
@@ -291,12 +291,12 @@
         if(idUser != null){
           url = '/api/products/inventory/user/'+idUser;
         }
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
 
         await axios.get(`${import.meta.env.VITE_API_URL}`+url, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PHPSESSID}` // Ajout du Bearer Token
+            'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
 
           }
         }).then(response => {
@@ -318,14 +318,14 @@
         this.isBtnSaveVisible = true;
       },
       async getReviex(){
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
         try {
           await axios.get(
             `${import.meta.env.VITE_API_URL}/api/profiles/ratings/`+this.profilInfo._id,
             {
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${PHPSESSID}`
+                'Authorization': `Bearer ${sessionToken}`
               }
             }
           ).then(response => {
@@ -345,7 +345,7 @@
         }
       },
       async saveProfile() {
-        const PHPSESSID = Cookies.get('PHPSESSID');
+        const sessionToken = Cookies.get('sessionToken');
         try {
           await axios.put(
             `${import.meta.env.VITE_API_URL}/api/profiles/me`,
@@ -357,7 +357,7 @@
             {
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${PHPSESSID}`
+                'Authorization': `Bearer ${sessionToken}`
               }
             }
           );

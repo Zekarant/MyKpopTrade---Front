@@ -2,8 +2,8 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { func } from '@/function.js';
 
-const PHPSESSID = Cookies.get('PHPSESSID');
-const idUser = Cookies.get('id_user');
+const getSessionToken = () => Cookies.get('sessionToken');
+const getidUser = () => Cookies.get('id_user');
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default {
@@ -19,14 +19,16 @@ export default {
           type: type
         },
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       });
       return response.data;
     } catch (error) {
       if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-        func.verifSession();
+        func.verifSession().then(() => {
+          this.getPosts(limit, page, kpopGroup, type);
+        });
       }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -38,14 +40,35 @@ export default {
     try {
       const response = await axios.get(`${API_URL}/api/products/${id}`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       });
       return response.data;
     } catch (error) {
       if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-        func.verifSession();
+        func.verifSession().then(() => {
+          this.getPost(id);
+        });
+      }
+      console.error('Erreur lors de la recherche :', error);
+      throw error;
+    }
+  },
+  async deletePost(id) {
+    try {
+      const response = await axios.delete(`${API_URL}/api/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${getSessionToken()}`,
+          "Content-Type": "application/json"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
+        func.verifSession().then(() => {
+          this.deletePost(id);
+        });
       }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -53,8 +76,8 @@ export default {
   },
 
   // Créer un post
-  createPost: async (postData) => {    
-    var data = new FormData();
+  createPost: async (postData) => {
+    const data = new FormData();
     data.append('title', postData.title);
     data.append('description', postData.description);
     data.append('price', postData.price);
@@ -66,37 +89,84 @@ export default {
     data.append('kpopMember', postData.kpopMember);
     data.append('albumName', postData.albumName);
     postData.images.forEach((file) => {
-      data.append('productImages', file); 
+      data.append('productImages', file);
     });
     data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
-    try{
-      console.log('PHPSESSID', PHPSESSID);
-      await axios.post(`${API_URL}/api/products`, data, {
+
+    try {
+      const response = await axios.post(`${API_URL}/api/products`, data, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
-        }
-      }).then(response => {
-          if (response.status == 201 || response.status == 200) {
-            return true;
-          }else {
-            return false;
-          }
-
-      }).catch(error => {
-        if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-          func.verifSession();
-        }
-        return false;
+          Authorization: `Bearer ${getSessionToken()}`,
+        },
       });
-      return true;
 
-    }catch (error) {
-      console.error('Erreur lors de la récupération des posts :', error);
-      throw error;
+      if (response.status === 201 || response.status === 200) {
+        return 'ok';
+      } else {
+        return response;
+      }
+
+    } catch (error) {
+      const res = error.response;
+
+      if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+
+        func.verifSession();
+      }
+
+      return res.data;
+    }
+},
+  updatePost: async (id, postData) => {
+    var data = {
+      title: postData.title,
+      description: postData.description,
+      price: postData.price,
+      currency: postData.currency,
+      condition: postData.condition,
+      category: postData.category,
+      type: postData.type,
+      kpopGroup: postData.kpopGroup,
+      kpopMember: postData.kpopMember,
+      albumName: postData.albumName,
+      shippingOptions: postData.shippingOptions,
+      productImages: []
+    };
+
+    if(postData.productImages && postData.productImages.length > 0) {
+      postData.productImages.forEach((file) => {
+        data.productImages.push(file);
+      });
+    }else{
+      postData.images.forEach((file) => {
+        data.productImages.push(file);
+      });
     }
 
+    try {
+      const response = await axios.put(`${API_URL}/api/products/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${getSessionToken()}`,
+        },
+      });
 
-  },
+      if (response.status === 201 || response.status === 200) {
+        return 'ok';
+      } else {
+        return response;
+      }
+
+    } catch (error) {
+      const res = error.response;
+
+      if (res && (res.data?.message === "Token invalide" || res.data?.code === "TOKEN_EXPIRED" || res.status === 401)) {
+
+        func.verifSession();
+      }
+
+      return res.data;
+    }
+},
   updateImagesPost: async (images) => {
     images.forEach(image => {
       
@@ -110,7 +180,7 @@ export default {
         buyerId: idUser
       }, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       }).then(response => {
@@ -120,7 +190,6 @@ export default {
             return false;
           }
       }).catch(error => {
-        console.log(error);
         return false;
   
       });
@@ -152,14 +221,16 @@ export default {
       const response = await axios.get(`${API_URL}/api/products`, {
         params: tabParam,
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       });
       return response.data;
     } catch (error) {
         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-          func.verifSession();
+          func.verifSession().then(() => {
+            this.search(query,maxPrice,minPrice,type);
+          });
         }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -167,26 +238,26 @@ export default {
   },
   
   addFavorite: async (id) => {
+
     try{
       await axios.post(`${API_URL}/api/products/`+id+'/favorite', {
-        buyerId: idUser
+        buyerId: getidUser()
       }, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       }).then(response => {
-        console.log()
           if (response.status === 200) {
             return true;
           } else {
             return false;
           }
       }).catch(error => {
-        console.log(error);
           if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-            func.verifSession();
-            addFavorite(id);
+            func.verifSession().then(() => {
+              this.addFavorite(id);
+            });
           }
         return false;
   
@@ -200,27 +271,27 @@ export default {
     
   },
   async getFavorites(limit = 20, page = 1)  {
-    try{
+    try {
       const response = await axios.get(`${API_URL}/api/products/inventory/favorites`, {
         params: {
           limit: limit,
           page: page
         },
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
-        
       });
       return response.data;
-
-      
-    }catch (error) {
+    } catch (error) {
       if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-        func.verifSession();
+        func.verifSession().then(() => {
+          this.getFavorites(limit, page);
+        });
+        
       }
+      console.error('Erreur lors de la recherche :', error);
       throw error;
-
     }
   },
   getRecommendations: async function ()  {
@@ -229,7 +300,7 @@ export default {
     try {
       await axios.get(`${API_URL}/api/products/recommendations/`, {
         headers: {
-          Authorization: `Bearer ${PHPSESSID}`,
+          Authorization: `Bearer ${getSessionToken()}`,
           "Content-Type": "application/json"
         }
       }).then(response => {
@@ -238,14 +309,18 @@ export default {
         })
       }).catch(error => {
         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-          func.verifSession();
+          func.verifSession().then(() => {
+            this.getRecommendations();
+          });
         }
         return tabRecommendations;
       });;
 
     } catch (error) {
       if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-        func.verifSession();
+        func.verifSession().then(() => {
+          this.getRecommendations();
+        });
       }
 
     }

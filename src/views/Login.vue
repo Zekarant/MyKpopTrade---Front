@@ -59,13 +59,13 @@
   export default defineComponent ({
     name: "Login",
     setup() {
-      const username = ref('');
-      const password = ref('');
-      const passwordError = ref('');
-      const ErroruserName = ref('');
-      const usernameError = ref('');
-      const errorBase = ref('');
-      const successMessage = ref('');
+      var passwordError = ref('');
+      var username = ref('');
+      var password = ref('');
+      var ErroruserName = ref('');
+      var usernameError = ref('');
+      var errorBase = ref('');
+      var successMessage = ref('');
       
       
       const router = useRouter();
@@ -96,7 +96,7 @@
           }).then(response => {
               console.log(response);
               if (response.status === 200) {
-              Cookies.set('PHPSESSID', response.data.accessToken, { expires: 15 / 1440 });
+              Cookies.set('sessionToken', response.data.accessToken, { expires: 15 / 1440 });
               Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 })
               Cookies.set('id_user', response.data.user.id, { expires: 1 });
               sessionStorage.removeItem('favorites');

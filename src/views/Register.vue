@@ -93,27 +93,27 @@
     name: "Register",
     setup() {
       const router = useRouter();
-      const errorBase = ref('');
-      const successMessage = ref('');
+      var errorBase = ref('');
+      var successMessage = ref('');
       
-      const username = ref('');
-      const nameError = ref('');
+      var username = ref('');
+      var nameError = ref('');
       
       /*const firstname = ref('');
       const firstnameError = ref('');*/
       
-      const tel = ref('');
-      const telError = ref('');
+      var tel = ref('');
+      var telError = ref('');
       
-      const email = ref('');
-      const emailError = ref('');
+      var email = ref('');
+      var emailError = ref('');
       
 
-      const password = ref('');
-      const password_confirm = ref('');
-      const passwordError = ref('');
-      const acceptPolicy = ref(false);
-      const policyError = ref('');
+      var password = ref('');
+      var password_confirm = ref('');
+      var passwordError = ref('');
+      var acceptPolicy = ref(false);
+      var policyError = ref('');
 
       const register = async () => {
         nameError.value = '';

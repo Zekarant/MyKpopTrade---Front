@@ -69,118 +69,146 @@ declare global {
   }
 }
 
-export default {
-  name: 'NavBar',
-  emits: ['toggle-popup-add'],
-  setup(_, { emit }) {
-    const route = useRoute();
-    const router = useRouter();
+    export default {
+        name: "left_menu",
+        data() {
+            return {
+                logoutPpopup:false,
+                menuOpen: false,
+                currentRoute: '',
+                itemMenu: [
+                    {
+                    label: 'Menu',
+                    icon: '<i class="bi bi-house"></i>',
+                    active: this.verifBtn('dashboard'),
+                    page: 'dashboard',
+                    parameter: null
 
-    const logoutPpopup = ref(false);
-    const menuOpen = ref(false);
-    const htmlImgProfile = ref('');
-    const dataUser = ref<UserProfile | null>(null);
+                    },
+                    {
+                    label: 'Mon profil',
+                    icon: '<i class="bi bi-collection"></i>',
+                    active: this.verifBtn('profile'),
+                    page: 'profile',
+                    parameter: 'me'
+                    },
+                    {
+                        label: 'Messagerie',
+                        icon: '<i class="bi bi-envelope"></i>',
+                        active: this.verifBtn('messaging'),
+                        page: 'messaging',
+                        parameter: 'me'
 
-    const itemMenu = ref<MenuItem[]>(
-      [
-        {
-          label: 'Menu',
-          icon: '<i class="bi bi-house"></i>',
-          active: false,
-          page: 'dashboard',
-          parameter: null,
+                    }
+                ],
+                itemMenuEnd: [
+                    {
+                    },
+                    {
+
+                    },
+                    {
+
+                    },
+                    {
+
+                    }
+                ],
+                dataUser:[],
+                htmlImgProfile: '',
+                showFullMenu:false
+            };
         },
-        {
-          label: 'Mon profil',
-          icon: '<i class="bi bi-collection"></i>',
-          active: false,
-          page: 'profile',
-          parameter: 'me',
+        setup() {
+            const route = useRoute();
+            const router = useRouter();
+
+            const id = route.params.id; // Récupère l'ID passé en paramètre
+            return {
+                route,
+                router,
+                id
+            };
         },
-        {
-          label: 'Messagerie',
-          icon: '<i class="bi bi-chat-left-text"></i>',
-          active: false,
-          page: 'messages',
-          parameter: 'me',
+        mounted() {
+            window.addEventListener('click', this.handleWindowClick);
         },
-      ]
-    );
+        beforeUnmount() {
+            window.removeEventListener('click', this.handleWindowClick);
+        },
+        computed: {
+            profilePicture() {
+                if(this.htmlImgProfile != ''){
+                    return this.htmlImgProfile;
+                }else{
+                    usersService.getMyInformation().then((data) => {
+                        this.dataUser = data.profile;
+                        if(this.dataUser){
+                            this.htmlImgProfile = this.$func.renderUserAvatar(this.dataUser);
+                        }else{
+                            return false;
+                        }
+                    }).catch((error) => {
+                        console.error('Error fetching user information:', error);
+                        return false;
+                    });
 
-    // Vérifie si le bouton doit être actif
-    function verifBtn(btn: string): boolean {
-      if (route.name === btn) {
-        if (btn === 'profile') {
-          return route.params?.id === 'me' || route.params?.parameter === 'me';
-        }
-        return true;
-      }
-      return false;
-    }
+                }
 
-    // Met à jour l'état actif des boutons
-    function updateMenuActive() {
-      itemMenu.value.forEach((menu) => {
-        menu.active = verifBtn(menu.page);
-      });
-    }
+            },
+        },
+        methods: {
+            handleWindowClick(event: MouseEvent) {
+                if (this.logoutPpopup) {
+                    // On vérifie si le clic est à l'extérieur de la popup et de l'avatar
+                    const popup = this.$el.querySelector('.logout_popup');
+                    const avatar = this.$el.querySelector('.userPicture');
+                    if (
+                        popup && !popup.contains(event.target as Node) &&
+                        avatar && !avatar.contains(event.target as Node)
+                    ) {
+                        this.logoutPpopup = false;
+                    }
+                }
+            },
+            verifBtn(btn:RouteRecordNameGeneric){
+                if( this.route.name == btn)
+                {
+                    if (btn === 'profile') {
+                        if (this.route.params?.id === 'me' || this.route.params?.parameter === 'me') {
+                            return true;
+                        }
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            },
+            navPage(page:RouteRecordNameGeneric, parameter: any){
 
-    // Navigation vers une page
-    function navPage(page: string, parameter: string | null) {
-      closeMenu();
-      router.push({ name: page, params: { id: parameter } });
-    }
+                this.closeMenu();
+                setTimeout(() => {
+                    this.router.push({ name: page , params: { id: parameter }});
+                }, 0);
 
-    function closeMenu() {
-      menuOpen.value = false;
-    }
 
-    function togglePopup() {
-      emit('toggle-popup-add');
-    }
+            },
+            devMenu(){
+                this.showFullMenu = true;
+            },
+            closeMenu(){
+                this.showFullMenu = false;
+            },
+            togglePopup() {
+                this.router.push({ name: 'add_post' });
+                //this.$emit('toggle-popup-add');
+            },
 
-    function toggleLogoutPopup() {
-      logoutPpopup.value = !logoutPpopup.value;
-    }
 
-    async function fetchProfilePicture() {
-      try {
-        const data = await usersService.getMyInformation();
-        dataUser.value = data.profile as UserProfile;
-        if (dataUser.value && window.$func?.renderUserAvatar) {
-          htmlImgProfile.value = window.$func.renderUserAvatar(dataUser.value);
-        } else {
-          htmlImgProfile.value = '';
-        }
-      } catch {
-        htmlImgProfile.value = '';
-      }
-    }
+        },
 
-    function logout() {
-      window.$func?.logout?.();
-    }
-
-    const profilePicture = computed(() => htmlImgProfile.value);
-
-    onMounted(() => {
-      fetchProfilePicture();
-      updateMenuActive();
-    });
-
-    return {
-      logoutPpopup,
-      menuOpen,
-      itemMenu,
-      profilePicture,
-      navPage,
-      closeMenu,
-      togglePopup,
-      toggleLogoutPopup,
-      logout,
     };
-  },
-};
+
 </script>
 
 <style lang="scss" scoped>
@@ -249,21 +277,22 @@ body {
   text-align: end;
 }
 
-.nav>.nav-links-center {
-  width: 5%;
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
+.nav > .nav-links-center {
+    width:5%;
+    display: flex;
+    align-items: center;
+    height: 100%;
 
-.add_post {
-  display: block;
-  margin-right: auto;
-  margin-left: auto;
 }
-
-.btn_add_mobile {
-  display: none !important;
+.add_post{
+    display: block;
+    margin-right:auto;
+    margin-left:auto;
+    cursor: pointer;
+}
+.btn_add_mobile{
+    display:none !important;
+    cursor: pointer;
 }
 
 .nav>.nav-links-first>a,

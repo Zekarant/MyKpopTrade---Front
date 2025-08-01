@@ -30,7 +30,7 @@
     import { func } from '@/function';
     import axios from 'axios';
     import Cookies from "js-cookie";
-    const PHPSESSID = Cookies.get('PHPSESSID');
+    const sessionToken = Cookies.get('sessionToken');
     const API_URL = import.meta.env.VITE_API_URL;
 
     export default {
@@ -71,7 +71,7 @@
                 try{
                     await axios.post(`${API_URL}/api/reports`, data, {
                         headers: {
-                        Authorization: `Bearer ${PHPSESSID}`,
+                        Authorization: `Bearer ${sessionToken}`,
                         "Content-Type": "application/json"
                         }
                     }).then(response => {

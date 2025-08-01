@@ -8,6 +8,8 @@ import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
+import messaging from '@p_v/messaging.vue';
+import add_post from '@p_v/add_post.vue';
 
 
 const routes = [
@@ -27,6 +29,11 @@ const routes = [
   {
     path: '/adherents/dashboard',
     name: 'dashboard',
+    component: Dashboard
+  },
+    {
+    path: '/adherents/',
+    name: 'adherents',
     component: Dashboard
   },
   {
@@ -115,6 +122,24 @@ const routes = [
       requiresAuth: true,
       title: 'Négocier'
     }
+  },{
+    path: '/messaging',
+    name: 'messaging',
+    component: messaging,
+    props: true
+
+  },{
+    path: '/adherents/new',
+    name: 'add_post',
+    component: add_post,
+    props: true
+
+  },{
+    path: '/adherents/modify',
+    name: 'modify_post',
+    component: add_post,
+    props: true
+
   }
 
 ];
