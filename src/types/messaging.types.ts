@@ -1,8 +1,6 @@
-// types/messaging.types.ts
 
 import type { IUserParticipant } from './user.types';
 
-// Re-export pour faciliter l'import
 export type { IUserParticipant } from './user.types';
 
 export interface MessageSender {

@@ -22,6 +22,7 @@ import type {
   ConversationDetailParams
 } from '@/types/messaging.types';
 import type { IUser, UserResponse } from '@/types/user.types';
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL + '/api' || 'http://localhost:3000/api';
 
@@ -84,22 +85,14 @@ class MessagingService {
   }
 
   private getAuthToken(): AuthToken {
-    // Récupère le cookie PHPSESSID si présent
-    const PHPSESSID = this.getCookieValue('PHPSESSID');
-    if (PHPSESSID) {
-      return PHPSESSID;
+    // Utilise js-cookie pour récupérer le sessionToken
+    const sessionToken = Cookies.get('sessionToken');
+    if (sessionToken) {
+      return sessionToken;
     }
 
-    // Sinon, récupère le token du localStorage
+    // Fallback : récupère le token du localStorage
     return localStorage.getItem('token');
-  }
-
-  private getCookieValue(name: string): string | null {
-    const cookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith(`${name}=`));
-
-    return cookie ? cookie.split('=')[1] : null;
   }
 
   private handleUnauthorized(): void {

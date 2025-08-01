@@ -96,7 +96,7 @@ declare global {
                         label: 'Messagerie',
                         icon: '<i class="bi bi-envelope"></i>',
                         active: this.verifBtn('messaging'),
-                        page: 'messaging',
+                        page: 'messages',
                         parameter: 'me'
 
                     }
