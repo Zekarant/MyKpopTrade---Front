@@ -42,8 +42,8 @@
 
 <script lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import usersService from '../../services/users';
+import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
+import userService from '../../services/user.service';
 
 interface MenuItem {
   label: string;
@@ -70,10 +70,10 @@ declare global {
 }
 
     export default {
-        name: "left_menu",
+        name: "nav_bar",
         data() {
             return {
-                logoutPpopup:false,
+                logoutPpopup: false,
                 menuOpen: false,
                 currentRoute: '',
                 itemMenu: [
@@ -141,7 +141,7 @@ declare global {
                 if(this.htmlImgProfile != ''){
                     return this.htmlImgProfile;
                 }else{
-                    usersService.getMyInformation().then((data) => {
+                    userService.getMyInformation().then((data) => {
                         this.dataUser = data.profile;
                         if(this.dataUser){
                             this.htmlImgProfile = this.$func.renderUserAvatar(this.dataUser);
@@ -202,6 +202,12 @@ declare global {
             togglePopup() {
                 this.router.push({ name: 'add_post' });
                 //this.$emit('toggle-popup-add');
+            },
+            toggleLogoutPopup() {
+              this.logoutPpopup = !this.logoutPpopup;
+            },
+            logout() {
+              this.$func.logout()
             },
 
 

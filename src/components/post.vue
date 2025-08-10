@@ -124,7 +124,7 @@
                 <div v-if="dataPost.isReserved" class="banner_reserved">
                     <div class="state">Réservé</div>
                 </div>
-                <ImageCarousel :images="dataPost.images" />
+                <ImageCarousel :images="dataPost?.images || []" />
                 <button v-if="!isRoot && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="like">
                     <i class="bi bi-heart imgcenter"></i>
                 </button>
@@ -145,7 +145,7 @@
             <p>Voulez-vous vraiment mettre cet article comme vendu ?</p>
             <div class="popup-buttons-footer">
                 <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="hidePopup">Annuler</button>
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sold(dataPost._id, dataSeller._id)">Vendu</button>
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sold(dataPost._id, dataSeller.id)">Vendu</button>
             </div>
         </div>
     </div>
@@ -173,7 +173,7 @@
     import ImageCarousel from '../components/ImageCarousel.vue';
     import send_message from '../components/adherents/send_message.vue';
     
-    import postService from '@/services/post.js';
+    import postService from '@/services/post.service';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
 
@@ -191,9 +191,11 @@
                 required: false,
             },
             idPost:{
-                type: Number,
-            }
+                type: String
+            },
+
         },
+        emits: ['closePost', 'sold'],
         data() {
             return {
                 dataPost: {} as Record<string, any>,
@@ -222,8 +224,7 @@
         },
         async mounted() {
             await this.getData();
-            console.log(this.dataUser);
-            console.log(this.dataPost);
+   
 
             if (this.dataUser) {
                 this.dataSeller = this.dataUser;
@@ -238,7 +239,6 @@
                     this.isRoot = false;
                 }
             }
-            console.log(this.dataSeller);
         },
 
         computed: {
@@ -260,11 +260,9 @@
         },
         methods: {
             async getData() {
-
                 const response = await postService.getPost(this.idPost);
                 this.dataPost = response.product;
                 this.isFav = response.isFavorite;
-                console.log(this.isFav);
             },
             toggleMenu(event: Event){
                 event.stopPropagation();
@@ -275,20 +273,14 @@
             },
             async sold(id: any,userId: any){
                 const response = await postService.sold(userId,id);
-                console.log(response);
-
                 if (response) {
-                    console.log(response);
                     this.showSoldPopup = false;
                     this.$emit('sold');
                 }
             },
             async deletePost(id: any){
                 const response = await postService.deletePost(id);
-                console.log(response);
-
                 if (response) {
-                    console.log(response);
                     this.showSoldPopup = false;
                     this.$emit('sold');
                 }
@@ -327,7 +319,6 @@
         },
         watch: {
             dataPost(newValue, oldValue) {
-                console.log('Données mises à jour:', { oldValue, newValue });
             },
         },
     });

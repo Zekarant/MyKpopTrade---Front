@@ -19,7 +19,7 @@
         <swiper-slide v-for="(data, index) in dataList" :key="index">
             <card
                 :data="data"
-                v-on:click="openPostInfo(index)"
+                @click="openPostInfo(index)"
                 :key="index"
             ></card>
         </swiper-slide>
@@ -38,7 +38,7 @@
   </div>
 </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @closePost="closePost" :idPost="dataCardPost._id" :dataPost="dataCardPost" />
+        <post @closePost="closePost" :idPost="dataCardPost._id" />
     </div>
 </template>
   

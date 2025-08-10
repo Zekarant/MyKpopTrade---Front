@@ -273,7 +273,7 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
-    import { PDFExportService } from '../../services/PDFExportService';
+    import { PDFExportService } from '../../services/PDFExportService.service';
     import send_message from './send_message.vue';
     export default {
         name: "banner",

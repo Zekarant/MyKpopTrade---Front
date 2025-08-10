@@ -25,9 +25,9 @@
       },
       props: {
         images: {
-            type: Array,
-            required: true,
-        },
+          type: Array,
+          default: () => []
+        }
     },
       setup() {
         const onSwiper = (swiper) => {

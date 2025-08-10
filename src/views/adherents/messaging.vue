@@ -17,7 +17,6 @@
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import message_list from '@/components/adherents/message_list.vue';
     
-    import postService from '../../services/post';
     import Cookies from "js-cookie";
     import axios from "axios";
 

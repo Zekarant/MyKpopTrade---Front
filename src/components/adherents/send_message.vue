@@ -13,7 +13,7 @@
   <script lang="ts">
     import axios from 'axios';
     import Cookies from "js-cookie";
-    import messagesService from '@/services/messages.js';
+    import mssagingService from '@/services/messaging.service';
     import { useRoute, useRouter } from "vue-router";
     //import eventBus from '/eventBus'
 
@@ -55,7 +55,11 @@
                 this.$emit('closeSendMessage'); // Émet un événement pour fermer la popup
             },
             sendMessage(){
-                messagesService.createConversation(this.id_user, this.id_post, this.textMessage).then((response) => {
+                mssagingService.startConversation({
+                    recipientId: this.id_user,
+                    initialMessage: this.textMessage,
+                    productId: this.id_post ?? undefined, 
+                }).then((response) => {
                     this.$func.showToastSuccess('Message envoyé avec succès');
                     this.closePopup();
                 }).catch((error) => {

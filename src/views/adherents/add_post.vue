@@ -143,7 +143,7 @@
   
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
-    import postService from '@/services/post.js';
+    import postService from '@/services/post.service';
     import { Navigation, A11y } from 'swiper/modules';
 
     // Import Swiper Vue.js components
@@ -193,7 +193,7 @@
         const formData = ref({
             title: '',
             description: '',
-            price: null,
+            price: 0,
             currency: 'EUR',
             condition: 'new',
             category: '',
@@ -216,8 +216,7 @@
 
         // Get data from query params instead of props
         const postDataFromQuery = route.query.postData as string;
-        
-        if(postDataFromQuery && postDataFromQuery !== ''){
+        if(postDataFromQuery && postDataFromQuery !== undefined && postDataFromQuery !== 'undefined'){
             try {
                 postDataObjet = JSON.parse(postDataFromQuery);
                 isModyfy.value = true;
@@ -229,13 +228,12 @@
 
         if (postDataObjet) {
             formData.value = { ...formData.value, ...postDataObjet };
-            postDataObjet.images.forEach(image => {
+            postDataObjet.images.forEach((image: string) => {
                 let API_URL = import.meta.env.VITE_API_URL;
                 let imgTmp = API_URL+image;
                 imagesPreview.value.push(imgTmp);
             });
         }
-        console.log(formData.value);
 
         const handleImageUpload = (event: Event) => {
             const file = (event.target as HTMLInputElement).files?.[0];
@@ -265,19 +263,24 @@
 
         const save = async () => {
             var response = null;
-            if(isModyfy){
-                response = await postService.updatePost(postDataObjet._id,formData.value);
+            if(isModyfy.value){
+                response = await postService.updatePost(postDataObjet.id,formData.value);
             }else{
                 response = await postService.createPost(formData.value);
             }
-            console.log(response);
             
             if (response == 'ok') {
                 // Note: $func is not available in setup, you'll need to handle this differently
-                // this.$func.showToastSuccess('Produit créé avec succès !');
+                //this.showToastSuccess('Produit créé avec succès !');
                 router.push({ name: 'profile' , params: { id: 'me' }});
             } else {
-                // this.$func.showToastError(response.message || 'Erreur lors de la création du produit');
+                const alert = document.createElement('div');
+                alert.className = 'alert error-alert';
+                alert.innerText = response.error.message || 'Erreur lors de la création du produit';
+                document.body.appendChild(alert);
+                setTimeout(() => {
+                    alert.remove();
+                }, 3000);
             }
         };
 
@@ -310,6 +313,12 @@
         };
     },
     methods:{
+        showToastError(message: string) {
+            this.$func.showToastError(message);
+        },
+        showToastSuccess(message: string) {
+            this.$func.showToastSuccess(message);
+        },
         onDragOver() {
             this.isDragOver = true;
         },

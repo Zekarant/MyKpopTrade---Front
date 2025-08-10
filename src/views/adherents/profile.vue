@@ -10,7 +10,7 @@
               <segment_profil @partDisplayed="changePart"></segment_profil>  
 
               <br>
-              <Grid style="width: 100%;" v-if="partView === 'post'" :admin="myProfile" :dataUser="profilInfo" :dataList="dataCardList"></Grid>
+              <Grid :style="{ width: '100%' }" v-if="partView === 'post'" :admin="myProfile" :dataUser="profilInfo" :dataList="dataCardList"></Grid>
               <div class="row" style="width: 100%;" v-if="partView === 'about'">
                 <div class="col-xs-0 col-md-0 col-lg-2"></div>
                 <div class="col-xs-12 col-md-12 col-lg-8">
@@ -204,7 +204,6 @@
           
         } as { username?: string; [key: string]: any })
         var dataCardList = ref([]);
-        console.log(profilInfo)
         return {
           dataCardList,
           profilInfo,
@@ -237,7 +236,6 @@
 
       },
       async getInfoProfil(){
-        console.log('getInfoProfil');
         const sessionToken = Cookies.get('sessionToken');
         await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
             headers: {
@@ -261,7 +259,6 @@
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
               this.$func.verifSession();
             }
-            console.log(error);
           });
 
   
@@ -314,7 +311,6 @@
         this.isPopupVisible = true; // Affiche la popup
       },
       info_update(){
-        console.log('update');
         this.isBtnSaveVisible = true;
       },
       async getReviex(){
@@ -336,7 +332,6 @@
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
               this.$func.verifSession();
             }
-            console.log(error);
           });
 
         } catch (error) {
@@ -374,10 +369,6 @@
       },
       handleUpdateReview({ review, index }: { review: any; index: number }) {
         if (Array.isArray(this.reviews.ratings) && this.reviews.ratings.length > index) {
-          console.log(this.reviews.ratings[index]);
-          console.log(index);
-          console.log(review);
-          console.log(this.reviews.ratings[index]);
           this.reviews.ratings[index] = review;
         }
       }

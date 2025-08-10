@@ -1,5 +1,5 @@
 <template v-if="!review.isHidden">
-    <div @click="closeMenu" class="container_detail_card">
+    <div v-bind="$attrs" @click="closeMenu" class="container_detail_card">
         <div style="font-size: small;">Posté le {{ formatDate(review.createdAt) }}</div>
         <div class="card">
             <div class="review_card_content">
@@ -56,6 +56,8 @@
             report_card
 
         },
+        inheritAttrs: false, 
+
         props: {
             review: {
                 type: Object,

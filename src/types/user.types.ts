@@ -70,6 +70,7 @@ export interface IUserParticipant {
 
 // Type pour les réponses API
 export interface UserResponse {
+  profile: never[];
   success: boolean;
   message?: string;
   user: IUser;

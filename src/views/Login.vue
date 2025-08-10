@@ -54,7 +54,6 @@
   import axios from 'axios';
   import { useRouter } from 'vue-router';
   import Cookies from 'js-cookie';
-  import postService from '../services/post';
 
   export default defineComponent ({
     name: "Login",

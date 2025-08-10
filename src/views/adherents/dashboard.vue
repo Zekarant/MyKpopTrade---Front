@@ -11,13 +11,13 @@
         </div>
         <div>
           <!-- Grid annonce Favoris -->
-          <div v-if="productFavorites.products.length > 0" class="container titleCateg">Tes favoris</div>
+          <div v-if="productFavorites.products && productFavorites.products.length > 0" class="container titleCateg">Tes favoris</div>
           <row_products @voirPlus="loadMore" :moreBtn="true" :pagination="productFavorites.pagination" :dataList="productFavorites.products"></row_products>
           <!-- Grid annonce autre -->
           <div v-if="productRecommendations.length > 0" class="container titleCateg">Recommandé pour toi</div>
           <Grid :moreBtn="true" :pagination="paginationTab" :dataList="productRecommendations"></Grid>
             <!-- Grid annonce autre -->
-          <div v-if="dataCardList.length > 0"  class="container titleCateg">Fil d'actu</div>
+          <div v-if="dataCardList && dataCardList.length > 0"  class="container titleCateg">Fil d'actu</div>
           <Grid :moreBtn="true" :pagination="paginationTab" :dataList="dataCardList"></Grid>
         </div>
 
@@ -33,7 +33,7 @@
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
-    import postService from '../../services/post';
+    import postService from '../../services/post.service';
     import Cookies from "js-cookie";
     import axios from "axios";
 
@@ -70,26 +70,28 @@
     data(): { 
       isPopupVisible: boolean; 
       dataCardList: any[],
-      paginationTab: any[],
+      paginationTab: any,
       productRecommendations: any[],
-      productFavorites: { pagination: []; products: []; }
+      productFavorites: { pagination: any; products: any[]; }
     } {
       return {
         isPopupVisible: false, 
         productRecommendations: [], 
         dataCardList: [],
-        paginationTab: [],
-        productFavorites: { pagination: [], products: [] },
+        paginationTab: {},
+        productFavorites: { pagination: {}, products: [] },
       };
     },
     methods: {
       showPopup() {
         this.isPopupVisible = true; // Affiche la popup
       },
-      getRecommendations(){
-        postService.getRecommendations().then((products) => {
-          this.productRecommendations = products;
-        });
+      async getRecommendations(){
+        const products = await postService.getRecommendations();
+        console.log('productRecommendations', products);
+
+        this.productRecommendations = products;
+        console.log('productRecommendations', this.productRecommendations);
       },
       getPosts(limit = 12) {
         postService.getPosts(limit).then((posts) => {
@@ -101,6 +103,7 @@
       },
       getFav(){
         postService.getFavorites(10).then((posts) => {
+          console.log('posts', posts);
           this.productFavorites = posts;
         }).catch((error) => {
           console.error('Erreur lors de la récupération des posts:', error);

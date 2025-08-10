@@ -63,6 +63,8 @@
 export default {
   
   name: "filter_list",
+  emits: ['saveFilter'],
+
   setup(){
     const tabFilter = ref({
       min: 0,

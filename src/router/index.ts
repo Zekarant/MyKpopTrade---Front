@@ -3,7 +3,6 @@ import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
 import searchList from '../views/adherents/searchList.vue';
-import searchList_bis from '../views/adherents/searchList_bis.vue';
 import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
@@ -84,13 +83,7 @@ const routes = [
 
     return { query, event };
   }
-},{
-    path: '/searchList_bis',
-    name: 'searchList_bis',
-    component: searchList_bis,
-    props: true
-
-  },
+},
   {
     path: '/messages',
     name: 'messages',

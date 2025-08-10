@@ -106,7 +106,7 @@
   
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
-  import postService from '@/services/post.js';
+  import postService from '@/services/post.service';
 
   export default defineComponent({
     name: 'PopupAddItem',

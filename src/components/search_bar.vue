@@ -18,7 +18,6 @@
   <script lang="ts">
     import axios from 'axios';
     import Cookies from "js-cookie";
-    import postService from '@/services/post.js';
     import { useRoute, useRouter } from "vue-router";
     //import eventBus from '/eventBus'
 
@@ -64,16 +63,7 @@
         height: 300px;
         position: relative;
     }
-    .review_card_content_header{
-        display: flex;
-    }
-    .reviewer_username{
-        vertical-align: middle;
-        margin-left: 10px;
-    }
-    .reviewer_rating{
-
-    }
+    
     .inputReason{
         width: calc(98% - 2px);
         margin-left: 1%;
@@ -81,46 +71,13 @@
         border: 2px solid var(--secondary-color-tint);
         border-radius: 4px;
     }
-    .review_card_content_header_content{
-        margin-top: 10px;
-    }
+
     .dropdown-menu{
         display: block;
     }
 
-    .review_card_content{
-        height: 100%;
-        width: 50%;
-        flex-direction: column; 
-        display: flex;
-        justify-content: space-between;
-        overflow-x: scroll;
-        position: relative;
-    }
 
-    .review_card_content_text{
-        margin-top: 10px;
-        margin-left: 10px;
-        height: 100%; // ou une hauteur explicite si besoin
-        display: flex;
-        flex-direction: column;
-    }
-    .review_text{
-        font-size: small;
-        padding-bottom: 15px;
-        max-height: 60%; // ou la valeur que tu veux
-        overflow-y: auto;
-        word-break: break-word;
-        padding-right: 3px;
-    }
-    .review_text::-webkit-scrollbar {
-        width: 8px;
-        background: #eee;
-    }
-    .review_text::-webkit-scrollbar-thumb {
-        background: #bdbdbd;
-        border-radius: 4px;
-    }
+  
     .illustration{
         display: flex;
         flex-direction: column;
@@ -133,25 +90,13 @@
         margin: 10px;
         border-radius: 5px;
     }
-    .picture_profile_review{
-        height: 80px;
-        width: 80px;
-        margin-left: 10px;
-        margin-top: 10px;
-        background-color: var(--primary-color);
-    }
-    .picture_profile_review img{
-        width: 100%;
-    }
+
     @media (max-width:980px){
         .container_detail_card .card{
             flex-direction: column-reverse;
         }
     }
     @media (max-width:820px){
-        .review_card_content{
-            width: 100%;
-        }
         .illustration{
             width: 100%;
             height: 50%;
