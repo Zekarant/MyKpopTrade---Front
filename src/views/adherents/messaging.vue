@@ -16,7 +16,8 @@
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import message_list from '@/components/adherents/message_list.vue';
-    
+    import authentification from '@/services/authentification.service';
+
     import Cookies from "js-cookie";
     import axios from "axios";
 
@@ -30,7 +31,7 @@
 
     },
     mounted() {
-      this.$func.verifSession().then(() => {
+      authentification.verifSession().then(() => {
 
 
       });

@@ -273,7 +273,8 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
-    import { PDFExportService } from '../../services/PDFExportService.service';
+    import { PDFExportService } from '@/services/PDFExportService.service';
+    import authentificationService from '@/services/authentification.service';
     import send_message from './send_message.vue';
     export default {
         name: "banner",
@@ -401,7 +402,7 @@
                         }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                            this.$func.verifSession();
+                            authentificationService.verifSession();
                         }
                         console.log(error);
                     });
@@ -433,7 +434,7 @@
                     }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                            this.$func.verifSession();
+                           authentificationService.verifSession();
                         }
                         console.log(error);
                     });
@@ -466,7 +467,7 @@
                 .catch((error) => {
                     console.error(error);
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                 });
             },
@@ -483,7 +484,7 @@
                 .catch((error) => {
                     console.error(error);
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
 
                     }
                 });
@@ -505,7 +506,7 @@
                             this.verification = response.data;
                         }else{
                             if(response.data.message == "Token invalide" || response.data.code == "TOKEN_EXPIRED"){
-                                this.$func.verifSession();
+                               authentificationService.verifSession();
                             }
                         }
                     } catch (error) {
@@ -536,7 +537,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                     this.$func.showToastError(error.response.data.message);
 
@@ -564,7 +565,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                     this.$func.showToastError(error.response.data.message);
 
@@ -590,7 +591,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                 });
             
@@ -615,7 +616,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                 });
             
@@ -638,7 +639,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                 });
             },
@@ -664,7 +665,7 @@
                         }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                            this.$func.verifSession();
+                           authentificationService.verifSession();
                         }
                     });
             },
@@ -695,7 +696,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }
                 });
             },
@@ -727,7 +728,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }else{
                         this.$func.showToastError(error.response.data.message);
                     }
@@ -782,10 +783,10 @@
                 }).then(response => {
                     this.$func.showToastSuccess(response.data.message);
                     this.showDeleteAccount = false;
-                    this.$func.logout();
+                    authentificationService.logout();
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }else{
                         this.$func.showToastError(error.response.data.message);
                     }
@@ -808,7 +809,7 @@
             
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }else{
                         this.$func.showToastError(error.response.data.message);
                     }
@@ -837,7 +838,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }else{
                         this.$func.showToastError(error.response.data.message);
                         this.saveMailPaypal = false;
@@ -866,7 +867,7 @@
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                        this.$func.verifSession();
+                       authentificationService.verifSession();
                     }else{
                         this.$func.showToastError(error.response.data.message);
                         this.saveMailPaypal = false;

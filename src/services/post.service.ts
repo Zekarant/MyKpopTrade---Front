@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios'; 
 import Cookies from "js-cookie";
-import { func } from '@/function.js';
+import authentificationService  from '@/services/authentification.service';
 
 import type {
   Post,
@@ -12,7 +12,7 @@ import type {
   SearchParams
 } from '@/types/post.types'; 
 import router from '@/router';
-// Helper functions
+// Helper authentificationServicetions
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
 
@@ -97,7 +97,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.getPosts(limit, page, kpopGroup, type);
       }
       console.error('Erreur lors de la recherche :', error);
@@ -125,7 +125,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.getPost(id);
       }
       console.error('Erreur lors de la recherche :', error);
@@ -153,7 +153,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.deletePost(id);
       }
       console.error('Erreur lors de la suppression :', error);
@@ -199,7 +199,7 @@ class PostService {
       if (res && (res.data?.message === "Token invalide" || 
                   res.data?.code === "TOKEN_EXPIRED" || 
                   res.status === 401)) {
-        await func.verifSession();
+        await authentificationService.verifSession();
       }
 
       return res.data;
@@ -257,7 +257,7 @@ class PostService {
       if (res && (res.data?.message === "Token invalide" || 
                   res.data?.code === "TOKEN_EXPIRED" || 
                   res.status === 401)) {
-        await func.verifSession();
+        await authentificationService.verifSession();
       }
 
       return res.data;
@@ -289,7 +289,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
       }
       console.error('Erreur lors de la modification du post :', error);
       return false;
@@ -327,7 +327,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.search(query, maxPrice, minPrice, type);
       }
       console.error('Erreur lors de la recherche :', error);
@@ -358,7 +358,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.addFavorite(id);
       }
       console.error('Erreur lors de l\'ajout aux favoris :', error);
@@ -380,7 +380,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.getFavorites(limit, page);
       }
       console.error('Erreur lors de la récupération des favoris :', error);
@@ -405,7 +405,7 @@ class PostService {
       if (error.response?.data?.message === "Token invalide" || 
           error.response?.data?.code === "TOKEN_EXPIRED" || 
           error.response?.status === 401) {
-        await func.verifSession();
+        await authentificationService.verifSession();
         return this.getRecommendations();
       }
       console.error('Erreur lors de la récupération des recommandations :', error);

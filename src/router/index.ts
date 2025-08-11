@@ -9,6 +9,7 @@ import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
 import messaging from '@p_v/messaging.vue';
 import add_post from '@p_v/add_post.vue';
+import Admin from '@/views/admin/admin.vue';
 
 
 const routes = [
@@ -29,6 +30,11 @@ const routes = [
     path: '/adherents/dashboard',
     name: 'dashboard',
     component: Dashboard
+  },
+  {
+    path: '/adherents/admin',
+    name: 'admin',
+    component: Admin
   },
     {
     path: '/adherents/',

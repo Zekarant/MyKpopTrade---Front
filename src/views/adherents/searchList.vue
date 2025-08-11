@@ -34,7 +34,7 @@
     import { defineComponent, ref } from 'vue';
     import { useInfiniteScroll } from '@vueuse/core'
     import { useRoute, useRouter } from 'vue-router';
-    import postService from '../../services/post.service';
+    import postService from '@/services/post.service';
     
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';

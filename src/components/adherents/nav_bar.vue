@@ -43,7 +43,8 @@
 <script lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
-import userService from '../../services/user.service';
+import userService from '@/services/user.service';
+import authentificationService from '@/services/authentification.service';
 
 interface MenuItem {
   label: string;
@@ -207,7 +208,7 @@ declare global {
               this.logoutPpopup = !this.logoutPpopup;
             },
             logout() {
-              this.$func.logout()
+              authentificationService.logout()
             },
 
 

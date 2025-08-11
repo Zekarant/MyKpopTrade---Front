@@ -15,7 +15,7 @@
     import Cookies from "js-cookie";
     const sessionToken = Cookies.get('sessionToken');
     const id_user = Cookies.get('id_user');
-
+    import authentificationService from "../../src/services/authentification.service";
     export default {
 
         name: "response_review",
@@ -108,7 +108,7 @@
                     .catch((error) => {
                         console.error(error);
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-                            this.$func.verifSession();
+                            authentificationService.verifSession();
                         }
                     });
 

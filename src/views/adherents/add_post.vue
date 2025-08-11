@@ -144,6 +144,7 @@
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
     import postService from '@/services/post.service';
+    import  authentification from '@/services/authentification.service';
     import { Navigation, A11y } from 'swiper/modules';
 
     // Import Swiper Vue.js components
@@ -181,7 +182,7 @@
       };
     },
     mounted() {
-        this.$func.verifSession().then(() => {
+        authentification.verifSession().then(() => {
 
         });
     },

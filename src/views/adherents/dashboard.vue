@@ -33,7 +33,8 @@
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
-    import postService from '../../services/post.service';
+    import postService from '@/services/post.service';
+    import authentification from '@/services/authentification.service';
     import Cookies from "js-cookie";
     import axios from "axios";
 
@@ -47,7 +48,7 @@
 
     },
     mounted() {
-      this.$func.verifSession().then(() => {
+      authentification.verifSession().then(() => {
         this.getFav();
         this.getRecommendations();
         this.getPosts(12);

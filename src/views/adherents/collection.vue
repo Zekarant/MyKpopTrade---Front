@@ -6,7 +6,7 @@
   
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
-
+    import authentification from '@/services/authentification.service';
 
   export default defineComponent({
     name: 'dashboard',
@@ -18,7 +18,7 @@
       };
     },
     mounted() {
-      this.$func.verifSession();
+      authentification.verifSession();
     },
   })
   </script>

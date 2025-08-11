@@ -3,7 +3,7 @@ import axios from "axios";
 import type { AxiosInstance, AxiosResponse } from "axios";
 
 import Cookies from "js-cookie";
-import { func } from "@/function.js";
+import authentificationService  from '@/services/authentification.service';
 import type {
     IUser,
     UserResponse
@@ -38,7 +38,7 @@ class userService {
         // Configuration des intercepteurs pour les deux clients
         this.setupInterceptors(this.userApiClient);
     }
-    // Interceptor setup function
+    // Interceptor setup authentificationServicetion
     private setupInterceptors(client: AxiosInstance) {
         client.interceptors.request.use(
             (config) => {
@@ -86,7 +86,7 @@ class userService {
         (response as any).data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
-        func.verifSession();
+        authentificationService.verifSession();
       }
 
       return response.data;
@@ -96,7 +96,7 @@ class userService {
         error?.response?.data?.code === "TOKEN_EXPIRED" ||
         error?.response?.status === 401
       ) {
-        func.verifSession();
+        authentificationService.verifSession();
       }
       console.error("Erreur lors de la recherche :", error);
       throw error;
@@ -114,7 +114,7 @@ class userService {
         (response as any).data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
-        func.verifSession();
+        authentificationService.verifSession();
       }
 
       return response.data;
@@ -124,7 +124,7 @@ class userService {
         error?.response?.data?.code === "TOKEN_EXPIRED" ||
         error?.response?.status === 401
       ) {
-        func.verifSession();
+        authentificationService.verifSession();
       }
       console.error("Erreur lors de la récupération :", error);
       throw error;

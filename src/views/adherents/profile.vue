@@ -130,6 +130,7 @@
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
     import response_review from '@/components/response_review.vue';
+    import authentificationService from '@/services/authentification.service';
 
   export default defineComponent({
     name: 'profile',
@@ -146,7 +147,7 @@
 
     mounted() {
       
-      this.$func.verifSession().then(() => {
+     authentificationService.verifSession().then(() => {
         const id = this.route?.params?.id;
         if (id === 'me') {
           // Logique pour "mon profil"
@@ -257,7 +258,7 @@
           }
           }).catch(error => {
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-              this.$func.verifSession();
+             authentificationService.verifSession();
             }
           });
 
@@ -279,7 +280,7 @@
           }
         }).catch(error => {
           if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-            this.$func.verifSession();
+           authentificationService.verifSession();
           }
         });
       },
@@ -303,7 +304,7 @@
           }
         }).catch(error => {
           if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-            this.$func.verifSession();
+           authentificationService.verifSession();
           }
         });
       },
@@ -330,7 +331,7 @@
             }
           }).catch(error => {
             if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-              this.$func.verifSession();
+             authentificationService.verifSession();
             }
           });
 
