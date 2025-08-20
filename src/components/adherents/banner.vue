@@ -327,15 +327,19 @@
             };
         },
         mounted() {
-            const id = this.route.params.id; // Récupère l'ID passé en paramètre
-            //récupérer l'id dans l'url et vérifier l'id de l'user si est pareille que l'id en session 
-            if(id == 'me'){
-                this.isYouProfil = true;
-            }
-           
+            this.checkUserProfile();
+        },
+        created() {
+            this.checkUserProfile();
         },
 
         methods: {
+            checkUserProfile() {
+                const id = this.route.params.id;
+                if(id == 'me'){
+                    this.isYouProfil = true;
+                }
+            },
             toggleMenu(event: Event){
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;

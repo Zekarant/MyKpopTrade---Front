@@ -549,7 +549,7 @@ export default defineComponent({
       align-items: center;
       gap: 8px;
       margin-top: 8px;
-      color: #dc3545;
+      color: var(--danger-color);
       font-size: 14px;
 
       i {

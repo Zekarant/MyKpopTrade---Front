@@ -6,7 +6,8 @@ import Cookies from "js-cookie";
 import authentificationService  from '@/services/authentification.service';
 import type {
     IUser,
-    UserResponse
+    UserResponse,
+    ImgUserProfile
 } from "@/types/user.types";
 import router from "@/router";
 
@@ -18,6 +19,7 @@ interface ApiError {
   status?: number;
   code?: string;
 }
+
 type AuthToken = string | null;
 
 
@@ -128,6 +130,39 @@ class userService {
       }
       console.error("Erreur lors de la récupération :", error);
       throw error;
+    }
+  }
+  renderUserAvatar(dataUser: ImgUserProfile): string {
+    const { username, profilePicture } = dataUser;
+
+    if (
+      profilePicture &&
+      profilePicture.trim() !== "" &&
+      profilePicture.trim() !==
+        "https://mykpoptrade.com/images/avatar-default.png"
+    ) {
+      return `
+        <img src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" />
+      `;
+    } else {
+      const firstLetter = username?.charAt(0).toUpperCase() || "?";
+      return `
+        <div style="
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          background-color: var(--primary-color);
+          border-radius: 3px;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 20px;
+        ">
+          ${firstLetter}
+        </div>
+      `;
     }
   }
 };

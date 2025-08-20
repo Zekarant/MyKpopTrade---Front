@@ -144,23 +144,27 @@
         Review_card, 
         response_review
     },
+   
 
     mounted() {
-      
-     authentificationService.verifSession().then(() => {
-        const id = this.route?.params?.id;
-        if (id === 'me') {
-          // Logique pour "mon profil"
-          this.myProfile = true;
-          this.getInfoProfil();
-          this.getInventory();
-        } else if (id) {
-          // Logique pour un autre profil (par exemple, charger un autre utilisateur)
-          this.myProfile = false;
-          const userId = Array.isArray(id) ? id[0] : id;
-          this.getInfoUser(userId); // ou une méthode adaptée pour un autre utilisateur
-        }
-      });
+      this.checkUserProfile();
+      authentificationService.verifSession().then(() => {
+          const id = this.route?.params?.id;
+          if (id === 'me') {
+            // Logique pour "mon profil"
+            this.myProfile = true;
+            console.log("Mon profil");
+            this.getInfoProfil();
+            this.getInventory();
+          } else if (id) {
+            // Logique pour un autre profil (par exemple, charger un autre utilisateur)
+            this.myProfile = false;
+            console.log("Pas mon profil");
+
+            const userId = Array.isArray(id) ? id[0] : id;
+            this.getInfoUser(userId); // ou une méthode adaptée pour un autre utilisateur
+          }
+        });
     },
     watch: {
     'route.params.id': {
@@ -227,7 +231,16 @@
         },
       };
     },
+    created() {
+      this.checkUserProfile();
+    },
     methods: {
+      checkUserProfile() {
+        const id = this.route.params.id; // Récupère l'ID passé en paramètre
+        if(id === 'me'){
+          this.myProfile = true;
+        }
+      },
       changePart(part: string){
         this.partView = part;
 
@@ -236,6 +249,7 @@
         }
 
       },
+
       async getInfoProfil(){
         const sessionToken = Cookies.get('sessionToken');
         await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {

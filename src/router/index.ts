@@ -7,7 +7,6 @@ import Dashboard from '@p_v/dashboard.vue';
 import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
-import messaging from '@p_v/messaging.vue';
 import add_post from '@p_v/add_post.vue';
 import Admin from '@/views/admin/admin.vue';
 
@@ -91,7 +90,7 @@ const routes = [
   }
 },
   {
-    path: '/messages',
+    path: '/adherents/messages',
     name: 'messages',
     component: () => import('@/views/messaging/MessagesView.vue'),
     meta: {
@@ -121,12 +120,6 @@ const routes = [
       requiresAuth: true,
       title: 'Négocier'
     }
-  },{
-    path: '/messaging',
-    name: 'messaging',
-    component: messaging,
-    props: true
-
   },{
     path: '/adherents/new',
     name: 'add_post',

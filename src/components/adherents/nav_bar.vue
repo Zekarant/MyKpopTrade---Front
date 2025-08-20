@@ -20,7 +20,8 @@
         @click.prevent="navPage(menu.page, menu.parameter)"
         href="#"
       >
-        {{ menu.label }}
+        <div class="label_item">{{ menu.label }}</div>
+        <div class="icon_item" v-html="menu.icon"></div>
       </a>
     </div>
     <div @click="togglePopup" class="nav-links-center">
@@ -45,6 +46,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
 import userService from '@/services/user.service';
 import authentificationService from '@/services/authentification.service';
+import type { ImgUserProfile } from '@/types/user.types';
 
 interface MenuItem {
   label: string;
@@ -64,7 +66,6 @@ interface UserProfile {
 declare global {
   interface Window {
     $func?: {
-      renderUserAvatar?: (profile: UserProfile) => string;
       logout?: () => void;
     };
   }
@@ -88,17 +89,17 @@ declare global {
                     },
                     {
                     label: 'Mon profil',
-                    icon: '<i class="bi bi-collection"></i>',
+                    icon: '<i class="bi bi-person"></i>',
                     active: this.verifBtn('profile'),
                     page: 'profile',
                     parameter: 'me'
                     },
                     {
-                        label: 'Messagerie',
-                        icon: '<i class="bi bi-envelope"></i>',
-                        active: this.verifBtn('messaging'),
-                        page: 'messages',
-                        parameter: 'me'
+                      label: 'Messagerie',
+                      icon: '<i class="bi bi-envelope"></i>',
+                      active: this.verifBtn('messages'),
+                      page: 'messages',
+                      parameter: 'me'
 
                     }
                 ],
@@ -145,7 +146,11 @@ declare global {
                     userService.getMyInformation().then((data) => {
                         this.dataUser = data.profile;
                         if(this.dataUser){
-                            this.htmlImgProfile = this.$func.renderUserAvatar(this.dataUser);
+                          var profileImgInfo : ImgUserProfile = {
+                            username: this.dataUser.username,
+                            profilePicture: this.dataUser.profilePicture
+                          };
+                          this.htmlImgProfile = userService.renderUserAvatar(profileImgInfo);
                         }else{
                             return false;
                         }
@@ -173,7 +178,12 @@ declare global {
                 }
             },
             verifBtn(btn:RouteRecordNameGeneric){
-                if( this.route.name == btn)
+                if(this.route.name == 'messages-list' && btn === 'messages')
+                {
+                    return true;
+                  
+                }
+                if(this.route.name == btn)
                 {
                     if (btn === 'profile') {
                         if (this.route.params?.id === 'me' || this.route.params?.parameter === 'me') {
@@ -235,7 +245,9 @@ body {
   box-shadow: 0px 1px 5px #d2d6de;
   position: relative;
 }
-
+.nav .icon_item{
+  display: none;
+}
 .main-title {
   font-family: Rethink Sans;
   font-size: 24px;
@@ -373,9 +385,9 @@ nav>.nav-links-end>a:hover {
   background: var(--danger-color);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 925px) {
   .nav {
-    z-index: 8;
+    z-index: 11;
   }
 
   .nav>.nav-btn {
@@ -418,7 +430,7 @@ nav>.nav-links-end>a:hover {
     left: 0px;
     text-align: center;
     padding-bottom: 60px;
-    z-index: 9;
+    z-index: 12;
     background: #fff;
   }
 
@@ -499,4 +511,6 @@ nav>.nav-links-end>a:hover {
     display: block;
   }
 }
+
+
 </style>

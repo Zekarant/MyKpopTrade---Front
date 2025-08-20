@@ -87,3 +87,7 @@ export interface UsersListResponse {
     totalPages: number;
   };
 }
+export interface ImgUserProfile {
+  username: string;
+  profilePicture?: string;
+}

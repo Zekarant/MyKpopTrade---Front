@@ -1,15 +1,15 @@
 <template>
    <div class="container_detail_card">
-        <div  class="card">
+        <div v-if="isLoading" class="loading-container">
+            <p>Chargement...</p>
+        </div>
+        <div v-else-if="dataInitialized" class="card">
             <div class="post_card_content">
                 <i style="position: absolute; top: 5px; right: 5px; width: 20px; zoom: 1.5; z-index: 3; color: var(--primary-color);" @click="closePost()" class="bi bi-x-lg display_phone_tablette"></i>
                 <div @click="viewUser()" class="post_card_content_header">
                     <div class="userPicture" v-html="profilePictureUrl"></div>
-       
-
                     <div>
                         <div class="identifier">@{{ dataSeller.username }}</div>
-
                         <div v-if="dataSeller.isIdentityVerified" class="img_certif_container">
                             <img src="@/assets/images/certif.svg">
                         </div>
@@ -18,19 +18,19 @@
                         <i class="bi bi-three-dots-vertical"></i>
                         <div v-if="isMenuVisible" class="dropdown-menu">
                                 <ul style="width: 100%;">
-                                    <li v-if="!isRoot" @click="showPopupReport=true">
+                                    <li v-if="!myProfile && !isRoot" @click="showPopupReport=true">
                                         <i class="bi bi-signal me-2"></i>
                                         Signaler
                                     </li>
-                                    <li v-if="isRoot" @click="hidePopup()">
+                                    <li v-if="myProfile || isRoot" @click="hidePopup()">
                                         <i class="bi bi-cart-check-fill me-2"></i>
                                         Vendu
                                     </li>
-                                    <li v-if="isRoot" @click="showDeletePopup = !showDeletePopup">
+                                    <li v-if="myProfile || isRoot" @click="showDeletePopup = !showDeletePopup">
                                         <i class="bi bi-trash me-2"></i>
                                         Supprimer
                                     </li>
-                                    <li v-if="isRoot" @click="modifyPost">
+                                    <li v-if="myProfile || isRoot" @click="modifyPost">
                                         <i class="bi bi-pen me-2"></i>
                                         Modifier
                                     </li>
@@ -114,7 +114,7 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="!dataPost.isReserved && !isRoot" class="post_card_content_footer">
+                <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post_card_content_footer">
                     <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button">Faire une offre</button>
                     <button class="btn-blue-outline" type="button">Acheter</button>
                     <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
@@ -125,10 +125,10 @@
                     <div class="state">Réservé</div>
                 </div>
                 <ImageCarousel :images="dataPost?.images || []" />
-                <button v-if="!isRoot && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="like">
+                <button v-if="!myProfile && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="like">
                     <i class="bi bi-heart imgcenter"></i>
                 </button>
-                <button v-if="!isRoot && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="like">
+                <button v-if="!myProfile && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="like">
                     <i style="color:var(--danger-color)" class="bi bi-heart-fill imgcenter"></i>
                 </button>
             </div>
@@ -176,6 +176,8 @@
     import postService from '@/services/post.service';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
+    import userService from "@/services/user.service";
+    import type { ImgUserProfile } from '@/types/user.types';
 
     export default defineComponent({
         name: "post",
@@ -193,6 +195,11 @@
             idPost:{
                 type: String
             },
+            myProfile: {
+                type: Boolean,
+                required: false,
+                default: false,
+            }
 
         },
         emits: ['closePost', 'sold'],
@@ -201,12 +208,14 @@
                 dataPost: {} as Record<string, any>,
                 dataSeller: {} as Record<string, any>,
                 isMenuVisible: false,
-                isRoot: true,
+                isRoot: false,
                 showSoldPopup: false,
                 showDeletePopup: false,
                 isFav: false,
                 showPopupReport: false,
-                popupMessage: false
+                popupMessage: false,
+                isLoading: true, // Ajout d'une variable de chargement
+                dataInitialized: false // Pour s'assurer que les données sont prêtes
             };
         },
         setup(){
@@ -223,28 +232,17 @@
             };
         },
         async mounted() {
-            await this.getData();
-   
-
-            if (this.dataUser) {
-                this.dataSeller = this.dataUser;
-            }else{
-                this.isRoot = false;
-                this.dataSeller = this.dataPost.seller;
-            }
-            if(this.dataSeller.id==this.myId) {
-                if (this.dataUser) {
-                    this.isRoot = true;
-                }else{
-                    this.isRoot = false;
-                }
-            }
+            await this.initializeComponent();
         },
 
         computed: {
 
             profilePictureUrl() {
-                return this.$func.renderUserAvatar(this.dataSeller);
+                var profileImgInfo : ImgUserProfile = {
+                    username: this.dataSeller.username,
+                    profilePicture: this.dataSeller.profilePicture
+                };
+                return userService.renderUserAvatar(profileImgInfo);
             },
             currencySymbol() {
                 const symbols = {
@@ -259,10 +257,49 @@
        
         },
         methods: {
+            async initializeComponent() {
+                try {
+                    this.isLoading = true;
+                    // Récupération des données du post
+                    await this.getData();
+                    // Vérification que les données sont bien chargées
+                    if (!this.dataPost || Object.keys(this.dataPost).length === 0) {
+                        throw new Error('Données du post non chargées');
+                    }
+                    
+                    // Initialisation des données utilisateur de manière synchrone
+                    this.initializeUserData();
+                    
+                    // Marquer comme initialisé
+                    this.dataInitialized = true;
+                    
+                } catch (error) {
+                    console.error('Erreur lors de l\'initialisation:', error);
+                    // Gérer l'erreur (afficher un message, rediriger, etc.)
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            initializeUserData() {
+                // Cette méthode s'exécute de manière synchrone après le chargement des données
+                if (this.dataUser && Object.keys(this.dataUser).length > 0) {
+                    this.dataSeller = { ...this.dataUser }; // Copie pour éviter les références
+                } else {
+                    this.dataSeller = this.dataPost.seller ? { ...this.dataPost.seller } : {};
+                    this.isRoot = false;
+                }
+                
+                // Vérification de l'utilisateur root
+                if (this.dataSeller._id && this.dataSeller._id === this.myId) {
+                    this.isRoot = true;
+                }
+            },
             async getData() {
                 const response = await postService.getPost(this.idPost);
-                this.dataPost = response.product;
-                this.isFav = response.isFavorite;
+                if (response && response.product) {
+                    this.dataPost = response.product;
+                    this.isFav = response.isFavorite || false;
+                }
             },
             toggleMenu(event: Event){
                 event.stopPropagation();

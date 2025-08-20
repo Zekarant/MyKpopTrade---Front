@@ -1015,7 +1015,7 @@ export default defineComponent({
       }
 
       &.btn-reject {
-        background: #dc3545;
+        background: var(--danger-color);
         color: white;
 
         &:hover {

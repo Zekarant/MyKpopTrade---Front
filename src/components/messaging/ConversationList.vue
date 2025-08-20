@@ -39,17 +39,14 @@
         @click="selectConversation(conversation)"
       >
         <div class="conversation-avatar">
-          <template v-if="hasValidProfilePicture(conversation.otherParticipant)">
-            <img
-              :src="conversation.otherParticipant!.profilePicture!"
-              :alt="`Avatar de ${conversation.otherParticipant!.username}`"
-            />
+          <template >
+            <div class="userPicture" v-html="getAvatar(conversation.otherParticipant)"></div>
           </template>
-          <template v-else>
+          <!--<template v-else>
             <div class="avatar-initials">
               {{ getAvatarInitials(conversation.otherParticipant) }}
             </div>
-          </template>
+          </template>-->
         </div>
 
         <div class="conversation-details">
@@ -127,7 +124,8 @@
 import messagingService from '@/services/messaging.service';
 import { ref, computed, onMounted } from 'vue';
 import type { Conversation, ConversationListParams, ProductReference } from '@/types/messaging.types';
-import type { IUserParticipant } from '@/types/user.types';
+import type { ImgUserProfile, IUserParticipant } from '@/types/user.types';
+import userService from '@/services/user.service';
 
 // Types pour les onglets
 type TabType = 'general' | 'product_inquiry' | 'negotiation' | 'pay_what_you_want';
@@ -178,12 +176,13 @@ const selectConversation = (conversation: Conversation): void => {
 /**
  * Vérifie si un participant a une photo de profil valide
  */
-const hasValidProfilePicture = (participant: IUserParticipant | undefined): boolean => {
+/*const hasValidProfilePicture = (participant: IUserParticipant | undefined): boolean => {
   return Boolean(
     participant?.profilePicture &&
     participant.profilePicture !== 'https://mykpoptrade.com/images/avatar-default.png'
   );
-};
+};*/
+
 
 /**
  * Récupère les initiales pour l'avatar
@@ -193,6 +192,20 @@ const getAvatarInitials = (participant: IUserParticipant | undefined): string =>
   return participant.username.charAt(0).toUpperCase();
 };
 
+/**
+ * on créer l'avatar de l'utilisateur
+ */
+
+const getAvatar = (user: IUserParticipant | undefined): string => {
+  if (!user) {
+    return 'https://mykpoptrade.com/images/avatar-default.png'; // or return a default avatar URL
+  }
+  const profileImgInfo: ImgUserProfile = {
+    username: user.username,
+    profilePicture: user.profilePicture
+  };
+  return userService.renderUserAvatar(profileImgInfo);
+};
 /**
  * Récupère le nom d'utilisateur d'un participant
  */
@@ -498,7 +511,6 @@ const filteredAndSortedConversations = computed((): Conversation[] => {
 
   return filtered;
 });
-
 // ============================================================================
 // LIFECYCLE
 // ============================================================================

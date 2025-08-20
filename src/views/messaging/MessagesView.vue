@@ -1,11 +1,11 @@
 <template>
+  <nav_bar></nav_bar>
   <div class="messaging-container">
     <!-- Sidebar Navigation -->
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="user-profile">
-          <div class="avatar">
-            <img :src="userInfo?.avatar || '/api/placeholder/40/40'" :alt="userInfo?.username || 'Profile'" />
+          <div v-html="getAvatar(userInfo)" class="avatar">
           </div>
           <div class="user-info">
             <span class="username">{{ userInfo?.username || '@nom_d_utilisateur' }}</span>
@@ -68,20 +68,21 @@
             :key="conversation._id || conversation.id"
             class="conversation-item"
             :class="{
-              active: selectedConversation?._id === conversation._id || selectedConversation?.id === conversation.id,
+              active: (selectedConversation?._id && selectedConversation._id === conversation._id) || 
+            (selectedConversation?.id && selectedConversation.id === conversation.id),
               unread: conversation.unreadCount > 0,
               favorite: conversation.isFavorite
             }"
-            @click="selectConversation(conversation)"
-          >
-            <div class="conversation-avatar">
-              <img :src="conversation.participants[0]?.avatar || '/api/placeholder/40/40'" :alt="conversation.participants[0]?.username" />
+            @click="selectConversation(conversation)">
+
+            <div>
+              <div class="conversation-avatar" v-html="getAvatar( conversation.otherParticipant || conversation.participants[0])"></div>
               <div class="online-indicator" v-if="conversation.participants[0]?.isOnline"></div>
             </div>
             <div class="conversation-content">
               <div class="conversation-header">
                 <div class="conversation-title">
-                  <span class="username">{{ conversation.participants[0]?.username || conversation.username }}</span>
+                  <span class="username">{{ conversation.otherParticipant?.username || conversation.participants[0]?.username || conversation.username }}</span>
                   <i class="bi bi-star-fill favorite-icon" v-if="conversation.isFavorite"></i>
                 </div>
                 <span class="timestamp">{{ formatTimestamp(conversation.lastMessageAt || conversation.timestamp) }}</span>
@@ -168,14 +169,13 @@
       <div v-else class="active-chat">
         <!-- Chat Header -->
         <div class="chat-header">
+          <i @click="closeConversation" class="bi bi-chevron-compact-left back-btn"></i>          
+
           <div class="chat-participant">
-            <img
-              :src="selectedConversation.participants?.[0]?.avatar || selectedConversation.avatar || '/api/placeholder/40/40'"
-              :alt="selectedConversation.participants?.[0]?.username || selectedConversation.username"
-            />
+            <div class="userPicture" v-html="getAvatar(selectedConversation.otherParticipant)"></div>
             <div class="participant-info">
               <div class="participant-name">
-                <span class="name">{{ selectedConversation.participants?.[0]?.username || selectedConversation.username }}</span>
+                <span class="name">{{ selectedConversation.otherParticipant?.username || selectedConversation.username }}</span>
                 <i class="bi bi-star-fill favorite-icon" v-if="selectedConversation.isFavorite"></i>
               </div>
               <span class="status" :class="{ online: selectedConversation.participants?.[0]?.isOnline }">
@@ -190,14 +190,19 @@
             <button class="action-btn" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
               <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
             </button>
-            <button class="action-btn" @click="showConversationOptions = !showConversationOptions" title="Options">
+            <button class="action-btn" @click="expandOptions" @click.stop title="Options">
               <i class="bi bi-three-dots"></i>
             </button>
+            
             <!-- Dropdown Options -->
             <div class="dropdown-menu" v-if="showConversationOptions" @click.stop>
               <button @click="archiveConversation(selectedConversation)" class="dropdown-item">
                 <i class="bi bi-archive"></i>
                 {{ selectedConversation.isArchived ? 'Désarchiver' : 'Archiver' }}
+              </button>
+              <button @click="showRightBar" class="dropdown-item information">
+                <i class="bi bi-info-circle"></i>               
+                Information
               </button>
               <button @click="deleteConversation(selectedConversation)" class="dropdown-item danger">
                 <i class="bi bi-trash"></i>
@@ -215,14 +220,21 @@
             class="message"
             :class="{ 'own-message': isOwnMessage(message), 'other-message': !isOwnMessage(message) }"
           >
-            <div v-if="!isOwnMessage(message)" class="message-avatar">
-              <img
-                :src="selectedConversation.participants?.[0]?.avatar || selectedConversation.avatar || '/api/placeholder/32/32'"
-                :alt="selectedConversation.participants?.[0]?.username || selectedConversation.username"
-              />
+            <div v-if="!isOwnMessage(message)">
+              <div class="message-avatar" v-html="getAvatar(selectedConversation.participants?.[0] || selectedConversation)"></div>
             </div>
             <div class="message-content">
               <div class="message-bubble">
+                <div v-if="message.attachments.length > 0" class="grid-attachements">
+                  <div
+                    class="message-attachement"
+                    v-for="(attachement, index) in message.attachments.slice(0, 4)"
+                    :key="index"
+                    :class="{ 'has-more': index === 3 && message.attachments.length > 4 }"
+                    :data-count="index === 3 && message.attachments.length > 4 ? `+${message.attachments.length - 4}` : ''" @click="openImgList(message.attachments, index)">
+                    <img :src="domain_api+'/uploads/chat_attachments/'+attachement">
+                  </div>
+                </div>
                 <p>{{ message.content }}</p>
                 <div class="message-meta">
                   <span class="message-time">{{ formatTimestamp(message.createdAt || message.timestamp) }}</span>
@@ -237,7 +249,19 @@
 
         <!-- Message Input -->
         <div class="message-input-area">
+          <div class="attachements-preview-area">
+            <div  v-for="(attachement, index) in attachmentView" :key="index" class="attachment-preview">
+              <div @click="deleteAttachement(index)" class="btn-delete-attachment">
+                <i class="bi bi-x-lg"></i>
+              </div>
+              <img @click="openImgListPreview(attachmentView, index)" :src="attachement" alt="Attachment" class="attachment-image">
+            </div>
+          </div>
           <div class="input-container">
+            
+            <!-- input caché + bouton -->
+            <input type="file" id="imageUpload" @change="handleImageUpload" accept="image/*" hidden multiple  ref="fileInput"/>
+
             <button class="attach-btn" @click="handleAttachment">
               <i class="bi bi-paperclip"></i>
             </button>
@@ -271,50 +295,49 @@
       <!-- User Information -->
       <div class="user-section">
         <div class="user-header">
-          <img
-            :src="selectedConversation.participants?.[0]?.avatar || selectedConversation.avatar || '/api/placeholder/80/80'"
-            :alt="selectedConversation.participants?.[0]?.username || selectedConversation.username"
-            class="user-avatar"
-          />
+          <div class="user-avatar" v-html="getAvatar((selectedConversation.otherParticipant || selectedConversation.participants?.[0] || selectedConversation))"></div>
           <div class="user-details">
-            <h3>{{ selectedConversation.participants?.[0]?.username || selectedConversation.username }}</h3>
-            <p class="user-status" :class="{ online: selectedConversation.participants?.[0]?.isOnline }">
-              {{ selectedConversation.participants?.[0]?.isOnline ? 'En ligne' : 'Hors ligne' }}
+            <h3>{{ selectedConversation.otherParticipant?.username || selectedConversation.participants?.[0]?.username || selectedConversation.username }}</h3>
+            <p class="user-status" :class="{ online: selectedConversation.otherParticipant?.isOnline }">
+              {{ selectedConversation.otherParticipant?.isOnline ? 'En ligne' : 'Hors ligne' }}
             </p>
             <div class="user-badges">
-              <span class="badge verified" v-if="selectedConversation.participants?.[0]?.isVerified">
+              <span class="badge verified" v-if="selectedConversation.otherParticipant?.isVerified">
                 <i class="bi bi-patch-check"></i>
                 Vérifié
               </span>
-              <span class="badge pro" v-if="selectedConversation.participants?.[0]?.isPro">
+              <span class="badge pro" v-if="selectedConversation.participants?.isPro">
                 <i class="bi bi-star"></i>
                 Pro
               </span>
             </div>
           </div>
+          <button @click="closeInformation" @click.stop class="close-btn-information-mobile">
+            <i class="bi bi-x-lg"></i>        
+          </button>
         </div>
 
         <div class="user-stats">
           <div class="stat-item">
             <span class="stat-label">Membre depuis</span>
-            <span class="stat-value">{{ formatDate(selectedConversation.participants?.[0]?.createdAt) }}</span>
+            <span class="stat-value">{{ formatDate(selectedConversation.otherParticipant?.createdAt) }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">Transactions</span>
-            <span class="stat-value">{{ selectedConversation.participants?.[0]?.transactionCount || 0 }}</span>
+            <span class="stat-value">{{ selectedConversation.otherParticipant?.transactionCount || 0 }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">Note</span>
             <span class="stat-value">
               <i class="bi bi-star-fill"></i>
-              {{ selectedConversation.participants?.[0]?.rating || 'N/A' }}
+              {{ selectedConversation.otherParticipant?.rating || 'N/A' }}
             </span>
           </div>
         </div>
       </div>
 
       <!-- Product/Transaction Context -->
-      <div class="transaction-section" v-if="selectedConversation.productContext || selectedConversation.context">
+      <div class="transaction-section" v-if="selectedConversation.productContext || selectedConversation.context || selectedConversation.productId">
         <div class="section-header">
           <h3>{{ getTransactionTitle() }}</h3>
           <span class="transaction-status" :class="getTransactionStatus()">
@@ -323,7 +346,7 @@
         </div>
 
         <div class="product-card" v-if="getProductContext()">
-          <img :src="getProductContext().image" alt="Product" />
+          <img :src="domain_api+getProductContext().images[0]" alt="Product" />
           <div class="product-info">
             <h4>{{ getProductContext().title }}</h4>
             <p class="product-description">{{ getProductContext().description }}</p>
@@ -371,62 +394,25 @@
           </button>
         </div>
       </div>
+
+      <div class="media-section">
+
+      </div>
     </div>
 
-    <!-- New Conversation Modal -->
-    <div v-if="showNewConversationModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <div class="modal-header">
-          <h2>Nouvelle conversation</h2>
-          <button class="close-btn" @click="closeModal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="search-member">
-            <label>Rechercher un membre :</label>
-            <div class="search-input">
-              <i class="bi bi-search"></i>
-              <input
-                type="text"
-                v-model="memberSearch"
-                @input="searchMembers"
-                placeholder="Nom d'utilisateur..."
-              />
-            </div>
+    <!-- Composant send_message pour nouvelle conversation -->
+    <send_message
+      v-if="showNewConversationModal"
+      @closeSendMessage="closeModal"
+      @newConversationCreated="onNewConversationCreated"
+    />
+    
+    <!-- Image Ouvert Modal -->
+    <div v-if="openAttachment"  @click.self="closePopupImgList" class="popup-overlay">
+      <div class="popup-content" style="height: 100%; flex-direction: column; display: flex; position: relative;">
+        <button class="close-btn" @click="closePopupImgList">&times;</button>
+        <ImageCarousel class="screen" :predefinedIndex="openAttachmentIndex" :images="openAttachmentView" />
 
-            <div class="search-results" v-if="memberSearchResults.length">
-              <div
-                v-for="member in memberSearchResults"
-                :key="member._id || member.id"
-                class="member-result"
-                :class="{ selected: selectedMember?._id === member._id || selectedMember?.id === member.id }"
-                @click="selectMember(member)"
-              >
-                <img :src="member.avatar || '/api/placeholder/36/36'" :alt="member.username" />
-                <span>{{ member.username }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="message-input">
-            <label>Message initial :</label>
-            <textarea
-              v-model="initialMessage"
-              rows="4"
-              placeholder="Écrivez votre message..."
-            ></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeModal" class="btn-secondary">Annuler</button>
-          <button
-            @click="startNewConversation"
-            :disabled="!selectedMember || creating"
-            class="btn-primary"
-          >
-            <i class="bi" :class="creating ? 'bi-arrow-clockwise' : 'bi-send'"></i>
-            {{ creating ? 'Création...' : 'Démarrer' }}
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -436,7 +422,11 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useMessagingStore } from '@/store/messaging.store'
 import userService from '@/services/user.service'
+import nav_bar from '@/components/adherents/nav_bar.vue';
+import ImageCarousel from '@/components/ImageCarousel.vue';
+import send_message from '@/components/adherents/send_message.vue'; // Import du composant
 
+const showSidebar = ref(false);
 // Store
 const messagingStore = useMessagingStore()
 
@@ -446,23 +436,23 @@ const searchQuery = ref('')
 const selectedConversation = ref(null)
 const currentMessages = ref([])
 const newMessage = ref('')
+const attachments = ref([])
+const attachmentView = ref([])
+const openAttachmentView = ref([])
+const openAttachmentIndex = ref(0)
+const openAttachment = ref(false)
 const showNewConversationModal = ref(false)
 const showConversationOptions = ref(false)
 const showConversationMenu = ref(null)
 const showEmojiPicker = ref(false)
-const memberSearch = ref('')
-const memberSearchResults = ref([])
-const selectedMember = ref(null)
-const initialMessage = ref('')
 const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
-const creating = ref(false)
+const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Computed
 const filteredConversations = computed(() => {
   let conversations = messagingStore.sortedConversations || []
-
   // Filter by tab
   switch (activeTab.value) {
     case 'favorites':
@@ -509,12 +499,32 @@ const getArchivedCount = () => {
   return (messagingStore.conversations || []).filter(conv => conv.isArchived).length
 }
 
-// Methods
-const isOwnMessage = (message) => {
-  const currentUserId = localStorage.getItem('userId') || localStorage.getItem('id_user')
-  return message.sender === currentUserId || message.isOwn === true
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 }
 
+// Methods
+const isOwnMessage = (message) => {
+  const currentUserId = localStorage.getItem('userId') || localStorage.getItem('id_user') || getCookie('id_user')
+  return message.sender._id === currentUserId || message.isOwn === true
+}
+
+const getAvatar = (user) => {
+  if (!user) {
+    return '<img src="https://mykpoptrade.com/images/avatar-default.png" alt="avatar">';
+  }
+  const profileImgInfo = {
+    username: user.username,
+    profilePicture: user.profilePicture
+  };
+  return userService.renderUserAvatar(profileImgInfo);
+};
+const expandOptions = () => {
+  showConversationOptions.value = !showConversationOptions.value
+}
 const selectConversation = async (conversation) => {
   selectedConversation.value = conversation
   showConversationOptions.value = false
@@ -531,7 +541,7 @@ const selectConversation = async (conversation) => {
     // Fetch conversation details and messages
     const response = await messagingStore.fetchConversation(conversation._id || conversation.id)
     currentMessages.value = response.messages || conversation.messages || []
-
+    document.getElementsByClassName('chat-area')[0].classList.add('active'); // Reset file input
     // Auto scroll to bottom
     await nextTick()
     scrollToBottom()
@@ -541,7 +551,26 @@ const selectConversation = async (conversation) => {
     loading.value = false
   }
 }
+const showRightBar = () => {
+  expandOptions()
+  const rightSidebar = document.querySelector('.right-sidebar')
+  if (rightSidebar) {
+    rightSidebar.classList.toggle('active')
+  }
+  console.log(showConversationOptions.value)
+}
+const closeConversation = () => {
+  selectedConversation.value = null
+  currentMessages.value = []
+  newMessage.value = ''
+  attachments.value = []
+  attachmentView.value = []
+  openAttachmentView.value = []
+  openAttachmentIndex.value = 0
+  openAttachment.value = false
+  document.getElementsByClassName('chat-area')[0].classList.remove('active'); // Reset file input
 
+}
 const toggleConversationMenu = (conversationId) => {
   showConversationMenu.value = showConversationMenu.value === conversationId ? null : conversationId
 }
@@ -570,13 +599,15 @@ const sendMessage = async () => {
 
     const response = await messagingStore.sendMessage(
       selectedConversation.value._id || selectedConversation.value.id,
-      newMessage.value.trim()
+      newMessage.value.trim(),
+      attachments.value
     )
 
     // Add message to current list
     currentMessages.value.push(response.data)
     newMessage.value = ''
-
+    attachments.value = []
+    attachmentView.value = []
     // Auto scroll to bottom
     await nextTick()
     scrollToBottom()
@@ -609,7 +640,7 @@ const archiveConversation = async (conversation) => {
     conversation.isArchived = !conversation.isArchived
     showConversationMenu.value = null
     showConversationOptions.value = false
-
+    // Update store
     // TODO: Call API to archive/unarchive
     await messagingStore.updateConversation(conversation._id || conversation.id, {
       isArchived: conversation.isArchived
@@ -654,57 +685,75 @@ const deleteConversation = async (conversation) => {
   }
 }
 
-const searchMembers = async () => {
-  if (memberSearch.value.length < 2) {
-    memberSearchResults.value = []
-    return
-  }
-
-  try {
-    const response = await userService.getUserByName(memberSearch.value)
-    memberSearchResults.value = response.users || []
-  } catch (error) {
-    console.error('Erreur lors de la recherche:', error)
-    memberSearchResults.value = []
-  }
-}
-
-const selectMember = (member) => {
-  selectedMember.value = member
-}
-
-const startNewConversation = async () => {
-  if (!selectedMember.value || creating.value) return
-
-  try {
-    creating.value = true
-
-    const response = await messagingStore.startConversation(
-      selectedMember.value._id || selectedMember.value.id,
-      null,
-      initialMessage.value
-    )
-
-    selectedConversation.value = response.conversation
-    closeModal()
-  } catch (error) {
-    console.error('Erreur lors de la création de la conversation:', error)
-  } finally {
-    creating.value = false
-  }
-}
-
 const closeModal = () => {
   showNewConversationModal.value = false
-  memberSearch.value = ''
-  memberSearchResults.value = []
-  selectedMember.value = null
-  initialMessage.value = ''
+}
+const closeInformation = () => {
+  const rightSidebar = document.querySelector('.right-sidebar');
+  if (rightSidebar) {
+    rightSidebar.classList.remove('active');
+  }
+}
+// Méthode appelée quand une nouvelle conversation est créée
+const onNewConversationCreated = (newConversation) => {
+  // Ajouter la conversation à la liste
+  messagingStore.conversations.unshift(newConversation)
+  
+  // Sélectionner automatiquement la nouvelle conversation
+  selectConversation(newConversation)
+  
+  // Fermer le modal
+  closeModal()
+}
+
+const handleImageUpload = (event) => {
+  for (let index = 0; index < event.target?.files?.length; index++) {
+    const file = event.target?.files[index];
+    if (file) {
+      attachments.value.push(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          attachmentView.value.push(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+};
+
+const closePopupImgList = () => {
+  openAttachment.value = false;
+  openAttachmentView.value = [];
+  openAttachmentIndex.value = 0;
+}
+
+const deleteAttachement = (index) => {
+  attachments.value.splice(index, 1);
+  attachmentView.value.splice(index, 1);
+}
+
+const openImgList = (attachments, index) => {
+  for (let index = 0; index < attachments.length; index++) {
+    const attachment = attachments[index];
+    openAttachmentView.value[index] = domain_api + '/uploads/chat_attachments/' + attachment;
+  }
+  openAttachmentIndex.value = index;
+  openAttachment.value = true;
+}
+
+const openImgListPreview = (attachments, index) => {
+  for (let index = 0; index < attachments.length; index++) {
+    const attachment = attachments[index];
+    openAttachmentView.value[index] = attachment;
+  }
+  openAttachmentIndex.value = index;
+  openAttachment.value = true;
 }
 
 const handleAttachment = () => {
-  // TODO: Implement file attachment
-  console.log('Attachment feature coming soon')
+  const fileInput = document.getElementById('imageUpload');
+  fileInput.click();
 }
 
 const scrollToBottom = () => {
@@ -726,6 +775,7 @@ const formatTimestamp = (timestamp) => {
   if (diff < 86400000) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
+
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
@@ -753,7 +803,7 @@ const getMessageStatusIcon = (message) => {
 }
 
 const getProductContext = () => {
-  return selectedConversation.value?.productContext || selectedConversation.value?.context?.product
+  return selectedConversation.value?.productContext || selectedConversation.value?.productId
 }
 
 const getTransactionTitle = () => {
@@ -769,8 +819,8 @@ const getTransactionStatus = () => {
 }
 
 const getTransactionStatusLabel = () => {
-  const context = selectedConversation.value?.productContext || selectedConversation.value?.context
-  const status = context?.status
+  const context = selectedConversation.value?.context || selectedConversation.value
+  const status = context?.negotiation?.status
   const labels = {
     'pending': 'En attente',
     'in_progress': 'En cours',
@@ -845,7 +895,8 @@ onMounted(async () => {
 
     // Load user info
     const userResponse = await userService.getMyInformation()
-    userInfo.value = userResponse.user || userResponse
+    userInfo.value = userResponse.user || userResponse.profile
+    
 
     // Load conversations
     await messagingStore.fetchConversations()
@@ -863,8 +914,8 @@ onMounted(async () => {
 
 // Close dropdowns when clicking outside
 document.addEventListener('click', () => {
-  showConversationOptions.value = false
-  showConversationMenu.value = null
+showConversationOptions.value =  false
+showConversationMenu.value = null
   showEmojiPicker.value = false
 })
 </script>
@@ -961,9 +1012,9 @@ document.addEventListener('click', () => {
 }
 
 .tab.active {
-  color: #0d6efd;
+  color: var(--blue);
   background: #e7f3ff;
-  border-bottom: 3px solid #0d6efd;
+  border-bottom: 3px solid var(--blue);
 }
 
 .tab i {
@@ -979,7 +1030,7 @@ document.addEventListener('click', () => {
 }
 
 .tab-count {
-  background: #dc3545;
+  background: var(--danger-color);
   color: white;
   font-size: 10px;
   padding: 2px 6px;
@@ -993,7 +1044,7 @@ document.addEventListener('click', () => {
 }
 
 .tab.active .tab-count {
-  background: #0d6efd;
+  background: var(--blue);
 }
 
 .messages-list {
@@ -1033,7 +1084,7 @@ document.addEventListener('click', () => {
 }
 
 .search-input input:focus {
-  border-color: #0d6efd;
+  border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
 
@@ -1058,7 +1109,8 @@ document.addEventListener('click', () => {
 
 .conversation-item.active {
   background: #e7f3ff;
-  border-left: 4px solid #0d6efd;
+  border-left: 4px solid var(--blue);
+  padding-left: 12px;
 }
 
 .conversation-item.unread {
@@ -1074,7 +1126,7 @@ document.addEventListener('click', () => {
 }
 
 .conversation-item.favorite.active {
-  border-left: 4px solid #0d6efd;
+  border-left: 4px solid var(--blue);
 }
 
 .conversation-avatar {
@@ -1169,7 +1221,7 @@ document.addEventListener('click', () => {
 }
 
 .badge {
-  background: #dc3545;
+  background: var(--danger-color);
   color: white;
   font-size: 11px;
   padding: 3px 7px;
@@ -1274,7 +1326,7 @@ document.addEventListener('click', () => {
 }
 
 .conversation-dropdown .dropdown-item.danger {
-  color: #dc3545;
+  color: var(--danger-color);
 }
 
 .conversation-dropdown .dropdown-item.danger:hover {
@@ -1323,7 +1375,7 @@ document.addEventListener('click', () => {
 }
 
 .btn-primary {
-  background: #0d6efd;
+  background: var(--blue);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -1353,6 +1405,9 @@ document.addEventListener('click', () => {
   flex-direction: column;
   height: 100%;
 }
+.chat-area.active{
+  display: block;
+}
 
 /* Enhanced Chat Header */
 .chat-header {
@@ -1364,18 +1419,23 @@ document.addEventListener('click', () => {
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
-
+.back-btn{
+  display: none;
+}
 .chat-participant {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.chat-participant img {
+.userPicture {
   width: 42px;
   height: 42px;
   border-radius: 50%;
   border: 2px solid #e9ecef;
+  overflow: hidden;
+  position: relative;
+  display: block;
 }
 
 .participant-info {
@@ -1444,8 +1504,14 @@ document.addEventListener('click', () => {
   z-index: 1000;
   min-width: 160px;
   overflow: hidden;
+  display: block;
 }
-
+.information{
+  display: none;
+}
+.close-btn-information-mobile{
+  display: none;
+}
 .dropdown-item {
   width: 100%;
   padding: 12px 16px;
@@ -1465,7 +1531,7 @@ document.addEventListener('click', () => {
 }
 
 .dropdown-item.danger {
-  color: #dc3545;
+  color: var(--danger-color);
 }
 
 .dropdown-item.danger:hover {
@@ -1522,14 +1588,117 @@ document.addEventListener('click', () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.grid-attachements {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+    width: 300px; 
+
+    grid-template-columns: 1fr;
+
+    &:has(.message-attachement:nth-child(2)) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    &:has(.message-attachement:nth-child(3)) {
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: repeat(2, 1fr);
+        height: 300px;
+
+        .message-attachement:first-child {
+            grid-column: 1;
+            grid-row: 1 / span 2;
+            height: 100%;
+        }
+    }
+
+    &:has(.message-attachement:nth-child(4)) {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        width: 300px;
+        height: 300px;
+        
+        .message-attachement:first-child {
+            grid-column: auto;
+            grid-row: auto;
+            height: 100%;
+        }
+        
+        .message-attachement {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+.message-attachement {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    position: relative;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Overlay pour afficher le nombre d'images supplémentaires */
+    &.has-more::after {
+        content: attr(data-count);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        z-index: 2;
+    }
+}
+.btn-delete-attachment{
+  width: fit-content;
+  background: var(--blue);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 10px;
+  text-align: center;
+  position: absolute;
+  margin-top: -7px;
+  z-index: 9;
+  margin-left: 85px;
+  cursor: pointer;
+}
+.btn-delete-attachment:hover {
+  background: var(--primary-color);
+}
+.popup-content .close-btn{
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  color: var(--primary-color);
+  z-index: 9;
+}
+
 .other-message .message-bubble {
   background: white;
   border: 1px solid #e9ecef;
 }
 
 .own-message .message-bubble {
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+  background: linear-gradient(135deg, var(--blue), #0b5ed7);
   color: white;
+  flex-direction: row-reverse;
+  justify-content: end;
 }
 
 .message-bubble p {
@@ -1562,7 +1731,26 @@ document.addEventListener('click', () => {
   border-top: 1px solid #e9ecef;
   background: white;
 }
+.attachements-preview-area {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.attachment-preview {
+  width: 100px; 
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
 
+.attachment-image {
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block;
+}
 .input-container {
   display: flex;
   align-items: center;
@@ -1614,7 +1802,7 @@ document.addEventListener('click', () => {
   width: 44px;
   height: 44px;
   border: none;
-  background: #0d6efd;
+  background: var(--blue);
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -1658,11 +1846,13 @@ document.addEventListener('click', () => {
 }
 
 .user-avatar {
+  border: 3px solid #e9ecef;
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 3px solid #e9ecef;
-  object-fit: cover;
+  overflow: hidden; 
+  position: relative;
+  display: block;
 }
 
 .user-details h3 {
@@ -1884,44 +2074,7 @@ document.addEventListener('click', () => {
   transform: translateY(-1px);
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
 
-.modal {
-  background: white;
-  border-radius: 12px;
-  width: 500px;
-  max-width: 90vw;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #212529;
-  font-size: 20px;
-}
 
 .close-btn {
   background: none;
@@ -1944,76 +2097,8 @@ document.addEventListener('click', () => {
   color: #495057;
 }
 
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-}
 
-.search-member {
-  margin-bottom: 24px;
-}
 
-.search-member label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #495057;
-}
-
-.search-results {
-  margin-top: 12px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.member-result {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid #f8f9fa;
-  transition: background 0.2s;
-}
-
-.member-result:hover {
-  background: #f8f9fa;
-}
-
-.member-result.selected {
-  background: #e7f3ff;
-  border-color: #0d6efd;
-}
-
-.member-result:last-child {
-  border-bottom: none;
-}
-
-.member-result img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #e9ecef;
-}
-
-.member-result span {
-  font-weight: 500;
-  color: #495057;
-}
-
-.message-input {
-  margin-bottom: 0;
-}
-
-.message-input label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #495057;
-}
 
 .message-input textarea {
   width: 100%;
@@ -2030,7 +2115,7 @@ document.addEventListener('click', () => {
 }
 
 .message-input textarea:focus {
-  border-color: #0d6efd;
+  border-color: var(--blue);
   background: white;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
@@ -2087,11 +2172,21 @@ document.addEventListener('click', () => {
   .right-sidebar {
     display: none;
   }
+  .right-sidebar.active {
+    display: block;
+    z-index: 11;
+    top: 0px;
+    position: absolute;
+    height: 100%;
+    width: 100%;  
+  }
 }
 
 @media (max-width: 768px) {
   .messaging-container {
     flex-direction: column;
+    position: relative;
+    z-index: 10;
   }
 
   .sidebar {
@@ -2129,6 +2224,31 @@ document.addEventListener('click', () => {
   .tab {
     min-width: 80px;
     flex-shrink: 0;
+  }
+  .information{
+    display: flex;
+  }
+  .close-btn-information-mobile{
+    display: block;
+    background: none;
+    border: none;
+    margin-left: auto;
+    font-size: larger;
+  }
+  .back-btn{
+    display: block;
+    font-size: xx-large;
+    margin-right: 10px;
+  }
+  .chat-participant{
+    margin-right: auto;
+  }
+  .no-conversation{
+    height: 100%;
+  }
+  .chat-area.active{
+    z-index: 11;
+    position: absolute;
   }
 }
 
@@ -2170,13 +2290,13 @@ document.addEventListener('click', () => {
 .btn-secondary:focus,
 .btn-outline:focus,
 .btn-success:focus {
-  outline: 2px solid #0d6efd;
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
 /* Text utilities */
 .text-primary {
-  color: #0d6efd !important;
+  color: var(--blue) !important;
 }
 
 .text-success {
@@ -2184,7 +2304,7 @@ document.addEventListener('click', () => {
 }
 
 .text-danger {
-  color: #dc3545 !important;
+  color: var(--danger-color) !important;
 }
 
 .text-warning {

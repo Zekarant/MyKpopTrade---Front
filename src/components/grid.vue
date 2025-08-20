@@ -6,7 +6,7 @@
         <button class="btn btn-primary-outline imgcenter">Charger plus</button> 
     </div>
     <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @closePost="closePost" @sold="onsold" :dataUser="dataUser" :idPost="dataCardPost._id" />
+        <post @closePost="closePost" @sold="onsold" :myProfile="admin" :dataUser="dataUser" :idPost="dataCardPost._id" />
     </div>
 </template>
   

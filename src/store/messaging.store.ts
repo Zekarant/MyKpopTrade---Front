@@ -42,7 +42,6 @@ export const useMessagingStore = defineStore('messaging', {
     async fetchConversations(params?: { page?: number; limit?: number; filter?: 'all' | 'unread' | 'active' }) {
       this.loading = true;
       this.error = null;
-
       try {
         const response = await messagingService.getUserConversations(params);
         this.conversations = response.conversations;
@@ -69,7 +68,21 @@ export const useMessagingStore = defineStore('messaging', {
         // Mettre à jour la conversation dans la liste
         const index = this.conversations.findIndex(c => c._id === conversationId);
         if (index !== -1) {
-          this.conversations[index] = response.conversation;
+          this.conversations[index].unreadCount = response.conversation.unreadCount || 0;
+          if(this.conversations[index].participants.length > 0) {
+            for (let index = 0; index < this.conversations[index].participants.length; index++) {
+              const participant = this.conversations[index].participants[index];
+              if(participant._id != localStorage.getItem('userId')) {
+                if(!this.conversations[index].otherParticipant){
+                  this.conversations[index].otherParticipant = participant;
+                }
+           
+                
+                
+              }
+              
+            }
+          }
         }
 
         return response;
@@ -241,6 +254,9 @@ export const useMessagingStore = defineStore('messaging', {
           message.readBy.push(data.userId);
         }
       });
+    },
+
+    updateConversation(conversationId: string, data:{ isFavorite: boolean , isArchived:boolean} ) {
     }
   }
 });
