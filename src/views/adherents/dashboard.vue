@@ -26,7 +26,7 @@
   </template>
   
   <script lang="ts">
-    import { defineComponent, ref } from 'vue';
+    import { defineComponent } from 'vue';
     import { useRouter } from "vue-router";
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
@@ -48,6 +48,8 @@
 
     },
     mounted() {
+        console.log('Service authentification:', authentification);
+
       authentification.verifSession().then(() => {
         this.getFav();
         this.getRecommendations();

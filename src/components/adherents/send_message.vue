@@ -6,7 +6,7 @@
                 <button class="close-btn" @click="closePopup">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="search-member">
+                <div v-if="!id_post" class="search-member">
                     <label>Rechercher un membre :</label>
                     <div class="search-input">
                         <i class="bi bi-search"></i>
@@ -17,6 +17,7 @@
                             placeholder="Nom d'utilisateur..."
                         />
                     </div>
+
 
                     <div class="search-results" v-if="memberSearchResults.length">
                         <div
@@ -64,13 +65,15 @@ import userService from '@/services/user.service'
 import { useRoute, useRouter } from "vue-router";
 import { ref } from 'vue';
 
-// Définition des types
-interface Member {
+
+// Définition et export des types
+export interface Member {
     _id?: string;
     id?: string;
     username: string;
     avatar?: string;
 }
+
 
 export default {
     name: "send_message",
@@ -105,6 +108,7 @@ export default {
         const memberSearchResults = ref<Member[]>([]);
         const selectedMember = ref<Member | null>(null);
 
+
         return { 
             route, 
             router, 
@@ -131,6 +135,7 @@ export default {
                 this.memberSearchResults = [];
                 return;
             }
+
 
             try {
                 const response = await userService.getUserByName(this.memberSearch);
@@ -161,6 +166,7 @@ export default {
                 return;
             }
 
+
             mssagingService.startConversation({
                 recipientId: recipientId,
                 initialMessage: this.textMessage,
@@ -182,6 +188,7 @@ export default {
     width: 100%;
 }
 
+
 /* Modal */
 .modal-overlay {
     position: fixed;
@@ -198,6 +205,7 @@ export default {
     box-sizing: border-box;
 }
 
+
 .modal {
     background: white;
     border-radius: 12px;
@@ -211,6 +219,7 @@ export default {
     position: relative; 
 }
 
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -219,17 +228,20 @@ export default {
     border-bottom: 1px solid #e9ecef;
 }
 
+
 .modal-header h2 {
     margin: 0;
     color: #212529;
     font-size: 20px;
 }
 
+
 .modal-body {
     padding: 24px;
     overflow-y: auto;
     flex: 1; /* Permet au body de prendre l'espace disponible */
 }
+
 
 .modal-footer {
     display: flex;
@@ -241,10 +253,12 @@ export default {
     flex-shrink: 0; /* Empêche le footer de se réduire */
 }
 
+
 /* Section de recherche de membres */
 .search-member {
     margin-bottom: 20px;
 }
+
 
 .search-member label {
     display: block;
@@ -253,11 +267,13 @@ export default {
     color: #495057;
 }
 
+
 .search-input {
     position: relative;
     display: flex;
     align-items: center;
 }
+
 
 .search-input i {
     position: absolute;
@@ -265,6 +281,7 @@ export default {
     color: #6c757d;
     z-index: 1;
 }
+
 
 .search-input input {
     width: 100%;
@@ -277,10 +294,12 @@ export default {
     transition: all 0.2s;
 }
 
+
 .search-input input:focus {
     border-color: #86b7fe;
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
+
 
 .search-results {
     max-height: 200px;
@@ -291,6 +310,7 @@ export default {
     background: white;
 }
 
+
 .member-result {
     display: flex;
     align-items: center;
@@ -300,18 +320,22 @@ export default {
     transition: background-color 0.2s;
 }
 
+
 .member-result:last-child {
     border-bottom: none;
 }
+
 
 .member-result:hover {
     background-color: #f8f9fa;
 }
 
+
 .member-result.selected {
     background-color: #e3f2fd;
     border-color: #2196f3;
 }
+
 
 .member-result img {
     width: 36px;
@@ -321,15 +345,18 @@ export default {
     object-fit: cover;
 }
 
+
 .member-result span {
     font-size: 14px;
     color: #495057;
 }
 
+
 /* Section de message */
 .message-input {
     width: 100%;
 }
+
 
 .message-input label {
     display: block;
@@ -337,6 +364,7 @@ export default {
     font-weight: 500;
     color: #495057;
 }
+
 
 .message-input textarea {
     width: 100%;
@@ -353,10 +381,12 @@ export default {
     box-sizing: border-box;
 }
 
+
 .message-input textarea:focus {
     border-color: #86b7fe;
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
+
 
 .close-btn {
     background: none;
@@ -374,10 +404,12 @@ export default {
     transition: all 0.2s;
 }
 
+
 .close-btn:hover {
     background: #f8f9fa;
     color: #495057;
 }
+
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -184,16 +184,30 @@
             </div>
           </div>
           <div class="chat-actions">
-            <button class="action-btn" @click="toggleFavorite(selectedConversation)" :title="selectedConversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+            <button v-if="selectedConversation.productId" class="action-btn btn_computer" @click="expandSalesOptions" @click.stop title="sold">
+              <i class="bi bi-cash-coin"></i>           
+            </button>
+            <button class="action-btn btn_computer" @click="toggleFavorite(selectedConversation)" :title="selectedConversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
               <i class="bi" :class="selectedConversation.isFavorite ? 'bi-star-fill' : 'bi-star'"></i>
             </button>
-            <button class="action-btn" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
+            <button class="action-btn btn_computer" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
               <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
             </button>
             <button class="action-btn" @click="expandOptions" @click.stop title="Options">
               <i class="bi bi-three-dots"></i>
             </button>
-            
+              <!-- Dropdown Options de vente -->
+              <div class="dropdown-menu" v-if="showSalesOptions" @click.stop>
+                <button @click="sendOfferOption" class="dropdown-item">
+                  <i class="bi bi-wallet"></i>      
+                  Faire une offre            
+                </button>
+                <button v-if="!selectedConversation.value?.productContext.isOwner" @click="buyOption" class="dropdown-item">
+                  <i class="bi bi-credit-card"></i>                  
+                  Acheter
+                </button>
+              </div>
+   
             <!-- Dropdown Options -->
             <div class="dropdown-menu" v-if="showConversationOptions" @click.stop>
               <button @click="archiveConversation(selectedConversation)" class="dropdown-item">
@@ -203,6 +217,24 @@
               <button @click="showRightBar" class="dropdown-item information">
                 <i class="bi bi-info-circle"></i>               
                 Information
+              </button>
+              <button @click="sendOfferOption" class="dropdown-item btn_mobile">
+                <i class="bi bi-wallet"></i>      
+                Faire une offre            
+              </button>
+              <button v-if="!selectedConversation.value?.productContext.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
+                <i class="bi bi-credit-card"></i>                  
+                Acheter
+              </button>     
+              <button class="dropdown-item  btn_mobile" @click="toggleFavorite(selectedConversation)" :title="selectedConversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                <i class="bi" :class="selectedConversation.isFavorite ? 'bi-star-fill' : 'bi-star'"></i>
+                  <span style="display: inline-block;" v-if="selectedConversation.isFavorite">Retirer</span>
+                  <span style="display: inline-block;" v-if="!selectedConversation.isFavorite">Ajouter</span>
+              </button>        
+              <button class="dropdown-item  btn_mobile" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
+                <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
+                  <span style="display: inline-block;" v-if="selectedConversation.unreadCount > 0">Lu</span>
+                  <span style="display: inline-block;" v-if="!selectedConversation.unreadCount > 0">Non lu</span>
               </button>
               <button @click="deleteConversation(selectedConversation)" class="dropdown-item danger">
                 <i class="bi bi-trash"></i>
@@ -349,6 +381,7 @@
           <img :src="domain_api+getProductContext().images[0]" alt="Product" />
           <div class="product-info">
             <h4>{{ getProductContext().title }}</h4>
+            <p class="product-kpopMember">{{ getProductContext().kpopMember }}, {{ getProductContext().kpopGroup }} </p>
             <p class="product-description">{{ getProductContext().description }}</p>
             <div class="product-details">
               <div class="detail-row">
@@ -362,6 +395,9 @@
               <div class="detail-row" v-if="getProductContext().condition">
                 <span>État</span>
                 <span>{{ getProductContext().condition }}</span>
+              </div>
+              <div class="detail-row" v-if="getProductContext().categoryLabel">
+                <span class="category-label">{{ getProductContext().categoryLabel }}</span>
               </div>
             </div>
           </div>
@@ -395,8 +431,25 @@
         </div>
       </div>
 
-      <div class="media-section">
+      <div class="media-section" v-if="selectedConversation?.media?.length">
+        <h3 class="section-title">Médias partagés</h3>
+        <div class="media-grid">
+          <div 
+            v-for="(media, index) in selectedConversation.media.slice(0, 4)" 
+            :key="index"
+            class="media-item"
+            :class="`media-${index + 1}`"
+            :data-has-more="index === 3 && selectedConversation.media.length > 4"
+            :data-count="index === 3 && selectedConversation.media.length > 4 ? `+${selectedConversation.media.length - 4}` : ''"
+            @click="openImgList(selectedConversation.media.map(item => item.filename), index)"
 
+          >
+            <img :src="domain_api + '/uploads/chat_attachments/' + media.filename" alt="Media">
+            <div v-if="index === 3 && selectedConversation.media.length > 4" class="media-overlay">
+              <span class="media-count">+{{ selectedConversation.media.length - 4 }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -409,12 +462,27 @@
     
     <!-- Image Ouvert Modal -->
     <div v-if="openAttachment"  @click.self="closePopupImgList" class="popup-overlay">
-      <div class="popup-content" style="height: 100%; flex-direction: column; display: flex; position: relative;">
+      <div class="popup-content" style="height: 100%; flex-direction: column; display: flex; position: relative; min-width: 50%;">
         <button class="close-btn" @click="closePopupImgList">&times;</button>
         <ImageCarousel class="screen" :predefinedIndex="openAttachmentIndex" :images="openAttachmentView" />
-
       </div>
     </div>
+    <!-- Option d'achat Modal -->
+    <div class="popup-overlay" v-if="showBuyOption">
+      <div @click.stop class="popup-content">
+        <div style="cursor: pointer;" @click="initPaypal" >
+          <i class="bi bi-paypal"></i>          
+          Payer avec PayPal
+        </div>
+      </div>
+    </div>
+
+    <!--Faire offre Modal -->
+    <div v-if="showOfferOption && selectedConversation.productId">
+      <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="selectedConversation"></send_offer>
+    </div>
+
+
   </div>
 </template>
 
@@ -422,9 +490,11 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useMessagingStore } from '@/store/messaging.store'
 import userService from '@/services/user.service'
+import paymentService from '@/services/payment.service'
 import nav_bar from '@/components/adherents/nav_bar.vue';
 import ImageCarousel from '@/components/ImageCarousel.vue';
 import send_message from '@/components/adherents/send_message.vue'; // Import du composant
+import send_offer from '@/components/send_offer.vue';
 
 const showSidebar = ref(false);
 // Store
@@ -443,12 +513,16 @@ const openAttachmentIndex = ref(0)
 const openAttachment = ref(false)
 const showNewConversationModal = ref(false)
 const showConversationOptions = ref(false)
+const showSalesOptions = ref(false)
+const showBuyOption = ref(false)
+const showOfferOption = ref(false)
 const showConversationMenu = ref(null)
 const showEmojiPicker = ref(false)
 const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
 const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  
 
 // Computed
 const filteredConversations = computed(() => {
@@ -525,7 +599,12 @@ const getAvatar = (user) => {
 const expandOptions = () => {
   showConversationOptions.value = !showConversationOptions.value
 }
+const expandSalesOptions = () => {
+  showSalesOptions.value = !showSalesOptions.value
+}
 const selectConversation = async (conversation) => {
+  console.log('conversation');
+  console.log(conversation);
   selectedConversation.value = conversation
   showConversationOptions.value = false
   showConversationMenu.value = null
@@ -540,6 +619,12 @@ const selectConversation = async (conversation) => {
 
     // Fetch conversation details and messages
     const response = await messagingStore.fetchConversation(conversation._id || conversation.id)
+    selectedConversation.value = response.conversation
+    selectedConversation.value.otherParticipant = conversation.
+    otherParticipant
+
+    selectedConversation.value.media = response.media || []
+
     currentMessages.value = response.messages || conversation.messages || []
     document.getElementsByClassName('chat-area')[0].classList.add('active'); // Reset file input
     // Auto scroll to bottom
@@ -557,7 +642,6 @@ const showRightBar = () => {
   if (rightSidebar) {
     rightSidebar.classList.toggle('active')
   }
-  console.log(showConversationOptions.value)
 }
 const closeConversation = () => {
   selectedConversation.value = null
@@ -590,7 +674,17 @@ const toggleFavorite = async (conversation) => {
     conversation.isFavorite = !conversation.isFavorite
   }
 }
-
+const handleOfferSent = async (offerInfo) => {
+  // Fermer le modal
+  showOfferOption.value = false
+  
+  // Envoyer un message dans la conversation
+  newMessage.value = `💰 J'ai fait une offre de ${offerInfo.amount}€`
+  if (offerInfo.message) {
+    newMessage.value += ` - ${offerInfo.message}`
+  }
+  await sendMessage()
+}
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConversation.value || sending.value) return
 
@@ -630,16 +724,439 @@ const toggleReadStatus = async (conversation) => {
     }
     showConversationMenu.value = null
     showConversationOptions.value = false
+    showSalesOptions.value = false
+    showBuyOption.value = false
+    showOfferOption.value = false
+
   } catch (error) {
     console.error('Erreur lors du changement de statut:', error)
   }
 }
+const buyOption = () => {
+  showBuyOption.value = ! showBuyOption.value
+}
+const sendOfferOption = () => {
+  console.log(selectedConversation.value)
+  showOfferOption.value = !showOfferOption.value
+}
+
+
+const initPaypal = async () => {
+  try {
+    showBuyOption.value = false; // Fermer le menu d'options
+    console.log(selectedConversation.value)
+    const retour_initPayPal = await paymentService.initPayPal(selectedConversation.value.productId._id);
+    console.log(retour_initPayPal);
+    
+    if (retour_initPayPal.success && retour_initPayPal.payment?.approvalUrl) {
+      
+      console.log('Ouverture PayPal avec iframe...');
+      
+      // Essayer d'abord l'iframe
+      const iframeResult = createPaypalIframe(retour_initPayPal.payment.approvalUrl, retour_initPayPal.payment.id);
+      
+      // Vérifier si l'iframe s'est bien créée
+      setTimeout(() => {
+        if (iframeResult && iframeResult.isVisible()) {
+          console.log('Iframe PayPal active et fonctionnelle');
+        } else {
+          console.error('Iframe PayPal non fonctionnelle, ouverture nouvel onglet...');
+          
+          // Fermer l'iframe si elle existe
+          if (iframeResult && iframeResult.close) {
+            iframeResult.close();
+          }
+          
+          // Fallback : ouvrir dans un nouvel onglet
+          const newTab = window.open(retour_initPayPal.payment.approvalUrl, '_blank');
+          if (newTab) {
+            console.log('Nouvel onglet PayPal ouvert');
+            handleTabEvents(newTab, retour_initPayPal.payment.id);
+          } else {
+            console.error('Impossible d\'ouvrir un nouvel onglet');
+            alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups/onglets ou copier ce lien : ' + retour_initPayPal.payment.approvalUrl);
+          }
+        }
+      }, 500); // Délai plus long pour laisser l'iframe se charger
+      
+    } else {
+      console.error('Erreur lors de l\'initialisation PayPal:', retour_initPayPal);
+      alert('Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
+    }
+  } catch (error) {
+    console.error('Erreur PayPal:', error);
+    alert('Une erreur est survenue lors de l\'initialisation du paiement PayPal.');
+  }
+};
+
+// Fonction pour créer une iframe modale PayPal avec détection d'erreur
+const createPaypalIframe = (approvalUrl, paymentId) => {
+  try {
+    // Vérifier si une iframe PayPal existe déjà
+    const existingModal = document.getElementById('paypal-iframe-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Créer la modale avec iframe
+    const modal = document.createElement('div');
+    modal.id = 'paypal-iframe-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      position: relative;
+      width: 90%;
+      height: 90%;
+      max-width: 500px;
+      max-height: 700px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    `;
+
+    // Header de la modale
+    const modalHeader = document.createElement('div');
+    modalHeader.style.cssText = `
+      padding: 15px 20px;
+      background: #0070ba;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `;
+    modalHeader.innerHTML = `
+      <span>Paiement PayPal</span>
+      <button id="close-paypal-modal" style="
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      " title="Fermer">×</button>
+    `;
+
+    // Iframe PayPal
+    const iframe = document.createElement('iframe');
+    iframe.src = approvalUrl;
+    iframe.style.cssText = `
+      width: 100%;
+      height: calc(100% - 60px);
+      border: none;
+      display: block;
+    `;
+
+    // Loader pendant le chargement
+    const loader = document.createElement('div');
+    loader.id = 'paypal-loader';
+    loader.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    `;
+    loader.innerHTML = `
+      <div style="margin-bottom: 10px;">Chargement PayPal...</div>
+      <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0070ba; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+
+    // Variables pour gérer les événements
+    let messageHandler = null;
+    let iframeLoadHandler = null;
+    let iframeErrorHandler = null;
+    let isIframeLoaded = false;
+    let iframeError = false;
+
+    // Fonction pour nettoyer et fermer la modale
+    const closeModal = () => {
+      if (messageHandler) {
+        window.removeEventListener('message', messageHandler);
+      }
+      if (iframeLoadHandler) {
+        iframe.removeEventListener('load', iframeLoadHandler);
+      }
+      if (iframeErrorHandler) {
+        iframe.removeEventListener('error', iframeErrorHandler);
+      }
+      if (modal && document.body.contains(modal)) {
+        modal.remove();
+      }
+      console.log('Iframe PayPal fermée');
+      checkPaymentStatus(paymentId);
+    };
+
+    // Gérer les messages de PayPal dans l'iframe
+    messageHandler = (event) => {
+      // Ignorer les messages de télémétrie PayPal
+      if (event.data.p2Sent || event.data.utils) {
+        console.log('Message de télémétrie PayPal ignoré');
+        return;
+      }
+      
+      // Vérifier l'origine pour la sécurité
+      if (event.origin !== 'https://www.sandbox.paypal.com' && 
+          event.origin !== 'https://www.paypal.com') {
+        return;
+      }
+      
+      console.log('Message reçu de PayPal iframe:', event.data);
+      
+      if (event.data.type === 'payment_success') {
+        closeModal();
+        onPaymentSuccess(event.data.paymentId || paymentId);
+      } else if (event.data.type === 'payment_cancelled') {
+        closeModal();
+        onPaymentCancelled();
+      }
+    };
+
+    // Gérer le chargement de l'iframe
+    iframeLoadHandler = () => {
+      isIframeLoaded = true;
+      const loaderElement = document.getElementById('paypal-loader');
+      if (loaderElement) {
+        loaderElement.style.display = 'none';
+      }
+      console.log('Iframe PayPal chargée avec succès');
+    };
+
+    // Gérer les erreurs de l'iframe
+    iframeErrorHandler = () => {
+      iframeError = true;
+      console.error('Erreur lors du chargement de l\'iframe PayPal');
+    };
+
+    // Event listeners
+    iframe.addEventListener('load', iframeLoadHandler);
+    iframe.addEventListener('error', iframeErrorHandler);
+    window.addEventListener('message', messageHandler);
+
+    // Event listener pour fermer la modale
+    modalHeader.querySelector('#close-paypal-modal').addEventListener('click', closeModal);
+    
+    // Fermer en cliquant sur l'arrière-plan
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Fermer avec la touche Escape
+    const escapeHandler = (event) => {
+      if (event.key === 'Escape') {
+        document.removeEventListener('keydown', escapeHandler);
+        closeModal();
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+
+    // Assembler la modale
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(loader);
+    modalContent.appendChild(iframe);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    console.log('Iframe PayPal créée et ajoutée à la page');
+    
+    // Focus sur l'iframe après un court délai
+    setTimeout(() => {
+      if (iframe) {
+        iframe.focus();
+      }
+    }, 500);
+
+    // Retourner une référence à la modale pour vérifications ultérieures
+    return {
+      modal: modal,
+      iframe: iframe,
+      isVisible: () => document.body.contains(modal) && modal.style.display !== 'none',
+      isLoaded: () => isIframeLoaded,
+      hasError: () => iframeError,
+      close: closeModal
+    };
+
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'iframe PayPal:', error);
+    return null;
+  }
+};
+
+// Fonction pour gérer les événements de l'onglet (simplifiée)
+const handleTabEvents = (tabWindow, paymentId) => {
+  let checkClosedInterval = null;
+  let messageHandler = null;
+
+  // Fonction pour nettoyer les listeners et intervals
+  const cleanup = () => {
+    if (checkClosedInterval) {
+      clearInterval(checkClosedInterval);
+      checkClosedInterval = null;
+    }
+    if (messageHandler) {
+      window.removeEventListener('message', messageHandler);
+      messageHandler = null;
+    }
+  };
+
+  // Gérer les messages de PayPal
+  messageHandler = (event) => {
+    // Ignorer les messages de télémétrie PayPal
+    if (event.data.p2Sent || event.data.utils) {
+      console.log('Message de télémétrie PayPal ignoré');
+      return;
+    }
+    
+    // Vérifier l'origine pour la sécurité
+    if (event.origin !== 'https://www.sandbox.paypal.com' && 
+        event.origin !== 'https://www.paypal.com') {
+      return;
+    }
+    
+    console.log('Message reçu de PayPal onglet:', event.data);
+    
+    if (event.data.type === 'payment_success') {
+      tabWindow.close();
+      cleanup();
+      onPaymentSuccess(event.data.paymentId || paymentId);
+    } else if (event.data.type === 'payment_cancelled') {
+      tabWindow.close();
+      cleanup();
+      onPaymentCancelled();
+    }
+  };
+
+  // Surveiller la fermeture de l'onglet
+  checkClosedInterval = setInterval(() => {
+    try {
+      if (tabWindow.closed) {
+        cleanup();
+        console.log('Onglet PayPal fermé');
+        checkPaymentStatus(paymentId);
+      }
+    } catch (error) {
+      // Erreur d'accès cross-origin, considérer comme fermé
+      cleanup();
+      console.log('Onglet PayPal fermé (cross-origin)');
+      checkPaymentStatus(paymentId);
+    }
+  }, 1000);
+
+  // Écouter les messages
+  window.addEventListener('message', messageHandler);
+
+  // Donner le focus à l'onglet
+  try {
+    tabWindow.focus();
+  } catch (error) {
+    console.log('Impossible de donner le focus à l\'onglet');
+  }
+
+  console.log('Onglet PayPal ouvert et surveillé');
+};
+
+// Les autres fonctions restent les mêmes...
+const checkPaymentStatus = async (paymentId) => {
+  try {
+    console.log('Vérification du statut de paiement:', paymentId);
+    const statusResponse = await paymentService.checkPaymentStatus(paymentId);
+    console.log('Statut du paiement:', statusResponse);
+    
+    if (statusResponse.success) {
+      if (statusResponse.status === 'approved' || statusResponse.status === 'completed') {
+        onPaymentSuccess(paymentId);
+      } else if (statusResponse.status === 'cancelled') {
+        onPaymentCancelled();
+      } else {
+        console.log('Paiement en attente ou statut inconnu:', statusResponse.status);
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification du statut:', error);
+  }
+};
+
+const onPaymentSuccess = async (paymentId) => {
+  try {
+    console.log('Paiement réussi:', paymentId);
+    
+    // Marquer le produit comme vendu
+    const soldResponse = await postService.sold(
+      selectedConversation.value.otherParticipant._id,
+      selectedConversation.value.productId._id
+    );
+    
+    if (soldResponse) {
+      // Envoyer un message de confirmation dans la conversation
+      await messagingStore.sendMessage(
+        selectedConversation.value._id,
+        `✅ Paiement confirmé ! Transaction réussie pour "${selectedConversation.value.productId.title}".`
+      );
+      
+      // Actualiser la conversation
+      await messagingStore.fetchConversation(selectedConversation.value._id);
+      
+      alert('Paiement réussi ! Le produit a été marqué comme vendu.');
+    } else {
+      alert('Paiement réussi mais erreur lors de la mise à jour du produit. Contactez le support.');
+    }
+    
+  } catch (error) {
+    console.error('Erreur lors du traitement du succès:', error);
+    alert('Paiement réussi mais erreur lors du traitement. Contactez le support.');
+  }
+};
+
+
+
+// Fonction appelée en cas d'annulation du paiement
+const onPaymentCancelled = () => {
+  console.log('Paiement annulé par l\'utilisateur');
+  alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
+};
 
 const archiveConversation = async (conversation) => {
   try {
     conversation.isArchived = !conversation.isArchived
     showConversationMenu.value = null
     showConversationOptions.value = false
+    showSalesOptions.value = false
+    showBuyOption.value = false
+    showOfferOption.value = false
+
     // Update store
     // TODO: Call API to archive/unarchive
     await messagingStore.updateConversation(conversation._id || conversation.id, {
@@ -659,30 +1176,37 @@ const archiveConversation = async (conversation) => {
 }
 
 const deleteConversation = async (conversation) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')) return
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')){
+    try {
+      const response = await messagingStore.deleteConversation(conversation._id || conversation.id)
+      console.log('Conversation supprimée:', response)
+      // Remove from store
+      const index = messagingStore.conversations.findIndex(c =>
+        (c._id || c.id) === (conversation._id || conversation.id)
+      )
+      if (index !== -1) {
+        messagingStore.conversations.splice(index, 1)
+      }
 
-  try {
-    // Remove from store
-    const index = messagingStore.conversations.findIndex(c =>
-      (c._id || c.id) === (conversation._id || conversation.id)
-    )
-    if (index !== -1) {
-      messagingStore.conversations.splice(index, 1)
+      // Clear selection if deleted conversation was selected
+      if (selectedConversation.value &&
+          (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+        selectedConversation.value = null
+      }
+
+      showConversationMenu.value = null
+      showConversationOptions.value = false
+      showSalesOptions.value = false
+      showBuyOption.value = false
+      showOfferOption.value = false
+
+      // TODO: Call API to delete
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
     }
-
-    // Clear selection if deleted conversation was selected
-    if (selectedConversation.value &&
-        (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
-      selectedConversation.value = null
-    }
-
-    showConversationMenu.value = null
-    showConversationOptions.value = false
-
-    // TODO: Call API to delete
-  } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
   }
+
+
 }
 
 const closeModal = () => {
@@ -734,6 +1258,7 @@ const deleteAttachement = (index) => {
 }
 
 const openImgList = (attachments, index) => {
+  console.log(attachments);
   for (let index = 0; index < attachments.length; index++) {
     const attachment = attachments[index];
     openAttachmentView.value[index] = domain_api + '/uploads/chat_attachments/' + attachment;
@@ -915,6 +1440,10 @@ onMounted(async () => {
 // Close dropdowns when clicking outside
 document.addEventListener('click', () => {
 showConversationOptions.value =  false
+showSalesOptions.value =  false
+showBuyOption.value = false
+showOfferOption.value = false
+
 showConversationMenu.value = null
   showEmojiPicker.value = false
 })
@@ -1301,7 +1830,12 @@ showConversationMenu.value = null
   overflow: hidden;
   margin-top: 4px;
 }
-
+.btn_mobile{
+  display: none;
+}
+.btn_computer{
+  display: block;
+}
 .conversation-dropdown .dropdown-item {
   width: 100%;
   padding: 10px 14px;
@@ -1317,7 +1851,7 @@ showConversationMenu.value = null
   font-size: 13px;
 }
 
-.conversation-dropdown .dropdown-item:hover {
+.conversation-dropdown .dropdown-item:hover, .popup-content:hover {
   background: #f8f9fa;
 }
 
@@ -1352,6 +1886,7 @@ showConversationMenu.value = null
   align-items: center;
   justify-content: center;
   background: #f8f9fa;
+  height: 100%;
 }
 
 .empty-state {
@@ -1688,7 +2223,9 @@ showConversationMenu.value = null
   color: var(--primary-color);
   z-index: 9;
 }
-
+.popup-content .screen{
+  height: 100%;
+}
 .other-message .message-bubble {
   background: white;
   border: 1px solid #e9ecef;
@@ -1985,18 +2522,26 @@ showConversationMenu.value = null
 .product-info {
   padding: 16px;
 }
+.product-kpopMember{
+  margin-bottom: 5px;
+}
 
 .product-info h4 {
-  margin: 0 0 8px 0;
+  margin: 0 0 3px 0;
   color: #212529;
   font-size: 16px;
 }
 
 .product-description {
-  color: #6c757d;
-  font-size: 14px;
-  margin-bottom: 16px;
-  line-height: 1.4;
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .product-details {
@@ -2023,6 +2568,14 @@ showConversationMenu.value = null
 .detail-row .price {
   color: #28a745;
   font-weight: 600;
+}
+.category-label{
+  color: #819A57;
+  border: 2px solid #819A57;
+  border-radius: 10px;
+  padding: 5px;
+  font-size: xx-small;
+  font-weight: bold;
 }
 
 .transaction-actions {
@@ -2177,12 +2730,13 @@ showConversationMenu.value = null
     z-index: 11;
     top: 0px;
     position: absolute;
-    height: 100%;
+    /*height: 100%;*/
     width: 100%;  
   }
 }
 
 @media (max-width: 768px) {
+
   .messaging-container {
     flex-direction: column;
     position: relative;
@@ -2211,7 +2765,10 @@ showConversationMenu.value = null
   .sidebar.mobile-hidden {
     display: none;
   }
-
+  .grid-attachements{
+    position: relative;
+    max-width: 100%;
+  }
   .modal {
     width: 95vw;
     margin: 20px;
@@ -2220,7 +2777,12 @@ showConversationMenu.value = null
   .navigation-tabs {
     overflow-x: auto;
   }
-
+  .btn_mobile{
+    display: block;
+  }
+  .btn_computer{
+    display: none;
+  }
   .tab {
     min-width: 80px;
     flex-shrink: 0;
@@ -2314,4 +2876,82 @@ showConversationMenu.value = null
 .text-muted {
   color: #6c757d !important;
 }
+
+.media-section {
+  padding: 24px;
+  border-top: 1px solid #e9ecef;
+
+  .section-title {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #212529;
+  }
+
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 150px);
+    gap: 8px;
+    max-width: 100%;
+    
+    .media-item {
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+      position: relative;
+      
+      &:hover {
+        transform: scale(1.02);
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Overlay pour le nombre de photos supplémentaires */
+      .media-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        
+        .media-count {
+          color: white;
+          font-size: 18px;
+          font-weight: bold;
+        }
+      }
+
+      &.media-1 {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      &.media-2 {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      &.media-3 {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      &.media-4 {
+        grid-column: 2;
+        grid-row: 2;
+      }
+    }
+  }
+}
+
 </style>

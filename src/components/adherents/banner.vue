@@ -76,8 +76,6 @@
             </div>
         </div>
     </div>
-
-    
     <!--------- Popup Pour envoyer un message ---------->
     <send_message :id_user="profilInfo.id" :pseudo_user="profilInfo.username" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
     <!--------- Popup Supression ---------->
@@ -100,80 +98,144 @@
             </div>
         </div>
     </div>
-        <!--------- Popup Paramètre ---------->
+        <!--------- Popup Paramètre - NOUVEAU DESIGN ---------->
         <div v-if="showSetting" class="popup-overlay" @click="closePopup()">
-            <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
-                <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
-                <div style="position: relative;">
-                    <div class="setting_item"   @click="changePswdPopup()">Changer le mot de passe <i class="bi bi-chevron-compact-right chevron-setting"></i></div>
-                    <div class="setting_item"  @click="getVerifIdentityState">
-                        <span>Identité vérifiée</span>
-                        <i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isIdentityVerified" class="bi bi-check-lg valid"></i>
-                        <i style="zoom: 1.5; vertical-align:sub; color:red; margin-left: 10px;" v-else-if="profilInfo.verificationLevel == 'none'" class="bi bi-x-lg"></i>
-                        <i v-if="!profilInfo.isIdentityVerified" class="bi bi-chevron-compact-right chevron-setting"></i>
-                    </div>
-                    <div class="setting_item">
-                        <span>Email vérifié </span>
-                        <span v-if="emailRequest" class="emailRequestSuccess">Email de vérification envoyé</span>  
-                        <button @click="verifEmail()" class="btn-primary btnRequestEmail" v-else-if="!profilInfo.isEmailVerified && !emailRequest">Vérifier l'email</button>
-                        <i style="zoom: 1.5; vertical-align:sub;" v-if="profilInfo.isEmailVerified" class="bi bi-check-lg valid"></i>
-                    </div>
-
-                    <div class="setting_item" style="display:flex;align-items: center;">
-                        <span>Téléphone</span> 
-                        <div style="display: flex;"  >
-                            <i v-if="profilInfo.isPhoneVerified || codeRequest"  style="zoom: 1.5; vertical-align:sub; margin-right: 10px;" class="bi bi-check-lg valid"></i>
-                            <input v-if="!telRequest || codeRequest" type="tel" style="margin-left: 10px;" id="phone" @input="isBtnSaveTelVisible=true" v-model="phoneNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
-                            
-                            <button @click="saveTel" class="btn-primary btnRequestPhone" v-if="isBtnSaveTelVisible">Enregistrer</button>                   
-                        </div>
-                        <div class="telRequestSuccess" v-if="telRequest && !codeRequest">
-                            <span >Veuillez entrer le code :</span>
-                            <div>
-                                <input placeholder="code" v-model="phoneCode" type="number"> 
-                                <button @click="verifCodeTel()" class="btn-primary btnRequestTel" >Vérifier le téléphone</button>
-                            </div>
-
-                        </div> 
-                        <button v-else-if="!profilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-primary btnRequestTel" >Vérifier le téléphone</button>
-
-    
-                    </div>
-                    <div class="setting_item" style="display:flex;align-items: center;">
-                        <span style="margin-right: 10px;">Email Paypal</span> 
-                        <div style="display: flex;">
-                            <input @input="saveMailPaypal = true" type="email" id="phone" v-model="emailPaypal">    
-                            <div style="position: absolute; right: 15px;">
-                                <button @click="savePaypal" class="btn-primary btnRequestEmail" v-if="saveMailPaypal">Enregistrer</button>                   
-                                <button @click="showDeletePaypalPopup = true; showSetting = false" class="btn-danger btnRequestEmail" v-if="profilInfo.paypalEmail">Supprimer</button>   
-                            </div>   
-                            
-                        </div>
-
-                    </div>
-                    <div class="setting_item">
-                        <span>
-                            Autoriser les messages directs
-                        </span>
-                        <label class="switch">
-                            <input @change="changeAllowDirectMessages" type="checkbox" v-model="profilInfo.preferences.allowDirectMessages">
-                            <span class="slider"></span>
-                        </label>
-                        
-                    </div>
-                    <div class="setting_item">
-                        <button style="width: 100%;" class="btn-primary-outline" @click="exportUserData">Exporter mes données</button>
-                    </div>
-                    <div class="setting_item" v-if="!profilInfo.anonymized">
-                        <button style="width: 100%;" class="btn-primary-outline" @click="anonymizePopup = true">Anonymiser mes données</button>
-                    </div>                    
-                    <div v-if="profilInfo.accountStatus = 'active'" class="setting_item">
-                        <button style="width: 100%;" class="btn-danger" @click="showDeleteAccount = true">Supprimer votre compte</button>
-                    </div>
-                    <!--<button class="btnSave btn btn-primary" v-if="isBtnSaveVisible" @click="saveSettings">Enregistrer</button>   -->               
-
+            <div @click="$event.stopPropagation()" class="popup-content popup-settings-modern">
+                <!-- Header -->
+                <div class="settings-header">
+                    <h4 class="settings-title">
+                        <i class="bi bi-gear-fill"></i>
+                        Paramètres
+                    </h4>
+                    <button @click="closePopup()" class="btn-close-settings">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
-                
+
+                <!-- Content avec sections -->
+                <div class="settings-content">
+                    <!-- Section Sécurité -->
+                    <div class="settings-section">
+                        <h5 class="section-title">Sécurité</h5>
+                        <div class="setting-item-modern" @click="changePswdPopup()">
+                            <div class="setting-item-left">
+                                <i class="bi bi-shield-lock setting-icon"></i>
+                                <span class="setting-label">Changer le mot de passe</span>
+                            </div>
+                            <i class="bi bi-chevron-right setting-arrow"></i>
+                        </div>
+                    </div>
+
+                    <!-- Section Vérifications -->
+                    <div class="settings-section">
+                        <h5 class="section-title">Vérifications</h5>
+                        
+                        <div class="setting-item-modern" @click="getVerifIdentityState">
+                            <div class="setting-item-left">
+                                <i class="bi bi-person-badge setting-icon"></i>
+                                <span class="setting-label">Identité vérifiée</span>
+                            </div>
+                            <div class="setting-item-right">
+                                <i v-if="profilInfo.isIdentityVerified" class="bi bi-check-circle-fill status-icon status-success"></i>
+                                <i v-else-if="profilInfo.verificationLevel == 'none'" class="bi bi-x-circle-fill status-icon status-error"></i>
+                                <i v-if="!profilInfo.isIdentityVerified" class="bi bi-chevron-right setting-arrow"></i>
+                            </div>
+                        </div>
+
+                        <div class="setting-item-modern">
+                            <div class="setting-item-left">
+                                <i class="bi bi-envelope setting-icon"></i>
+                                <span class="setting-label">Email vérifié</span>
+                            </div>
+                            <div class="setting-item-right">
+                                <span v-if="emailRequest" class="status-badge status-badge-info">Email envoyé</span>
+                                <button @click="verifEmail()" class="btn-verify" v-else-if="!profilInfo.isEmailVerified && !emailRequest">Vérifier</button>
+                                <i v-if="profilInfo.isEmailVerified" class="bi bi-check-circle-fill status-icon status-success"></i>
+                            </div>
+                        </div>
+
+                        <div class="setting-item-modern setting-item-phone">
+                            <div class="setting-item-left">
+                                <i class="bi bi-phone setting-icon"></i>
+                                <span class="setting-label">Téléphone</span>
+                            </div>
+                            <div class="setting-item-right setting-phone-content">
+                                <i v-if="profilInfo.isPhoneVerified || codeRequest" class="bi bi-check-circle-fill status-icon status-success"></i>
+                                <input v-if="!telRequest || codeRequest" type="tel" class="input-phone" id="phone" @input="isBtnSaveTelVisible=true" v-model="phoneNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
+                                <button @click="saveTel" class="btn-verify" v-if="isBtnSaveTelVisible">Enregistrer</button>
+                            </div>
+                        </div>
+
+                        <div v-if="telRequest && !codeRequest" class="setting-item-expanded">
+                            <div class="verification-code-container">
+                                <span class="verification-label">Code de vérification :</span>
+                                <div class="verification-input-group">
+                                    <input placeholder="Entrez le code" v-model="phoneCode" type="number" class="input-code">
+                                    <button @click="verifCodeTel()" class="btn-verify-code">Vérifier</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button v-else-if="!profilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-verify-standalone">Vérifier le téléphone</button>
+                    </div>
+
+                    <!-- Section Paiement -->
+                    <div class="settings-section">
+                        <h5 class="section-title">Paiement</h5>
+                        <div class="setting-item-modern setting-item-paypal">
+                            <div class="setting-item-left">
+                                <i class="bi bi-paypal setting-icon"></i>
+                                <span class="setting-label">Email Paypal</span>
+                            </div>
+                            <div class="setting-item-right setting-paypal-content">
+                                <input @input="saveMailPaypal = true" type="email" class="input-paypal" id="paypal" v-model="emailPaypal">
+                                <div class="paypal-actions">
+                                    <button @click="savePaypal" class="btn-save-paypal" v-if="saveMailPaypal">Enregistrer</button>
+                                    <button @click="showDeletePaypalPopup = true; showSetting = false" class="btn-delete-paypal" v-if="profilInfo.paypalEmail">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Préférences -->
+                    <div class="settings-section">
+                        <h5 class="section-title">Préférences</h5>
+                        <div class="setting-item-modern">
+                            <div class="setting-item-left">
+                                <i class="bi bi-chat-dots setting-icon"></i>
+                                <span class="setting-label">Messages directs</span>
+                            </div>
+                            <label class="switch-modern">
+                                <input @change="changeAllowDirectMessages" type="checkbox" v-model="profilInfo.preferences.allowDirectMessages">
+                                <span class="slider-modern"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Section Données -->
+                    <div class="settings-section">
+                        <h5 class="section-title">Mes données</h5>
+                        <button class="btn-action-full" @click="exportUserData">
+                            <i class="bi bi-download"></i>
+                            Exporter mes données
+                        </button>
+                        <button v-if="!profilInfo.anonymized" class="btn-action-full btn-action-secondary" @click="anonymizePopup = true">
+                            <i class="bi bi-shield-check"></i>
+                            Anonymiser mes données
+                        </button>
+                    </div>
+
+                    <!-- Section Danger Zone -->
+                    <div class="settings-section settings-danger-zone" v-if="profilInfo.accountStatus = 'active'">
+                        <h5 class="section-title section-title-danger">Zone de danger</h5>
+                        <button class="btn-action-full btn-action-danger" @click="showDeleteAccount = true">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Supprimer votre compte
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         <!--------- Popup changer mdp ---------->
@@ -242,7 +304,7 @@
                     <button style="margin-top: 10px;"  v-if="consentUseData && documentIamge"  class="btn btn-primary imgcenter" @click="verifIdentity">Vérifier mon identitée</button>      
                 </div>
                 <div v-else>
-                    <div v-if="!verification.userVerification.isVerified && verification.verification. status == 'pending'">
+                    <div v-if="!verification.userVerification.isVerified && verification.verification.status == 'pending'">
                         <div style="text-align: center; margin-bottom: 5px;">
                             Demande soumise le {{ formatDate(verification.verification.submittedAt) }}
                         </div>
@@ -259,15 +321,10 @@
                         </button>
                     </div>
                 </div>
-                
-
             </div>
-
-            
         </div>
-        
+    
 </template>
-
 
 <script lang="ts">
     import { useRoute, useRouter } from "vue-router";
@@ -308,7 +365,7 @@
                 newPassword: '',
                 confirmPassword: '',
                 passwordForConfirm: '',
-                documentType:'id_card', // Type de document pour la vérification d'identité
+                documentType:'id_card',
                 verification: null as any,
                 popupMessage: false,
 
@@ -395,7 +452,7 @@
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/banner`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                         }
                     }).then(response => {
@@ -427,7 +484,7 @@
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                         }
                     }).then(response => {
@@ -482,8 +539,8 @@
                         'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
-                    this.profilInfo.profilePicture = null; // Supprime localement l'image
-                    this.showDeletePictureConfirmation = false; // Ferme la boîte de dialogue
+                    this.profilInfo.profilePicture = null;
+                    this.showDeletePictureConfirmation = false;
                 })
                 .catch((error) => {
                     console.error(error);
@@ -529,7 +586,7 @@
                 const sessionToken = Cookies.get('sessionToken');
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/verification/identity/cancel`, {
                     headers: {
-                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -557,7 +614,7 @@
                 }
                 axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity`, data, {
                     headers: {
-                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -583,7 +640,7 @@
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -608,7 +665,7 @@
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -632,7 +689,7 @@
                 }, {
                     headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                    'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -658,14 +715,13 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                         }
                 }).then(response => {
                         console.log(response);
                         if (response.status === 200) {
                             this.$func.showToastSuccess(response.data.message);
-                            //Sucess Message
                         }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -685,7 +741,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                         }
                 }).then(response => {
@@ -695,7 +751,7 @@
                         this.telRequest = false;
                         this.codeRequest = false;
                         this.phoneCode = '';
-                        this.profilInfo.isPhoneVerified = false; // Met à jour l'état de vérification du téléphone
+                        this.profilInfo.isPhoneVerified = false;
                 
                     }
                 }).catch(error => {
@@ -719,7 +775,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                         }
                 }).then(response => {
@@ -747,7 +803,6 @@
                             'Authorization': `Bearer ${sessionToken}`
                         }
                     });
-                    // Création du blob et téléchargement
                     const dataStr = JSON.stringify(response.data, null, 2);
                     const pdfExporter = new PDFExportService();
                     const sections = [
@@ -761,16 +816,6 @@
                     ];
                     pdfExporter.createPDF(response.data,'MyKPopTrade - Export des Données',sections);
 
-                    /*const blob = new Blob([dataStr], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'export-mykpoptrade.json';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);*/
                 } catch (error) {
                     this.$func.showToastError("Erreur lors de l'export des données.");
                     console.error(error);
@@ -821,12 +866,11 @@
             },
             deletePaypal(){
                 const sessionToken = Cookies.get('sessionToken');
-
                 axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
                     },
                     data: {
                         paypalEmail: this.emailPaypal
@@ -859,7 +903,7 @@
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
+                        'Authorization': `Bearer ${sessionToken}`
 
                     }
                 }).then(response => {
@@ -902,7 +946,7 @@
                 if(this.profilInfo.profilePicture == 'https://mykpoptrade.com/images/avatar-default.png'){
                     return 'https://mykpoptrade.com/images/avatar-default.png';
                 }else{
-                const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
+                const baseUrl = import.meta.env.VITE_API_URL;
                 return this.profilInfo.profilePicture
                 ? `${baseUrl}${this.profilInfo.profilePicture}`
                 : null;
@@ -910,7 +954,7 @@
           
             },
             banneerictureUrl() {
-                const baseUrl = import.meta.env.VITE_API_URL; // Récupère le nom de domaine depuis les variables d'environnement
+                const baseUrl = import.meta.env.VITE_API_URL;
                 return this.profilInfo.profileBanner
                 ? `${baseUrl}${this.profilInfo.profileBanner}`
                 : null;
@@ -978,7 +1022,7 @@
   align-items: center;
 }
 .empty-profile i {
-  font-size: 3rem; /* Ajustez la taille de l'icône */
+  font-size: 3rem;
   color: white; 
 }
 .empty_box{
@@ -1016,7 +1060,6 @@
 }
 .identifier{
     font-family: "Sora", serif;
-    /*font-size: 10px;*/
     font-size: small;
     font-weight: 400;
     line-height: 12.6px;
@@ -1077,6 +1120,444 @@ button.btn.btn-outline:hover {
 .dropdown-menu li:hover {
   background-color: var(--secondary-color-tint);
 }
+
+/* ============================================ */
+/* NOUVEAU DESIGN MODERNE POPUP PARAMÈTRES */
+/* ============================================ */
+.popup-settings-modern {
+    width: 600px;
+    max-width: 95vw;
+    max-height: 85vh;
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark, #1a1a2e) 100%);
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-close-settings {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-close-settings:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.settings-content {
+    padding: 20px 28px 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.settings-section {
+    margin-bottom: 32px;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--secondary-color-shade);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--secondary-color-tint);
+}
+
+.section-title-danger {
+    color: var(--danger-color);
+    border-bottom-color: var(--danger-color);
+}
+
+.setting-item-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.setting-item-modern:hover {
+    background: #e9ecef;
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.setting-item-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.setting-icon {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.setting-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.setting-item-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.setting-arrow {
+    font-size: 1.1rem;
+    color: var(--secondary-color-shade);
+}
+
+.status-icon {
+    font-size: 1.3rem;
+}
+
+.status-success {
+    color: var(--success-color);
+}
+
+.status-error {
+    color: var(--danger-color);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.status-badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.btn-verify {
+    font-size: 0.8rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-verify:hover {
+    background: var(--primary-color-dark, #1a1a2e);
+    transform: scale(1.05);
+}
+
+/* Éléments de configuration spéciaux */
+.setting-item-phone,
+.setting-item-paypal {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+}
+
+.setting-item-phone:hover,
+.setting-item-paypal:hover {
+    transform: none;
+}
+
+.setting-phone-content,
+.setting-paypal-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.input-phone,
+.input-paypal {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.input-phone:focus,
+.input-paypal:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 0, 0, 0), 0.1);
+}
+
+.paypal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-save-paypal {
+    padding: 8px 16px;
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-save-paypal:hover {
+    background: #28a745;
+    transform: translateY(-2px);
+}
+
+.btn-delete-paypal {
+    padding: 8px 12px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-paypal:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Vérification téléphone étendue */
+.setting-item-expanded {
+    padding: 16px 20px;
+    background: #e7f3ff;
+    border-radius: 12px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+    border: 2px solid var(--primary-color);
+}
+
+.verification-code-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.verification-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.verification-input-group {
+    display: flex;
+    gap: 12px;
+}
+
+.input-code {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.btn-verify-code {
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-verify-code:hover {
+    background: var(--primary-color-dark, #1a1a2e);
+}
+
+.btn-verify-standalone {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* Switch moderne */
+.switch-modern {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.switch-modern input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-modern {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 28px;
+}
+
+.slider-modern:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider-modern {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider-modern:before {
+    transform: translateX(24px);
+}
+
+/* Boutons d'action pleine largeur */
+.btn-action-full {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-action-full:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-action-secondary {
+    background: var(--secondary-color);
+    color: var(--primary-color);
+}
+
+.btn-action-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-action-danger:hover {
+    background: #c82333;
+}
+
+/* Zone de danger */
+.settings-danger-zone {
+    border: 2px solid var(--danger-color);
+    border-radius: 12px;
+    padding: 20px;
+    background: #fff5f5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .popup-settings-modern {
+        width: 95vw;
+        max-height: 90vh;
+    }
+
+    .settings-header {
+        padding: 20px;
+    }
+
+    .settings-title {
+        font-size: 1.25rem;
+    }
+
+    .settings-content {
+        padding: 16px 20px 20px;
+    }
+
+    .setting-item-modern {
+        padding: 14px 16px;
+    }
+
+    .setting-icon {
+        font-size: 1.1rem;
+    }
+
+    .setting-label {
+        font-size: 0.9rem;
+    }
+}
+
+/* Ancien styles conservés */
 .valid, .emailRequestSuccess{
     color: var(--success-color);
     margin-left: 15px;
@@ -1119,6 +1600,7 @@ button.btn.btn-outline:hover {
 .setting_item{
     margin-top: 10px;
 }
+
 @media (max-width: 768px) {
     .picture{
         top: 15%;
@@ -1164,8 +1646,4 @@ button.btn.btn-outline:hover {
         width: 30%;
     }
 }
-
-
-
-    
 </style>

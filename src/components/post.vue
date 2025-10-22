@@ -116,7 +116,7 @@
                 </div>
                 <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post_card_content_footer">
                     <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button">Faire une offre</button>
-                    <button class="btn-blue-outline" type="button">Acheter</button>
+                    <button class="btn-blue-outline"  @click="buyOption"  type="button">Acheter</button>
                     <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
                 </div>
             </div>
@@ -133,14 +133,17 @@
                 </button>
             </div>
 
+
         </div>
+
 
     </div>
     <!--------- Popup Pour envoyer un message ---------->
     <send_message :id_user="dataSeller._id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
 
+
     <!--------- Popup ---------->
-    <div v-if="showSoldPopup "class="popup-overlay">
+    <div v-if="showSoldPopup" class="popup-overlay" @click.self="hidePopup">
         <div class="popup-content">
             <p>Voulez-vous vraiment mettre cet article comme vendu ?</p>
             <div class="popup-buttons-footer">
@@ -149,12 +152,23 @@
             </div>
         </div>
     </div>
+    <!-- Option d'achat Modal -->
+    <div class="popup-overlay" v-if="showBuyOption" @click.self="buyOption">
+      <div @click.stop class="popup-content">
+        <div style="cursor: pointer;" @click="initPaypal" >
+          <i class="bi bi-paypal"></i>          
+          Payer avec PayPal
+        </div>
+      </div>
+    </div>
+
+
     <!--------- Popup Suppression ---------->
-    <div v-if="showDeletePopup "class="popup-overlay">
+    <div v-if="showDeletePopup" class="popup-overlay" @click.self="closeDeletePopup">
         <div class="popup-content">
             <p>Voulez-vous vraiment supprimer cet article  ?</p>
             <div class="popup-buttons-footer">
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="hidePopup">Annuler</button>
+                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="closeDeletePopup">Annuler</button>
                 <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="deletePost(dataPost._id)">Supprimer</button>
             </div>
         </div>
@@ -162,8 +176,10 @@
     
     <report_card @closeReport="showPopupReport = false" :type="'product'" :id="dataPost._id" v-if="showPopupReport"></report_card>
 
+
 </template>
   
+
 
 <script lang="ts">
     import { defineComponent, ref } from 'vue';
@@ -174,10 +190,12 @@
     import send_message from '../components/adherents/send_message.vue';
     
     import postService from '@/services/post.service';
+    import paymentService from '@/services/payment.service';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
     import type { ImgUserProfile } from '@/types/user.types';
+
 
     export default defineComponent({
         name: "post",
@@ -201,6 +219,7 @@
                 default: false,
             }
 
+
         },
         emits: ['closePost', 'sold'],
         data() {
@@ -214,29 +233,436 @@
                 isFav: false,
                 showPopupReport: false,
                 popupMessage: false,
-                isLoading: true, // Ajout d'une variable de chargement
-                dataInitialized: false // Pour s'assurer que les données sont prêtes
+                isLoading: true,
+                dataInitialized: false
             };
         },
-        setup(){
+        setup(props){
             const myId = Cookies.get('id_user');
             const route = useRoute();
             const router = useRouter();
+            const showBuyOption = ref(false);
 
-            const id = route.params.id; // Récupère l'ID passé en paramètre
+
+            const buyOption = () => {
+                showBuyOption.value = !showBuyOption.value;
+            };
+
+            // Fonction pour créer une iframe modale PayPal avec détection d'erreur
+            const createPaypalIframe = (approvalUrl: string, paymentId: string) => {
+                try {
+                    // Vérifier si une iframe PayPal existe déjà
+                    const existingModal = document.getElementById('paypal-iframe-modal');
+                    if (existingModal) {
+                        existingModal.remove();
+                    }
+
+                    // Créer la modale avec iframe
+                    const modal = document.createElement('div');
+                    modal.id = 'paypal-iframe-modal';
+                    modal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        z-index: 9999;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    `;
+
+                    const modalContent = document.createElement('div');
+                    modalContent.style.cssText = `
+                        position: relative;
+                        width: 90%;
+                        height: 90%;
+                        max-width: 500px;
+                        max-height: 700px;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                    `;
+
+                    // Header de la modale
+                    const modalHeader = document.createElement('div');
+                    modalHeader.style.cssText = `
+                        padding: 15px 20px;
+                        background: #0070ba;
+                        color: white;
+                        font-family: Arial, sans-serif;
+                        font-size: 16px;
+                        font-weight: bold;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+                    modalHeader.innerHTML = `
+                        <span>Paiement PayPal</span>
+                        <button id="close-paypal-modal" style="
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 20px;
+                            cursor: pointer;
+                            padding: 0;
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        " title="Fermer">×</button>
+                    `;
+
+                    // Iframe PayPal
+                    const iframe = document.createElement('iframe');
+                    iframe.src = approvalUrl;
+                    iframe.style.cssText = `
+                        width: 100%;
+                        height: calc(100% - 60px);
+                        border: none;
+                        display: block;
+                    `;
+
+                    // Loader pendant le chargement
+                    const loader = document.createElement('div');
+                    loader.id = 'paypal-loader';
+                    loader.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                        font-family: Arial, sans-serif;
+                    `;
+                    loader.innerHTML = `
+                        <div style="margin-bottom: 10px;">Chargement PayPal...</div>
+                        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0070ba; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        </style>
+                    `;
+
+                    // Variables pour gérer les événements
+                    let messageHandler: ((event: MessageEvent) => void) | null = null;
+                    let iframeLoadHandler: (() => void) | null = null;
+                    let iframeErrorHandler: (() => void) | null = null;
+                    let isIframeLoaded = false;
+                    let iframeError = false;
+
+                    // Fonction pour nettoyer et fermer la modale
+                    const closeModal = () => {
+                        if (messageHandler) {
+                            window.removeEventListener('message', messageHandler);
+                        }
+                        if (iframeLoadHandler) {
+                            iframe.removeEventListener('load', iframeLoadHandler);
+                        }
+                        if (iframeErrorHandler) {
+                            iframe.removeEventListener('error', iframeErrorHandler);
+                        }
+                        if (modal && document.body.contains(modal)) {
+                            modal.remove();
+                        }
+                        console.log('Iframe PayPal fermée');
+                        checkPaymentStatus(paymentId);
+                    };
+
+                    // Gérer les messages de PayPal dans l'iframe
+                    messageHandler = (event: MessageEvent) => {
+                        // Ignorer les messages de télémétrie PayPal
+                        if (event.data.p2Sent || event.data.utils) {
+                            console.log('Message de télémétrie PayPal ignoré');
+                            return;
+                        }
+                        
+                        // Vérifier l'origine pour la sécurité
+                        if (event.origin !== 'https://www.sandbox.paypal.com' && 
+                            event.origin !== 'https://www.paypal.com') {
+                            return;
+                        }
+                        
+                        console.log('Message reçu de PayPal iframe:', event.data);
+                        
+                        if (event.data.type === 'payment_success') {
+                            closeModal();
+                            onPaymentSuccess(event.data.paymentId || paymentId);
+                        } else if (event.data.type === 'payment_cancelled') {
+                            closeModal();
+                            onPaymentCancelled();
+                        }
+                    };
+
+                    // Gérer le chargement de l'iframe
+                    iframeLoadHandler = () => {
+                        isIframeLoaded = true;
+                        const loaderElement = document.getElementById('paypal-loader');
+                        if (loaderElement) {
+                            loaderElement.style.display = 'none';
+                        }
+                        console.log('Iframe PayPal chargée avec succès');
+                    };
+
+                    // Gérer les erreurs de l'iframe
+                    iframeErrorHandler = () => {
+                        iframeError = true;
+                        console.error('Erreur lors du chargement de l\'iframe PayPal');
+                    };
+
+                    // Event listeners
+                    iframe.addEventListener('load', iframeLoadHandler);
+                    iframe.addEventListener('error', iframeErrorHandler);
+                    window.addEventListener('message', messageHandler);
+
+                    // Event listener pour fermer la modale
+                    const closeButton = modalHeader.querySelector('#close-paypal-modal');
+                    if (closeButton) {
+                        closeButton.addEventListener('click', closeModal);
+                    }
+                    
+                    // Fermer en cliquant sur l'arrière-plan
+                    modal.addEventListener('click', (event) => {
+                        if (event.target === modal) {
+                            closeModal();
+                        }
+                    });
+
+                    // Fermer avec la touche Escape
+                    const escapeHandler = (event: KeyboardEvent) => {
+                        if (event.key === 'Escape') {
+                            document.removeEventListener('keydown', escapeHandler);
+                            closeModal();
+                        }
+                    };
+                    document.addEventListener('keydown', escapeHandler);
+
+                    // Assembler la modale
+                    modalContent.appendChild(modalHeader);
+                    modalContent.appendChild(loader);
+                    modalContent.appendChild(iframe);
+                    modal.appendChild(modalContent);
+                    document.body.appendChild(modal);
+
+                    console.log('Iframe PayPal créée et ajoutée à la page');
+                    
+                    // Focus sur l'iframe après un court délai
+                    setTimeout(() => {
+                        if (iframe) {
+                            iframe.focus();
+                        }
+                    }, 500);
+
+                    // Retourner une référence à la modale pour vérifications ultérieures
+                    return {
+                        modal: modal,
+                        iframe: iframe,
+                        isVisible: () => document.body.contains(modal) && modal.style.display !== 'none',
+                        isLoaded: () => isIframeLoaded,
+                        hasError: () => iframeError,
+                        close: closeModal
+                    };
+
+                } catch (error) {
+                    console.error('Erreur lors de la création de l\'iframe PayPal:', error);
+                    return null;
+                }
+            };
+
+            // Fonction pour gérer les événements de l'onglet
+            const handleTabEvents = (tabWindow: Window, paymentId: string) => {
+                let checkClosedInterval: number | null = null;
+                let messageHandler: ((event: MessageEvent) => void) | null = null;
+
+                // Fonction pour nettoyer les listeners et intervals
+                const cleanup = () => {
+                    if (checkClosedInterval) {
+                        clearInterval(checkClosedInterval);
+                        checkClosedInterval = null;
+                    }
+                    if (messageHandler) {
+                        window.removeEventListener('message', messageHandler);
+                        messageHandler = null;
+                    }
+                };
+
+                // Gérer les messages de PayPal
+                messageHandler = (event: MessageEvent) => {
+                    // Ignorer les messages de télémétrie PayPal
+                    if (event.data.p2Sent || event.data.utils) {
+                        console.log('Message de télémétrie PayPal ignoré');
+                        return;
+                    }
+                    
+                    // Vérifier l'origine pour la sécurité
+                    if (event.origin !== 'https://www.sandbox.paypal.com' && 
+                        event.origin !== 'https://www.paypal.com') {
+                        return;
+                    }
+                    
+                    console.log('Message reçu de PayPal onglet:', event.data);
+                    
+                    if (event.data.type === 'payment_success') {
+                        tabWindow.close();
+                        cleanup();
+                        onPaymentSuccess(event.data.paymentId || paymentId);
+                    } else if (event.data.type === 'payment_cancelled') {
+                        tabWindow.close();
+                        cleanup();
+                        onPaymentCancelled();
+                    }
+                };
+
+                // Surveiller la fermeture de l'onglet
+                checkClosedInterval = window.setInterval(() => {
+                    try {
+                        if (tabWindow.closed) {
+                            cleanup();
+                            console.log('Onglet PayPal fermé');
+                            checkPaymentStatus(paymentId);
+                        }
+                    } catch (error) {
+                        // Erreur d'accès cross-origin, considérer comme fermé
+                        cleanup();
+                        console.log('Onglet PayPal fermé (cross-origin)');
+                        checkPaymentStatus(paymentId);
+                    }
+                }, 1000);
+
+                // Écouter les messages
+                window.addEventListener('message', messageHandler);
+
+                // Donner le focus à l'onglet
+                try {
+                    tabWindow.focus();
+                } catch (error) {
+                    console.log('Impossible de donner le focus à l\'onglet');
+                }
+
+                console.log('Onglet PayPal ouvert et surveillé');
+            };
+
+            const initPaypal = async () => {
+                try {
+                    showBuyOption.value = false;
+                    // Utiliser props.idPost au lieu de route.params.id
+                    console.log('Initialisation PayPal pour le produit:', props.idPost);
+                    
+                    if (!props.idPost) {
+                        alert('Erreur: ID du produit non disponible');
+                        return;
+                    }
+                    
+                    const retour_initPayPal = await paymentService.initPayPal(props.idPost);
+                    console.log(retour_initPayPal);
+                    
+                    if (retour_initPayPal.success && retour_initPayPal.payment?.approvalUrl) {
+                        console.log('Ouverture PayPal avec iframe...');
+                        
+                        // Essayer d'abord l'iframe
+                        const iframeResult = createPaypalIframe(retour_initPayPal.payment.approvalUrl, retour_initPayPal.payment.id);
+                        
+                        // Vérifier si l'iframe s'est bien créée
+                        setTimeout(() => {
+                            if (iframeResult && iframeResult.isVisible()) {
+                                console.log('Iframe PayPal active et fonctionnelle');
+                            } else {
+                                console.error('Iframe PayPal non fonctionnelle, ouverture nouvel onglet...');
+                                
+                                // Fermer l'iframe si elle existe
+                                if (iframeResult && iframeResult.close) {
+                                    iframeResult.close();
+                                }
+                                
+                                // Fallback : ouvrir dans un nouvel onglet
+                                const newTab = window.open(retour_initPayPal.payment.approvalUrl, '_blank');
+                                if (newTab) {
+                                    console.log('Nouvel onglet PayPal ouvert');
+                                    handleTabEvents(newTab, retour_initPayPal.payment.id);
+                                } else {
+                                    console.error('Impossible d\'ouvrir un nouvel onglet');
+                                    alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups/onglets ou copier ce lien : ' + retour_initPayPal.payment.approvalUrl);
+                                }
+                            }
+                        }, 500);
+                        
+                    } else {
+                        console.error('Erreur lors de l\'initialisation PayPal:', retour_initPayPal);
+                        alert('Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
+                    }
+                } catch (error) {
+                    console.error('Erreur PayPal:', error);
+                    alert('Une erreur est survenue lors de l\'initialisation du paiement PayPal.');
+                }
+            };
+
+            const checkPaymentStatus = async (paymentId: string) => {
+                try {
+                    console.log('Vérification du statut de paiement:', paymentId);
+                    const statusResponse = await paymentService.checkPaymentStatus(paymentId);
+                    console.log('Statut du paiement:', statusResponse);
+                    
+                    if (statusResponse.success) {
+                        if (statusResponse.status === 'approved' || statusResponse.status === 'completed') {
+                            onPaymentSuccess(paymentId);
+                        } else if (statusResponse.status === 'cancelled') {
+                            onPaymentCancelled();
+                        } else {
+                            console.log('Paiement en attente ou statut inconnu:', statusResponse.status);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la vérification du statut:', error);
+                }
+            };
+
+            const onPaymentSuccess = async (paymentId: string) => {
+                try {
+                    console.log('Paiement réussi:', paymentId);
+                    alert('Paiement réussi ! Le produit a été marqué comme vendu.');
+                    // Recharger les données du post
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Erreur lors du traitement du succès:', error);
+                    alert('Paiement réussi mais erreur lors du traitement. Contactez le support.');
+                }
+            };
+
+            const onPaymentCancelled = () => {
+                console.log('Paiement annulé par l\'utilisateur');
+                alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
+            };
+
+            const id = route.params.id;
             return {
                 route,
                 router,
                 id,
-                myId
+                myId,
+                showBuyOption,
+                buyOption,
+                initPaypal,
+                handleTabEvents,
+                createPaypalIframe,
+                checkPaymentStatus,
+                onPaymentSuccess,
+                onPaymentCancelled
             };
         },
         async mounted() {
             await this.initializeComponent();
         },
 
-        computed: {
 
+        computed: {
             profilePictureUrl() {
                 var profileImgInfo : ImgUserProfile = {
                     username: this.dataSeller.username,
@@ -252,44 +678,37 @@
                     JPY: '¥',
                     GBP: '£',
                 };
-                return symbols[this.dataPost.currency as keyof typeof symbols] || ''; // Retourne le symbole ou une chaîne vide si non défini
+                return symbols[this.dataPost.currency as keyof typeof symbols] || '';
             },
        
         },
         methods: {
+            
             async initializeComponent() {
                 try {
                     this.isLoading = true;
-                    // Récupération des données du post
                     await this.getData();
-                    // Vérification que les données sont bien chargées
                     if (!this.dataPost || Object.keys(this.dataPost).length === 0) {
                         throw new Error('Données du post non chargées');
                     }
                     
-                    // Initialisation des données utilisateur de manière synchrone
                     this.initializeUserData();
-                    
-                    // Marquer comme initialisé
                     this.dataInitialized = true;
                     
                 } catch (error) {
                     console.error('Erreur lors de l\'initialisation:', error);
-                    // Gérer l'erreur (afficher un message, rediriger, etc.)
                 } finally {
                     this.isLoading = false;
                 }
             },
             initializeUserData() {
-                // Cette méthode s'exécute de manière synchrone après le chargement des données
                 if (this.dataUser && Object.keys(this.dataUser).length > 0) {
-                    this.dataSeller = { ...this.dataUser }; // Copie pour éviter les références
+                    this.dataSeller = { ...this.dataUser };
                 } else {
                     this.dataSeller = this.dataPost.seller ? { ...this.dataPost.seller } : {};
                     this.isRoot = false;
                 }
                 
-                // Vérification de l'utilisateur root
                 if (this.dataSeller._id && this.dataSeller._id === this.myId) {
                     this.isRoot = true;
                 }
@@ -308,6 +727,9 @@
             hidePopup(){
                 this.showSoldPopup = !this.showSoldPopup;
             },
+            closeDeletePopup(){
+                this.showDeletePopup = false;
+            },
             async sold(id: any,userId: any){
                 const response = await postService.sold(userId,id);
                 if (response) {
@@ -318,7 +740,7 @@
             async deletePost(id: any){
                 const response = await postService.deletePost(id);
                 if (response) {
-                    this.showSoldPopup = false;
+                    this.showDeletePopup = false;
                     this.$emit('sold');
                 }
             },
@@ -360,7 +782,8 @@
         },
     });
 
-  </script>
+
+</script>
   
   <style lang="scss" scoped>
     .banner_reserved{
@@ -435,12 +858,14 @@
         margin-right: auto;
         margin-left: auto;
 
+
         height: 100%;
         width: 100%;
         position: absolute;
         top: 0;
         border-radius: 3px 3px 0 0;
         z-index: 1;
+
 
     }
     .card .back {
@@ -467,6 +892,7 @@
     .post_card_content_header, .post_card_detail, .post_card_content_footer{
         margin: 15px;
     }
+
 
 
     .img_certif_container{
@@ -543,12 +969,15 @@
         bottom: 0px;
     }
 
+
     .post_card_content_footer button{
         margin: 1%;
         font-size: small;
         width: 30%;
 
+
     }
+
 
     @media (max-width:980px){
         .container_detail_card .card{
@@ -614,4 +1043,3 @@
         }
     }
   </style>
-  

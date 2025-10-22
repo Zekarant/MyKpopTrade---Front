@@ -9,6 +9,8 @@ import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
 import add_post from '@p_v/add_post.vue';
 import Admin from '@/views/admin/admin.vue';
+import cancel from '@/views/payment/cancel.vue';
+
 
 
 const routes = [
@@ -34,6 +36,14 @@ const routes = [
     path: '/adherents/admin',
     name: 'admin',
     component: Admin
+  },
+{
+    path: '/payment/cancel',
+    name: 'payment_cancel',
+    component: () => import('@/views/payment/cancel.vue'),
+    meta: {
+      title: 'Paiement annulé'
+    }
   },
     {
     path: '/adherents/',
@@ -63,8 +73,10 @@ const routes = [
     const combined = route.params.combined || '';
     const parts = combined.split('-');
 
+
     let query = '';
     let event = '';
+
 
     if (combined === '') {
       query = '';
@@ -85,6 +97,7 @@ const routes = [
       query = parts[0] || '';
       event = parts[parts.length - 1] || '';
     }
+
 
     return { query, event };
   }
@@ -126,21 +139,26 @@ const routes = [
     component: add_post,
     props: true
 
+
   },{
     path: '/adherents/modify',
     name: 'modify_post',
     component: add_post,
     props: true
 
+
   }
 
+
 ];
+
 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: routes
 })
+
 
 
 export default router

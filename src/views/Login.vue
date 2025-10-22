@@ -1,5 +1,5 @@
 <template>
-     <main>
+  <main>
     <div class="d-flex align-items-center position-absolute top-0 start-0 p-3 p-md-5 pt-4 logo-container">
       <img src="@/assets/images/logo.png" class="logo-img" alt="Logo" />
       <span class="main-title ms-3">
@@ -9,32 +9,52 @@
     <div class="container-custom">
       <div class="d-flex flex-column justify-content-center w-50 position-relative">
         <div class="imgcenter column_form">
-
-    
           <form @submit.prevent="submitForm" class="d-flex flex-column">
             <div class="input-group mb-3">
               <span class="input-group-text bg-white border-0">
                 <i class="material-icons">person</i>
               </span>
-              <input type="text" v-model="username" class="form-control border-0" :class="{ 'is-invalid': ErroruserName }"
-                placeholder="Votre identifiant" required />
+              <input
+                type="text"
+                v-model="username"
+                class="form-control border-0"
+                :class="{ 'is-invalid': ErroruserName }"
+                placeholder="Votre identifiant"
+                required
+              />
             </div>
             <div class="input-group mb-3">
-                <span class="input-group-text bg-white border-0">
-                    <i class="material-icons">lock</i>
-                </span>
-              <input type="password" v-model="password" class="form-control border-0" :class="{ 'is-invalid': passwordError }"
-              placeholder="Mot de passe" required />
+              <span class="input-group-text bg-white border-0">
+                <i class="material-icons">lock</i>
+              </span>
+              <input
+                type="password"
+                v-model="password"
+                class="form-control border-0"
+                :class="{ 'is-invalid': passwordError }"
+                placeholder="Mot de passe"
+                required
+              />
             </div>
-            <button class="btn-primary" @click="login" aria-label="login"  variant="primary">Se connecter</button>
+            <button class="btn-primary" aria-label="login" variant="primary">
+              Se connecter
+            </button>
             <a class="registerBtn btn-primary-outline" href="register">S'inscire</a>
             <a style="text-align: center;" href="forgot_psw">Mot de passe oublié</a>
-            <br>
-            <div v-if="ErroruserName || successMessage || passwordError"
-              :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage, 'alert-danger': ErroruserName }]"
-              role="alert">
+            <br />
+            <div
+              v-if="ErroruserName || successMessage || passwordError"
+              :class="[
+                'alert',
+                'alert-dismissible',
+                'd-flex',
+                'align-items-center',
+                { 'alert-success': successMessage, 'alert-danger': ErroruserName || passwordError }
+              ]"
+              role="alert"
+            >
               <i class="material-icons me-3">
-                {{ ErroruserName | passwordError ? 'error' : 'check' }}
+                {{ ErroruserName || passwordError ? 'error' : 'check' }}
               </i>
               <div>
                 {{ ErroruserName || passwordError || successMessage }}
@@ -48,89 +68,61 @@
       </div>
     </div>
   </main>
-  </template>
-  <script>
-  import { defineComponent, ref } from 'vue';
-  import axios from 'axios';
-  import { useRouter } from 'vue-router';
-  import Cookies from 'js-cookie';
+</template>
 
-  export default defineComponent ({
-    name: "Login",
-    setup() {
-      var passwordError = ref('');
-      var username = ref('');
-      var password = ref('');
-      var ErroruserName = ref('');
-      var usernameError = ref('');
-      var errorBase = ref('');
-      var successMessage = ref('');
-      
-      
-      const router = useRouter();
+<script>
+import { defineComponent, ref } from "vue";
+import { useRouter } from "vue-router";
+import authentificationService from "@/services/authentification.service";
 
-      const login = async () => {
-        var verif_login = true;
+export default defineComponent({
+  name: "Login",
+  setup() {
+    const passwordError = ref("");
+    const username = ref("");
+    const password = ref("");
+    const ErroruserName = ref("");
+    const successMessage = ref("");
 
-        if(username.value == '' || username.value.length < 5) {
-          verif_register = false;
-          ErroruserName.value  = 'Le pseudo doit être plus long';
-        } else {
-          ErroruserName.value = '';
-        }
-        if(password.value == '') {
-          verif_register = false;
-          passwordError.value  = 'Le mot de passe ne peut pas être vide';
-        } else {
-          passwordError.value = '';
-        }
-        if(verif_login){
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-              identifier: username.value,
-              password: password.value,
-          }, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(response => {
-              console.log(response);
-              if (response.status === 200) {
-              Cookies.set('sessionToken', response.data.accessToken, { expires: 15 / 1440 });
-              Cookies.set('refreshToken', response.data.refreshToken, { expires: 1 })
-              Cookies.set('id_user', response.data.user.id, { expires: 1 });
-              sessionStorage.removeItem('favorites');
-              router.push('/adherents/dashboard');
+    const router = useRouter();
 
-            } else {
-              ErroruserName.value = response.data.message;
-            }
-          }).catch(error => {
-            console.log(error);
-            ErroruserName.value = error.response.data.message;
-
-          });
-
-
-
-
-
+    const submitForm = async () => {
+      let verif_login = true;
+      if (username.value === "" || username.value.length < 5) {
+        verif_login = false;
+        ErroruserName.value = "Le pseudo doit être plus long";
+      } else {
+        ErroruserName.value = "";
+      }
+      if (password.value === "") {
+        verif_login = false;
+        passwordError.value = "Le mot de passe ne peut pas être vide";
+      } else {
+        passwordError.value = "";
+      }
+      if (verif_login) {
+        try {
+          await authentificationService.login(username.value, password.value);
+          successMessage.value = "Connexion réussie.";
+          router.push("/adherents/dashboard");
+        } catch (error) {
+          ErroruserName.value = error.message;
         }
       }
-      return {
-        login,
-        passwordError,
-        username,
-        ErroruserName,
-        errorBase,
-        successMessage,
-        password,
-        
-      };
-    }
+    };
 
+    return {
+      username,
+      password,
+      ErroruserName,
+      passwordError,
+      successMessage,
+      submitForm,
+    };
+  },
+});
+</script>
 
-  });
-  </script>
 <style lang="scss" scoped>
 .registerBtn{
   width: 100%;

@@ -212,6 +212,19 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
+  // Supprimer une coneversation
+  async deleteConversation(conversationId: string): Promise<void> {
+    if (!conversationId.trim()) {
+      throw new Error('ID de conversation requis');
+    }
+
+    try {
+      await this.apiClient.delete(`/${conversationId}`);
+    } catch (error) {
+      console.error(`Erreur lors de la suppression de la conversation ${conversationId}:`, error);
+      throw this.handleError(error);
+    }
+  }
 
   // Récupérer une pièce jointe
   getAttachmentUrl(messageId: string, attachmentName: string): string {

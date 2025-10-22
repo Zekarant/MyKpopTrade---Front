@@ -1,100 +1,103 @@
-// services/user.service.ts
-import axios from "axios";
-import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
-
+import axios, { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
 import Cookies from "js-cookie";
-import type {
-    IUser,
-    UserResponse
-} from "@/types/user.types";
 import router from "@/router";
-
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
-const getIdUser = (): string | undefined => Cookies.get('id_user');
 
 interface ApiError {
   message: string;
   status?: number;
   code?: string;
 }
+
 interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
 }
+
 type AuthToken = string | null;
 
-
 class authentificationService {
-    private authApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
+  private authApiClient: AxiosInstance;
+  private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
 
-    constructor() {
-    
-        this.authApiClient = axios.create({
-        baseURL: `${this.API_BASE_URL}/auth`,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        });
+  constructor() {
+    this.authApiClient = axios.create({
+      baseURL: `${this.API_BASE_URL}/auth`,
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
 
-        // Configuration des intercepteurs pour les deux clients
-        this.setupInterceptors(this.authApiClient);
-    }
-    private setupInterceptors(client: AxiosInstance): void {
-        // Intercepteur pour ajouter le token JWT ou le cookie PHPSESSID
-        client.interceptors.request.use(
-        (config) => {
-            const token = this.getAuthToken();
-            if (token && config.headers) {
-            config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-        },
-        (error: AxiosError) => Promise.reject(error)
-        );
+    this.setupInterceptors(this.authApiClient);
+  }
 
-        // Intercepteur pour gérer les erreurs
-        client.interceptors.response.use(
-        (response) => response,
-        (error: AxiosError) => {
-            if (error.response?.status === 401) {
-            this.handleUnauthorized();
-            }
-            return Promise.reject(error);
+  private setupInterceptors(client: AxiosInstance): void {
+    client.interceptors.request.use(
+      (config) => {
+        const token = this.getAuthToken();
+        if (token && config.headers) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
-        );
-    }
-    private handleUnauthorized(): void {
-        localStorage.removeItem('token');
-        router.push('/login');
-    }
-    private getAuthToken(): AuthToken {
-        // Utilise js-cookie pour récupérer le sessionToken
-        const sessionToken = Cookies.get('sessionToken');
-        if (sessionToken) {
-        return sessionToken;
-        }
+        return config;
+      },
+      (error: AxiosError) => Promise.reject(error)
+    );
 
-        // Fallback : récupère le token du localStorage
-        return localStorage.getItem('token');
+    client.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        if (error.response?.status === 401) {
+          this.handleUnauthorized();
+        }
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  private handleUnauthorized(): void {
+    localStorage.removeItem("token");
+    this.clearCookies();
+    router.push("/login");
+  }
+
+  private getAuthToken(): AuthToken {
+    const sessionToken = Cookies.get("sessionToken");
+    if (sessionToken) {
+      return sessionToken;
     }
+    return localStorage.getItem("token");
+  }
+
+  async login(identifier: string, password: string): Promise<void> {
+    try {
+      const response: AxiosResponse = await this.authApiClient.post("/login", {
+        identifier,
+        password,
+      });
+      if (response.status === 200) {
+        Cookies.set("sessionToken", response.data.accessToken, { expires: 15 / 1440 });
+        Cookies.set("refreshToken", response.data.refreshToken, { expires: 1 });
+        Cookies.set("id_user", response.data.user.id, { expires: 1 });
+        sessionStorage.removeItem("favorites");
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      throw new Error(axiosError.response?.data.message || "Erreur lors de la connexion");
+    }
+  }
+
   async logout(): Promise<void> {
     try {
       const refreshToken = Cookies.get("refreshToken");
-      const sessionToken = Cookies.get("sessionToken");
-      await this.authApiClient.post(
-        '/logout',
-        { refreshToken },
-      );
-
-      this.clearCookies();
-      router.push("/login");
-    } catch (error) {
+      await this.authApiClient.post("/logout", { refreshToken });
+    } catch (_) {
+      // Ignore errors on logout request
+    } finally {
       this.clearCookies();
       router.push("/login");
     }
   }
-
   async verifSession(): Promise<void> {
     const sessionToken = Cookies.get("sessionToken");
 
@@ -129,12 +132,12 @@ class authentificationService {
       this.logout();
     }
   }
-
   clearCookies(): void {
     Cookies.remove("sessionToken");
     Cookies.remove("refreshToken");
+    Cookies.remove("id_user");
     document.cookie = "sessionToken=; expires=Thu, 01 Jan 1970 00:00:01 GMT";
   }
-};
+}
 
 export default new authentificationService();

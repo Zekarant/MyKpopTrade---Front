@@ -146,6 +146,21 @@ export const useMessagingStore = defineStore('messaging', {
         throw error;
       }
     },
+    async deleteConversation(coneversationId: string) {
+      try {
+        await messagingService.deleteConversation(coneversationId);
+
+        // Retirer la conversation de la liste
+        const index = this.conversations.findIndex(m => m._id === coneversationId);
+        if (index !== -1) {
+          this.conversations.splice(index, 1);
+        }
+      } catch (error) {
+        this.error = 'Erreur lors de la suppression de la conversation';
+        console.error(error);
+        throw error;
+      }
+    },
 
     async startConversation(recipientId: string, productId?: string, initialMessage?: string) {
       try {
