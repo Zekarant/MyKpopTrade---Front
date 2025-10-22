@@ -169,8 +169,7 @@
       <div v-else class="active-chat">
         <!-- Chat Header -->
         <div class="chat-header">
-          <i @click="closeConversation" class="bi bi-chevron-compact-left back-btn"></i>          
-
+          <i @click="closeConversation" class="bi bi-chevron-compact-left back-btn"></i>
           <div class="chat-participant">
             <div class="userPicture" v-html="getAvatar(selectedConversation.otherParticipant)"></div>
             <div class="participant-info">
@@ -307,7 +306,7 @@
                 :disabled="sending"
               />
             </div>
-            <button class="emoji-btn" @click="showEmojiPicker = !showEmojiPicker">
+            <button class="emoji-btn" @click.stop="showEmojiPicker = !showEmojiPicker">
               <i class="bi bi-emoji-smile"></i>
             </button>
             <button
@@ -317,6 +316,15 @@
             >
               <i class="bi" :class="sending ? 'bi-arrow-clockwise' : 'bi-send'"></i>
             </button>
+          </div>
+
+          <!-- Emoji Picker Popup -->
+          <div v-if="showEmojiPicker" class="emoji-picker-popup" @click.stop>
+            <EmojiPicker 
+              :native="true" 
+              @select="onSelectEmoji"
+              :display-recent="true"
+            />
           </div>
         </div>
       </div>
@@ -482,7 +490,6 @@
       <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="selectedConversation"></send_offer>
     </div>
 
-
   </div>
 </template>
 
@@ -493,8 +500,10 @@ import userService from '@/services/user.service'
 import paymentService from '@/services/payment.service'
 import nav_bar from '@/components/adherents/nav_bar.vue';
 import ImageCarousel from '@/components/ImageCarousel.vue';
-import send_message from '@/components/adherents/send_message.vue'; // Import du composant
+import send_message from '@/components/adherents/send_message.vue';
 import send_offer from '@/components/send_offer.vue';
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 const showSidebar = ref(false);
 // Store
@@ -596,6 +605,12 @@ const getAvatar = (user) => {
   };
   return userService.renderUserAvatar(profileImgInfo);
 };
+
+const onSelectEmoji = (emoji) => {
+  newMessage.value += emoji.i
+  showEmojiPicker.value = false
+}
+
 const expandOptions = () => {
   showConversationOptions.value = !showConversationOptions.value
 }
@@ -620,13 +635,12 @@ const selectConversation = async (conversation) => {
     // Fetch conversation details and messages
     const response = await messagingStore.fetchConversation(conversation._id || conversation.id)
     selectedConversation.value = response.conversation
-    selectedConversation.value.otherParticipant = conversation.
-    otherParticipant
+    selectedConversation.value.otherParticipant = conversation.otherParticipant
 
     selectedConversation.value.media = response.media || []
 
     currentMessages.value = response.messages || conversation.messages || []
-    document.getElementsByClassName('chat-area')[0].classList.add('active'); // Reset file input
+    document.getElementsByClassName('chat-area')[0].classList.add('active');
     // Auto scroll to bottom
     await nextTick()
     scrollToBottom()
@@ -652,7 +666,7 @@ const closeConversation = () => {
   openAttachmentView.value = []
   openAttachmentIndex.value = 0
   openAttachment.value = false
-  document.getElementsByClassName('chat-area')[0].classList.remove('active'); // Reset file input
+  document.getElementsByClassName('chat-area')[0].classList.remove('active');
 
 }
 const toggleConversationMenu = (conversationId) => {
@@ -664,21 +678,17 @@ const toggleFavorite = async (conversation) => {
     conversation.isFavorite = !conversation.isFavorite
     showConversationMenu.value = null
 
-    // TODO: Call API to update favorite status
     await messagingStore.updateConversation(conversation._id || conversation.id, {
       isFavorite: conversation.isFavorite
     })
   } catch (error) {
     console.error('Erreur lors de la mise à jour des favoris:', error)
-    // Revert on error
     conversation.isFavorite = !conversation.isFavorite
   }
 }
 const handleOfferSent = async (offerInfo) => {
-  // Fermer le modal
   showOfferOption.value = false
   
-  // Envoyer un message dans la conversation
   newMessage.value = `💰 J'ai fait une offre de ${offerInfo.amount}€`
   if (offerInfo.message) {
     newMessage.value += ` - ${offerInfo.message}`
@@ -697,12 +707,10 @@ const sendMessage = async () => {
       attachments.value
     )
 
-    // Add message to current list
     currentMessages.value.push(response.data)
     newMessage.value = ''
     attachments.value = []
     attachmentView.value = []
-    // Auto scroll to bottom
     await nextTick()
     scrollToBottom()
   } catch (error) {
@@ -718,9 +726,7 @@ const toggleReadStatus = async (conversation) => {
       await messagingStore.markAsRead(conversation._id || conversation.id)
       conversation.unreadCount = 0
     } else {
-      // Mark as unread
       conversation.unreadCount = 1
-      // TODO: Call API to mark as unread
     }
     showConversationMenu.value = null
     showConversationOptions.value = false
@@ -739,11 +745,9 @@ const sendOfferOption = () => {
   console.log(selectedConversation.value)
   showOfferOption.value = !showOfferOption.value
 }
-
-
 const initPaypal = async () => {
   try {
-    showBuyOption.value = false; // Fermer le menu d'options
+    showBuyOption.value = false;
     console.log(selectedConversation.value)
     const retour_initPayPal = await paymentService.initPayPal(selectedConversation.value.productId._id);
     console.log(retour_initPayPal);
@@ -752,22 +756,18 @@ const initPaypal = async () => {
       
       console.log('Ouverture PayPal avec iframe...');
       
-      // Essayer d'abord l'iframe
       const iframeResult = createPaypalIframe(retour_initPayPal.payment.approvalUrl, retour_initPayPal.payment.id);
       
-      // Vérifier si l'iframe s'est bien créée
       setTimeout(() => {
         if (iframeResult && iframeResult.isVisible()) {
           console.log('Iframe PayPal active et fonctionnelle');
         } else {
           console.error('Iframe PayPal non fonctionnelle, ouverture nouvel onglet...');
           
-          // Fermer l'iframe si elle existe
           if (iframeResult && iframeResult.close) {
             iframeResult.close();
           }
           
-          // Fallback : ouvrir dans un nouvel onglet
           const newTab = window.open(retour_initPayPal.payment.approvalUrl, '_blank');
           if (newTab) {
             console.log('Nouvel onglet PayPal ouvert');
@@ -777,7 +777,7 @@ const initPaypal = async () => {
             alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups/onglets ou copier ce lien : ' + retour_initPayPal.payment.approvalUrl);
           }
         }
-      }, 500); // Délai plus long pour laisser l'iframe se charger
+      }, 500);
       
     } else {
       console.error('Erreur lors de l\'initialisation PayPal:', retour_initPayPal);
@@ -789,16 +789,13 @@ const initPaypal = async () => {
   }
 };
 
-// Fonction pour créer une iframe modale PayPal avec détection d'erreur
 const createPaypalIframe = (approvalUrl, paymentId) => {
   try {
-    // Vérifier si une iframe PayPal existe déjà
     const existingModal = document.getElementById('paypal-iframe-modal');
     if (existingModal) {
       existingModal.remove();
     }
 
-    // Créer la modale avec iframe
     const modal = document.createElement('div');
     modal.id = 'paypal-iframe-modal';
     modal.style.cssText = `
@@ -827,7 +824,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     `;
 
-    // Header de la modale
     const modalHeader = document.createElement('div');
     modalHeader.style.cssText = `
       padding: 15px 20px;
@@ -858,7 +854,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       " title="Fermer">×</button>
     `;
 
-    // Iframe PayPal
     const iframe = document.createElement('iframe');
     iframe.src = approvalUrl;
     iframe.style.cssText = `
@@ -868,7 +863,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       display: block;
     `;
 
-    // Loader pendant le chargement
     const loader = document.createElement('div');
     loader.id = 'paypal-loader';
     loader.style.cssText = `
@@ -893,14 +887,12 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       </style>
     `;
 
-    // Variables pour gérer les événements
     let messageHandler = null;
     let iframeLoadHandler = null;
     let iframeErrorHandler = null;
     let isIframeLoaded = false;
     let iframeError = false;
 
-    // Fonction pour nettoyer et fermer la modale
     const closeModal = () => {
       if (messageHandler) {
         window.removeEventListener('message', messageHandler);
@@ -918,15 +910,12 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       checkPaymentStatus(paymentId);
     };
 
-    // Gérer les messages de PayPal dans l'iframe
     messageHandler = (event) => {
-      // Ignorer les messages de télémétrie PayPal
       if (event.data.p2Sent || event.data.utils) {
         console.log('Message de télémétrie PayPal ignoré');
         return;
       }
       
-      // Vérifier l'origine pour la sécurité
       if (event.origin !== 'https://www.sandbox.paypal.com' && 
           event.origin !== 'https://www.paypal.com') {
         return;
@@ -943,7 +932,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       }
     };
 
-    // Gérer le chargement de l'iframe
     iframeLoadHandler = () => {
       isIframeLoaded = true;
       const loaderElement = document.getElementById('paypal-loader');
@@ -953,28 +941,23 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       console.log('Iframe PayPal chargée avec succès');
     };
 
-    // Gérer les erreurs de l'iframe
     iframeErrorHandler = () => {
       iframeError = true;
       console.error('Erreur lors du chargement de l\'iframe PayPal');
     };
 
-    // Event listeners
     iframe.addEventListener('load', iframeLoadHandler);
     iframe.addEventListener('error', iframeErrorHandler);
     window.addEventListener('message', messageHandler);
 
-    // Event listener pour fermer la modale
     modalHeader.querySelector('#close-paypal-modal').addEventListener('click', closeModal);
     
-    // Fermer en cliquant sur l'arrière-plan
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
         closeModal();
       }
     });
 
-    // Fermer avec la touche Escape
     const escapeHandler = (event) => {
       if (event.key === 'Escape') {
         document.removeEventListener('keydown', escapeHandler);
@@ -983,7 +966,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
     };
     document.addEventListener('keydown', escapeHandler);
 
-    // Assembler la modale
     modalContent.appendChild(modalHeader);
     modalContent.appendChild(loader);
     modalContent.appendChild(iframe);
@@ -992,14 +974,12 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
 
     console.log('Iframe PayPal créée et ajoutée à la page');
     
-    // Focus sur l'iframe après un court délai
     setTimeout(() => {
       if (iframe) {
         iframe.focus();
       }
     }, 500);
 
-    // Retourner une référence à la modale pour vérifications ultérieures
     return {
       modal: modal,
       iframe: iframe,
@@ -1015,12 +995,10 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
   }
 };
 
-// Fonction pour gérer les événements de l'onglet (simplifiée)
 const handleTabEvents = (tabWindow, paymentId) => {
   let checkClosedInterval = null;
   let messageHandler = null;
 
-  // Fonction pour nettoyer les listeners et intervals
   const cleanup = () => {
     if (checkClosedInterval) {
       clearInterval(checkClosedInterval);
@@ -1032,15 +1010,12 @@ const handleTabEvents = (tabWindow, paymentId) => {
     }
   };
 
-  // Gérer les messages de PayPal
   messageHandler = (event) => {
-    // Ignorer les messages de télémétrie PayPal
     if (event.data.p2Sent || event.data.utils) {
       console.log('Message de télémétrie PayPal ignoré');
       return;
     }
     
-    // Vérifier l'origine pour la sécurité
     if (event.origin !== 'https://www.sandbox.paypal.com' && 
         event.origin !== 'https://www.paypal.com') {
       return;
@@ -1059,7 +1034,6 @@ const handleTabEvents = (tabWindow, paymentId) => {
     }
   };
 
-  // Surveiller la fermeture de l'onglet
   checkClosedInterval = setInterval(() => {
     try {
       if (tabWindow.closed) {
@@ -1068,17 +1042,14 @@ const handleTabEvents = (tabWindow, paymentId) => {
         checkPaymentStatus(paymentId);
       }
     } catch (error) {
-      // Erreur d'accès cross-origin, considérer comme fermé
       cleanup();
       console.log('Onglet PayPal fermé (cross-origin)');
       checkPaymentStatus(paymentId);
     }
   }, 1000);
 
-  // Écouter les messages
   window.addEventListener('message', messageHandler);
 
-  // Donner le focus à l'onglet
   try {
     tabWindow.focus();
   } catch (error) {
@@ -1088,7 +1059,6 @@ const handleTabEvents = (tabWindow, paymentId) => {
   console.log('Onglet PayPal ouvert et surveillé');
 };
 
-// Les autres fonctions restent les mêmes...
 const checkPaymentStatus = async (paymentId) => {
   try {
     console.log('Vérification du statut de paiement:', paymentId);
@@ -1113,20 +1083,17 @@ const onPaymentSuccess = async (paymentId) => {
   try {
     console.log('Paiement réussi:', paymentId);
     
-    // Marquer le produit comme vendu
     const soldResponse = await postService.sold(
       selectedConversation.value.otherParticipant._id,
       selectedConversation.value.productId._id
     );
     
     if (soldResponse) {
-      // Envoyer un message de confirmation dans la conversation
       await messagingStore.sendMessage(
         selectedConversation.value._id,
         `✅ Paiement confirmé ! Transaction réussie pour "${selectedConversation.value.productId.title}".`
       );
       
-      // Actualiser la conversation
       await messagingStore.fetchConversation(selectedConversation.value._id);
       
       alert('Paiement réussi ! Le produit a été marqué comme vendu.');
@@ -1140,9 +1107,6 @@ const onPaymentSuccess = async (paymentId) => {
   }
 };
 
-
-
-// Fonction appelée en cas d'annulation du paiement
 const onPaymentCancelled = () => {
   console.log('Paiement annulé par l\'utilisateur');
   alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
@@ -1157,20 +1121,16 @@ const archiveConversation = async (conversation) => {
     showBuyOption.value = false
     showOfferOption.value = false
 
-    // Update store
-    // TODO: Call API to archive/unarchive
     await messagingStore.updateConversation(conversation._id || conversation.id, {
       isArchived: conversation.isArchived
     })
 
-    // If currently selected and archived, clear selection
     if (conversation.isArchived && selectedConversation.value &&
         (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
       selectedConversation.value = null
     }
   } catch (error) {
     console.error('Erreur lors de l\'archivage:', error)
-    // Revert on error
     conversation.isArchived = !conversation.isArchived
   }
 }
@@ -1180,7 +1140,6 @@ const deleteConversation = async (conversation) => {
     try {
       const response = await messagingStore.deleteConversation(conversation._id || conversation.id)
       console.log('Conversation supprimée:', response)
-      // Remove from store
       const index = messagingStore.conversations.findIndex(c =>
         (c._id || c.id) === (conversation._id || conversation.id)
       )
@@ -1188,7 +1147,6 @@ const deleteConversation = async (conversation) => {
         messagingStore.conversations.splice(index, 1)
       }
 
-      // Clear selection if deleted conversation was selected
       if (selectedConversation.value &&
           (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
         selectedConversation.value = null
@@ -1200,7 +1158,6 @@ const deleteConversation = async (conversation) => {
       showBuyOption.value = false
       showOfferOption.value = false
 
-      // TODO: Call API to delete
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
     }
@@ -1218,15 +1175,12 @@ const closeInformation = () => {
     rightSidebar.classList.remove('active');
   }
 }
-// Méthode appelée quand une nouvelle conversation est créée
+
 const onNewConversationCreated = (newConversation) => {
-  // Ajouter la conversation à la liste
   messagingStore.conversations.unshift(newConversation)
   
-  // Sélectionner automatiquement la nouvelle conversation
   selectConversation(newConversation)
   
-  // Fermer le modal
   closeModal()
 }
 
@@ -1300,7 +1254,6 @@ const formatTimestamp = (timestamp) => {
   if (diff < 86400000) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
-
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
@@ -1379,7 +1332,6 @@ const cancelTransaction = async () => {
   if (!confirm('Êtes-vous sûr de vouloir annuler cette transaction ?')) return
 
   try {
-    // TODO: Call API to cancel transaction
     const context = selectedConversation.value?.productContext || selectedConversation.value?.context
     if (context) {
       context.status = 'cancelled'
@@ -1391,7 +1343,6 @@ const cancelTransaction = async () => {
 
 const confirmReceived = async () => {
   try {
-    // TODO: Call API to confirm reception
     const context = selectedConversation.value?.productContext || selectedConversation.value?.context
     if (context) {
       context.status = 'completed'
@@ -1403,7 +1354,6 @@ const confirmReceived = async () => {
 
 const markAsSent = async () => {
   try {
-    // TODO: Call API to mark as sent
     const context = selectedConversation.value?.productContext || selectedConversation.value?.context
     if (context) {
       context.status = 'in_progress'
@@ -1418,15 +1368,12 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    // Load user info
     const userResponse = await userService.getMyInformation()
     userInfo.value = userResponse.user || userResponse.profile
     
 
-    // Load conversations
     await messagingStore.fetchConversations()
 
-    // Auto-select first conversation if available
     if (messagingStore.conversations.length > 0) {
       await selectConversation(messagingStore.conversations[0])
     }
@@ -2180,7 +2127,6 @@ showConversationMenu.value = null
         object-fit: cover;
     }
 
-    /* Overlay pour afficher le nombre d'images supplémentaires */
     &.has-more::after {
         content: attr(data-count);
         position: absolute;
@@ -2267,6 +2213,7 @@ showConversationMenu.value = null
   padding: 20px;
   border-top: 1px solid #e9ecef;
   background: white;
+  position: relative;
 }
 .attachements-preview-area {
   display: flex;
@@ -2359,6 +2306,20 @@ showConversationMenu.value = null
   background: #6c757d;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ============================================ */
+/* EMOJI PICKER POPUP STYLES */
+/* ============================================ */
+.emoji-picker-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 /* Right Sidebar */
@@ -2650,9 +2611,6 @@ showConversationMenu.value = null
   color: #495057;
 }
 
-
-
-
 .message-input textarea {
   width: 100%;
   padding: 12px;
@@ -2719,6 +2677,11 @@ showConversationMenu.value = null
   .right-sidebar {
     width: 280px;
   }
+  
+  .emoji-picker-popup {
+    right: 10px;
+    bottom: 70px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -2730,7 +2693,6 @@ showConversationMenu.value = null
     z-index: 11;
     top: 0px;
     position: absolute;
-    /*height: 100%;*/
     width: 100%;  
   }
 }
@@ -2811,6 +2773,16 @@ showConversationMenu.value = null
   .chat-area.active{
     z-index: 11;
     position: absolute;
+  }
+  
+  .emoji-picker-popup {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    width: 90vw;
+    max-width: 350px;
   }
 }
 
@@ -2911,7 +2883,6 @@ showConversationMenu.value = null
         object-fit: cover;
       }
 
-      /* Overlay pour le nombre de photos supplémentaires */
       .media-overlay {
         position: absolute;
         top: 0;
