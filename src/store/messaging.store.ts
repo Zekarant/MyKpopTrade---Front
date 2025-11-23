@@ -2,11 +2,12 @@
 import { defineStore } from 'pinia';
 import messagingService from '@/services/messaging.service';
 import type { Conversation, Message } from '@/types/messaging.types';
+import Cookies from 'js-cookie';
 
 interface MessagingState {
   conversations: Conversation[];
   currentConversation: Conversation | null;
-  messages: Message[];
+  messages: (Message & { archivedBy?: string[]; favoritedBy?: string[] })[];
   unreadCount: number;
   loading: boolean;
   error: string | null;
@@ -72,7 +73,8 @@ export const useMessagingStore = defineStore('messaging', {
           if(this.conversations[index].participants.length > 0) {
             for (let index = 0; index < this.conversations[index].participants.length; index++) {
               const participant = this.conversations[index].participants[index];
-              if(participant._id != localStorage.getItem('userId')) {
+
+              if(participant._id != Cookies.get('id_user')) {
                 if(!this.conversations[index].otherParticipant){
                   this.conversations[index].otherParticipant = participant;
                 }
@@ -146,6 +148,85 @@ export const useMessagingStore = defineStore('messaging', {
         throw error;
       }
     },
+    
+    async favorite(messageId: string) {
+      try {
+        await messagingService.favorite(messageId);
+
+        // Trouver le message dans la liste
+        const index = this.messages.findIndex(m => m._id === messageId);
+        
+        if (index !== -1) {
+          const myId = Cookies.get('id_user') || '';          
+          // Initialiser favoritedBy si undefined
+          if (!this.messages[index].favoritedBy) {
+            this.messages[index].favoritedBy = [];
+          }
+          
+          // Vérifier si l'utilisateur est déjà dans favoritedBy
+          const userIndex = this.messages[index].favoritedBy.indexOf(myId);
+          
+          if (userIndex !== -1) {
+            // L'utilisateur est déjà dans favoritedBy, le retirer
+            this.messages[index].favoritedBy.splice(userIndex, 1);
+          } else {
+            // L'utilisateur n'est pas dans favoritedBy, l'ajouter
+            this.messages[index].favoritedBy.push(myId);
+          }
+        }
+
+      } catch (error) {
+        this.error = 'Erreur lors de la modification du favori';
+        console.error(error);
+        throw error;
+      }
+    },
+
+    async archiveConversation(messageId: string) {
+      try {
+        await messagingService.archiveConversation(messageId);
+        const myId = Cookies.get('id_user') || '';          
+
+        // Retirer le message de la liste
+        const index = this.messages.findIndex(m => m._id === messageId);
+        if (index !== -1) {
+          this.messages[index].archivedBy?.push(myId);
+        }
+
+      } catch (error) {
+        this.error = 'Erreur lors de la suppression du message';
+        console.error(error);
+        throw error;
+      }
+    },
+    async unarchiveConversation(messageId: string) {
+      try {
+        await messagingService.unarchiveConversation(messageId);
+        const myId = Cookies.get('id_user') || '';          
+
+        // Retirer le message de la liste
+        const index = this.messages.findIndex(m => m._id === messageId);
+        if (index !== -1) {
+          const archivedBy = this.messages[index].archivedBy || [];
+          const userIndex = archivedBy.indexOf(myId);
+
+          if(!this.messages[index].archivedBy){
+            this.messages[index].archivedBy = [];
+          }
+
+          if (userIndex !== -1) {
+            // Si l'utilisateur a archivé le message, retirer son id de archivedBy
+            this.messages[index].archivedBy.splice(userIndex, 1);
+
+          }
+        }
+
+      } catch (error) {
+        this.error = 'Erreur lors de la suppression du message';
+        console.error(error);
+        throw error;
+      }
+    },
     async deleteConversation(coneversationId: string) {
       try {
         await messagingService.deleteConversation(coneversationId);
@@ -183,11 +264,16 @@ export const useMessagingStore = defineStore('messaging', {
 
     async initiateNegotiation(productId: string, initialOffer: number, message?: string) {
       try {
-        const response = await messagingService.initiateNegotiation({
-          productId,
-          initialOffer,
-          message
-        });
+        // Build payload as `any` to avoid excess property checks on the object literal
+        const payload: any = { productId };
+        if (initialOffer !== undefined && initialOffer !== null) {
+          payload.initialOffer = initialOffer;
+        }
+        if (message !== undefined) {
+          payload.message = message;
+        }
+
+        const response = await messagingService.initiateNegotiation(payload);
 
         // Ajouter ou mettre à jour la conversation
         const index = this.conversations.findIndex(c => c._id === response.conversation._id);
@@ -228,6 +314,48 @@ export const useMessagingStore = defineStore('messaging', {
         throw error;
       }
     },
+    async cancelNegotiation(
+      productId: string,
+      initialOffer: number,
+      conversationId: string,
+      message?: string
+    ){
+      try {
+        const response = await messagingService.cancelNegotiation(
+          productId,
+          initialOffer,
+          conversationId,
+          message
+        );
+        // Met à jour la conversation et messages
+        await this.fetchConversation(conversationId);
+        return response;
+      } catch (error) {
+        this.error = "Erreur lors de l'envoi de la contre-offre";
+        console.error(error);
+        throw error;
+      }
+    },
+    async sendCounterOffer(
+      conversationId: string,
+      counterOffer: number,
+      message?: string
+    ) {
+      try {
+        const response = await messagingService.respondToNegotiation(conversationId, {
+          action: 'counter',
+          counterOffer,
+          message
+        });
+        // Met à jour la conversation et messages
+        await this.fetchConversation(conversationId);
+        return response;
+      } catch (error) {
+        this.error = "Erreur lors de l'envoi de la contre-offre";
+        console.error(error);
+        throw error;
+      }
+    },
 
     updateUnreadCount() {
       this.unreadCount = this.conversations.reduce((sum, conv) => {
@@ -254,7 +382,8 @@ export const useMessagingStore = defineStore('messaging', {
         conversation.lastMessageAt = message.createdAt;
 
         // Incrémenter le compteur de non-lus si ce n'est pas notre message
-        const currentUserId = localStorage.getItem('userId');
+
+        const currentUserId = Cookies.get('id_user') || '';
         if (message.sender !== currentUserId && !message.readBy.includes(currentUserId || '')) {
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
           this.updateUnreadCount();

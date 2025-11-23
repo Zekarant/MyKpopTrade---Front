@@ -137,11 +137,8 @@ export interface SendMessageResponse {
 
 export interface NegotiationRequest {
   productId: string;
-  recipientId: string;
-  proposedPrice: number;
-  originalPrice: number;
-  message?: string;
-  expiresIn?: number; // en heures
+  initialOffer: number;
+  message?: string
 }
 
 export interface NegotiationResponse {
@@ -149,6 +146,14 @@ export interface NegotiationResponse {
   message: string;
   conversation: Conversation;
   negotiation: NegotiationStatus;
+}
+export interface CancelOfferResponse {
+  message: string
+  conversationId: string
+  cancelledOffer: {
+    amount: number,
+    cancelledAt: string
+  }
 }
 
 export interface NegotiationActionRequest {

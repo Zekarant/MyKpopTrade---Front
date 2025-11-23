@@ -174,6 +174,7 @@ class PostService {
     data.append('kpopGroup', postData.kpopGroup);
     data.append('kpopMember', postData.kpopMember);
     data.append('albumName', postData.albumName);
+    data.append('allowOffers', postData.allowOffers.toString());
     
     postData.images.forEach((file: File) => {
       data.append('productImages', file);

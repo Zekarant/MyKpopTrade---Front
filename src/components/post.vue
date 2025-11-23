@@ -115,7 +115,7 @@
                     </div>
                 </div>
                 <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post_card_content_footer">
-                    <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button">Faire une offre</button>
+                    <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button" @click="showOfferOption = true">Faire une offre</button>
                     <button class="btn-blue-outline"  @click="buyOption"  type="button">Acheter</button>
                     <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
                 </div>
@@ -138,8 +138,11 @@
 
 
     </div>
+    <div v-if="showOfferOption">
+      <send_offer :product="dataPost" @offerSent="handleOfferSent"  @close="showOfferOption = false" ></send_offer>
+    </div>
     <!--------- Popup Pour envoyer un message ---------->
-    <send_message :id_user="dataSeller._id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
+    <send_message :id_user="dataSeller.id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
 
 
     <!--------- Popup ---------->
@@ -188,6 +191,7 @@
     import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
     import send_message from '../components/adherents/send_message.vue';
+    import send_offer from '../components/send_offer.vue';
     
     import postService from '@/services/post.service';
     import paymentService from '@/services/payment.service';
@@ -195,6 +199,7 @@
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
     import type { ImgUserProfile } from '@/types/user.types';
+    import messagingService from '@/services/messaging.service';
 
 
     export default defineComponent({
@@ -203,7 +208,8 @@
             card_illu,
             ImageCarousel,
             report_card,
-            send_message
+            send_message,
+            send_offer
         },
         props: {
             dataUser: {
@@ -234,7 +240,8 @@
                 showPopupReport: false,
                 popupMessage: false,
                 isLoading: true,
-                dataInitialized: false
+                dataInitialized: false,
+                showOfferOption: false,
             };
         },
         setup(props){
@@ -773,6 +780,25 @@
             }, 
             openMessagePopup(){
                 this.popupMessage = !this.popupMessage;
+            },
+            async handleOfferSent(offerInfo: { offerData: { productId: any; }; amount: any; message: any; }){
+                this.showOfferOption = false
+
+                let offerData = {
+                    productId: offerInfo.offerData.productId,
+                    initialOffer: offerInfo.amount,
+                    message:  offerInfo.message
+                };
+                console.log('offerData');
+                console.log(offerData);
+                messagingService.initiateNegotiation(
+                    offerData
+                ).then(response => {
+                    this.$func.showToastSuccess('Offre envoyée avec succès !');
+                }).catch(error => {
+                    console.error('Erreur lors de l\'envoi de l\'offre:', error);
+                    this.$func.showToastError('Erreur lors de l\'envoi de l\'offre.');
+                })
             }
       
         },

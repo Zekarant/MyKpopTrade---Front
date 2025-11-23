@@ -9,7 +9,7 @@
           </div>
           <div class="user-info">
             <span class="username">{{ userInfo?.username || '@nom_d_utilisateur' }}</span>
-            <span class="status">{{ userInfo?.status || 'Hors ligne' }}</span>
+            <span class="status"><!--{{ userInfo?.status || 'Hors ligne' }}--> En ligne</span>
           </div>
         </div>
       </div>
@@ -71,7 +71,7 @@
               active: (selectedConversation?._id && selectedConversation._id === conversation._id) || 
             (selectedConversation?.id && selectedConversation.id === conversation.id),
               unread: conversation.unreadCount > 0,
-              favorite: conversation.isFavorite
+              favorite: isFavoriteConversation(conversation)
             }"
             @click="selectConversation(conversation)">
 
@@ -83,7 +83,7 @@
               <div class="conversation-header">
                 <div class="conversation-title">
                   <span class="username">{{ conversation.otherParticipant?.username || conversation.participants[0]?.username || conversation.username }}</span>
-                  <i class="bi bi-star-fill favorite-icon" v-if="conversation.isFavorite"></i>
+                  <i class="bi bi-star-fill favorite-icon" v-if="isFavoriteConversation(conversation)"></i>
                 </div>
                 <span class="timestamp">{{ formatTimestamp(conversation.lastMessageAt || conversation.timestamp) }}</span>
               </div>
@@ -111,13 +111,9 @@
                 v-if="showConversationMenu === (conversation._id || conversation.id)"
                 @click.stop
               >
-                <button
-                  @click="toggleFavorite(conversation)"
-                  class="dropdown-item"
-                  :class="{ favorite: conversation.isFavorite }"
-                >
-                  <i class="bi" :class="conversation.isFavorite ? 'bi-star-fill' : 'bi-star'"></i>
-                  {{ conversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
+                <button @click="toggleFavorite(conversation)" class="dropdown-item" :class="{ favorite: isFavoriteConversation(conversation) }">
+                  <i class="bi" :class="isFavoriteConversation(conversation) ? 'bi-star-fill' : 'bi-star'"></i>
+                  {{ isFavoriteConversation(conversation) ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
                 </button>
                 <button
                   @click="toggleReadStatus(conversation)"
@@ -131,7 +127,7 @@
                   class="dropdown-item"
                 >
                   <i class="bi bi-archive"></i>
-                  {{ conversation.isArchived ? 'Désarchiver' : 'Archiver' }}
+                  {{ isArchived(conversation) ? 'Désarchiver' : 'Archiver' }}
                 </button>
                 <button
                   @click="deleteConversation(conversation)"
@@ -175,10 +171,10 @@
             <div class="participant-info">
               <div class="participant-name">
                 <span class="name">{{ selectedConversation.otherParticipant?.username || selectedConversation.username }}</span>
-                <i class="bi bi-star-fill favorite-icon" v-if="selectedConversation.isFavorite"></i>
+                <i class="bi bi-star-fill favorite-icon" v-if="isFavoriteConversation(selectedConversation)"></i>
               </div>
               <span class="status" :class="{ online: selectedConversation.participants?.[0]?.isOnline }">
-                {{ selectedConversation.participants?.[0]?.isOnline ? 'En ligne' : 'Hors ligne' }}
+                <!--{{ selectedConversation.participants?.[0]?.isOnline ? 'En ligne' : 'Hors ligne' }}-->
               </span>
             </div>
           </div>
@@ -186,8 +182,12 @@
             <button v-if="selectedConversation.productId" class="action-btn btn_computer" @click="expandSalesOptions" @click.stop title="sold">
               <i class="bi bi-cash-coin"></i>           
             </button>
-            <button class="action-btn btn_computer" @click="toggleFavorite(selectedConversation)" :title="selectedConversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
-              <i class="bi" :class="selectedConversation.isFavorite ? 'bi-star-fill' : 'bi-star'"></i>
+            <button
+              class="action-btn btn_computer"
+              @click="toggleFavorite(selectedConversation)"
+              :title="isFavoriteConversation(selectedConversation) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            >
+              <i class="bi" :class="isFavoriteConversation(selectedConversation) ? 'bi-star-fill' : 'bi-star'"></i>
             </button>
             <button class="action-btn btn_computer" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
               <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
@@ -201,7 +201,7 @@
                   <i class="bi bi-wallet"></i>      
                   Faire une offre            
                 </button>
-                <button v-if="!selectedConversation.value?.productContext.isOwner" @click="buyOption" class="dropdown-item">
+                <button v-if="!selectedConversation.isOwner" @click="buyOption" class="dropdown-item">
                   <i class="bi bi-credit-card"></i>                  
                   Acheter
                 </button>
@@ -211,7 +211,7 @@
             <div class="dropdown-menu" v-if="showConversationOptions" @click.stop>
               <button @click="archiveConversation(selectedConversation)" class="dropdown-item">
                 <i class="bi bi-archive"></i>
-                {{ selectedConversation.isArchived ? 'Désarchiver' : 'Archiver' }}
+                {{ isArchived(selectedConversation)? 'Désarchiver' : 'Archiver' }}
               </button>
               <button @click="showRightBar" class="dropdown-item information">
                 <i class="bi bi-info-circle"></i>               
@@ -221,15 +221,15 @@
                 <i class="bi bi-wallet"></i>      
                 Faire une offre            
               </button>
-              <button v-if="!selectedConversation.value?.productContext.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
+              <button v-if="!selectedConversation.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
                 <i class="bi bi-credit-card"></i>                  
                 Acheter
-              </button>     
-              <button class="dropdown-item  btn_mobile" @click="toggleFavorite(selectedConversation)" :title="selectedConversation.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
-                <i class="bi" :class="selectedConversation.isFavorite ? 'bi-star-fill' : 'bi-star'"></i>
-                  <span style="display: inline-block;" v-if="selectedConversation.isFavorite">Retirer</span>
-                  <span style="display: inline-block;" v-if="!selectedConversation.isFavorite">Ajouter</span>
-              </button>        
+              </button>
+              <button class="dropdown-item btn_mobile" @click="toggleFavorite(selectedConversation)" :title="isFavoriteConversation(selectedConversation) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                <i class="bi" :class="isFavoriteConversation(selectedConversation) ? 'bi-star-fill' : 'bi-star'"></i>
+                <span style="display: inline-block;" v-if="isFavoriteConversation(selectedConversation)">Retirer</span>
+                <span style="display: inline-block;" v-if="!isFavoriteConversation(selectedConversation)">Ajouter</span>
+              </button>
               <button class="dropdown-item  btn_mobile" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
                 <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
                   <span style="display: inline-block;" v-if="selectedConversation.unreadCount > 0">Lu</span>
@@ -267,6 +267,51 @@
                   </div>
                 </div>
                 <p>{{ message.content }}</p>
+                <div v-if="message.contentType === 'offer'" class="offer-actions">
+                  <!-- Si c'est l'utilisateur actuel qui a envoyé l'offre -->
+                  <div class="btn-offer" v-if="isOwnMessage(message)">
+                    <!-- Afficher le statut de l'offre -->
+                    <div v-if="getOfferStatus(message)" class="offer-status">
+                      <span v-if="getOfferStatus(message) === 'accepted'" class="status-accepted">
+                        <i class="bi bi-check-circle-fill"></i> Acceptée
+                      </span>
+                      <span v-else-if="getOfferStatus(message) === 'rejected'" class="status-rejected">
+                        <i class="bi bi-x-circle-fill"></i> Refusée
+                      </span>
+                      <span v-else-if="getOfferStatus(message) === 'expired'"  class="status-rejected">
+                        <i class="bi bi-x-lg"></i> Expirée
+                      </span>
+                      <span v-else class="status-pending">
+                        <i class="bi bi-clock"></i> En attente
+                      </span>
+                    </div>
+                    <div class="cancel-offer" @click="cancelOffer(message)" v-if="getOfferStatus(message) === 'pending'">
+                      Annuler
+                    </div>
+                  </div>
+                  <!-- Si c'est l'autre utilisateur qui a reçu l'offre -->
+                  <div class="btns-offers" v-else>
+                    <!-- Vérifier si l'offre est déjà acceptée ou refusée -->
+                    <div v-if="getOfferStatus(message)" class="offer-status">
+                      <span v-if="getOfferStatus(message) === 'accepted'" class="status-accepted">
+                        <i class="bi bi-check-circle-fill"></i> Vous avez accepté
+                      </span>
+                      <span v-else-if="getOfferStatus(message) === 'rejected'" class="status-rejected">
+                        <i class="bi bi-x-circle-fill"></i> Vous avez refusé
+                      </span>
+                      <div v-else-if="getOfferStatus(message) === 'pending'" style="display: flex;">
+                        <button class="btn-outline btn-offer" @click="declineOffer_popup = true">
+                          <i class="bi bi-x-circle"></i> 
+                          Refuser
+                        </button>
+                        <button class="btn-success btn-offer" @click="acceptOffer(message)">
+                          <i class="bi bi-check-circle"></i>  
+                          Accepter
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="message-meta">
                   <span class="message-time">{{ formatTimestamp(message.createdAt || message.timestamp) }}</span>
                   <div v-if="isOwnMessage(message)" class="message-status">
@@ -339,7 +384,7 @@
           <div class="user-details">
             <h3>{{ selectedConversation.otherParticipant?.username || selectedConversation.participants?.[0]?.username || selectedConversation.username }}</h3>
             <p class="user-status" :class="{ online: selectedConversation.otherParticipant?.isOnline }">
-              {{ selectedConversation.otherParticipant?.isOnline ? 'En ligne' : 'Hors ligne' }}
+              <!--{{ selectedConversation.otherParticipant?.isOnline ? 'En ligne' : 'Hors ligne' }}-->
             </p>
             <div class="user-badges">
               <span class="badge verified" v-if="selectedConversation.otherParticipant?.isVerified">
@@ -490,11 +535,60 @@
       <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="selectedConversation"></send_offer>
     </div>
 
+    <div v-if="showCounterOfferOption" class="counter-popup-overlay" @click.self="closeCounterOfferPopup">
+      <div class="counter-popup-content">
+        <button class="counter-close-btn" @click="closeCounterOfferPopup">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <h3 class="counter-popup-title">Faire une contre-offre</h3>
+        <p class="counter-popup-message">Souhaitez-vous proposer une contre-offre ?</p>
+        <input
+          v-model.number="counterOfferAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Entrez votre montant"
+          class="counter-input"
+        />
+        <textarea
+          v-model="counterOfferMessage"
+          placeholder="Message optionnel"
+          class="counter-input"
+          style="min-height:60px;resize:vertical;margin-top:8px;"
+        ></textarea>
+        <div class="counter-popup-actions">
+          <button class="btn-outline btn-wide" @click="closeCounterOfferPopup">Annuler</button>
+          <button class="btn-danger btn-wide" @click="confirmCounterOffer" :disabled="!counterOfferAmount || sending">
+            <span v-if="sending">Envoi...</span>
+            <span v-else>Envoyer</span>
+          </button>
+        </div>
+        <div v-if="errorMessageCounterOffer" style="color:#eb5252;padding:8px 0 0 0;text-align:center;font-size:14px;">
+          {{ errorMessageCounterOffer }}
+        </div>
+      </div>
+    </div>
+
+    <div v-if="declineOffer_popup" class="popup-overlay">
+      <div class="popup-content">
+        <h3 class="popup-title">Refuser l'offre</h3>
+        <p class="popup-message">Êtes-vous sûr de vouloir refuser cette offre ?</p>
+        <textarea 
+          v-model="declineMessage" 
+          class="popup-textarea" 
+          placeholder="Ajouter un message (optionnel)">
+        </textarea>
+        <div class="popup-actions">
+          <button class="btn-outline" @click="declineOffer_popup = false">Annuler</button>
+          <button class="btn-danger" @click="declineOffer(selectedConversation, declineMessage)">Refuser</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch, getCurrentInstance } from 'vue'
 import { useMessagingStore } from '@/store/messaging.store'
 import userService from '@/services/user.service'
 import paymentService from '@/services/payment.service'
@@ -503,9 +597,10 @@ import ImageCarousel from '@/components/ImageCarousel.vue';
 import send_message from '@/components/adherents/send_message.vue';
 import send_offer from '@/components/send_offer.vue';
 import EmojiPicker from 'vue3-emoji-picker'
+import Cookies from 'js-cookie';
 import 'vue3-emoji-picker/css'
+import messagingService from '@/services/messaging.service';
 
-const showSidebar = ref(false);
 // Store
 const messagingStore = useMessagingStore()
 
@@ -525,13 +620,18 @@ const showConversationOptions = ref(false)
 const showSalesOptions = ref(false)
 const showBuyOption = ref(false)
 const showOfferOption = ref(false)
+const showCounterOfferOption = ref(false)
 const showConversationMenu = ref(null)
 const showEmojiPicker = ref(false)
 const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
 const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  
+const declineOffer_popup = ref(false);
+const counterOfferAmount = ref(null);
+const counterOfferMessage = ref('');
+const errorMessageCounterOffer = ref('');
+const { proxy } = getCurrentInstance()
 
 // Computed
 const filteredConversations = computed(() => {
@@ -539,17 +639,19 @@ const filteredConversations = computed(() => {
   // Filter by tab
   switch (activeTab.value) {
     case 'favorites':
-      conversations = conversations.filter(conv => conv.isFavorite && !conv.isArchived)
+      conversations = conversations.filter((conv) => 
+        isFavoriteConversation(conv)
+      );
       break
     case 'unread':
-      conversations = conversations.filter(conv => conv.unreadCount > 0 && !conv.isArchived)
+      conversations = conversations.filter(conv => conv.unreadCount > 0 && isArchived(conv.archivedBy) == false)
       break
     case 'archived':
-      conversations = conversations.filter(conv => conv.isArchived)
+      conversations = conversations.filter(conv => isArchived(conv))
       break
     case 'all':
     default:
-      conversations = conversations.filter(conv => !conv.isArchived)
+      conversations = conversations.filter(conv => isArchived(conv) == false)
       break
   }
 
@@ -564,22 +666,47 @@ const filteredConversations = computed(() => {
 
   return conversations
 })
+function isFavoriteConversation(conversation){
+  let id_user = Cookies.get('id_user');
+  let favoritedBy = conversation['favoritedBy'] || conversation.favoritedBy || [];
 
+  if(favoritedBy.length == 0){
+    return false;
+  }else if(favoritedBy && favoritedBy.includes(id_user)){
+    return true;
+  }else{
+    return false;
+  }
+};
+function isArchived(conversation){
+  let id_user = Cookies.get('id_user');
+  let archivedBy = conversation['archivedBy'] || conversation.archivedBy || [];
+
+  if(archivedBy.length == 0){
+    return false;
+  }else if(archivedBy && archivedBy.includes(id_user)){
+    return true;
+  }else{
+    return false;
+  }
+};
 // Tab counts
 const getAllConversationsCount = () => {
-  return (messagingStore.conversations || []).filter(conv => !conv.isArchived).length
+  return (messagingStore.conversations || []).filter(conv => isArchived(conv) == false).length
 }
 
 const getFavoritesCount = () => {
-  return (messagingStore.conversations || []).filter(conv => conv.isFavorite && !conv.isArchived).length
+  return messagingStore.conversations.filter((conv) => 
+      isFavoriteConversation(conv)
+    ).length;
 }
 
 const getUnreadConversationsCount = () => {
-  return (messagingStore.conversations || []).filter(conv => conv.unreadCount > 0 && !conv.isArchived).length
+  return (messagingStore.conversations || []).filter(conv => conv.unreadCount > 0 && isArchived(conv) == false).length
 }
 
 const getArchivedCount = () => {
-  return (messagingStore.conversations || []).filter(conv => conv.isArchived).length
+  return (messagingStore.conversations || []).filter(conv => isArchived(conv)).length
 }
 
 const getCookie = (name) => {
@@ -591,7 +718,7 @@ const getCookie = (name) => {
 
 // Methods
 const isOwnMessage = (message) => {
-  const currentUserId = localStorage.getItem('userId') || localStorage.getItem('id_user') || getCookie('id_user')
+  const currentUserId =  localStorage.getItem('id_user') || getCookie('id_user')
   return message.sender._id === currentUserId || message.isOwn === true
 }
 
@@ -675,26 +802,157 @@ const toggleConversationMenu = (conversationId) => {
 
 const toggleFavorite = async (conversation) => {
   try {
-    conversation.isFavorite = !conversation.isFavorite
-    showConversationMenu.value = null
+    const id_user = localStorage.getItem('id_user');
+    const wasFavorite = isFavoriteConversation(conversation);
+    
+    showConversationMenu.value = null;
 
-    await messagingStore.updateConversation(conversation._id || conversation.id, {
-      isFavorite: conversation.isFavorite
-    })
+    await messagingStore.favorite(conversation._id || conversation.id);
+    
+    // Mettre à jour localement
+    if (!conversation.favoritedBy) {
+      conversation.favoritedBy = [];
+    }
+    
+    await messagingStore.fetchConversations();
+    selectConversation(selectedConversation.value);
+    
   } catch (error) {
-    console.error('Erreur lors de la mise à jour des favoris:', error)
-    conversation.isFavorite = !conversation.isFavorite
+    console.error('Erreur lors de la mise à jour des favoris:', error);
   }
 }
+const closeCounterOfferPopup = () => {
+  showCounterOfferOption.value = false;
+  counterOfferAmount.value = null;
+  counterOfferMessage.value = '';
+  errorMessageCounterOffer.value = '';
+}
+
+const confirmCounterOffer = async () => {
+  if (!counterOfferAmount.value || counterOfferAmount.value <= 0) {
+    errorMessageCounterOffer.value = "Montant requis et doit être supérieur à 0.";
+    return;
+  }
+  errorMessageCounterOffer.value = '';
+  sending.value = true;
+  try {
+    if (!selectedConversation.value || !selectedConversation.value._id) {
+      errorMessageCounterOffer.value = "Conversation invalide.";
+      sending.value = false;
+      return;
+    }
+    await messagingStore.sendCounterOffer(
+      selectedConversation.value._id,
+      counterOfferAmount.value,
+      counterOfferMessage.value
+    );
+    closeCounterOfferPopup();
+
+    // Recharge la conversation pour rafraîchir messages et statut
+    await messagingStore.fetchConversation(selectedConversation.value._id);
+
+  } catch (error) {
+    errorMessageCounterOffer.value = "Erreur lors de l'envoi de la contre-offre.";
+    console.error(error);
+  } finally {
+    sending.value = false;
+  }
+}
+
 const handleOfferSent = async (offerInfo) => {
   showOfferOption.value = false
-  
-  newMessage.value = `💰 J'ai fait une offre de ${offerInfo.amount}€`
-  if (offerInfo.message) {
-    newMessage.value += ` - ${offerInfo.message}`
-  }
+
+  let offerData = {
+    productId: offerInfo.offerData.productId,
+    initialOffer: offerInfo.amount,
+    message:  offerInfo.message
+  };
+  console.log('offerData');
+  console.log(offerData);
+  messagingService.initiateNegotiation(
+    offerData
+  ).then(response => {
+    currentMessages.value.push(response.data)
+    scrollToBottom()
+  }).catch(error => {
+    console.error('Erreur lors de l\'envoi de l\'offre:', error)
+  })
   await sendMessage()
 }
+const acceptOffer = async (message) => {
+  try {
+    console.log('Acceptation de l\'offre pour le message:', message);
+    const response = await messagingStore.respondToNegotiation(
+      message.conversation || message.id,
+      'accept'  
+    )
+    proxy.$func.showToastSuccess('Offre acceptée avec succès.');
+    selectConversation(selectedConversation.value);
+
+  } catch (error) {
+    proxy.$func.showToastError('Erreur lors de l\'acceptation de l\'offre.');
+    console.error('Erreur lors de l\'acceptation de l\'offre:', error)
+  }
+}
+const declineOffer = async (message, text) => {
+  try {
+    const response = await messagingStore.respondToNegotiation(
+      message._id || message.id,
+      'reject',  
+      text
+    )
+    declineOffer_popup.value = false;
+
+  } catch (error) {
+    console.error('Erreur lors du refus de l\'offre:', error)
+  }
+}
+
+const getOfferStatus = (message) => {
+
+  
+  if (!selectedConversation.value || !selectedConversation.value.offerHistory) {
+    return null;
+  }
+  
+
+  const offer = selectedConversation.value.offerHistory.find(offer => {
+    // Tronquer les millisecondes en divisant par 1000 puis multipliant
+    const offerDateSeconds = Math.floor(new Date(offer.createdAt).getTime() / 1000);
+    const messageDateSeconds = Math.floor(new Date(message.createdAt).getTime() / 1000);
+    
+    const isSameDate = offerDateSeconds === messageDateSeconds;
+    
+    return isSameDate;
+  });
+
+  if (offer && offer.status) {
+    return offer.status;
+  }
+
+  return null;
+}
+
+const cancelOffer = async (message) => {
+  console.log('Annulation de l\'offre pour le message:', message);
+  console.log(selectedConversation.value);
+  try {
+    const response = await messagingStore.cancelNegotiation(
+      selectedConversation.value.negotiation.initialPrice,
+      selectedConversation.value.productId._id,
+      selectedConversation.value._id,
+      message._id || message.id
+    )
+    proxy.$func.showToastSuccess('Offre annulée avec succès.');
+    selectConversation(selectedConversation.value);
+
+  } catch (error) {
+    proxy.$func.showToastError('Erreur lors de l\'annulation de l\'offre.');
+    console.error('Erreur lors de l\'annulation de l\'offre:', error)
+  }
+}
+
+
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConversation.value || sending.value) return
 
@@ -742,8 +1000,12 @@ const buyOption = () => {
   showBuyOption.value = ! showBuyOption.value
 }
 const sendOfferOption = () => {
-  console.log(selectedConversation.value)
-  showOfferOption.value = !showOfferOption.value
+  if(selectedConversation.value.isOwner){
+    showCounterOfferOption.value = !showCounterOfferOption.value
+
+  }else{
+    showOfferOption.value = !showOfferOption.value
+  }
 }
 const initPaypal = async () => {
   try {
@@ -1113,25 +1375,49 @@ const onPaymentCancelled = () => {
 };
 
 const archiveConversation = async (conversation) => {
-  try {
-    conversation.isArchived = !conversation.isArchived
-    showConversationMenu.value = null
-    showConversationOptions.value = false
-    showSalesOptions.value = false
-    showBuyOption.value = false
-    showOfferOption.value = false
+  if(isArchived(conversation) == false){
+    if (confirm('Êtes-vous sûr de vouloir archiver cette conversation ?')){
+      try {
+        const response = await messagingStore.archiveConversation(conversation._id || conversation.id)
 
-    await messagingStore.updateConversation(conversation._id || conversation.id, {
-      isArchived: conversation.isArchived
-    })
+        if (selectedConversation.value &&
+            (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+          selectedConversation.value = null
+        }
 
-    if (conversation.isArchived && selectedConversation.value &&
-        (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
-      selectedConversation.value = null
+        showConversationMenu.value = null
+        showConversationOptions.value = false
+        showSalesOptions.value = false
+        showBuyOption.value = false
+        showOfferOption.value = false
+        await messagingStore.fetchConversations();
+
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+      }
     }
-  } catch (error) {
-    console.error('Erreur lors de l\'archivage:', error)
-    conversation.isArchived = !conversation.isArchived
+  }else{
+    if (confirm('Êtes-vous sûr de vouloir de désarchiver cette conversation ?')){
+    try {
+      const response = await messagingStore.unarchiveConversation(conversation._id || conversation.id)
+
+      if (selectedConversation.value &&
+          (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+        selectedConversation.value = null
+      }
+
+      showConversationMenu.value = null
+      showConversationOptions.value = false
+      showSalesOptions.value = false
+      showBuyOption.value = false
+      showOfferOption.value = false
+      await messagingStore.fetchConversations();
+
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+    }
+  }
+
   }
 }
 
@@ -1162,8 +1448,6 @@ const deleteConversation = async (conversation) => {
       console.error('Erreur lors de la suppression:', error)
     }
   }
-
-
 }
 
 const closeModal = () => {
@@ -1395,6 +1679,7 @@ showConversationMenu.value = null
   showEmojiPicker.value = false
 })
 </script>
+
 
 <style scoped>
 /* Base styles - White theme only */
@@ -2162,12 +2447,68 @@ showConversationMenu.value = null
 .btn-delete-attachment:hover {
   background: var(--primary-color);
 }
+.btns-offers {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+.btn-offer{
+  width: 100%;
+  display: inline-block !important;
+}
+.cancel-offer{
+  color: var(--danger-color);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: small;
+  text-align: end;
+}
+.btn-offer.btn-success{
+  margin-left: 5px;
+}
+.popup-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e7e7e7;
+  border-radius: 6px;
+}
+.popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.popup-actions .btn-outline {
+  background: white;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: 50%;
+
+}
+
+
+.popup-actions .btn-danger {
+  border: none;
+  color: white;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  width: 50%;
+}
+
+
 .popup-content .close-btn{
   position: absolute;
   right: -5px;
   top: -5px;
   color: var(--primary-color);
   z-index: 9;
+  
 }
 .popup-content .screen{
   height: 100%;
@@ -2189,7 +2530,52 @@ showConversationMenu.value = null
   line-height: 1.4;
   word-wrap: break-word;
 }
+.offer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
 
+.status-accepted {
+  color: #155724;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+
+}
+
+.status-rejected {
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.status-pending {
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
 .message-meta {
   display: flex;
   justify-content: space-between;
@@ -2655,11 +3041,148 @@ showConversationMenu.value = null
   font-size: 24px;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* POPUP CONTRE-OFFRE - STYLES ISOLÉS */
+.counter-popup-overlay {
+  background: rgba(30,34,44,0.55);
+  backdrop-filter: blur(3px);
+  position: fixed;
+  z-index: 1001;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: counter-fade-in 0.20s;
+}
+
+@keyframes counter-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.counter-popup-content {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.19);
+  padding: 38px 28px 26px 28px;
+  position: relative;
+  max-width: 380px;
+  width: 95vw;
+  animation: counter-popup-appear 0.23s cubic-bezier(0.35,1.55,0.58,1);
+}
+
+@keyframes counter-popup-appear {
+  from { transform: translateY(55px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.counter-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 23px;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+}
+
+.counter-close-btn:hover {
+  color: #0b5ed7;
+  background: #f8f9fa;
+  border-radius: 50%;
+}
+
+.counter-popup-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+.counter-popup-message {
+  color: #6c757d;
+  font-size: 15px;
+  margin-bottom: 21px;
+}
+
+.counter-input {
+  width: 100%;
+  background: #f6f7fb;
+  border: 1.5px solid #dee2e6;
+  border-radius: 10px;
+  outline: none;
+  font-size: 16px;
+  padding: 13px 14px;
+  margin-bottom: 10px;
+  transition: border 0.18s, box-shadow 0.18s, background 0.18s;
+  box-shadow: 0 1px 5px rgba(13,110,253,0.04) inset;
+}
+
+.counter-input:focus {
+  border: 1.5px solid #0b5ed7;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.08);
+}
+
+.counter-popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn-outline.btn-wide,
+.btn-danger.btn-wide {
+  min-width: 120px;
+  border-radius: 10px;
+  font-size: 16px;
+  padding: 11px;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 8px rgba(13,110,253,0.04);
+}
+
+.btn-outline.btn-wide:hover {
+  background: #e7f3ff;
+  color: #0b5ed7;
+  border-color: #0b5ed7;
+}
+
+.btn-danger.btn-wide {
+  background: #eb5252;
+  border: none;
+  color: #fff;
+}
+
+.btn-danger.btn-wide:hover {
+  background: #b92929;
+}
+
+.counter-error-message {
+  color: #eb5252;
+  padding-top: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .counter-popup-content {
+    padding: 20px 7px 16px 7px;
+    max-width: 98vw;
+  }
+
+  .btn-outline.btn-wide,
+  .btn-danger.btn-wide {
+    min-width: 100px;
+    font-size: 15px;
+  }
+}
+
 
 @keyframes messageSlideIn {
   from {
@@ -2922,6 +3445,19 @@ showConversationMenu.value = null
         grid-row: 2;
       }
     }
+  }
+}
+@media (max-width: 768px) {
+  .btns-offers {
+    flex-direction: column;
+  }
+  .btn-offer{
+    width: 100%;
+  }
+  .btn-offer.btn-success{
+    margin-left: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
   }
 }
 

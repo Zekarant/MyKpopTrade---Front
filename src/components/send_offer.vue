@@ -10,12 +10,12 @@
     
     <div class="product-summary">
       <div class="product-image">
-        <img :src="domain_api + conversation.productId.images[0]" :alt="conversation.productId.title">
+        <img :src="domain_api + images[0]" :alt="title">
       </div>
       <div class="product-details">
-        <h4>{{ conversation.productId.title }}</h4>
+        <h4>{{ title }}</h4>
         <div class="original-price">
-          Prix initial: <span class="price-value">{{ conversation.productId.price }}€</span>
+          Prix initial: <span class="price-value">{{ price }}€</span>
         </div>
       </div>
     </div>
@@ -28,14 +28,14 @@
           id="offerAmount" 
           v-model="offerAmount" 
           :min="1" 
-          :max="conversation.productId.price - 1"
+          :max="price - 1"
           step="0.01"
           placeholder="Montant de votre offre"
           required
         >
         <div class="price-info">
-          <span class="savings" v-if="offerAmount && offerAmount < conversation.productId.price">
-            Économie: {{ (conversation.productId.price - offerAmount).toFixed(2) }}€
+          <span class="savings" v-if="offerAmount && offerAmount < price">
+            Économie: {{ (price - offerAmount).toFixed(2) }}€
           </span>
         </div>
       </div>
@@ -79,15 +79,21 @@
 </template>
   
 <script lang="ts">
+import Cookies from 'js-cookie';
 import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
     name: 'send_offer',
     props: {
         conversation: {
-            type: Object,
-            required: true,
-        }
+          type: Object,
+          required: false,
+        },
+        product: {
+          type: Object,
+          required: false,
+        },
+
     },
     emits: ['close', 'offerSent'],
     setup(props, { emit }) {
@@ -96,23 +102,47 @@ export default defineComponent({
         const offerTermsAccepted = ref(false)
         const sendingOffer = ref(false)
         const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
+        const myId = Cookies.get('id_user') || '';
+        const price = ref(0);
+        const title = ref('');
+        const images = ref<string[]>([]);
+        console.log(props);
+        if(props.product) {
+          price.value = props.product.price;
+          title.value = props.product.title;
+          images.value = props.product.images;
+        }else if(props.conversation) {
+          price.value = props.conversation.productId.price;
+          title.value = props.conversation.productId.title;
+          images.value = props.conversation.productId.images[0]
+        }
         // Méthode pour soumettre l'offre
+        var offerData = {};
         const submitOffer = async () => {
             if (!offerAmount.value || !offerTermsAccepted.value) return
-            
             try {
                 sendingOffer.value = true
                 
                 // Appel API pour envoyer l'offre
-                const offerData = {
+                if(!props.conversation) {
+                  if(props.product) {
+                    offerData = {
+                      productId: props.product._id,
+                      amount: parseFloat(offerAmount.value),
+                      message: offerMessage.value,
+                      conversationId: null
+                    }
+                  }
+                }else{
+                  offerData = {
                     productId: props.conversation.productId._id,
                     amount: parseFloat(offerAmount.value),
                     message: offerMessage.value,
                     conversationId: props.conversation._id || props.conversation.id
+                  }
+
                 }
-                
-                // await offerService.sendOffer(offerData)
+     
                 
                 // Émettre l'événement avec les données de l'offre
                 emit('offerSent', {
@@ -139,7 +169,10 @@ export default defineComponent({
             sendingOffer,
             offerMessage,
             domain_api,
-            submitOffer
+            submitOffer,
+            price,
+            title,
+            images
         }
     }
 })

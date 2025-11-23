@@ -10,6 +10,7 @@ import type {
   SendMessageResponse,
   NegotiationRequest,
   NegotiationResponse,
+  CancelOfferResponse,
   NegotiationActionRequest,
   NegotiationActionResponse,
   PayWhatYouWantRequest,
@@ -225,6 +226,46 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
+  
+  // Archiver une coneversation
+  async favorite(conversationId: string): Promise<void> {
+    if (!conversationId.trim()) {
+      throw new Error('ID de conversation requis');
+    }
+
+    try {
+      await this.apiClient.put(`/${conversationId}/favorite`);
+    } catch (error) {
+      console.error(`Erreur lors de la mise en favoris de la conversation ${conversationId}:`, error);
+      throw this.handleError(error);
+    }
+  }
+  
+  // Archiver une coneversation
+  async archiveConversation(conversationId: string): Promise<void> {
+    if (!conversationId.trim()) {
+      throw new Error('ID de conversation requis');
+    }
+
+    try {
+      await this.apiClient.put(`/${conversationId}/archive`);
+    } catch (error) {
+      console.error(`Erreur lors de l\'archivage de la conversation ${conversationId}:`, error);
+      throw this.handleError(error);
+    }
+  }
+  async unarchiveConversation(conversationId: string): Promise<void> {
+    if (!conversationId.trim()) {
+      throw new Error('ID de conversation requis');
+    }
+
+    try {
+      await this.apiClient.put(`/${conversationId}/unarchive`);
+    } catch (error) {
+      console.error(`Erreur lors du désarchivage de la conversation ${conversationId}:`, error);
+      throw this.handleError(error);
+    }
+  }
 
   // Récupérer une pièce jointe
   getAttachmentUrl(messageId: string, attachmentName: string): string {
@@ -244,11 +285,7 @@ class MessagingService {
       throw new Error('ID du produit requis');
     }
 
-    if (!data.recipientId?.trim()) {
-      throw new Error('ID du destinataire requis');
-    }
-
-    if (typeof data.proposedPrice !== 'number' || data.proposedPrice <= 0) {
+    if (typeof data.initialOffer !== 'number' || data.initialOffer <= 0) {
       throw new Error('Prix proposé invalide');
     }
 
@@ -261,11 +298,38 @@ class MessagingService {
     }
   }
 
+  async cancelNegotiation(
+    productId: string,
+    initialOffer: number,
+    conversationId: string,
+    message?: string
+  ): Promise<CancelOfferResponse> {
+    try {
+      const response: AxiosResponse<CancelOfferResponse> = await this.apiClient.delete(
+        `/${conversationId}/cancel-offer`,
+        {
+          data: { 
+            productId,
+            initialOffer,
+            message
+          }
+        }
+      );
+      
+      return response.data; 
+    } catch (error) {
+      console.error('Erreur lors de l\'annulation de la négociation:', error);
+      throw this.handleError(error);
+    }
+  }
+
+
   // Répondre à une négociation
   async respondToNegotiation(
     conversationId: string,
     data: NegotiationActionRequest
   ): Promise<NegotiationActionResponse> {
+
     if (!conversationId.trim()) {
       throw new Error('ID de conversation requis');
     }
@@ -310,7 +374,7 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
-
+   
   // Faire une proposition PWYW
   async makePayWhatYouWantOffer(
     conversationId: string,

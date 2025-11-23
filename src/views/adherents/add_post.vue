@@ -103,6 +103,10 @@
                 <input type="text" id="albumName" v-model="formData.albumName" required />
             </div>
             <div>
+                <label for="allowOffers">Accepter les offres <input type="checkbox" id="allowOffers" v-model="formData.allowOffers" /></label>
+            </div>
+            
+            <div>
                 <label>Options de livraison</label>
                 <div :class="{ disabled: formData.shippingOptions.nationalOnly }">
                 <label style="font-weight: normal;">
@@ -202,6 +206,7 @@
             kpopGroup: '',
             kpopMember: '',
             albumName: '',
+            allowOffers: true,
             images: [] as File[],
             shippingOptions: {
                 worldwide: false,
@@ -277,7 +282,7 @@
             } else {
                 const alert = document.createElement('div');
                 alert.className = 'alert error-alert';
-                alert.innerText = response.error.message || 'Erreur lors de la création du produit';
+                alert.innerText = response.message || response.error.message || 'Erreur lors de la création du produit';
                 document.body.appendChild(alert);
                 setTimeout(() => {
                     alert.remove();

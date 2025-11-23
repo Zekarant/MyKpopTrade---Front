@@ -19,6 +19,7 @@ export interface PostData {
   albumName: string;
   images: File[];
   productImages?: File[];
+  allowOffers: boolean;
   shippingOptions: {
     worldwide: boolean;
     nationalOnly: boolean;
