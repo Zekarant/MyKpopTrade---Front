@@ -27,8 +27,15 @@
                             :class="{ selected: selectedMember?._id === member._id || selectedMember?.id === member.id }"
                             @click="selectMember(member)"
                         >
-                            <img :src="member.avatar || '/api/placeholder/36/36'" :alt="member.username" />
-                            <span>{{ member.username }}</span>
+                            <img :src="getImageUrl(member.profilePicture)" :alt="member.username" class="member-avatar" />
+                            <div class="member-info">
+                                <div class="member-username">{{ member.username }}</div>
+                                <div v-if="member.bio" class="member-bio">{{ member.bio }}</div>
+                                <div v-if="member.location" class="member-location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    {{ member.location }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -70,7 +77,6 @@
 import axios from 'axios';
 import Cookies from "js-cookie";
 import mssagingService from '@/services/messaging.service';
-import userService from '@/services/user.service'
 import { useRoute, useRouter } from "vue-router";
 import { ref, computed } from 'vue';
 
@@ -80,7 +86,13 @@ export interface Member {
     id?: string;
     username: string;
     avatar?: string;
+    profilePicture?: string;
+    bio?: string;
+    location?: string;
+    email?: string;
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default {
     name: "send_message",
@@ -116,6 +128,19 @@ export default {
             return !hasMessage;
         };
 
+        // Fonction pour construire l'URL complète de l'image
+        const getImageUrl = (imagePath?: string): string => {
+            if (!imagePath) {
+                return '/api/placeholder/50/50';
+            }
+            // Si le chemin commence déjà par http, le retourner tel quel
+            if (imagePath.startsWith('http')) {
+                return imagePath;
+            }
+            // Sinon, ajouter le domaine API
+            return `${API_BASE_URL}${imagePath}`;
+        };
+
         // Pré-sélection si on a déjà un utilisateur ciblé
         if (props.id_user || props.pseudo_user) {
             selectedMember.value = {
@@ -131,8 +156,20 @@ export default {
             }
 
             try {
-                const response = await userService.getUserByName(memberSearch.value);
-                memberSearchResults.value = response.user ? [response.user] as Member[] : [];
+                const response = await mssagingService.getUserByName(memberSearch.value);
+                console.log('Response de searchMembers:', response);
+                
+                // Le service retourne soit 'users' (tableau) soit 'user' (objet unique)
+                const responseAny = response as any;
+                if (responseAny.users && Array.isArray(responseAny.users)) {
+                    memberSearchResults.value = responseAny.users as Member[];
+                } else if (responseAny.user) {
+                    memberSearchResults.value = [responseAny.user] as Member[];
+                } else {
+                    memberSearchResults.value = [];
+                }
+                
+                console.log('Résultats de recherche après traitement:', memberSearchResults.value);
             } catch (error) {
                 console.error('Erreur lors de la recherche:', error);
                 memberSearchResults.value = [];
@@ -143,6 +180,7 @@ export default {
             selectedMember.value = member;
             memberSearch.value = member.username;
             memberSearchResults.value = [];
+            console.log('Membre sélectionné:', member);
         };
         
         const closePopup = () => {
@@ -150,12 +188,7 @@ export default {
         };
         
         const sendMessage = () => {
-            console.log('=== DÉBUT sendMessage ===');
-            console.log('textMessage:', textMessage.value);
-            console.log('selectedMember:', selectedMember.value);
-            console.log('props:', props);
-            console.log('id_user:', props.id_user);
-            
+     
             const recipientId = selectedMember.value?._id || selectedMember.value?.id || props.id_user;
             
             if (!recipientId) {
@@ -169,6 +202,12 @@ export default {
                 (window as any).$func?.showToastError('Veuillez saisir un message');
                 return;
             }
+            console.log('=== DÉBUT sendMessage ===');
+            console.log('textMessage:', textMessage.value);
+            console.log('selectedMember:', selectedMember.value);
+            console.log('props:', props);
+            console.log('id_user:', props.id_user);
+            
 
             console.log('Envoi du message:', {
                 recipientId,
@@ -201,7 +240,8 @@ export default {
             searchMembers,
             selectMember,
             closePopup,
-            sendMessage
+            sendMessage,
+            getImageUrl
         };
     }
 }
@@ -313,12 +353,13 @@ export default {
 }
 
 .search-results {
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     margin-top: 8px;
     background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .member-result {
@@ -327,7 +368,8 @@ export default {
     padding: 12px;
     cursor: pointer;
     border-bottom: 1px solid #f1f3f4;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
+    gap: 12px;
 }
 
 .member-result:last-child {
@@ -336,24 +378,61 @@ export default {
 
 .member-result:hover {
     background-color: #f8f9fa;
+    transform: translateX(4px);
 }
 
 .member-result.selected {
     background-color: #e3f2fd;
-    border-color: #2196f3;
+    border-left: 4px solid #2196f3;
+    padding-left: 8px;
 }
 
-.member-result img {
-    width: 36px;
-    height: 36px;
+.member-avatar {
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    margin-right: 12px;
     object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
 }
 
-.member-result span {
+.member-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.member-username {
     font-size: 14px;
-    color: #495057;
+    font-weight: 600;
+    color: #212529;
+    word-break: break-word;
+}
+
+.member-bio {
+    font-size: 13px;
+    color: #6c757d;
+    line-height: 1.3;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.member-location {
+    font-size: 12px;
+    color: #868e96;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.member-location i {
+    font-size: 11px;
 }
 
 /* Section destinataire sélectionné */

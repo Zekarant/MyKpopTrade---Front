@@ -92,16 +92,68 @@
 
             <div>
                 <label for="kpopGroup">Groupe Kpop</label>
-                <input type="text" id="kpopGroup" v-model="formData.kpopGroup" required />
+            <div class="select-searchable">
+                <input 
+                    type="text" 
+                    id="kpopGroup"
+                    v-model="searchGroupKpop"
+                    @focus="isGroupDropdownOpen = true"
+                    @blur="closeGroupDropdown"
+                    placeholder="Rechercher un groupe..."
+                    class="searchable-input"
+                />
+                <div v-if="isGroupDropdownOpen" class="dropdown-menu">
+                    <div 
+                        v-for="group in filteredGroupsKpop" 
+                        :key="group._id"
+                        @mousedown="selectGroupKpop(group)"
+                        class="dropdown-item"
+                    >
+                        {{ group.name }}
+                    </div>
+                    <div v-if="filteredGroupsKpop.length === 0" class="dropdown-item disabled">
+                        Aucun groupe trouvé
+                    </div>
+                </div>
             </div>
+
+
+
+
+            </div>
+
             <div>
                 <label for="kpopMember">Membre Kpop</label>
                 <input type="text" id="kpopMember" v-model="formData.kpopMember" required />
             </div>
             <div>
                 <label for="albumName">Nom de l'album</label>
-                <input type="text" id="albumName" v-model="formData.albumName" required />
+                <div class="select-searchable">
+                    <input 
+                        type="text" 
+                        id="albumName"
+                        v-model="searchAlbumName"
+                        @focus="isAlbumDropdownOpen = true"
+                        @blur="closeAlbumDropdown"
+                        placeholder="Rechercher un album..."
+                        class="searchable-input"
+                    />
+                    <div v-if="isAlbumDropdownOpen" class="dropdown-menu">
+                        <div 
+                            v-for="album in filteredAlbums" 
+                            :key="album._id"
+                            @mousedown="selectAlbum(album)"
+                            class="dropdown-item"
+                        >
+                            {{ album.name }} - {{ album.artistName }}
+                        </div>
+                        <div v-if="filteredAlbums.length === 0" class="dropdown-item disabled">
+                            Aucun album trouvé
+                        </div>
+                    </div>
+                </div>
             </div>
+
             <div>
                 <label for="allowOffers">Accepter les offres <input type="checkbox" id="allowOffers" v-model="formData.allowOffers" /></label>
             </div>
@@ -146,7 +198,7 @@
   </template>
   
   <script lang="ts">
-    import { defineComponent, ref } from 'vue';
+    import { defineComponent, ref, computed, watch } from 'vue';
     import postService from '@/services/post.service';
     import  authentification from '@/services/authentification.service';
     import { Navigation, A11y } from 'swiper/modules';
@@ -194,6 +246,12 @@
     setup(props) {
         const imagesPreview = ref<string[]>([]);
         const router = useRouter();
+        const searchGroupKpop = ref('');
+        const isGroupDropdownOpen = ref(false);
+        const groupsKpopList = ref<any[]>([]);
+        const searchAlbumName = ref('');
+        const isAlbumDropdownOpen = ref(false);
+        const albumsList = ref<any[]>([]);
 
         const formData = ref({
             title: '',
@@ -240,6 +298,94 @@
                 imagesPreview.value.push(imgTmp);
             });
         }
+        const getGroupKpopSelect = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/search?query=${searchGroupKpop.value}`);
+                return response.data.groups || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des groupes K-pop:', error);
+                return [];
+            }
+        };
+
+
+        const getAllGroupsKpop = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups`);
+                return response.data.groups || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des groupes K-pop:', error);
+                return [];
+            }
+        };
+        const getAllAlbums = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums?page=1&limit=100&sortBy=releaseDate&sortOrder=asc`);
+                return response.data.albums || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des albums:', error);
+                return [];
+            }
+        };
+
+        const searchAlbums = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums?page=1&limit=100&sortBy=releaseDate&sortOrder=asc`);
+                const allAlbums = response.data.albums || [];
+                return allAlbums.filter((album: any) =>
+                    album.name.toLowerCase().includes(searchAlbumName.value.toLowerCase()) ||
+                    album.artistName.toLowerCase().includes(searchAlbumName.value.toLowerCase())
+                );
+            } catch (error) {
+                console.error('Erreur lors de la recherche des albums:', error);
+                return [];
+            }
+        };
+
+        const selectAlbum = (album: any) => {
+            formData.value.albumName = album._id;
+            searchAlbumName.value = `${album.name} - ${album.artistName}`;
+            isAlbumDropdownOpen.value = false;
+        };
+
+        const closeAlbumDropdown = () => {
+            setTimeout(() => {
+                isAlbumDropdownOpen.value = false;
+            }, 150);
+        };
+
+
+        // Charger tous les groupes K-pop au montage du composant
+        (async () => {
+            groupsKpopList.value = await getAllGroupsKpop();
+        })();
+        (async () => {
+            albumsList.value = await getAllAlbums();
+        })();
+
+        watch(searchGroupKpop, async (newValue) => {
+            if (newValue && newValue.trim() !== '') {
+                groupsKpopList.value = await getGroupKpopSelect();
+            } else {
+                groupsKpopList.value = await getAllGroupsKpop();
+            }
+        }, { immediate: false });
+
+        watch(searchAlbumName, async (newValue) => {
+            if (newValue && newValue.trim() !== '') {
+                albumsList.value = await searchAlbums();
+            } else {
+                albumsList.value = await getAllAlbums();
+            }
+        }, { immediate: false });
+
+        const filteredGroupsKpop = computed(() => {
+            return groupsKpopList.value;
+        });
+        const filteredAlbums = computed(() => {
+            return albumsList.value;
+        });
+
 
         const handleImageUpload = (event: Event) => {
             const file = (event.target as HTMLInputElement).files?.[0];
@@ -305,7 +451,19 @@
                 reader.readAsDataURL(file);
             }
         };
-    
+        const selectGroupKpop = (group: any) => {
+            formData.value.kpopGroup = group._id;
+            searchGroupKpop.value = group.name;
+            isGroupDropdownOpen.value = false;
+        };
+
+        const closeGroupDropdown = () => {
+            setTimeout(() => {
+                isGroupDropdownOpen.value = false;
+            }, 150);
+        };
+
+
         return {
             formData,
             router,
@@ -316,7 +474,19 @@
             isModyfy,
             save,
             readFiles,
+            searchGroupKpop,
+            isGroupDropdownOpen,
+            filteredGroupsKpop,
+            selectGroupKpop,
+            closeGroupDropdown,
+            getGroupKpopSelect,
+            searchAlbumName,
+            isAlbumDropdownOpen,
+            filteredAlbums,
+            selectAlbum,
+            closeAlbumDropdown,
         };
+
     },
     methods:{
         showToastError(message: string) {
@@ -342,172 +512,5 @@
   </script>
   
 <style lang="scss" scoped>
-    main{
-        background: var(--light-color);
-    }
-    .content{
-        background: white;
-        width: 80%;
-        padding: 20px;
-    }
-    form div {
-        margin-bottom: 15px;
-    }
-  
-    label {
-        display: block;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    input,
-    textarea,
-    select {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    
-    .image-drop-zone{
-        background: var(--light-color);
-        border: 2px dashed var(--primary-color);
-        padding: 20px;
-    }
-
-    .image-preview-container {
-        margin-bottom: 15px;
-        border: 2px dashed var(--primary-color);
-        padding-top: 10px;
-        padding-bottom: 10px;
-        padding-left: 10px;
-        
-    }
-    .add-image-slide {
-        height: 100% !important;        /* Important pour écraser les styles Swiper */
-    }
-    .image-preview img{
-        max-width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    .image-preview i{
-        background: var(--primary-color);
-        padding-left: 7px;
-        padding-right: 7px;
-        padding-top: 4px;
-        border-radius: 50%;
-        height: 30px;
-        width: 30px;
-    }
-
-    .image-swiper {
-        height: 120px; // ou la hauteur souhaitée pour tous les slides
-    }
-    /* Le bouton doit aussi remplir le slide */
-    .add-image-button {
-        width: 100%;
-        height: 100%;
-        min-height: 100%;
-        font-size: 2rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-    }
-    .image-preview-container div{
-        margin-bottom: 0px;
-    }
-    
-    .image-preview {
-        flex: 0 0 auto; 
-        position: relative;
-        width: 100%;
-        height: 100%;
-        border-radius: 4px;
-        overflow: hidden;
-        display: block;
-        justify-content: center;
-        align-items: center;
-        margin-top: auto;
-        margin-bottom: auto;
-        padding-right: 10px;
-        padding-left: 10px;
-    }
-    .delete_img{
-        position: absolute; 
-        right: 5px; 
-        top: 0px; 
-        color: white;  
-        border-radius: 4px; 
-        cursor: pointer;
-    }
-    .delete_img:hover{
-        color: var(--primary-color);  
-    }
-    .image-preview img {
-        max-width: 100%;
-        height: 100%;
-    }
-
-    .image-preview button {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        background: red;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        font-size: 12px;
-        line-height: 20px;
-        text-align: center;
-    }
-    .popup-buttons-footer button{
-        width: 100%;
-        margin: 2%;
-    }
-    .disabled {
-        opacity: 0.5; 
-        pointer-events: none; 
-    }
-    input[type="checkbox"] {
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        margin-right: 10px; 
-        border: 2px solid var(--primary-color); 
-        border-radius: 4px; 
-        background-color: white; 
-        cursor: pointer;
-        display: inline-block;
-        vertical-align: middle;
-        position: relative; 
-    }
-
-    input[type="checkbox"]:checked {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color); 
-        color: white;
-    }
-    input[type="checkbox"]:checked::after {
-        content: '✔';
-        color: white; 
-        font-size: 14px; 
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%); 
-        font-weight: bold;
-        line-height: 1; 
-    }
-@media (max-width: 769px) {
-    .content{
-        background: white;
-        width: 100%;
-        padding: 20px;
-    }
-}
+@use '../../css/add_post.scss' as *;
 </style>

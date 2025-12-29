@@ -208,7 +208,7 @@
         justify-content: center;
         background: black;
         position: relative;
-        margin: 10px;
+        margin-left: 10px;
         border-radius: 5px;
     }
     .picture_profile_review{

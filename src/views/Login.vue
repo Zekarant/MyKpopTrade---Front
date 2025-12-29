@@ -106,7 +106,7 @@ export default defineComponent({
           successMessage.value = "Connexion réussie.";
           router.push("/adherents/dashboard");
         } catch (error) {
-          ErroruserName.value = error.message;
+          ErroruserName.value = error;
         }
       }
     };

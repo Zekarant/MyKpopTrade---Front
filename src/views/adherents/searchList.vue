@@ -254,54 +254,7 @@
   })
   </script>
   
-<style lang="scss" scoped>
-.content{
-  display: flex;
-}
-.content_grid{
-  width: 70%;
-}
-.search_bar_content{
-  width: 100%;
-  margin-left: 24px; 
-  margin-right: 24px 
-}
-.filter_content{
-  width: 20%; 
-  height: 100%;
-}
-.title_content{
-  font-weight: bold;
-  font-size: 20px;
-  display: grid;
-  grid-template: auto / repeat(1, 1fr);
-  align-items: center;
-  justify-self: center;
-  max-width: 990px;
-  width: 100%;
-}
-@media (max-width: 769px) {
-  .title_content{
-    display: block;
-  }
-  .search_bar_content{
-    width: 90%;
-  }
-  .content{
-    flex-direction: column;
-  }
-  .content_grid{
-    width: 100%;
-  }
-  .filter_content{
-    margin-left: auto;
-    width: auto;
-    display: inline-block;
-  }
-  .result_title{
-    display: inline-block;
-    width: 85%;
-  }
-}
-</style>
+  <style scoped lang="scss">
+  @use '../../css/searchList.scss' as *;
+  </style>
   

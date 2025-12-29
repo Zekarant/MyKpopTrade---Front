@@ -723,8 +723,11 @@
             async getData() {
                 const response = await postService.getPost(this.idPost);
                 if (response && response.product) {
+                    console.log(response);
                     this.dataPost = response.product;
                     this.isFav = response.isFavorite || false;
+                }else{
+                    console.log('pas de reponse');
                 }
             },
             toggleMenu(event: Event){
@@ -768,7 +771,7 @@
             async rmFav(id: any){
                 await postService.addFavorite(id).then(addFavorite => {                
                     this.$func.showToastSuccess('Supprimé de mes favoris');
-                    this.isFav = true;
+                    this.isFav = false;
                 });;
             },
             
@@ -789,8 +792,6 @@
                     initialOffer: offerInfo.amount,
                     message:  offerInfo.message
                 };
-                console.log('offerData');
-                console.log(offerData);
                 messagingService.initiateNegotiation(
                     offerData
                 ).then(response => {

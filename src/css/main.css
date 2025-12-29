@@ -116,3 +116,9 @@
   background-color: var(--primary-color);
   border-radius: 3px;
 }
+@media (prefers-color-scheme: dark) {
+  input, textarea, select{
+    background-color: white;
+    color: black;
+  }
+}

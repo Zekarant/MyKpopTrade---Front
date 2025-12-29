@@ -138,6 +138,7 @@
         display: grid;
         grid-template: auto / repeat( 4, 1fr );
         //grid-gap: 2rem;
+        row-gap: 2rem;
         align-items: center;
         justify-self: center;
         max-width: 990px;
@@ -183,11 +184,13 @@
             padding-right: 0px;
             margin-left: 0px;
             padding-left: 0px;
+            row-gap: 0;
         }
     }
     @media (max-width:550px){
         .container{
-            grid-template: auto / repeat(1, 1fr)
+            grid-template: auto / repeat(1, 1fr);
+            row-gap: 0;
         }
     }
   </style>

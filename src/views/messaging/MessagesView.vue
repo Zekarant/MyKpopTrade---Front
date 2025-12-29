@@ -60,6 +60,10 @@
             <i class="bi bi-search"></i>
             <input type="text" placeholder="Rechercher..." v-model="searchQuery" />
           </div>
+          <button class="btn-new-conversation" @click="openNewConversationModal" title="Créer une nouvelle conversation">
+            <i class="bi bi-plus-circle"></i>
+            <span class="btn-label">Nouveau</span>
+          </button>
         </div>
 
         <div class="conversations" v-if="!loading">
@@ -718,8 +722,9 @@ const getCookie = (name) => {
 
 // Methods
 const isOwnMessage = (message) => {
+
   const currentUserId =  localStorage.getItem('id_user') || getCookie('id_user')
-  return message.sender._id === currentUserId || message.isOwn === true
+  return message.sender === currentUserId || message.sender._id === currentUserId || message.isOwn === true
 }
 
 const getAvatar = (user) => {
@@ -872,10 +877,14 @@ const handleOfferSent = async (offerInfo) => {
   messagingService.initiateNegotiation(
     offerData
   ).then(response => {
-    currentMessages.value.push(response.data)
+    selectedConversation.value = response.conversation;
+
+    console.log('Offre envoyée avec succès:', response)
+    currentMessages.value.push(response.conversation.lastMessage)
     scrollToBottom()
   }).catch(error => {
-    console.error('Erreur lors de l\'envoi de l\'offre:', error)
+    proxy.$func.showToastError(error.message || 'Erreur lors de l\'envoi de l\'offre.');
+
   })
   await sendMessage()
 }
@@ -1453,6 +1462,11 @@ const deleteConversation = async (conversation) => {
 const closeModal = () => {
   showNewConversationModal.value = false
 }
+
+const openNewConversationModal = () => {
+  showNewConversationModal.value = true
+}
+
 const closeInformation = () => {
   const rightSidebar = document.querySelector('.right-sidebar');
   if (rightSidebar) {
@@ -1818,12 +1832,16 @@ showConversationMenu.value = null
   padding: 16px;
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .search-input {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .search-input i {
@@ -1847,6 +1865,56 @@ showConversationMenu.value = null
 .search-input input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.btn-new-conversation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--primary-color, --primary-color-ligh);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-new-conversation:hover {
+  background: var(--primary-color-ligh);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(99, 106, 116, 0.3);
+}
+
+.btn-new-conversation:active {
+  transform: translateY(0);
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.btn-new-conversation i {
+  font-size: 16px;
+}
+
+.btn-new-conversation .btn-label {
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .btn-new-conversation .btn-label {
+    display: none;
+  }
+
+  .btn-new-conversation {
+    padding: 10px;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
 }
 
 .conversations {
@@ -2273,9 +2341,7 @@ showConversationMenu.value = null
   overflow: hidden;
   display: block;
 }
-.information{
-  display: none;
-}
+
 .close-btn-information-mobile{
   display: none;
 }
@@ -2292,7 +2358,9 @@ showConversationMenu.value = null
   color: #495057;
   transition: background 0.2s;
 }
-
+.information{
+  display: none;
+}
 .dropdown-item:hover {
   background: #f8f9fa;
 }

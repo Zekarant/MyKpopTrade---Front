@@ -77,33 +77,6 @@ class userService {
         // Fallback : récupère le token du localStorage
         return localStorage.getItem('token');
     }
-  async getUserByName(name: string): Promise<UserResponse> {
-    try {        
-      const response: AxiosResponse<UserResponse> = await this.userApiClient.get(
-        `/user/${name}`
-      );
-
-      if (
-        response.data.message === "Token invalide" ||
-        (response as any).data.code === "TOKEN_EXPIRED" ||
-        response.status === 401
-      ) {
-        authentificationService.verifSession();
-      }
-
-      return response.data;
-    } catch (error: any) {
-      if (
-        error?.response?.data?.message === "Token invalide" ||
-        error?.response?.data?.code === "TOKEN_EXPIRED" ||
-        error?.response?.status === 401
-      ) {
-        authentificationService.verifSession();
-      }
-      console.error("Erreur lors de la recherche :", error);
-      throw error;
-    }
-  }
 
   async getMyInformation(): Promise<UserResponse> {
     try {
