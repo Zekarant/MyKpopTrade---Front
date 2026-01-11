@@ -202,18 +202,7 @@ export default {
                 (window as any).$func?.showToastError('Veuillez saisir un message');
                 return;
             }
-            console.log('=== DÉBUT sendMessage ===');
-            console.log('textMessage:', textMessage.value);
-            console.log('selectedMember:', selectedMember.value);
-            console.log('props:', props);
-            console.log('id_user:', props.id_user);
-            
-
-            console.log('Envoi du message:', {
-                recipientId,
-                message: textMessage.value,
-                productId: props.id_post
-            });
+  
 
             mssagingService.startConversation({
                 recipientId: recipientId,
@@ -222,6 +211,7 @@ export default {
             }).then((response) => {
                 console.log('Message envoyé avec succès:', response);
                 (window as any).$func?.showToastSuccess('Message envoyé avec succès');
+                emit('newConversationCreated', response.conversation);
                 closePopup();
             }).catch((error) => {
                 console.error('Erreur lors de l\'envoi:', error);

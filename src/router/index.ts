@@ -4,13 +4,12 @@ import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
 import searchList from '../views/adherents/searchList.vue';
 import Dashboard from '@p_v/dashboard.vue';
-import Test from '../views/test.vue';
 import Collection from '@p_v/collection.vue';
 import profile from '@p_v/profile.vue';
 import add_post from '@p_v/add_post.vue';
+import add_review from '@p_v/add_review.vue';
 import Admin from '@/views/admin/admin.vue';
-import cancel from '@/views/payment/cancel.vue';
-
+import PaymentCancel from '@/views/payment/cancel.vue';
 
 
 const routes = [
@@ -138,15 +137,22 @@ const routes = [
     name: 'add_post',
     component: add_post,
     props: true
-
-
-  },{
+  },
+  {
     path: '/adherents/modify',
     name: 'modify_post',
     component: add_post,
     props: true
-
-
+  },
+  {
+    path: '/adherents/review/:id',
+    name: 'add_review',
+    component: add_review,
+    props: true,
+    meta: {
+      requiresAuth: true,
+      title: 'Ajouter un avis'
+    }
   }
 
 

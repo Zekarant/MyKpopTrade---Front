@@ -75,7 +75,6 @@
                         "Content-Type": "application/json"
                         }
                     }).then(response => {
-                        console.log()
                         if (response.status === 200 || response.status === 201) {
                             func.showToastSuccess(response.data.message);
                             this.close();
@@ -86,11 +85,8 @@
                             return false;
                         }
                     }).catch(error => {
-                        console.log(error);
-
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
                             func.verifSession();
-                        
                         }
                         func.showToastError(error.response.data.message );
 

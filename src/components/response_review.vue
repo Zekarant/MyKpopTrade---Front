@@ -117,8 +117,6 @@
             }
         },
         mounted() {
-            console.log(id_user);
-            console.log(this.review.recipient);
 
             if(this.review.recipient === id_user){
                 this.isRoot = true;

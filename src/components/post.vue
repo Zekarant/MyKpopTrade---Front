@@ -78,7 +78,7 @@
                                 <p>Groupe :</p>
                             </div>
                             <div>
-                                <p>{{ dataPost.kpopGroup }}</p>
+                                <p>{{ dataPost.kpopGroupName }}</p>
                             </div>
                         </div>
                         <div class="bloc_detail kpopMember">
@@ -94,7 +94,7 @@
                                 <p>Album :</p>
                             </div>
                             <div>
-                                <p>{{ dataPost.albumName }}</p>
+                                <p>{{ dataPost.albumNameStr }}</p>
                             </div>
                         </div>
                         <div  v-if="dataPost.shippingOptions" class="bloc_detail shippingOptions">
@@ -875,6 +875,12 @@
         width: 45px;
         height: 45px;
         border: none;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .like {
+            color: black;
+        }
     }
     i.bi.bi-heart::before{    
         height: 100%;

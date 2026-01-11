@@ -5,7 +5,7 @@
             <div class="col-0 col-xs-0 col-md-0 col-lg-2 "></div>
             <div class="col-12 col-xs-12 col-md-12 col-lg-8 ">
               <div class="row row-banner">
-                <banner :profilInfo="profilInfo" :admin="myProfile"></banner>     
+                <banner_profil :profilInfo="profilInfo" :admin="myProfile"></banner_profil>     
               </div>
               <segment_profil @partDisplayed="changePart"></segment_profil>  
 
@@ -86,14 +86,14 @@
                   <div class="col-12 col-xs-12 col-md-12 col-lg-10 ">
                     <div class="review_gen" style="width: 100%;">
                       <div>
-                        <Filter_review></Filter_review>  
+                        <Filter_review @filter="handleFilterChange"></Filter_review>  
                         <i style="color: #FFD485;margin-left: 8px; vertical-align: super;" class="bi bi-star-fill"></i>
                         <div style="display: inline-block;vertical-align: super;">{{ reviews.stats.averageRating }} ({{ reviews.stats.totalRatings }})</div>
                       </div>
                       
                     </div>
                     <div class="separator"></div>
-                    <div class="review_content" style="display: flex;" v-for="(rating, index) in reviews.ratings">
+                    <div class="review_content" style="display: flex;" v-for="(rating, index) in filteredReviews" :key="index">
                       <div class="list_review">
                         <Review_card class="card_review" :review="rating" ></Review_card>  
                       </div>
@@ -120,7 +120,7 @@
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
     import Nav_bar from '@/components/adherents/nav_bar.vue';
-    import banner from '@/components/adherents/banner.vue';
+    import banner_profil from '@/components/adherents/banner.vue';
     import segment_profil from '@/components/adherents/segment_profil.vue';
     import Grid from '@/components/grid.vue';
     import Cookies from "js-cookie";
@@ -131,12 +131,13 @@
     import Review_card from '@/components/review_card.vue';
     import response_review from '@/components/response_review.vue';
     import authentificationService from '@/services/authentification.service';
+    import reviewService from '@/services/review.service';
 
   export default defineComponent({
     name: 'profile',
     components: {
         Nav_bar,
-        banner,
+        banner_profil,
         segment_profil,
         Grid,
         Popup_add_item,
@@ -193,6 +194,32 @@
           month: 'long',
           year: 'numeric'
         });
+      },
+      filteredReviews() {
+        let filtered = [...this.reviews.ratings];
+
+        // Filtrer par note
+        if (this.filterRating) {
+          const ratingValue = parseInt(this.filterRating);
+          filtered = filtered.filter(review => review.rating === ratingValue);
+        }
+
+        // Trier
+        filtered.sort((a, b) => {
+          switch (this.filterSort) {
+            case 'oldest':
+              return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'highest':
+              return b.rating - a.rating;
+            case 'lowest':
+              return a.rating - b.rating;
+            case 'recent':
+            default:
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          }
+        });
+
+        return filtered;
       }
     },
     setup() {
@@ -229,6 +256,8 @@
           },
           ratings: [] as any[]
         },
+        filterRating: '',
+        filterSort: 'recent',
       };
     },
     created() {
@@ -245,7 +274,7 @@
         this.partView = part;
 
         if(part === 'review'){
-          this.getReviex();
+          this.getReview();
         }
 
       },
@@ -328,31 +357,18 @@
       info_update(){
         this.isBtnSaveVisible = true;
       },
-      async getReviex(){
-        const sessionToken = Cookies.get('sessionToken');
+      async getReview(){
+        console.log(this.profilInfo);
         try {
-          await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/profiles/ratings/`+this.profilInfo._id,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionToken}`
-              }
-            }
-          ).then(response => {
-            if (response.status === 200) {
-              this.reviews = response.data;
-            }
-          }).catch(error => {
-            if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-             authentificationService.verifSession();
-            }
-          });
-
+          const reviews = await reviewService.getProfileReviews(this.profilInfo.id || this.profilInfo._id);
+          this.reviews = reviews;
         } catch (error) {
-          // Optionnel : afficher un message d'erreur
-          console.error(error);
+          console.error('Erreur lors du chargement des avis:', error);
         }
+      },
+      handleFilterChange({ rating, sort }: { rating: string; sort: string }) {
+        this.filterRating = rating;
+        this.filterSort = sort;
       },
       async saveProfile() {
         const sessionToken = Cookies.get('sessionToken');
@@ -449,9 +465,6 @@
     margin-left: 8px;
     margin-right: 8px;
     width: 50%;
-  }
-  .review_gen{
-
   }
   .separator{
     width: 100%;

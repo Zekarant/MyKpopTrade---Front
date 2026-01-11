@@ -1,5 +1,7 @@
 // post.types.ts
 
+import type { IUser } from "./user.types";
+
 export interface ShippingOption {
   method: string;
   price: number;
@@ -42,7 +44,7 @@ export interface Post {
   albumName: string;
   images: string[];
   shippingOptions: ShippingOption[];
-  sellerId: string;
+  seller: string | IUser[];
   createdAt: string;
   updatedAt: string;
   isAvailable?: boolean;

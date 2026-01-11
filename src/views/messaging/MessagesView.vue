@@ -201,11 +201,11 @@
             </button>
               <!-- Dropdown Options de vente -->
               <div class="dropdown-menu" v-if="showSalesOptions" @click.stop>
-                <button @click="sendOfferOption" class="dropdown-item">
+                <button v-if="selectedConversation.productId" @click="sendOfferOption" class="dropdown-item">
                   <i class="bi bi-wallet"></i>      
                   Faire une offre            
                 </button>
-                <button v-if="!selectedConversation.isOwner" @click="buyOption" class="dropdown-item">
+                <button v-if="selectedConversation.productId && !selectedConversation.isOwner" @click="buyOption" class="dropdown-item">
                   <i class="bi bi-credit-card"></i>                  
                   Acheter
                 </button>
@@ -221,11 +221,11 @@
                 <i class="bi bi-info-circle"></i>               
                 Information
               </button>
-              <button @click="sendOfferOption" class="dropdown-item btn_mobile">
+              <button v-if="selectedConversation.productId" @click="sendOfferOption" class="dropdown-item btn_mobile">
                 <i class="bi bi-wallet"></i>      
                 Faire une offre            
               </button>
-              <button v-if="!selectedConversation.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
+              <button v-if="selectedConversation.productId && !selectedConversation.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
                 <i class="bi bi-credit-card"></i>                  
                 Acheter
               </button>
@@ -256,7 +256,7 @@
             :class="{ 'own-message': isOwnMessage(message), 'other-message': !isOwnMessage(message) }"
           >
             <div v-if="!isOwnMessage(message)">
-              <div class="message-avatar" v-html="getAvatar(selectedConversation.participants?.[0] || selectedConversation)"></div>
+              <div class="message-avatar" v-html="getAvatar(message.sender)"></div>
             </div>
             <div class="message-content">
               <div class="message-bubble">
@@ -1475,9 +1475,21 @@ const closeInformation = () => {
 }
 
 const onNewConversationCreated = (newConversation) => {
-  messagingStore.conversations.unshift(newConversation)
-  
-  selectConversation(newConversation)
+  // Vérifier s'il existe déjà une conversation avec le même utilisateur sans produit lié
+  const otherParticipant = newConversation.otherParticipant || newConversation.participants?.find(p => p._id !== userInfo.value._id)
+  const existingConversation = messagingStore.conversations.find(conv => {
+    const convOtherParticipant = conv.otherParticipant || conv.participants?.find(p => p._id !== userInfo.value._id)
+    return convOtherParticipant?._id === otherParticipant?._id && !conv.productId
+  })
+
+  if (existingConversation) {
+    // Une conversation sans produit existe déjà, on la sélectionne
+    selectConversation(existingConversation)
+  } else {
+    // Ajouter la nouvelle conversation en début de liste
+    messagingStore.conversations.unshift(newConversation)
+    selectConversation(newConversation)
+  }
   
   closeModal()
 }

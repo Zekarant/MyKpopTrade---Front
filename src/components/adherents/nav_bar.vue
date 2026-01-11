@@ -42,19 +42,11 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
 import userService from '@/services/user.service';
 import authentificationService from '@/services/authentification.service';
 import type { ImgUserProfile } from '@/types/user.types';
 
-interface MenuItem {
-  label: string;
-  icon: string;
-  active: boolean;
-  page: string;
-  parameter: string | null;
-}
 
 interface UserProfile {
   username: string;
@@ -78,6 +70,7 @@ declare global {
                 logoutPpopup: false,
                 menuOpen: false,
                 currentRoute: '',
+                htmlImgProfile: '',
                 itemMenu: [
                     {
                     label: 'Menu',
@@ -116,8 +109,7 @@ declare global {
 
                     }
                 ],
-                dataUser:[],
-                htmlImgProfile: '',
+                dataUser: {} as UserProfile,
                 showFullMenu:false
             };
         },
@@ -133,35 +125,35 @@ declare global {
             };
         },
         mounted() {
-            window.addEventListener('click', this.handleWindowClick);
+          if(this.htmlImgProfile != ''){
+            return this.htmlImgProfile;
+          }else{
+            userService.getMyInformation().then((data: any) => {
+              this.dataUser = data.profile as UserProfile;
+              if(this.dataUser){
+                const profileImgInfo : ImgUserProfile = {
+                  username: this.dataUser.username,
+                  profilePicture: this.dataUser.profilePicture
+                };
+                this.htmlImgProfile = userService.renderUserAvatar(profileImgInfo);
+              }else{
+                return false;
+              }
+            }).catch((error) => {
+              console.error('Error fetching user information:', error);
+              return false;
+            });
+          }
+          window.addEventListener('click', this.handleWindowClick);
         },
         beforeUnmount() {
             window.removeEventListener('click', this.handleWindowClick);
         },
+     
         computed: {
-            profilePicture() {
-                if(this.htmlImgProfile != ''){
-                    return this.htmlImgProfile;
-                }else{
-                    userService.getMyInformation().then((data) => {
-                        this.dataUser = data.profile;
-                        if(this.dataUser){
-                          var profileImgInfo : ImgUserProfile = {
-                            username: this.dataUser.username,
-                            profilePicture: this.dataUser.profilePicture
-                          };
-                          this.htmlImgProfile = userService.renderUserAvatar(profileImgInfo);
-                        }else{
-                            return false;
-                        }
-                    }).catch((error) => {
-                        console.error('Error fetching user information:', error);
-                        return false;
-                    });
-
-                }
-
-            },
+          profilePicture() {
+            return this.htmlImgProfile;
+          },
         },
         methods: {
             handleWindowClick(event: MouseEvent) {
@@ -195,7 +187,7 @@ declare global {
                 }
                 return false;
             },
-            navPage(page:RouteRecordNameGeneric, parameter: any){
+            navPage(page:RouteRecordNameGeneric, parameter: string | null){
 
                 this.closeMenu();
                 setTimeout(() => {

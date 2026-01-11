@@ -77,8 +77,6 @@
             toggleMenu(event: MouseEvent) {
                 event.stopPropagation();
                 this.isMenuVisible = !this.isMenuVisible;
-                console.log(this.isMenuVisible);
-
             },
             closeMenu() {
                 this.isMenuVisible = false;

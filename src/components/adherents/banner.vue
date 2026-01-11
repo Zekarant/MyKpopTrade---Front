@@ -1,26 +1,26 @@
 <template>
     <div @click="closeMenu" class="content">
         <div v-if="admin" class="background" @click="triggerFileInputBanner">
-            <img v-if="profilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
+            <img v-if="localProfilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
             <div v-else class="background"></div>
-            <i  v-if="profilInfo.profileBanner" @click="deletePicturePopup($event,'banner')" style="position: absolute; right: 5px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
+            <i  v-if="localProfilInfo.profileBanner" @click="deletePicturePopup($event,'banner')" style="position: absolute; right: 5px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
             <input type="file" ref="fileInputbanner" @change="updatePictureBanner" accept="image/*" style="display: none;" />
         </div>
         <div v-else class="background">
-            <img v-if="profilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
+            <img v-if="localProfilInfo.profileBanner" :src="banneerictureUrl || undefined" alt="Banner Picture" />
             <div v-else class="background"></div>
         </div>
 
         <div @click="triggerFileInput"  v-if="admin" class="picture">
-            <img v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />
+            <img v-if="localProfilInfo.profilePicture && localProfilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />
             <div v-else class="empty-profile">
                 <i class="bi bi-camera"></i>
             </div>
-            <i  v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" @click="deletePicturePopup($event,'profil')" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
+            <i  v-if="localProfilInfo.profilePicture && localProfilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" @click="deletePicturePopup($event,'profil')" style="position: absolute; right: 0px; bottom: 0px; color: white; background: #0000005c; border-radius: 4px; cursor: pointer;"  class="bi bi-trash"></i>
             <input type="file" ref="fileInput" @change="updatePicture" accept="image/*" style="display: none;" />
         </div>
         <div  v-else class="picture">
-            <img v-if="profilInfo.profilePicture && profilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />           
+            <img v-if="localProfilInfo.profilePicture && localProfilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />           
             <div v-else class="empty-profile">
                 <i class="bi bi-camera"></i>
             </div>
@@ -160,7 +160,7 @@
                                 <span class="setting-label">Téléphone</span>
                             </div>
                             <div class="setting-item-right setting-phone-content">
-                                <i v-if="profilInfo.isPhoneVerified || codeRequest" class="bi bi-check-circle-fill status-icon status-success"></i>
+                                <i v-if="localProfilInfo.isPhoneVerified || codeRequest" class="bi bi-check-circle-fill status-icon status-success"></i>
                                 <input v-if="!telRequest || codeRequest" type="tel" class="input-phone" id="phone" @input="isBtnSaveTelVisible=true" v-model="phoneNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
                                 <button @click="saveTel" class="btn-verify" v-if="isBtnSaveTelVisible">Enregistrer</button>
                             </div>
@@ -176,7 +176,7 @@
                             </div>
                         </div>
 
-                        <button v-else-if="!profilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-verify-standalone">Vérifier le téléphone</button>
+                        <button v-else-if="!localProfilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-verify-standalone">Vérifier le téléphone</button>
                     </div>
 
                     <!-- Section Paiement -->
@@ -191,7 +191,7 @@
                                 <input @input="saveMailPaypal = true" type="email" class="input-paypal" id="paypal" v-model="emailPaypal">
                                 <div class="paypal-actions">
                                     <button @click="savePaypal" class="btn-save-paypal" v-if="saveMailPaypal">Enregistrer</button>
-                                    <button @click="showDeletePaypalPopup = true; showSetting = false" class="btn-delete-paypal" v-if="profilInfo.paypalEmail">
+                                    <button @click="showDeletePaypalPopup = true; showSetting = false" class="btn-delete-paypal" v-if="localProfilInfo.paypalEmail">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -208,7 +208,11 @@
                                 <span class="setting-label">Messages directs</span>
                             </div>
                             <label class="switch-modern">
-                                <input @change="changeAllowDirectMessages" type="checkbox" v-model="profilInfo.preferences.allowDirectMessages">
+                                <input 
+                                    type="checkbox"
+                                    :checked="profilInfo.preferences.allowDirectMessages"
+                                    @change="changeAllowDirectMessages($event)"
+                                    >
                                 <span class="slider-modern"></span>
                             </label>
                         </div>
@@ -228,7 +232,7 @@
                     </div>
 
                     <!-- Section Danger Zone -->
-                    <div class="settings-section settings-danger-zone" v-if="profilInfo.accountStatus = 'active'">
+                    <div class="settings-section settings-danger-zone" v-if="profilInfo.accountStatus === 'active'">
                         <h5 class="section-title section-title-danger">Zone de danger</h5>
                         <button class="btn-action-full btn-action-danger" @click="showDeleteAccount = true">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -333,8 +337,14 @@
     import { PDFExportService } from '@/services/PDFExportService.service';
     import authentificationService from '@/services/authentification.service';
     import send_message from './send_message.vue';
+
+    interface LocalProfilInfo {
+        isPhoneVerified: boolean;
+        [key: string]: unknown;
+    }
+
     export default {
-        name: "banner",
+        name: "banner_profil",
         data() {
             return {
                 modify: false,
@@ -362,13 +372,17 @@
                 emailPaypal: "",
                 phoneCode: "",
                 currentPassword: '',
+                passwordForConfirm: '',
+                localProfilInfo: {
+                    isPhoneVerified: false,
+                    profileBanner: null,
+                    profilePicture: null,
+                } as LocalProfilInfo,
+                popupMessage: false,
+                verification: null as any,
+                documentType:'id_card',
                 newPassword: '',
                 confirmPassword: '',
-                passwordForConfirm: '',
-                documentType:'id_card',
-                verification: null as any,
-                popupMessage: false,
-
             };
         },
         components: {
@@ -382,6 +396,29 @@
                 route,
                 router,
             };
+        },
+        watch: {
+            'profilInfo.isPhoneVerified'(newValue) {
+                this.localProfilInfo.isPhoneVerified = newValue;
+            },
+            'profilInfo.profileBanner'(newValue) {
+                this.localProfilInfo.profileBanner = newValue;  
+            },
+            'profilInfo.profilePicture'(newValue) {
+                this.localProfilInfo.profilePicture = newValue;  
+            },
+            'profilInfo.paypalEmail'(newValue) {
+                this.localProfilInfo.paypalEmail = newValue;  
+            },
+            profilInfo: {
+                handler(newValue) {
+                    if (newValue) {
+                        Object.assign(this.localProfilInfo, newValue);
+                    }
+                },
+                immediate: true,
+                deep: true,
+            },
         },
         mounted() {
             this.checkUserProfile();
@@ -407,7 +444,7 @@
             closeMenu(){
                 this.isMenuVisible = false;
             },
-            formatDate(dateString: String) {
+            formatDate(dateString: string) {
                 if (!dateString) return '';
                 const date = new Date(dateString.toString());
                 return date.toLocaleDateString('fr-FR', {
@@ -444,7 +481,7 @@
                 const file = (event.target as HTMLInputElement).files?.[0];
           
                 if (file) {
-                    var formData = new FormData();
+                    const formData = new FormData();
 
                     formData.append('profileBanner', file);
 
@@ -458,7 +495,7 @@
                     }).then(response => {
 
                         if (response.status === 200) {
-                            this.profilInfo.profileBanner = response.data.profileBanner;
+                            this.localProfilInfo.profileBanner = response.data.profileBanner;
 
                         }
                     }).catch(error => {
@@ -475,7 +512,7 @@
                 if (file) {
                     console.log(file);
 
-                    var formData = new FormData();
+                    const formData = new FormData();
 
                     formData.append('profilePicture', file);
                     console.log('Contenu de FormData :', Array.from(formData.entries()));
@@ -490,7 +527,7 @@
                     }).then(response => {
 
                     if (response.status === 200) {
-                        this.profilInfo.profilePicture = response.data.profilePicture;
+                        this.localProfilInfo.profilePicture = response.data.profilePicture;
 
                     }
                     }).catch(error => {
@@ -522,7 +559,8 @@
                         'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
-                    this.profilInfo.profileBanner = null;
+                    
+                    this.localProfilInfo.profileBanner = null;
                     this.showDeletePictureBannerConfirmation = false; 
                 })
                 .catch((error) => {
@@ -539,7 +577,7 @@
                         'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
-                    this.profilInfo.profilePicture = null;
+                    this.localProfilInfo.profilePicture = null;
                     this.showDeletePictureConfirmation = false;
                 })
                 .catch((error) => {
@@ -606,7 +644,7 @@
             },
             verifIdentity(){
                 const sessionToken = Cookies.get('sessionToken');
-                var data = new FormData();
+                const data = new FormData();
                 data.append('documentType',  this.documentType);
                 data.append('consentGiven',  String(this.consentUseData));
                 if (this.documentIamge) {
@@ -704,20 +742,22 @@
                     }
                 });
             },
-            async changeAllowDirectMessages() {
+            async changeAllowDirectMessages(event: Event){ 
+                const target = event.target as HTMLInputElement
+                const value = target.checked;
                 const sessionToken = Cookies.get('sessionToken');
 
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, 
                 {
                     preferences: {
-                        allowDirectMessages: this.profilInfo.allowDirectMessages
+                        allowDirectMessages: value
                     },
                 }, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${sessionToken}`
 
-                        }
+                    }
                 }).then(response => {
                         console.log(response);
                         if (response.status === 200) {
@@ -751,8 +791,7 @@
                         this.telRequest = false;
                         this.codeRequest = false;
                         this.phoneCode = '';
-                        this.profilInfo.isPhoneVerified = false;
-                
+                        this.localProfilInfo.isPhoneVerified = false; 
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -803,9 +842,10 @@
                             'Authorization': `Bearer ${sessionToken}`
                         }
                     });
-                    const dataStr = JSON.stringify(response.data, null, 2);
                     const pdfExporter = new PDFExportService();
-                    const sections = [
+                    type SectionColor = [number, number, number];  // Définition explicite
+
+                    const sections: { key: string; label: string; color: SectionColor }[] = [
                         { key: 'user', label: 'Informations Utilisateur', color: [46, 125, 50] },
                         { key: 'products', label: 'Posts/Articles', color: [231, 76, 60] },
                         { key: 'orders', label: 'Commandes/Achats', color: [155, 89, 182] },
@@ -880,7 +920,7 @@
                         this.$func.showToastSuccess(response.data.message);
                         this.saveMailPaypal = false;
                         this.emailPaypal = '';
-                        this.profilInfo.paypalEmail = '';
+                        this.localProfilInfo.paypalEmail = '';
                         this.showDeletePaypalPopup = false;
 
                     }
@@ -911,7 +951,7 @@
                     if (response.status === 200) {
                         this.$func.showToastSuccess(response.data.message);
                         this.saveMailPaypal = false;
-                        this.profilInfo.paypalEmail = this.emailPaypal;
+                        this.localProfilInfo.paypalEmail = this.emailPaypal;
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -943,20 +983,20 @@
         },
         computed: {
             profilePictureUrl() {
-                if(this.profilInfo.profilePicture == 'https://mykpoptrade.com/images/avatar-default.png'){
+                if(this.localProfilInfo.profilePicture == 'https://mykpoptrade.com/images/avatar-default.png'){
                     return 'https://mykpoptrade.com/images/avatar-default.png';
                 }else{
                 const baseUrl = import.meta.env.VITE_API_URL;
-                return this.profilInfo.profilePicture
-                ? `${baseUrl}${this.profilInfo.profilePicture}`
+                return this.localProfilInfo.profilePicture
+                ? `${baseUrl}${this.localProfilInfo.profilePicture}`
                 : null;
                 }
           
             },
             banneerictureUrl() {
                 const baseUrl = import.meta.env.VITE_API_URL;
-                return this.profilInfo.profileBanner
-                ? `${baseUrl}${this.profilInfo.profileBanner}`
+                return this.localProfilInfo.profileBanner
+                ? `${baseUrl}${this.localProfilInfo.profileBanner}`
                 : null;
           
             },
