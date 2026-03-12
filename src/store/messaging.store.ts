@@ -64,7 +64,7 @@ export const useMessagingStore = defineStore('messaging', {
       try {
         const response = await messagingService.getConversation(conversationId, params);
         this.currentConversation = response.conversation;
-        this.messages = response.messages;
+        this.messages = response.messages.reverse();
 
         // Mettre à jour la conversation dans la liste
         const index = this.conversations.findIndex(c => c._id === conversationId);
@@ -303,9 +303,9 @@ export const useMessagingStore = defineStore('messaging', {
           counterOffer,
           message
         });
-
+        console.log(response);
         // Mettre à jour la conversation
-        await this.fetchConversation(conversationId);
+        //await this.fetchConversation(conversationId);
 
         return response;
       } catch (error) {

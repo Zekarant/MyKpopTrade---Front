@@ -80,13 +80,13 @@
             @click="selectConversation(conversation)">
 
             <div>
-              <div class="conversation-avatar" v-html="getAvatar( conversation.otherParticipant || conversation.participants[0])"></div>
-              <div class="online-indicator" v-if="conversation.participants[0]?.isOnline"></div>
+              <div class="conversation-avatar" v-html="getAvatar(getOtherParticipant(conversation))"></div>
+              <div class="online-indicator" v-if="getOtherParticipant(conversation)?.isOnline"></div>
             </div>
             <div class="conversation-content">
               <div class="conversation-header">
                 <div class="conversation-title">
-                  <span class="username">{{ conversation.otherParticipant?.username || conversation.participants[0]?.username || conversation.username }}</span>
+                  <span class="username">{{ getOtherParticipant(conversation)?.username || conversation.username }}</span>
                   <i class="bi bi-star-fill favorite-icon" v-if="isFavoriteConversation(conversation)"></i>
                 </div>
                 <span class="timestamp">{{ formatTimestamp(conversation.lastMessageAt || conversation.timestamp) }}</span>
@@ -249,6 +249,10 @@
 
         <!-- Messages Area -->
         <div class="messages-area" ref="messagesContainer">
+          <div v-if="loadingMoreMessages" class="loading-more-messages">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Chargement...</span>
+          </div>
           <div
             v-for="message in currentMessages"
             :key="message._id || message.id"
@@ -635,6 +639,15 @@ const declineOffer_popup = ref(false);
 const counterOfferAmount = ref(null);
 const counterOfferMessage = ref('');
 const errorMessageCounterOffer = ref('');
+const messagePagination = ref({
+  page: 1,
+  limit: 20,
+  total: 0,
+  pages: 1,
+  hasMore: true
+});
+const loadingMoreMessages = ref(false);
+
 const { proxy } = getCurrentInstance()
 
 // Computed
@@ -663,7 +676,7 @@ const filteredConversations = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     conversations = conversations.filter(conv =>
-      (conv.participants?.[0]?.username || conv.username || '').toLowerCase().includes(query) ||
+      (getOtherParticipant(conv)?.username || conv.username || '').toLowerCase().includes(query) ||
       (conv.lastMessage?.content || conv.lastMessage || '').toLowerCase().includes(query)
     )
   }
@@ -719,7 +732,29 @@ const getCookie = (name) => {
   if (parts.length === 2) return parts.pop().split(';').shift();
   return null;
 }
+const getOtherParticipant = (conversation) => {
+  // Si otherParticipant existe déjà, on le retourne
+  if (conversation.otherParticipant) {
+    return conversation.otherParticipant;
+  }
 
+  // Sinon, on cherche dans participants celui qui n'est pas l'utilisateur actuel
+  const currentUserId = localStorage.getItem('iduser') || getCookie('iduser') || userInfo.value?.id;
+  
+  if (conversation.participants && conversation.participants.length > 0) {
+    const other = conversation.participants.find(p => {
+      const participantId = p.id || p._id || p;
+      return participantId !== currentUserId && participantId.toString() !== currentUserId;
+    });
+    
+    if (other) {
+      return other;
+    }
+  }
+
+  // Fallback sur participants[0] si aucune correspondance
+  return conversation.participants?.[0] || null;
+};
 // Methods
 const isOwnMessage = (message) => {
 
@@ -750,16 +785,20 @@ const expandSalesOptions = () => {
   showSalesOptions.value = !showSalesOptions.value
 }
 const selectConversation = async (conversation) => {
-  console.log('conversation');
-  console.log(conversation);
   selectedConversation.value = conversation
   showConversationOptions.value = false
   showConversationMenu.value = null
 
   try {
     loading.value = true
+    messagePagination.value = {
+      page: 1,
+      limit: 20,
+      total: 0,
+      pages: 1,
+      hasMore: true
+    };
 
-    // Mark as read if it has unread messages
     if (conversation.unreadCount > 0) {
       await messagingStore.markAsRead(conversation._id || conversation.id)
     }
@@ -772,6 +811,12 @@ const selectConversation = async (conversation) => {
     selectedConversation.value.media = response.media || []
 
     currentMessages.value = response.messages || conversation.messages || []
+    if (response.pagination) {
+      messagePagination.value = {
+        ...response.pagination,
+        hasMore: response.pagination.page < response.pagination.pages
+      };
+    }
     document.getElementsByClassName('chat-area')[0].classList.add('active');
     // Auto scroll to bottom
     await nextTick()
@@ -782,6 +827,55 @@ const selectConversation = async (conversation) => {
     loading.value = false
   }
 }
+const loadMoreMessages = async () => {
+  if (!selectedConversation.value || loadingMoreMessages.value || !messagePagination.value.hasMore) {
+    return;
+  }
+
+  try {
+    loadingMoreMessages.value = true;
+    const nextPage = messagePagination.value.page + 1;
+
+    const response = await messagingStore.fetchConversation(
+      selectedConversation.value.id || selectedConversation.value._id,
+      { 
+        page: nextPage, 
+        limit: messagePagination.value.limit 
+      }
+    );
+
+    if (response.messages && response.messages.length > 0) {
+      currentMessages.value = [...response.messages, ...currentMessages.value];
+
+      if (response.pagination) {
+        messagePagination.value = {
+          ...response.pagination,
+          hasMore: response.pagination.page < response.pagination.pages
+        };
+      }
+
+      await nextTick();
+      const container = document.querySelector('.messages-area');
+      if (container) {
+        const previousScrollHeight = container.scrollHeight;
+        await nextTick();
+        container.scrollTop = container.scrollHeight - previousScrollHeight;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement des messages', error);
+  } finally {
+    loadingMoreMessages.value = false;
+  }
+};
+const handleMessagesScroll = (event) => {
+  const container = event.target;
+  // Si on est proche du haut (50px), charger plus de messages
+  if (container.scrollTop < 50 && messagePagination.value.hasMore && !loadingMoreMessages.value) {
+    loadMoreMessages();
+  }
+};
+
 const showRightBar = () => {
   expandOptions()
   const rightSidebar = document.querySelector('.right-sidebar')
@@ -896,7 +990,7 @@ const acceptOffer = async (message) => {
       'accept'  
     )
     proxy.$func.showToastSuccess('Offre acceptée avec succès.');
-    selectConversation(selectedConversation.value);
+    selectConversation(response.conversation);
 
   } catch (error) {
     proxy.$func.showToastError('Erreur lors de l\'acceptation de l\'offre.');
@@ -911,6 +1005,7 @@ const declineOffer = async (message, text) => {
       text
     )
     declineOffer_popup.value = false;
+    selectConversation(response.conversation);
 
   } catch (error) {
     console.error('Erreur lors du refus de l\'offre:', error)
@@ -1023,11 +1118,16 @@ const initPaypal = async () => {
     const retour_initPayPal = await paymentService.initPayPal(selectedConversation.value.productId._id);
     console.log(retour_initPayPal);
     
-    if (retour_initPayPal.success && retour_initPayPal.payment?.approvalUrl) {
-      
+    if (retour_initPayPal.success) {
+      let paypalUrl = '';
+      if(!retour_initPayPal.payment?.approvalUrl && retour_initPayPal.payment?.paypalOrderId){
+        paypalUrl = "https://www.sandbox.paypal.com/checkoutnow?token="+retour_initPayPal.payment?.paypalOrderId;
+      }else{
+        paypalUrl =retour_initPayPal.payment?.approvalUrl;
+      }
       console.log('Ouverture PayPal avec iframe...');
       
-      const iframeResult = createPaypalIframe(retour_initPayPal.payment.approvalUrl, retour_initPayPal.payment.id);
+      const iframeResult = createPaypalIframe(paypalUrl, retour_initPayPal.payment.id);
       
       setTimeout(() => {
         if (iframeResult && iframeResult.isVisible()) {
@@ -1475,24 +1575,53 @@ const closeInformation = () => {
 }
 
 const onNewConversationCreated = (newConversation) => {
-  // Vérifier s'il existe déjà une conversation avec le même utilisateur sans produit lié
-  const otherParticipant = newConversation.otherParticipant || newConversation.participants?.find(p => p._id !== userInfo.value._id)
-  const existingConversation = messagingStore.conversations.find(conv => {
-    const convOtherParticipant = conv.otherParticipant || conv.participants?.find(p => p._id !== userInfo.value._id)
-    return convOtherParticipant?._id === otherParticipant?._id && !conv.productId
-  })
+  const currentUserId = localStorage.getItem('iduser') || getCookie('iduser') || userInfo.value?.id;
+  const newConvId = newConversation.id || newConversation._id;
+  
+  // Vérifier si la conversation existe déjà par son ID
+  const existingById = messagingStore.conversations.find((conv) => {
+    const convId = conv.id || conv._id;
+    return convId === newConvId;
+  });
+
+  if (existingById) {
+    // La conversation existe déjà par ID, on la sélectionne
+    selectConversation(existingById);
+    closeModal();
+    return;
+  }
+
+  // Vérifier s'il existe déjà une conversation avec le même utilisateur et le même produit
+  const otherParticipant = getOtherParticipant(newConversation);
+  const newProductId = newConversation.productId?._id || newConversation.productId;
+
+  const existingConversation = messagingStore.conversations.find((conv) => {
+    const convOtherParticipant = getOtherParticipant(conv);
+    const convProductId = conv.productId?._id || conv.productId;
+    
+    // Même utilisateur
+    const sameUser = convOtherParticipant?.id === otherParticipant?.id || 
+                     convOtherParticipant?._id === otherParticipant?._id;
+    
+    // Même produit (ou tous deux sans produit)
+    const sameProduct = (!convProductId && !newProductId) || 
+                        (convProductId === newProductId);
+    
+    return sameUser && sameProduct;
+  });
 
   if (existingConversation) {
-    // Une conversation sans produit existe déjà, on la sélectionne
-    selectConversation(existingConversation)
+    // Une conversation similaire existe déjà, on la sélectionne
+    selectConversation(existingConversation);
   } else {
     // Ajouter la nouvelle conversation en début de liste
-    messagingStore.conversations.unshift(newConversation)
-    selectConversation(newConversation)
+    messagingStore.conversations.unshift(newConversation);
+    selectConversation(newConversation);
   }
-  
-  closeModal()
-}
+
+  closeModal();
+};
+
 
 const handleImageUpload = (event) => {
   for (let index = 0; index < event.target?.files?.length; index++) {
@@ -1686,6 +1815,10 @@ onMounted(async () => {
 
     if (messagingStore.conversations.length > 0) {
       await selectConversation(messagingStore.conversations[0])
+    }
+    const messagesArea = document.querySelector('.messages-area');
+    if (messagesArea) {
+      messagesArea.addEventListener('scroll', handleMessagesScroll);
     }
   } catch (error) {
     console.error('Erreur lors du chargement:', error)
@@ -2396,6 +2529,23 @@ showConversationMenu.value = null
                     linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+.loading-more-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: #6c757d;
+  gap: 8px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  margin: 10px auto;
+  width: fit-content;
+}
+
+.loading-more-messages i {
+  animation: spin 1s linear infinite;
 }
 
 .message {

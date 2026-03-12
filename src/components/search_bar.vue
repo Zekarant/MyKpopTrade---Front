@@ -16,8 +16,6 @@
 </template>
   
   <script lang="ts">
-    import axios from 'axios';
-    import Cookies from "js-cookie";
     import { useRoute, useRouter } from "vue-router";
     //import eventBus from '/eventBus'
 

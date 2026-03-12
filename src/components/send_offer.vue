@@ -79,7 +79,6 @@
 </template>
   
 <script lang="ts">
-import Cookies from 'js-cookie';
 import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
@@ -102,7 +101,6 @@ export default defineComponent({
         const offerTermsAccepted = ref(false)
         const sendingOffer = ref(false)
         const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const myId = Cookies.get('id_user') || '';
         const price = ref(0);
         const title = ref('');
         const images = ref<string[]>([]);
@@ -117,7 +115,7 @@ export default defineComponent({
           images.value = props.conversation.productId.images[0]
         }
         // Méthode pour soumettre l'offre
-        var offerData = {};
+        let offerData = {};
         const submitOffer = async () => {
             if (!offerAmount.value || !offerTermsAccepted.value) return
             try {

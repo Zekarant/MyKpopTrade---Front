@@ -27,9 +27,8 @@
     import ImageCarousel from '@/components/ImageCarousel.vue';
 
     export default {
-
-        name: "card",
-       components: {
+        name: "post-card",
+        components: {
             ImageCarousel,
         },
         props: {

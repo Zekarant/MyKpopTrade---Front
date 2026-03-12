@@ -186,8 +186,6 @@
 
 <script lang="ts">
     import { defineComponent, ref } from 'vue';
-    import axios from 'axios';
-    import card_illu from '../components/card_illu.vue';
     import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
     import send_message from '../components/adherents/send_message.vue';
@@ -205,7 +203,6 @@
     export default defineComponent({
         name: "post",
         components: {
-            card_illu,
             ImageCarousel,
             report_card,
             send_message,
@@ -538,8 +535,8 @@
                         }
                     } catch (error) {
                         // Erreur d'accès cross-origin, considérer comme fermé
+                        console.error('Onglet PayPal fermé (cross-origin) :', error);
                         cleanup();
-                        console.log('Onglet PayPal fermé (cross-origin)');
                         checkPaymentStatus(paymentId);
                     }
                 }, 1000);
@@ -551,7 +548,7 @@
                 try {
                     tabWindow.focus();
                 } catch (error) {
-                    console.log('Impossible de donner le focus à l\'onglet');
+                    console.error('Impossible de donner le focus à l\'onglet'+error);
                 }
 
                 console.log('Onglet PayPal ouvert et surveillé');
@@ -671,9 +668,9 @@
 
         computed: {
             profilePictureUrl() {
-                var profileImgInfo : ImgUserProfile = {
-                    username: this.dataSeller.username,
-                    profilePicture: this.dataSeller.profilePicture
+                const profileImgInfo: ImgUserProfile = {
+                username: this.dataSeller.username,
+                profilePicture: this.dataSeller.profilePicture
                 };
                 return userService.renderUserAvatar(profileImgInfo);
             },
@@ -740,14 +737,14 @@
             closeDeletePopup(){
                 this.showDeletePopup = false;
             },
-            async sold(id: any,userId: any){
+            async sold(id: string,userId: string){
                 const response = await postService.sold(userId,id);
                 if (response) {
                     this.showSoldPopup = false;
                     this.$emit('sold');
                 }
             },
-            async deletePost(id: any){
+            async deletePost(id: string ){
                 const response = await postService.deletePost(id);
                 if (response) {
                     this.showDeletePopup = false;
@@ -762,14 +759,14 @@
                     }
                 });
             },
-            async addFav(id: any){
-                await postService.addFavorite(id).then(addFavorite => {                
+            async addFav(id: string){
+                await postService.addFavorite(id).then(() => {                
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
                     this.isFav = true;
                 });;
             },
-            async rmFav(id: any){
-                await postService.addFavorite(id).then(addFavorite => {                
+            async rmFav(id: string){
+                await postService.addFavorite(id).then(() => {                
                     this.$func.showToastSuccess('Supprimé de mes favoris');
                     this.isFav = false;
                 });;
@@ -784,17 +781,17 @@
             openMessagePopup(){
                 this.popupMessage = !this.popupMessage;
             },
-            async handleOfferSent(offerInfo: { offerData: { productId: any; }; amount: any; message: any; }){
+            async handleOfferSent(offerInfo: { offerData: { productId: string; }; amount: number; message: string; }){
                 this.showOfferOption = false
 
-                let offerData = {
+                const offerData = {
                     productId: offerInfo.offerData.productId,
                     initialOffer: offerInfo.amount,
                     message:  offerInfo.message
                 };
                 messagingService.initiateNegotiation(
                     offerData
-                ).then(response => {
+                ).then(() => {
                     this.$func.showToastSuccess('Offre envoyée avec succès !');
                 }).catch(error => {
                     console.error('Erreur lors de l\'envoi de l\'offre:', error);
@@ -803,276 +800,11 @@
             }
       
         },
-        watch: {
-            dataPost(newValue, oldValue) {
-            },
-        },
     });
 
 
 </script>
   
-  <style lang="scss" scoped>
-    .banner_reserved{
-        background: var(--danger-color);
-        width: 100%;
-        position: absolute;
-        top: 0;
-        z-index: 9;
-        
-    }
-    .post_card_detail{
-        display: block;
-        margin-bottom: auto;
-    }
-    .post_card_detail .price{
-        margin-left: auto;
-        font-size:medium; 
-        color: var(--blue); 
-        margin-bottom: 20px;
-    }
-    .post_card_detail b{
-    
-    }
-    .banner_reserved .state{
-        color: white;
-        font-size: large;
-        font-weight: bold;
-        text-align: center;
-    }
-    .container_detail_card{
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        z-index: 9;
-        width: 80%;
-        height: 80%;
-    }
-    .container_detail_card .card{
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;   
-        height: 100%;
-    }
-    .illustration{
-        display: flex;
-        flex-direction: column;
-        flex-wrap: nowrap;
-        width: 50%;
-        height: 100%;
-        align-items: center;
-        justify-content: center;
-        background: black;
-        position: relative;
-    }
-    .like{
-        position: absolute;
-        right: 10px;
-        z-index: 9;
-        top: 10px;
-        background: white;
-        border-radius: 30px;    
-        width: 45px;
-        height: 45px;
-        border: none;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .like {
-            color: black;
-        }
-    }
-    i.bi.bi-heart::before{    
-        height: 100%;
-        width: 100%;
-    }
-    .card .screen {
-        display: block;
-        margin-right: auto;
-        margin-left: auto;
-
-
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        border-radius: 3px 3px 0 0;
-        z-index: 1;
-
-
-    }
-    .card .back {
-        display: flex;
-        width: 100%;
-        aspect-ratio: 1 / 1;        
-        border-radius: 8px;
-        position: relative;
-        text-decoration: none;
-        align-items: center;
-        justify-content: center;
-        background: var(--primary-color);
-    }
-    .post_card_content{
-        height: 100%;
-        width: 50%;
-        flex-direction: column; 
-        display: flex;
-        overflow-x: scroll;
-    }
-    .post_card_content_header, .post_card_content_header div{
-        display: flex;
-    }
-    .post_card_content_header, .post_card_detail, .post_card_content_footer{
-        margin: 15px;
-    }
-
-
-
-    .img_certif_container{
-        display: inline-block;
-        width: 10px;
-    }
-    .img_certif_container img{
-        width: 100%;
-    }
-    .identifier {
-        display: flex;
-        align-items: center; 
-        height: 100%; 
-        margin-left: 5px;
-        margin-right: 5px;
-    }
-    .more_content {
-        margin-left: auto; 
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-    }
-    .description_container{
-        margin-top: 10px;
-        border-bottom: 1px solid var(--secondary-color-tint);
-    }
-    .post_description_label{
-        font-size: small;
-    }
-    .post_description{
-        font-size: small;
-        padding-bottom: 15px;
-    }
-    .list_detail{
-        width: 60%;
-    }
-    .bloc_detail{
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px; 
-        width: 100%;
-        margin-top: 10px;
-        font-size: small;
-    }
-    .bloc_detail p{
-        margin-bottom: 0px;
-    }
-    .bloc_detail > div {
-        display: flex;
-        align-items: center; 
-    }
-    .type_content{
-        width: min-content;
-        color: #819A57;
-        border: 2px solid #819A57;
-        border-radius: 10px;
-        padding: 5px;
-        font-size: xx-small;
-        font-weight: bold;
-    }
-    .shippingOptions_line{
-        vertical-align: middle;
-        display: flex
-    }
-    .post_card_content_footer {
-        display: flex;
-        flex-direction: row; 
-        justify-content: center; 
-        align-items: center; 
-        margin: 10px;
-        font-size: small;
-        position: absolute;
-        width: 47%;
-        bottom: 0px;
-    }
-
-
-    .post_card_content_footer button{
-        margin: 1%;
-        font-size: small;
-        width: 30%;
-
-
-    }
-
-
-    @media (max-width:980px){
-        .container_detail_card .card{
-            flex-direction: column-reverse;
-        }
-    }
-    @media (max-width:820px){
-        .post_card_content{
-            width: 100%;
-        }
-        .illustration{
-            width: 100%;
-            height: 50%;
-        }
-        .container_detail_card{
-            height: 90%;
-        }
-        .post_card_content_footer{
-            position: relative;
-            width: auto;
-        }
-    }
-    @media (max-width:550px){
-        .container_detail_card .card {
-            overflow-y: scroll;
-            display: flex;
-            flex-wrap: nowrap; 
-            white-space: nowrap; 
-            width: 100%;    
-        }
-        .post_card_content{
-            overflow-y: scroll;
-            overflow-x: hidden;
-        }
-        .container_detail_card{
-            width: 90%;
-        }
-        .post_description {
-            font-size: small;
-            padding-bottom: 15px;
-            overflow-wrap: break-word; 
-            word-wrap: break-word; 
-            white-space: normal; 
-            max-height: 100%; 
-            overflow-y: auto; 
-        }
-        .post_card_detail div{
-            flex-direction: column;
-        }
-        .post_card_detail b{
-            margin-bottom: 0px;
-        }
-        .post_card_detail .price{
-            margin-left: 0px;
-        }
-        .post_card_content_footer{
-            flex-direction: column;
-            position: relative;
-            width: auto;
-        }
-        .post_card_content_footer button{
-            width: 100%;
-        }
-    }
-  </style>
+<style lang="scss" scoped>
+@use '../css/post.scss';
+</style>

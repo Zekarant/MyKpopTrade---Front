@@ -45,8 +45,6 @@
 
 <script lang="ts">
     import { defineComponent, ref } from 'vue';
-    import axios from 'axios';
-    import card_illu from '../components/card_illu.vue';
     import post from '../components/post.vue';
     import card from '../components/card.vue';
     import { Navigation, A11y } from 'swiper/modules';
@@ -61,7 +59,6 @@
     export default defineComponent({
         name: "row_products",
         components: {
-            card_illu,
             post,
             card,
             Swiper,
@@ -97,8 +94,8 @@
           };
         },
         setup() {
-            var dataCardPost: any = null;
-            var stateCardPost = ref(false);
+            const dataCardPost: any = null;
+            const stateCardPost = ref(false);
             const onSwiper = (swiper: any) => {
                 console.log(swiper);
             };

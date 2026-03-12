@@ -5,6 +5,7 @@
     :pagination="true" 
     :modules="modules"
     :initial-slide="predefinedIndex"
+    ref="swiperRef"
   >
     <swiper-slide v-for="(image, index) in imagesWithDomain" :key="index">
       <img style="width: 100%; height: 100%; object-fit: contain;" :src="image" alt="Slide image" />
@@ -12,7 +13,7 @@
   </swiper>
 </template>
 
-<script>
+<script lang="ts">
 import { Navigation, Pagination, A11y } from 'swiper/modules';
 
 // Import Swiper Vue.js components
@@ -30,20 +31,20 @@ export default {
   },
   props: {
     images: {
-      type: Array,
+      type: Array as () => Array<string | undefined>,
       default: () => []
     },
     predefinedIndex: {
       type: Number,
       default: 0,
       required: false,
-      validator(value) {
+      validator(value: number) {
         return value >= 0;
       }
     }
   },
   setup() {
-    const onSwiper = (swiper) => {
+    const onSwiper = () => {
     };
     const onSlideChange = () => {
     };
@@ -56,11 +57,11 @@ export default {
   computed: {
     imagesWithDomain() {
       const baseUrl = import.meta.env.VITE_API_URL;
-      return this.images.map(img => {
+      return (this.images as Array<string | undefined>).filter(Boolean).map((img: string | undefined): string => {
         // Si l'image commence par 'data:' (base64) ou 'http' (URL complète), 
         // on la retourne telle quelle
-        if (img.startsWith('data:') || img.startsWith('http')) {
-          return img;
+        if (img?.startsWith('data:') || img?.startsWith('http')) {
+          return img!;
         }
         // Sinon, on ajoute le baseUrl
         return `${baseUrl}${img}`;
@@ -69,9 +70,9 @@ export default {
   },
   watch: {
     // Optionnel: si predefinedIndex change après le montage
-    predefinedIndex(newIndex) {
-      if (this.$refs.swiper && this.$refs.swiper.swiper) {
-        this.$refs.swiper.swiper.slideTo(newIndex, 0); // 0 = pas d'animation
+    predefinedIndex(newIndex: number) {
+      if (this.$refs.swiperRef && (this.$refs.swiperRef as any).swiper) {
+        (this.$refs.swiperRef as any).swiper.slideTo(newIndex, 0); // 0 = pas d'animation
       }
     }
   }
@@ -86,10 +87,10 @@ export default {
 
 .sliderWrapper {
   :global(.swiper-pagination-bullet) {
-    background-color: var(--primary-color);
+    background-color: var(--primary-color) !important;
   }
   :global(.swiper-pagination-bullet-active) {
-    background-color: var(--secondary-color-tint);
+    background-color: var(--secondary-color-tint) !important;
   }
 }
 

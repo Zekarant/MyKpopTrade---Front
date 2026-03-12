@@ -303,11 +303,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import messagingService from '@/services/messaging.service';
 import type { Conversation, Message, User } from '@/types/messaging.types';
-import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default defineComponent({

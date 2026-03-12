@@ -76,9 +76,9 @@
             </div>
         </div>
     </div>
-    <!--------- Popup Pour envoyer un message ---------->
+    <!--------- Popup send message ---------->
     <send_message :id_user="profilInfo.id" :pseudo_user="profilInfo.username" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
-    <!--------- Popup Supression ---------->
+    <!--------- Popup delete ---------->
     <div v-if="showDeletePictureConfirmation || showDeletePictureBannerConfirmation" @click="closePopup()" class="popup-overlay">
         <div @click="$event.stopPropagation()" class="popup-content">
             <p>Voulez-vous vraiment supprimer votre photo ?</p>
@@ -98,7 +98,7 @@
             </div>
         </div>
     </div>
-        <!--------- Popup Paramètre - NOUVEAU DESIGN ---------->
+        <!--------- Popup settings ---------->
         <div v-if="showSetting" class="popup-overlay" @click="closePopup()">
             <div @click="$event.stopPropagation()" class="popup-content popup-settings-modern">
                 <!-- Header -->
@@ -112,9 +112,9 @@
                     </button>
                 </div>
 
-                <!-- Content avec sections -->
+                <!-- Content suggest -->
                 <div class="settings-content">
-                    <!-- Section Sécurité -->
+                    <!-- Security -->
                     <div class="settings-section">
                         <h5 class="section-title">Sécurité</h5>
                         <div class="setting-item-modern" @click="changePswdPopup()">
@@ -126,7 +126,6 @@
                         </div>
                     </div>
 
-                    <!-- Section Vérifications -->
                     <div class="settings-section">
                         <h5 class="section-title">Vérifications</h5>
                         
@@ -179,7 +178,6 @@
                         <button v-else-if="!localProfilInfo.isPhoneVerified && !telRequest && phoneNumber && !isBtnSaveTelVisible && !codeRequest" @click="verifTel()" class="btn-verify-standalone">Vérifier le téléphone</button>
                     </div>
 
-                    <!-- Section Paiement -->
                     <div class="settings-section">
                         <h5 class="section-title">Paiement</h5>
                         <div class="setting-item-modern setting-item-paypal">
@@ -199,7 +197,6 @@
                         </div>
                     </div>
 
-                    <!-- Section Préférences -->
                     <div class="settings-section">
                         <h5 class="section-title">Préférences</h5>
                         <div class="setting-item-modern">
@@ -218,7 +215,6 @@
                         </div>
                     </div>
 
-                    <!-- Section Données -->
                     <div class="settings-section">
                         <h5 class="section-title">Mes données</h5>
                         <button class="btn-action-full" @click="exportUserData">
@@ -231,7 +227,6 @@
                         </button>
                     </div>
 
-                    <!-- Section Danger Zone -->
                     <div class="settings-section settings-danger-zone" v-if="profilInfo.accountStatus === 'active'">
                         <h5 class="section-title section-title-danger">Zone de danger</h5>
                         <button class="btn-action-full btn-action-danger" @click="showDeleteAccount = true">
@@ -242,7 +237,7 @@
                 </div>
             </div>
         </div>
-        <!--------- Popup changer mdp ---------->
+        <!--------- Popup reset password ---------->
         <div v-if="showSettingPswd" class="popup-overlay" @click="closePopup()">
             <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
                 <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
@@ -257,7 +252,7 @@
             </div>
             
         </div>
-        <!--------- Popup anonymiser les données ---------->
+        <!--------- Popup hide data ---------->
         <div v-if="anonymizePopup" class="popup-overlay" @click="closePopup()">
             <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
                 <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
@@ -271,7 +266,7 @@
             </div>
             
         </div>
-        <!--------- Popup supprimer compte ---------->
+        <!--------- Popup delete account ---------->
         <div v-if="showDeleteAccount" class="popup-overlay" @click="closePopup()">
             <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
                 <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
@@ -286,11 +281,11 @@
             </div>
             
         </div>
-        <!--------- Popup vérifier identitée ---------->
+        <!--------- Popup verify identity  ---------->
         <div v-if="verifIdentityPopup" class="popup-overlay" @click="closePopup()">
             <div @click="$event.stopPropagation()" style="width: 500px;" class="popup-content">
                 <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
-                <div v-if="!verification"><!-- Si aucune demande en cours -->
+                <div v-if="!verification">
                     <select class="select-primary" v-model="documentType" name="documentType" id="documentType">
                         <option value="id_card">Carte d'identitée</option>
                         <option value="passport">Passport</option>

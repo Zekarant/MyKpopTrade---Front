@@ -57,6 +57,7 @@
             </select>
           </div>
 
+
           <div>
             <label for="kpopGroup">Groupe Kpop</label>
             <input type="text" id="kpopGroup" v-model="formData.kpopGroup" required />
@@ -99,6 +100,7 @@
             <button class="btn-primary" type="submit">Publier</button>
           </div>
 
+
         </form>
       </div>
     </div>
@@ -108,10 +110,12 @@
   import { defineComponent, ref } from 'vue';
   import postService from '@/services/post.service';
 
+
   export default defineComponent({
     name: 'PopupAddItem',
-    setup(props, { emit }) {
+    setup() {
       const imagesPreview = ref<string[]>([]);
+
 
       const formData = ref({
         title: '',
@@ -125,6 +129,7 @@
         kpopMember: '',
         albumName: '',
         images: [] as File[],
+        allowOffers: false,
         shippingOptions: {
           worldwide: false,
           nationalOnly: false,
@@ -148,15 +153,18 @@
         }
     };
 
+
     const removeImage = (index: number) => {
       formData.value.images.splice(index, 1);
       imagesPreview.value.splice(index, 1);
     };
 
+
     const triggerFileInput = () => {
       const fileInput = document.getElementById('imageUpload') as HTMLInputElement;
       fileInput.click();
     };
+
 
       return {
         formData,
@@ -174,9 +182,11 @@
         if (response) {
           this.$func.showToastSuccess('Produit créé avec succès !');
 
+
           this.$emit('close');
         }else{
           this.$func.showToastError('Erreur lors de la création du produit.');
+
 
         }
       }
@@ -229,12 +239,14 @@
   
 
 
+
   .image-preview-container {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 15px;
   }
+
 
 .image-preview {
   position: relative;
@@ -262,6 +274,7 @@
   max-width: 100%;
   max-height: 100%;
 }
+
 
 .image-preview button {
   position: absolute;
@@ -299,7 +312,9 @@ input[type="checkbox"] {
   vertical-align: middle;
   position: relative; 
 
+
 }
+
 
 input[type="checkbox"]:checked {
   background-color: var(--primary-color);
@@ -317,5 +332,6 @@ input[type="checkbox"]:checked::after {
   font-weight: bold;
   line-height: 1; 
 }
+
 
 </style>

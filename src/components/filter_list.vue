@@ -1,13 +1,4 @@
 <template>
-  <!--
-  - type : OK
-  - kpopGroup 
-  - kpopMember 
-  - minPrice : OK
-  - maxPrice : OK
-  - conditions : OK
-  
-  -->
   <div class="filter_mobile">
     <div @click="showFilterList" class="filter_btn">
       <i v-if="!filterMobileOpen" class="bi bi-filter"></i>

@@ -1,5 +1,5 @@
-<script setup>
-import { ref, computed, watch } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import Slider from 'primevue/slider'; //https://primevue.org/slider/
 const emit = defineEmits(['changeMinPrice', 'changeMaxPrice']);
 

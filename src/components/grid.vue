@@ -1,6 +1,6 @@
 <template>
     <div :style="style" class="container">
-        <card :data="data" @click="openPostInfo(index)" v-for="(data, index) in dataList"></card>
+        <card :data="data" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
     </div>
     <div v-if="dataList && dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more"  @click="loadMore()">
         <button class="btn btn-primary-outline imgcenter">Charger plus</button> 

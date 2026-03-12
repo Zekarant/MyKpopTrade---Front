@@ -30,6 +30,8 @@
     import { func } from '@/function';
     import axios from 'axios';
     import Cookies from "js-cookie";
+    import  authentification from '@/services/authentification.service';
+
     const sessionToken = Cookies.get('sessionToken');
     const API_URL = import.meta.env.VITE_API_URL;
 
@@ -62,7 +64,7 @@
             },
 
            async report(){
-                let data = {
+                const data = {
                     'targetType': this.type,
                     'reason': this.signalReason,
                     'targetId': this.id,
@@ -86,7 +88,7 @@
                         }
                     }).catch(error => {
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"||error.response.status == 401){
-                            func.verifSession();
+                            authentification.verifSession();
                         }
                         func.showToastError(error.response.data.message );
 

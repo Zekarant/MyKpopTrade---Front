@@ -87,8 +87,8 @@
             },
             async sendSignal(reason: string) {
                 const sessionToken = Cookies.get('sessionToken');
-                let id_review = this.review._id;
-                let data = {
+                const id_review = this.review._id;
+                const data = {
                     'reason': reason,
                 };
                 
@@ -104,9 +104,7 @@
                         console.error("Error reporting review:", response);
                     }
 
-                }).catch(error => {
-                    //return false;
-                });
+                })
             },
             getUrlImage(url: string) {
                 if (url.startsWith('http')) {

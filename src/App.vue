@@ -4,7 +4,7 @@
 
 </template>
 <script setup lang="ts">
-import './css/main.css'
+import './css/main.scss'
 
 import { RouterView } from 'vue-router';
 import { onMounted, onUnmounted, ref } from 'vue';

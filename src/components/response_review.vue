@@ -1,26 +1,23 @@
 <template>
     <div v-if="isRoot" class="responseReviewContent">
         <textarea v-model="textResponse" @keyup="showSendResponseBtn = true"></textarea>
-        <button  v-if="showSendResponseBtn && !review.response.content" @click="response" class="btn-primary">Répondre</button>
-        <button  v-if="showSendResponseBtn && review.response.content" @click="modify" class="btn-primary">Modifier</button>
+        <button v-if="showSendResponseBtn && !review.response.content" @click="response" class="btn-primary">Répondre</button>
+        <button v-if="showSendResponseBtn && review.response.content" @click="modify" class="btn-primary">Modifier</button>
     </div>
     <div v-else-if="!isRoot" class="responseReviewContent">
         <div>{{ textResponse }}</div>
     </div>
-
 </template>
-  
-  <script lang="ts">
+
+<script lang="ts">
     import axios from 'axios';
     import Cookies from "js-cookie";
     const sessionToken = Cookies.get('sessionToken');
     const id_user = Cookies.get('id_user');
     import authentificationService from "../../src/services/authentification.service";
     export default {
-
         name: "response_review",
         components: {
-            
         },
         props: {
             review: {
@@ -30,7 +27,6 @@
             index:{
                 type: Number,
                 required: true,
-
             }
         },
         data() {
@@ -38,10 +34,8 @@
                 textResponse: '', 
                 showSendResponseBtn: false,
                 isRoot: false
-
             };
         },
-
         methods: {
             async response(){
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${this.review._id}/response`, {
@@ -54,18 +48,15 @@
                     if (response.status == 201 || response.status == 200) {
                         this.$func.showToastSuccess(response.data.message);
                         this.showSendResponseBtn = false;
-                        this.review.response.content = this.textResponse;
-                        this.$emit('update-review', { review: this.review, index: this.index }); 
-
-
+                        this.$emit('update-review', { 
+                            review: { ...this.review, response: { ...this.review.response, content: this.textResponse } }, 
+                            index: this.index 
+                        }); 
                     }else {
                         this.$func.showToastError(response);
                         console.error("Error reporting review:", response);
                     }
-
-                }).catch(error => {
-                    //return false;
-                });
+                })
             }, 
             async modify(){
                 if(this.textResponse != ''){
@@ -79,16 +70,15 @@
                         if (response.status == 201 || response.status == 200) {
                             this.$func.showToastSuccess(response.data.message);
                             this.showSendResponseBtn = false;
-                            this.review.response.content = this.textResponse;
-                            this.$emit('update-review', { review: this.review, index: this.index });
+                            this.$emit('update-review', { 
+                                review: { ...this.review, response: { ...this.review.response, content: this.textResponse } }, 
+                                index: this.index 
+                            });
                         }else {
                             this.$func.showToastError(response);
                             console.error("Error reporting review:", response);
                         }
-
-                    }).catch(error => {
-                        //return false;
-                    });
+                    })
                 }else{
                     axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${this.review._id}/response`, {
                         headers: {
@@ -98,8 +88,10 @@
                         if (response.status == 201 || response.status == 200) {
                             this.$func.showToastSuccess(response.data.message);
                             this.showSendResponseBtn = false;
-                             this.review.response.content = '';
-                            this.$emit('update-review', { review: this.review, index: this.index });
+                            this.$emit('update-review', { 
+                                review: { ...this.review, response: { ...this.review.response, content: '' } }, 
+                                index: this.index 
+                            });
                         }else {
                             this.$func.showToastError(response);
                             console.error("Error reporting review:", response);
@@ -111,26 +103,21 @@
                             authentificationService.verifSession();
                         }
                     });
-
                 }
-
             }
         },
         mounted() {
-
             if(this.review.recipient === id_user){
                 this.isRoot = true;
             }
             if(this.review.response.content){
                 this.textResponse = this.review.response.content;
             }
-        },
-           
+        },           
     };
+</script>
 
-  </script>
-  
-  <style lang="scss" scoped>
+<style lang="scss" scoped>
     .responseReviewContent{
         position: absolute;
         bottom: 5px; 
@@ -150,5 +137,4 @@
         width: 100%;
         font-size: x-small;
     }
-  </style>
-  
+</style>

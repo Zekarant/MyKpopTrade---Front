@@ -7,6 +7,7 @@
       <button @click="setTab('pay_what_you_want')" :class="{ active: currentTab === 'pay_what_you_want' }">Invitations</button>
     </div>
 
+
     <div class="filters">
       <div class="achat-filter" @click="toggleSortOrder">
         Achat
@@ -21,14 +22,17 @@
       />
     </div>
 
+
     <div v-if="loading" class="loading">
       Chargement des conversations...
     </div>
+
 
     <div v-else-if="error" class="error">
       <p>{{ error }}</p>
       <button @click="loadConversations" class="retry-button">Réessayer</button>
     </div>
+
 
     <ul class="conversation-list-items" v-else>
       <li
@@ -49,6 +53,7 @@
           </template>-->
         </div>
 
+
         <div class="conversation-details">
           <div class="conversation-header">
             <span class="username">{{ getParticipantUsername(conversation.otherParticipant) }}</span>
@@ -57,6 +62,7 @@
               {{ conversation.unreadCount ?? 0 }}
             </span>
           </div>
+
 
           <div class="conversation-meta">
             <!-- Onglet BST : Affichage produit -->
@@ -73,6 +79,7 @@
               </span>
             </template>
 
+
             <!-- Onglet Messages Privés : Statut lecture ou aperçu -->
             <template v-else-if="currentTab === 'general'">
               <div class="message-status">
@@ -84,6 +91,7 @@
                 </template>
               </div>
             </template>
+
 
             <!-- Autres onglets : Affichage par défaut -->
             <template v-else>
@@ -106,6 +114,7 @@
             </template>
           </div>
 
+
           <div class="conversation-footer">
             <span class="last-message-time">{{ formatLastMessageTime(conversation.lastMessageAt) }}</span>
             <span class="status-badge" :class="conversation.status">{{ getConversationStatus(conversation.status) }}</span>
@@ -114,11 +123,13 @@
       </li>
     </ul>
 
+
     <div v-if="!loading && !error && filteredAndSortedConversations.length === 0" class="no-conversations">
       Aucune conversation à afficher.
     </div>
   </div>
 </template>
+
 
 <script lang="ts" setup>
 import messagingService from '@/services/messaging.service';
@@ -127,9 +138,11 @@ import type { Conversation, ConversationListParams, ProductReference } from '@/t
 import type { ImgUserProfile, IUserParticipant } from '@/types/user.types';
 import userService from '@/services/user.service';
 
+
 // Types pour les onglets
 type TabType = 'general' | 'product_inquiry' | 'negotiation' | 'pay_what_you_want';
 type SortOrder = 'recent' | 'oldest';
+
 
 // État réactif
 const currentTab = ref<TabType>('product_inquiry');
@@ -139,14 +152,17 @@ const sortOrder = ref<SortOrder>('recent');
 const searchQuery = ref<string>('');
 const conversations = ref<Conversation[]>([]);
 
+
 // Événements émis
 const emit = defineEmits<{
   conversationSelected: [conversation: Conversation]
 }>();
 
+
 // ============================================================================
 // FONCTIONS UTILITAIRES - NAVIGATION ET ÉTAT
 // ============================================================================
+
 
 /**
  * Change l'onglet actif
@@ -155,12 +171,14 @@ const setTab = (tab: TabType): void => {
   currentTab.value = tab;
 };
 
+
 /**
  * Bascule l'ordre de tri
  */
 const toggleSortOrder = (): void => {
   sortOrder.value = sortOrder.value === 'recent' ? 'oldest' : 'recent';
 };
+
 
 /**
  * Sélectionne une conversation
@@ -169,9 +187,11 @@ const selectConversation = (conversation: Conversation): void => {
   emit('conversationSelected', conversation);
 };
 
+
 // ============================================================================
 // FONCTIONS UTILITAIRES - PARTICIPANTS
 // ============================================================================
+
 
 /**
  * Vérifie si un participant a une photo de profil valide
@@ -184,6 +204,7 @@ const selectConversation = (conversation: Conversation): void => {
 };*/
 
 
+
 /**
  * Récupère les initiales pour l'avatar
  */
@@ -192,9 +213,11 @@ const getAvatarInitials = (participant: IUserParticipant | undefined): string =>
   return participant.username.charAt(0).toUpperCase();
 };
 
+
 /**
  * on créer l'avatar de l'utilisateur
  */
+
 
 const getAvatar = (user: IUserParticipant | undefined): string => {
   if (!user) {
@@ -213,6 +236,7 @@ const getParticipantUsername = (participant: IUserParticipant | undefined): stri
   return participant?.username || 'Utilisateur inconnu';
 };
 
+
 /**
  * Récupère la localisation d'un participant
  */
@@ -220,9 +244,11 @@ const getParticipantLocation = (participant: IUserParticipant | undefined): stri
   return participant?.location || 'Localisation inconnue';
 };
 
+
 // ============================================================================
 // FONCTIONS UTILITAIRES - PRODUITS
 // ============================================================================
+
 
 /**
  * Récupère le titre du produit
@@ -230,6 +256,7 @@ const getParticipantLocation = (participant: IUserParticipant | undefined): stri
 const getProductTitle = (product: ProductReference | null | undefined): string => {
   return product?.title || 'Conversation générale';
 };
+
 
 /**
  * Formate le prix du produit avec devise
@@ -241,11 +268,13 @@ const formatPrice = (product: ProductReference | null | undefined): string => {
   return `${product.price}${symbol}`;
 };
 
+
 /**
  * Formate la condition du produit
  */
 const formatCondition = (product: ProductReference | null | undefined): string => {
   if (!product || !('condition' in product) || typeof (product as ProductReference & { condition?: string }).condition !== 'string') return '';
+
 
   const conditionMap: Record<string, string> = {
     'new': 'Neuf',
@@ -255,13 +284,16 @@ const formatCondition = (product: ProductReference | null | undefined): string =
     'poor': 'Mauvais état'
   };
 
+
   const condition = (product as ProductReference & { condition?: string }).condition;
   return condition ? (conditionMap[condition] || '') : '';
 };
 
+
 // ============================================================================
 // FONCTIONS UTILITAIRES - STATUTS ET NÉGOCIATIONS
 // ============================================================================
+
 
 /**
  * Formate le statut de négociation
@@ -277,6 +309,7 @@ const formatNegotiationStatus = (status: string): string => {
   return statusMap[status] || status;
 };
 
+
 /**
  * Récupère la classe CSS pour le statut de négociation
  */
@@ -291,6 +324,7 @@ const getNegotiationStatusClass = (status: string): string => {
   return classMap[status] || '';
 };
 
+
 /**
  * Formate le statut Pay What You Want
  */
@@ -303,6 +337,7 @@ const formatPwywStatus = (status: string): string => {
   return statusMap[status] || status;
 };
 
+
 /**
  * Récupère la classe CSS pour le statut PWYW
  */
@@ -314,6 +349,7 @@ const getPwywStatusClass = (status: string): string => {
   };
   return classMap[status] || '';
 };
+
 
 /**
  * Traduit le type de conversation
@@ -328,6 +364,7 @@ const getConversationType = (type: string): string => {
   return typeMap[type] || type;
 };
 
+
 /**
  * Traduit le statut de conversation
  */
@@ -340,9 +377,11 @@ const getConversationStatus = (status: string): string => {
   return statusMap[status] || status;
 };
 
+
 // ============================================================================
 // FONCTIONS UTILITAIRES - MESSAGES ET TEMPS
 // ============================================================================
+
 
 /**
  * Vérifie si le dernier message a été lu
@@ -352,24 +391,30 @@ const isMessageRead = (conversation: Conversation): boolean => {
   return unreadCount === 0 && !!conversation.lastMessage;
 };
 
+
 /**
  * Formate le temps depuis la dernière lecture/message
  */
 const formatLastSeen = (lastMessageAt: string | undefined): string => {
   if (!lastMessageAt) return '';
 
+
   const now = new Date();
   const messageDate = new Date(lastMessageAt);
   const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
 
+
   if (diffInMinutes < 1) return 'à l\'instant';
   if (diffInMinutes < 60) return `il y a ${diffInMinutes}min`;
+
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `il y a ${diffInHours}h`;
 
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `il y a ${diffInDays}j`;
+
 
   return messageDate.toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -377,15 +422,18 @@ const formatLastSeen = (lastMessageAt: string | undefined): string => {
   });
 };
 
+
 /**
  * Formate l'heure du dernier message
  */
 const formatLastMessageTime = (lastMessageAt: string | undefined): string => {
   if (!lastMessageAt) return '';
 
+
   const messageDate = new Date(lastMessageAt);
   const now = new Date();
   const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+
 
   if (diffInHours < 24) {
     return messageDate.toLocaleTimeString('fr-FR', {
@@ -394,11 +442,13 @@ const formatLastMessageTime = (lastMessageAt: string | undefined): string => {
     });
   }
 
+
   if (diffInHours < 24 * 7) {
     return messageDate.toLocaleDateString('fr-FR', {
       weekday: 'short'
     });
   }
+
 
   return messageDate.toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -406,16 +456,20 @@ const formatLastMessageTime = (lastMessageAt: string | undefined): string => {
   });
 };
 
+
 /**
  * Récupère l'aperçu du dernier message
  */
 const getMessagePreview = (conversation: Conversation): string => {
   if (!conversation.lastMessage) return 'Aucun message';
 
+
   const message = conversation.lastMessage;
+
 
   // Gestion des messages chiffrés
   if ('isEncrypted' in message && message.isEncrypted) return '🔒 Message chiffré';
+
 
   // Gestion des différents types de contenu
   switch (message.contentType) {
@@ -434,9 +488,11 @@ const getMessagePreview = (conversation: Conversation): string => {
   }
 };
 
+
 // ============================================================================
 // FONCTIONS DE CHARGEMENT ET FILTRAGE
 // ============================================================================
+
 
 /**
  * Charge les conversations de l'utilisateur
@@ -445,9 +501,11 @@ const loadConversations = async (): Promise<void> => {
   loading.value = true;
   error.value = '';
 
+
   try {
     const params: ConversationListParams = {};
     const response = await messagingService.getUserConversations(params);
+
 
     if (response?.conversations) {
       // Normaliser les conversations pour s'assurer que unreadCount existe
@@ -466,6 +524,7 @@ const loadConversations = async (): Promise<void> => {
   }
 };
 
+
 /**
  * Filtre les conversations selon l'onglet actif
  */
@@ -474,18 +533,22 @@ const filteredConversations = computed((): Conversation[] => {
     // Filtrer par type d'onglet
     if (conv.type !== currentTab.value) return false;
 
+
     // Exclure les conversations terminées
     if (conv.status === 'completed' || conv.status === 'archived') return false;
+
 
     return true;
   });
 });
+
 
 /**
  * Filtre et trie les conversations
  */
 const filteredAndSortedConversations = computed((): Conversation[] => {
   let filtered = [...filteredConversations.value];
+
 
   // Filtrage par recherche
   if (searchQuery.value.trim()) {
@@ -495,19 +558,23 @@ const filteredAndSortedConversations = computed((): Conversation[] => {
       const username = conversation.otherParticipant?.username || '';
       const productTitle = conversation.productId?.title || '';
 
+
       return title.toLowerCase().includes(query) ||
              username.toLowerCase().includes(query) ||
              productTitle.toLowerCase().includes(query);
     });
   }
 
+
   // Tri par date
   filtered.sort((a, b) => {
     const dateA = new Date(a.lastMessageAt || a.createdAt).getTime();
     const dateB = new Date(b.lastMessageAt || b.createdAt).getTime();
 
+
     return sortOrder.value === 'recent' ? dateB - dateA : dateA - dateB;
   });
+
 
   return filtered;
 });
@@ -515,12 +582,17 @@ const filteredAndSortedConversations = computed((): Conversation[] => {
 // LIFECYCLE
 // ============================================================================
 
+
 onMounted(() => {
   loadConversations();
 });
 </script>
 
+
 <style scoped lang="scss">
+// Import du module sass:color pour les nouvelles fonctions de couleur
+@use "sass:color";
+
 // ============================================================================
 // VARIABLES ET COULEURS
 // ============================================================================
@@ -533,6 +605,7 @@ $light-gray: #f8f9fa;
 $medium-gray: #6c757d;
 $dark-gray: #343a40;
 
+
 // ============================================================================
 // LAYOUT PRINCIPAL
 // ============================================================================
@@ -543,6 +616,7 @@ $dark-gray: #343a40;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+
 // ============================================================================
 // ONGLETS
 // ============================================================================
@@ -552,6 +626,7 @@ $dark-gray: #343a40;
   margin-bottom: 20px;
   border-bottom: 2px solid #e9ecef;
 }
+
 
 .tabs button {
   padding: 12px 15px;
@@ -564,10 +639,12 @@ $dark-gray: #343a40;
   transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
 
+
   &:hover {
     color: $primary-color;
     background: rgba($primary-color, 0.05);
   }
+
 
   &.active {
     color: $primary-color;
@@ -575,6 +652,7 @@ $dark-gray: #343a40;
     font-weight: 600;
   }
 }
+
 
 // ============================================================================
 // FILTRES
@@ -585,6 +663,7 @@ $dark-gray: #343a40;
   margin-bottom: 20px;
   align-items: center;
 }
+
 
 .achat-filter {
   display: flex;
@@ -598,15 +677,18 @@ $dark-gray: #343a40;
   transition: background-color 0.2s ease;
   min-width: 120px;
 
+
   &:hover {
-    background: darken($light-gray, 5%);
+    background: color.scale($light-gray, $lightness: -5%);
   }
+
 
   span {
     color: $medium-gray;
     font-size: 12px;
   }
 }
+
 
 .search-bar {
   flex: 1;
@@ -618,15 +700,18 @@ $dark-gray: #343a40;
   font-size: 14px;
   transition: border-color 0.2s ease;
 
+
   &:focus {
     outline: none;
     border-color: $primary-color;
   }
 
+
   &::placeholder {
     color: $medium-gray;
   }
 }
+
 
 // ============================================================================
 // ÉTATS DE CHARGEMENT
@@ -639,8 +724,10 @@ $dark-gray: #343a40;
   color: $medium-gray;
 }
 
+
 .error {
   color: $danger-color;
+
 
   .retry-button {
     margin-top: 15px;
@@ -653,11 +740,13 @@ $dark-gray: #343a40;
     font-weight: 500;
     transition: background-color 0.2s ease;
 
+
     &:hover {
-      background: darken($primary-color, 10%);
+      background: color.scale($primary-color, $lightness: -10%);
     }
   }
 }
+
 
 // ============================================================================
 // LISTE DES CONVERSATIONS
@@ -667,6 +756,7 @@ $dark-gray: #343a40;
   padding: 0;
   margin: 0;
 }
+
 
 .conversation-item {
   display: flex;
@@ -679,16 +769,19 @@ $dark-gray: #343a40;
   margin-bottom: 8px;
   border: 1px solid transparent;
 
+
   &:hover {
     background: $light-gray;
     border-color: #e9ecef;
   }
+
 
   &.unread {
     background: rgba($primary-color, 0.05);
     border-color: rgba($primary-color, 0.2);
   }
 }
+
 
 // ============================================================================
 // AVATAR
@@ -698,6 +791,7 @@ $dark-gray: #343a40;
   min-width: 50px;
   height: 50px;
   position: relative;
+
 
   img {
     width: 100%;
@@ -709,11 +803,12 @@ $dark-gray: #343a40;
   }
 }
 
+
 .avatar-initials {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, $primary-color, lighten($primary-color, 20%));
+  background: linear-gradient(135deg, $primary-color, color.scale($primary-color, $lightness: 20%));
   color: white;
   display: flex;
   align-items: center;
@@ -724,6 +819,7 @@ $dark-gray: #343a40;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+
 // ============================================================================
 // DÉTAILS DE LA CONVERSATION
 // ============================================================================
@@ -732,12 +828,14 @@ $dark-gray: #343a40;
   min-width: 0;
 }
 
+
 .conversation-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 5px;
 }
+
 
 .username {
   font-size: 16px;
@@ -748,6 +846,7 @@ $dark-gray: #343a40;
   text-overflow: ellipsis;
 }
 
+
 .country {
   font-size: 12px;
   color: $medium-gray;
@@ -756,6 +855,7 @@ $dark-gray: #343a40;
   text-overflow: ellipsis;
   flex-shrink: 0;
 }
+
 
 .unread-badge {
   background: $danger-color;
@@ -769,6 +869,7 @@ $dark-gray: #343a40;
   flex-shrink: 0;
 }
 
+
 // ============================================================================
 // MÉTADONNÉES DE CONVERSATION
 // ============================================================================
@@ -780,6 +881,7 @@ $dark-gray: #343a40;
   align-items: flex-start;
 }
 
+
 .product-price {
   color: $success-color;
   font-weight: 600;
@@ -788,6 +890,7 @@ $dark-gray: #343a40;
   padding: 2px 5px;
   border-radius: 3px;
 }
+
 
 .product-condition {
   color: $info-color;
@@ -799,9 +902,11 @@ $dark-gray: #343a40;
   font-weight: 500;
 }
 
+
 .message-status {
   width: 100%;
 }
+
 
 .read-status {
   color: $medium-gray;
@@ -809,11 +914,13 @@ $dark-gray: #343a40;
   font-size: 12px;
 }
 
+
 .message-preview {
   color: $dark-gray;
   font-size: 13px;
   line-height: 1.4;
 }
+
 
 .conversation-type,
 .conversation-state {
@@ -823,6 +930,7 @@ $dark-gray: #343a40;
   padding: 2px 6px;
   border-radius: 4px;
 }
+
 
 // ============================================================================
 // STATUTS ET BADGES
@@ -837,41 +945,49 @@ $dark-gray: #343a40;
   letter-spacing: 0.5px;
 }
 
+
 .status-pending {
   background: rgba($warning-color, 0.2);
-  color: darken($warning-color, 20%);
+  color: color.scale($warning-color, $lightness: -20%);
 }
+
 
 .status-accepted {
   background: rgba($success-color, 0.2);
-  color: darken($success-color, 20%);
+  color: color.scale($success-color, $lightness: -20%);
 }
+
 
 .status-rejected {
   background: rgba($danger-color, 0.2);
-  color: darken($danger-color, 20%);
+  color: color.scale($danger-color, $lightness: -20%);
 }
+
 
 .status-expired,
 .status-completed {
   background: rgba($medium-gray, 0.2);
-  color: darken($medium-gray, 20%);
+  color: color.scale($medium-gray, $lightness: -20%);
 }
+
 
 .pwyw-pending {
   background: rgba($info-color, 0.2);
-  color: darken($info-color, 20%);
+  color: color.scale($info-color, $lightness: -20%);
 }
+
 
 .pwyw-accepted {
   background: rgba($success-color, 0.2);
-  color: darken($success-color, 20%);
+  color: color.scale($success-color, $lightness: -20%);
 }
+
 
 .pwyw-rejected {
   background: rgba($danger-color, 0.2);
-  color: darken($danger-color, 20%);
+  color: color.scale($danger-color, $lightness: -20%);
 }
+
 
 // ============================================================================
 // PIED DE CONVERSATION
@@ -883,11 +999,13 @@ $dark-gray: #343a40;
   gap: 10px;
 }
 
+
 .last-message-time {
   font-size: 11px;
   color: $medium-gray;
   white-space: nowrap;
 }
+
 
 .status-badge {
   font-size: 10px;
@@ -897,21 +1015,25 @@ $dark-gray: #343a40;
   text-transform: capitalize;
   white-space: nowrap;
 
+
   &.open {
     background: rgba($success-color, 0.2);
-    color: darken($success-color, 20%);
+    color: color.scale($success-color, $lightness: -20%);
   }
+
 
   &.closed {
     background: rgba($medium-gray, 0.2);
-    color: darken($medium-gray, 20%);
+    color: color.scale($medium-gray, $lightness: -20%);
   }
+
 
   &.archived {
     background: rgba($medium-gray, 0.3);
-    color: darken($medium-gray, 30%);
+    color: color.scale($medium-gray, $lightness: -30%);
   }
 }
+
 
 // ============================================================================
 // STYLES BST SPÉCIFIQUES
@@ -923,12 +1045,14 @@ $dark-gray: #343a40;
   width: 100%;
 }
 
+
 .bst-header {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 
 .bst-details {
   display: flex;
@@ -937,10 +1061,12 @@ $dark-gray: #343a40;
   flex-wrap: wrap;
 }
 
+
 .bst-status {
   display: flex;
   align-items: center;
 }
+
 
 .transaction-type {
   font-size: 11px;
@@ -951,25 +1077,30 @@ $dark-gray: #343a40;
   letter-spacing: 0.5px;
 }
 
+
 .transaction-buy {
   background: rgba($info-color, 0.2);
-  color: darken($info-color, 20%);
+  color: color.scale($info-color, $lightness: -20%);
 }
+
 
 .transaction-sell {
   background: rgba($success-color, 0.2);
-  color: darken($success-color, 20%);
+  color: color.scale($success-color, $lightness: -20%);
 }
+
 
 .transaction-trade {
   background: rgba($warning-color, 0.2);
-  color: darken($warning-color, 20%);
+  color: color.scale($warning-color, $lightness: -20%);
 }
+
 
 .separator {
   color: $medium-gray;
   font-size: 12px;
 }
+
 
 .artist-info {
   font-weight: 600;
@@ -978,14 +1109,16 @@ $dark-gray: #343a40;
   flex: 1;
 }
 
+
 .product-type {
   font-size: 11px;
   background: rgba($primary-color, 0.1);
-  color: darken($primary-color, 20%);
+  color: color.scale($primary-color, $lightness: -20%);
   padding: 2px 5px;
   border-radius: 3px;
   font-weight: 500;
 }
+
 
 .official-status {
   font-size: 10px;
@@ -994,8 +1127,9 @@ $dark-gray: #343a40;
   text-transform: uppercase;
   font-weight: 600;
   background: rgba($success-color, 0.15);
-  color: darken($success-color, 25%);
+  color: color.scale($success-color, $lightness: -25%);
 }
+
 
 // ============================================================================
 // RESPONSIVE DESIGN
@@ -1005,20 +1139,24 @@ $dark-gray: #343a40;
     padding: 15px;
   }
 
+
   .filters {
     flex-direction: column;
     gap: 10px;
     align-items: stretch;
   }
 
+
   .achat-filter {
     min-width: auto;
   }
+
 
   .conversation-item {
     gap: 12px;
     padding: 12px;
   }
+
 
   .conversation-avatar {
     width: 40px;
@@ -1026,17 +1164,20 @@ $dark-gray: #343a40;
     height: 40px;
   }
 
+
   .avatar-initials {
     width: 40px;
     height: 40px;
     font-size: 16px;
   }
 
+
   .conversation-meta {
     flex-direction: column;
     gap: 4px;
     align-items: flex-start;
   }
+
 
   .conversation-footer {
     flex-direction: column;
