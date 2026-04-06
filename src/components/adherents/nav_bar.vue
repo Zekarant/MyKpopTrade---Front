@@ -94,6 +94,13 @@ declare global {
                       page: 'messages',
                       parameter: 'me'
 
+                    },
+                    {
+                      label: 'Contact',
+                      icon: '<i class="bi bi-headset"></i>',
+                      active: this.verifBtn('contact'),
+                      page: 'contact',
+                      parameter: null
                     }
                 ],
                 itemMenuEnd: [

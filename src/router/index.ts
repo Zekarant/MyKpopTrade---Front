@@ -9,7 +9,6 @@ import profile from '@p_v/profile.vue';
 import add_post from '@p_v/add_post.vue';
 import add_review from '@p_v/add_review.vue';
 import Admin from '@/views/admin/admin.vue';
-import PaymentCancel from '@/views/payment/cancel.vue';
 
 
 const routes = [
@@ -42,6 +41,14 @@ const routes = [
     component: () => import('@/views/payment/cancel.vue'),
     meta: {
       title: 'Paiement annulé'
+    }
+  },
+  {
+    path: '/payment/success',
+    name: 'payment_success',
+    component: () => import('@/views/payment/success.vue'),
+    meta: {
+      title: 'Paiement confirmé'
     }
   },
     {
@@ -152,6 +159,14 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Ajouter un avis'
+    }
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: () => import('@/views/contact.vue'),
+    meta: {
+      title: 'Nous contacter'
     }
   }
 
