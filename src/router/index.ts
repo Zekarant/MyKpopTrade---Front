@@ -21,6 +21,12 @@ const routes = [
     name: 'login',
     component: Login
   },
+  {
+    path: '/auth/callback',
+    name: 'auth_callback',
+    component: () => import('@/views/AuthCallback.vue'),
+    meta: { title: 'Connexion…' },
+  },
   { path: '/register',
     name: 'register',
     component: Register
