@@ -85,10 +85,17 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import { useRouter } from "vue-router";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import authentificationService from "@/services/authentification.service";
-import { signInWithGoogle } from "@/services/authClient";
+
+const GOOGLE_ERROR_MESSAGES = {
+  user_not_found: "Aucun compte n'est associé à cette adresse Google. Inscrivez-vous d'abord.",
+  google_no_email: "Google n'a pas fourni d'adresse e-mail.",
+  google_auth_failed: "La connexion Google a échoué. Réessaie.",
+  auth_failed: "La connexion a échoué. Réessaie.",
+  server_error: "Erreur serveur pendant la connexion Google.",
+};
 
 export default defineComponent({
   name: "Login",
@@ -100,6 +107,16 @@ export default defineComponent({
     const successMessage = ref("");
 
     const router = useRouter();
+    const route = useRoute();
+
+    onMounted(() => {
+      const errCode = route.query.error;
+      if (typeof errCode === "string" && errCode) {
+        ErroruserName.value =
+          GOOGLE_ERROR_MESSAGES[errCode] || "Connexion Google indisponible.";
+        router.replace({ path: "/login", query: {} });
+      }
+    });
 
     const submitForm = async () => {
       let verif_login = true;
@@ -126,14 +143,9 @@ export default defineComponent({
       }
     };
 
-    const loginWithGoogle = async () => {
-      try {
-        await signInWithGoogle();
-      } catch (err) {
-        ErroruserName.value = "Connexion Google indisponible. Réessaie.";
-        // eslint-disable-next-line no-console
-        console.error("Google sign-in error", err);
-      }
+    const loginWithGoogle = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      window.location.href = `${apiUrl}/api/auth/google`;
     };
 
     return {
