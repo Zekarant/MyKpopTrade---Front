@@ -90,10 +90,8 @@ import { useRouter, useRoute } from "vue-router";
 import authentificationService from "@/services/authentification.service";
 
 const GOOGLE_ERROR_MESSAGES = {
-  user_not_found: "Aucun compte n'est associé à cette adresse Google. Inscrivez-vous d'abord.",
   google_no_email: "Google n'a pas fourni d'adresse e-mail.",
   google_auth_failed: "La connexion Google a échoué. Réessaie.",
-  auth_failed: "La connexion a échoué. Réessaie.",
   server_error: "Erreur serveur pendant la connexion Google.",
 };
 

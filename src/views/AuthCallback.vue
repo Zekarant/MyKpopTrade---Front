@@ -1,8 +1,9 @@
 <template>
   <main class="auth-callback">
     <div class="loader">
-      <p v-if="!error">Connexion en cours…</p>
-      <p v-else class="text-danger">{{ error }}</p>
+      <p v-if="error" class="text-danger">{{ error }}</p>
+      <p v-else-if="welcome" class="text-success">{{ welcome }}</p>
+      <p v-else>Connexion en cours…</p>
     </div>
   </main>
 </template>
@@ -18,12 +19,14 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const error = ref<string>('');
+    const welcome = ref<string>('');
 
     onMounted(() => {
       const accessToken = route.query.accessToken as string | undefined;
       const refreshToken = route.query.refreshToken as string | undefined;
       const userId = route.query.userId as string | undefined;
       const errParam = route.query.error as string | undefined;
+      const isNewAccount = route.query.newAccount === '1';
 
       if (errParam) {
         error.value = `Échec de connexion : ${errParam}`;
@@ -42,10 +45,15 @@ export default defineComponent({
       Cookies.set('id_user', userId, { expires: 1 });
       sessionStorage.removeItem('favorites');
 
-      router.replace('/adherents/dashboard');
+      if (isNewAccount) {
+        welcome.value = 'Bienvenue ! Votre compte a été créé via Google. Pensez à compléter votre profil.';
+        setTimeout(() => router.replace('/adherents/dashboard'), 1500);
+      } else {
+        router.replace('/adherents/dashboard');
+      }
     });
 
-    return { error };
+    return { error, welcome };
   },
 });
 </script>
@@ -63,5 +71,8 @@ export default defineComponent({
 }
 .text-danger {
   color: var(--danger-color, #dc3545);
+}
+.text-success {
+  color: var(--success-color, #198754);
 }
 </style>
