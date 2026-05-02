@@ -144,7 +144,10 @@
                         <div class="setting-item-modern">
                             <div class="setting-item-left">
                                 <i class="bi bi-envelope setting-icon"></i>
-                                <span class="setting-label">Email vérifié</span>
+                                <div class="setting-label-group">
+                                    <span class="setting-label">Email vérifié</span>
+                                    <span v-if="profilInfo.email" class="setting-sublabel">{{ profilInfo.email }}</span>
+                                </div>
                             </div>
                             <div class="setting-item-right">
                                 <span v-if="emailRequest" class="status-badge status-badge-info">Email envoyé</span>
@@ -1276,6 +1279,18 @@ button.btn.btn-outline:hover {
     font-size: 1rem;
     font-weight: 500;
     color: var(--primary-color);
+}
+
+.setting-label-group {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.setting-sublabel {
+    font-size: 0.85rem;
+    color: var(--secondary-color-shade);
+    word-break: break-all;
 }
 
 .setting-item-right {
