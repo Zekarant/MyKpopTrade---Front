@@ -27,6 +27,9 @@ export default defineComponent({
       const userId = route.query.userId as string | undefined;
       const errParam = route.query.error as string | undefined;
       const isNewAccount = route.query.newAccount === '1';
+      const provider = (route.query.provider as string | undefined) || '';
+      const providerLabel =
+        provider === 'discord' ? 'Discord' : provider === 'google' ? 'Google' : '';
 
       if (errParam) {
         error.value = `Échec de connexion : ${errParam}`;
@@ -46,7 +49,9 @@ export default defineComponent({
       sessionStorage.removeItem('favorites');
 
       if (isNewAccount) {
-        welcome.value = 'Bienvenue ! Votre compte a été créé via Google. Pensez à compléter votre profil.';
+        welcome.value = providerLabel
+          ? `Bienvenue ! Votre compte a été créé via ${providerLabel}. Pensez à compléter votre profil.`
+          : 'Bienvenue ! Votre compte a été créé. Pensez à compléter votre profil.';
         setTimeout(() => router.replace('/adherents/dashboard'), 1500);
       } else {
         router.replace('/adherents/dashboard');

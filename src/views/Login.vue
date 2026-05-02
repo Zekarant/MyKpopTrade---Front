@@ -53,6 +53,17 @@
               </svg>
               <span>Continuer avec Google</span>
             </button>
+            <button
+              type="button"
+              class="btn-discord"
+              aria-label="Continuer avec Discord"
+              @click="loginWithDiscord"
+            >
+              <svg class="discord-logo" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#fff" d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3.2a.074.074 0 0 0-.079.037c-.34.6-.719 1.384-.984 2.001a18.27 18.27 0 0 0-5.487 0 12.65 12.65 0 0 0-1-2.001.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 5.17 4.369a.07.07 0 0 0-.032.027C1.533 9.795.546 15.06 1.03 20.262a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.027 14.2 14.2 0 0 0 1.226-1.994.076.076 0 0 0-.041-.105 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.04.106c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-6.012-.838-11.232-3.549-15.866a.06.06 0 0 0-.031-.028zM8.02 17.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+              </svg>
+              <span>Continuer avec Discord</span>
+            </button>
             <a class="registerBtn btn-primary-outline" href="register">S'inscire</a>
             <a style="text-align: center;" href="forgot_psw">Mot de passe oublié</a>
             <br />
@@ -89,10 +100,12 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import authentificationService from "@/services/authentification.service";
 
-const GOOGLE_ERROR_MESSAGES = {
+const OAUTH_ERROR_MESSAGES = {
   google_no_email: "Google n'a pas fourni d'adresse e-mail.",
   google_auth_failed: "La connexion Google a échoué. Réessaie.",
-  server_error: "Erreur serveur pendant la connexion Google.",
+  discord_no_email: "Discord n'a pas fourni d'adresse e-mail.",
+  discord_auth_failed: "La connexion Discord a échoué. Réessaie.",
+  server_error: "Erreur serveur pendant la connexion.",
 };
 
 export default defineComponent({
@@ -111,7 +124,7 @@ export default defineComponent({
       const errCode = route.query.error;
       if (typeof errCode === "string" && errCode) {
         ErroruserName.value =
-          GOOGLE_ERROR_MESSAGES[errCode] || "Connexion Google indisponible.";
+          OAUTH_ERROR_MESSAGES[errCode] || "Connexion indisponible.";
         router.replace({ path: "/login", query: {} });
       }
     });
@@ -146,6 +159,11 @@ export default defineComponent({
       window.location.href = `${apiUrl}/api/auth/google`;
     };
 
+    const loginWithDiscord = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      window.location.href = `${apiUrl}/api/auth/discord`;
+    };
+
     return {
       username,
       password,
@@ -154,6 +172,7 @@ export default defineComponent({
       successMessage,
       submitForm,
       loginWithGoogle,
+      loginWithDiscord,
     };
   },
 });
@@ -188,6 +207,30 @@ export default defineComponent({
 .google-logo {
   width: 18px;
   height: 18px;
+}
+.btn-discord {
+  width: 100%;
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #5865F2;
+  color: #fff;
+  border: 1px solid #5865F2;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn-discord:hover {
+  background: #4752C4;
+  box-shadow: 0 1px 3px rgba(60,64,67,0.2);
+}
+.discord-logo {
+  width: 20px;
+  height: 20px;
 }
 .container-custom {
   display: flex;
