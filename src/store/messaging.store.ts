@@ -303,7 +303,6 @@ export const useMessagingStore = defineStore('messaging', {
           counterOffer,
           message
         });
-        console.log(response);
         // Mettre à jour la conversation
         //await this.fetchConversation(conversationId);
 

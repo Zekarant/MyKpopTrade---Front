@@ -10,6 +10,7 @@ import type {
     ImgUserProfile
 } from "@/types/user.types";
 import router from "@/router";
+import { API_URL } from '@/config/api';
 
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
@@ -26,10 +27,11 @@ type AuthToken = string | null;
 
 class userService {
     private userApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
+    private rgpdApiClient: AxiosInstance;
+    private API_BASE_URL: string = `${API_URL}/api`;
 
     constructor() {
-    
+
         this.userApiClient = axios.create({
         baseURL: `${this.API_BASE_URL}/profiles`,
         headers: {
@@ -37,8 +39,15 @@ class userService {
         },
         });
 
-        // Configuration des intercepteurs pour les deux clients
+        this.rgpdApiClient = axios.create({
+        baseURL: `${this.API_BASE_URL}/users`,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        });
+
         this.setupInterceptors(this.userApiClient);
+        this.setupInterceptors(this.rgpdApiClient);
     }
     // Interceptor setup authentificationServicetion
     private setupInterceptors(client: AxiosInstance) {
@@ -89,7 +98,7 @@ class userService {
         (response as any).data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
-        authentificationService.verifSession();
+        await authentificationService.verifSession();
       }
 
       return response.data;
@@ -99,12 +108,37 @@ class userService {
         error?.response?.data?.code === "TOKEN_EXPIRED" ||
         error?.response?.status === 401
       ) {
-        authentificationService.verifSession();
+        await authentificationService.verifSession().catch(() => {});
       }
       console.error("Erreur lors de la récupération :", error);
       throw error;
     }
   }
+  async updateConsents(payload: { marketing?: boolean; analytics?: boolean; cookies?: boolean }) {
+    const response = await this.rgpdApiClient.put('/me/consents', payload);
+    return response.data;
+  }
+
+  async exportMyData() {
+    const response = await this.rgpdApiClient.get('/me/data-export');
+    return response.data;
+  }
+
+  async requestAccountDeletion(payload: { confirmation: boolean }) {
+    const response = await this.rgpdApiClient.post('/me/deletion-request', payload);
+    return response.data;
+  }
+
+  async cancelAccountDeletion() {
+    const response = await this.rgpdApiClient.delete('/me/deletion-request');
+    return response.data;
+  }
+
+  async anonymizeMyAccount(payload: { confirmation: boolean }) {
+    const response = await this.rgpdApiClient.post('/me/anonymize', payload);
+    return response.data;
+  }
+
   renderUserAvatar(dataUser: ImgUserProfile): string {
     const { username, profilePicture } = dataUser;
 
@@ -115,7 +149,7 @@ class userService {
         "https://mykpoptrade.com/images/avatar-default.png"
     ) {
       return `
-        <img src="${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" />
+        <img src="${API_URL}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#ff2d78,#7c3aed);border-radius:3px;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;\\'>${username?.charAt(0).toUpperCase() || '?'}</div>'" />
       `;
     } else {
       const firstLetter = username?.charAt(0).toUpperCase() || "?";

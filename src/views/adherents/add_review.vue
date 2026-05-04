@@ -1,4 +1,5 @@
 <template>
+  <main class="page">
   <nav_bar></nav_bar>
   <div class="add-review-container">
     <div class="add-review-content">
@@ -12,10 +13,10 @@
         <!-- Product Display -->
         <div v-if="product" class="product-display">
           <div class="product-image">
-            <img 
-              v-if="product" 
-              :src="`${apiUrl}${product.images[0]}`" 
-              :alt="product.title" 
+            <img
+              v-if="product"
+              :src="`${apiUrl}${product.images[0]}`"
+              :alt="product.title"
             />
           </div>
           <div class="product-info">
@@ -69,7 +70,7 @@
           <!-- Image Upload -->
           <div class="form-group">
             <label for="images">Photos (optionnel)</label>
-            <div 
+            <div
               class="drop-zone"
               @dragover.prevent="isDragging = true"
               @dragleave="isDragging = false"
@@ -97,9 +98,9 @@
             <div v-if="selectedImages.length > 0" class="image-preview-gallery">
               <div v-for="(image, index) in selectedImages" :key="index" class="preview-item">
                 <img :src="image.preview" :alt="`Preview ${index + 1}`" />
-                <button 
-                  type="button" 
-                  class="remove-btn" 
+                <button
+                  type="button"
+                  class="remove-btn"
                   @click="removeImage(index)"
                   title="Supprimer cette image"
                 >
@@ -137,6 +138,7 @@
       </div>
     </div>
   </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -147,11 +149,12 @@ import reviewService from '@/services/review.service';
 import postService from '@/services/post.service';
 import type { ReviewData } from '@/types/review.types';
 import type { Post } from '@/types/post.types';
+import { API_URL } from '@/config/api';
 
 const route = useRoute();
 const router = useRouter();
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const apiUrl = API_URL;
 
 const loading = ref(true);
 const isSubmitting = ref(false);
@@ -224,11 +227,11 @@ const validateImages = (files: File[]): boolean => {
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = Array.from(target.files || []);
-  
+
   if (validateImages(files)) {
     addImages(files);
   }
-  
+
   // Réinitialiser l'input
   if (target) {
     target.value = '';
@@ -240,7 +243,7 @@ const handleDrop = (event: DragEvent) => {
   isDragging.value = false;
   const files = Array.from(event.dataTransfer?.files || []);
   const imageFiles = files.filter(f => f.type.startsWith('image/'));
-  
+
   if (validateImages(imageFiles)) {
     addImages(imageFiles);
   }
@@ -322,7 +325,7 @@ const submitReview = async () => {
 
     await reviewService.submitReview(formData.value);
     successMessage.value = 'Votre avis a été envoyé avec succès!';
-    
+
     // Rediriger après 2 secondes
     setTimeout(() => {
       router.push('/adherents/dashboard');

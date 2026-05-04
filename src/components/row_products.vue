@@ -1,7 +1,7 @@
 <template>
    <div style="display: flex; align-items: center;">
   <div class="container" ref="scrollContainer">
-    <swiper  
+    <swiper
         class="custom-swiper-nav"
         :navigation="{
             nextEl: '.custom-swiper-next',
@@ -23,11 +23,11 @@
                 :key="index"
             ></card>
         </swiper-slide>
-        <div class="custom-swiper-prev">      
-            <i class="bi bi-chevron-left chevron-bold"></i>        
+        <div class="custom-swiper-prev">
+            <i class="bi bi-chevron-left chevron-bold"></i>
         </div>
         <div class="custom-swiper-next">
-            <i class="bi bi-chevron-right chevron-bold"></i>        
+            <i class="bi bi-chevron-right chevron-bold"></i>
         </div>
         <swiper-slide v-if="pagination.page < pagination.pages " class="voir-plus-slide">
             <button class="voir-plus-btn" @click="onVoirPlus">Voir plus</button>
@@ -37,14 +37,16 @@
 
   </div>
 </div>
-    <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-        <post @closePost="closePost" :idPost="dataCardPost._id" />
-    </div>
+    <Teleport to="body">
+      <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
+          <post :key="dataCardPost?._id" @closePost="closePost" :idPost="dataCardPost?._id" />
+      </div>
+    </Teleport>
 </template>
-  
+
 
 <script lang="ts">
-    import { defineComponent, ref } from 'vue';
+    import { defineComponent, ref, nextTick } from 'vue';
     import post from '../components/post.vue';
     import card from '../components/card.vue';
     import { Navigation, A11y } from 'swiper/modules';
@@ -55,7 +57,7 @@
     // Import Swiper styles
     import 'swiper/css';
     import 'swiper/css/navigation';
-    
+
     export default defineComponent({
         name: "row_products",
         components: {
@@ -64,7 +66,7 @@
             Swiper,
             SwiperSlide,
         },
-        
+
         props: {
             dataList: {
                 type: Array as () => Array<Record<string, any>>,
@@ -86,21 +88,19 @@
                 default: false
             }
         },
-        emits: ['voirPlus'], 
-        
+        emits: ['voirPlus'],
+
         data() {
           return {
 
           };
         },
         setup() {
-            const dataCardPost: any = null;
+            const dataCardPost = ref<any>(null);
             const stateCardPost = ref(false);
             const onSwiper = (swiper: any) => {
-                console.log(swiper);
             };
             const onSlideChange = () => {
-                console.log('slide change');
             };
             return {
                 dataCardPost,
@@ -112,16 +112,13 @@
             };
         },
         methods: {
-            openPostInfo(index: number) {
+            async openPostInfo(index: number) {
                 if(this.stateCardPost){
                     this.stateCardPost = false;
-                    this.dataCardPost = this.dataList[index];
-                    this.stateCardPost = true;
-                }else{
-                    this.dataCardPost = this.dataList[index];
-                    this.stateCardPost = true;
+                    await nextTick();
                 }
-              
+                this.dataCardPost = this.dataList[index];
+                this.stateCardPost = true;
             },
             onVoirPlus() {
                 // Action à faire (navigation, popup, etc.)
@@ -130,153 +127,92 @@
             closePost() {
                 this.stateCardPost = false;
             },
-         
+
 
 
 
         },
-    
+
         mounted() {
 
         },
     });
 
   </script>
-  
+
   <style lang="scss" scoped>
-
-    .card{
-        width: 220px;    
-    }
-    .banner_reserved{
-        background: var(--danger-color);
-        width: 100%;
-        position: absolute;
-        top: 0;
-        z-index: 9;
-    }
-    .banner_draft{
-        background: var( --secondary-color-shade);
-        width: 100%;
-        position: absolute;
-        top: 0;
-        z-index: 9;
-    }
-    .banner_reserved .state_reserved,  .banner_draft .state_draft{
-        color: white;
-        font-size: smaller;
-        font-weight: bold;
-        text-align: center;
-    }
     .container {
-        position: relative;
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        align-items: center;
-        max-width: 990px;
-        width: 100% !important;
-        gap: 1rem;
-        padding-bottom: 8px;
-        scrollbar-width: thin;    // Scrollbar fine sur Firefox
-    }
-    .swiper{
-        width: 100%;
-    }
-    /* Pour un meilleur rendu sur Chrome */
-    .container::-webkit-scrollbar {
-        height: 8px;
-    }
-    .container::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 4px;
+      position: relative;
+      width: 100%;
     }
 
-    /* Optionnel : largeur minimale pour chaque carte */
-    .container > * {
-        min-width: 220px;
-    }
-    .post-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5); /* Fond noir transparent */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000; /* Assurez-vous que le composant est au-dessus des autres éléments */
+    .swiper {
+      width: 100%;
     }
 
-    .post-overlay post {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        max-width: 90%;
-        max-height: 90%;
-        overflow-y: auto;
+    .custom-swiper-prev,
+    .custom-swiper-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+
+      &:hover {
+        background: var(--accent-pink);
+        color: white;
+        border-color: var(--accent-pink);
+      }
     }
-    .bi-chevron-right, .bi-chevron-left {
-    // Pour certains navigateurs, tu peux essayer :
-        filter: drop-shadow(0 0 0 black) drop-shadow(0 0 0 black);
-    }
+    .custom-swiper-prev { left: -8px; }
+    .custom-swiper-next { right: -8px; }
+
     .voir-plus-slide {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        min-width: 110px !important; /* moitié de 220px */
-        max-width: 110px !important;
-        padding: 0;
-        height: 100%;
-
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      min-width: 110px !important;
+      max-width: 110px !important;
     }
 
     .voir-plus-btn {
-        width: 100%;
-        height: 100%;
-        background: var(--primary-color, #819A57);
-        color: #fff;
-        border: none;
-        border-radius: 12px;
-        font-size: 1.1em;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 280px;
-        
-    }
-    .voir-plus-btn:hover {
-        background: #fff;
-        border: solid 2px var(--primary-color);
-        color: var(--primary-color);
-    }
-    @media (max-width:980px){
-    .container{
-        grid-template: auto / repeat(auto, 1fr)
-    }
-    }
-    @media (max-width:720px){
-        .container{
-            grid-template: auto / repeat(2, 1fr);
-            width: 96vw;
-            margin-right: 0px;
-            padding-right: 0px;
-            margin-left: 0px;
-            padding-left: 0px;
-        }
-    }
-    @media (max-width:550px){
-        .container{
-            grid-template: auto / repeat(1, 1fr)
-        }
+      width: 100%;
+      min-height: 260px;
+      background: var(--bg-tertiary);
+      border: 1.5px dashed var(--surface-border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-base);
+
+      &:hover {
+        border-color: var(--accent-pink);
+        color: var(--accent-pink);
+        background: rgba(255, 45, 120, 0.05);
+      }
     }
 
-
+    .post-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
   </style>
 <style lang="scss">
 .custom-swiper-nav .custom-swiper-next,

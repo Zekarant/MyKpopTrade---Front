@@ -13,6 +13,10 @@ import Admin from '@/views/admin/admin.vue';
 
 const routes = [
   {
+    path: '/settings',
+    redirect: '/adherents/settings'
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue')
@@ -71,6 +75,18 @@ const routes = [
     path: '/adherents/profile/:id',
     name: 'profile',
     component: profile
+  },
+  {
+    path: '/adherents/settings',
+    name: 'settings',
+    component: () => import('@p_v/settings.vue'),
+    meta: { requiresAuth: true, title: 'Paramètres' }
+  },
+  {
+    path: '/adherents/payments',
+    name: 'payments',
+    component: () => import('@p_v/payments.vue'),
+    meta: { requiresAuth: true, title: 'Mes paiements' }
   },
   {
     path: '/forgot_psw',

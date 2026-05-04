@@ -1,76 +1,55 @@
 <template v-if="!review.isHidden">
-    <div v-bind="$attrs" @click="closeMenu" class="container_detail_card">
-        <div style="font-size: small;">Posté le {{ formatDate(review.createdAt) }}</div>
-        <div class="card">
-            <div class="review_card_content">
-                <div class="review_card_content_header">
-                    <div class="picture_profile_review">
-                        <img :src="getUrlImage(review.reviewer.profilePicture)" alt="Profile Picture" />
+    <div v-bind="$attrs" @click="closeMenu" class="review-card">
+        <div class="review-card__date">Posté le {{ formatDate(review.createdAt) }}</div>
+        <div class="review-card__body">
+            <div class="review-card__content">
+                <div class="review-card__header">
+                    <div class="review-card__avatar">
+                        <img :src="getUrlImage(review.reviewer.profilePicture)" @error="onImgError($event)" alt="Profile" />
                     </div>
-                    <div class="review_card_content_header_content">
-                        <div class="reviewer_username">
-                            <span>@{{ review.reviewer.username }}</span>
-                        </div>
-                        <div class="reviewer_rating">
-                            <i style="color: #FFD485;margin-left: 8px;" class="bi bi-star-fill"></i>
-                            <span class="rating_number">{{ review.rating }}</span>
+                    <div class="review-card__user">
+                        <span class="review-card__username">@{{ review.reviewer.username }}</span>
+                        <div class="review-card__stars">
+                            <i v-for="n in 5" :key="n" class="bi" :class="n <= review.rating ? 'bi-star-fill' : 'bi-star'" ></i>
+                            <span class="review-card__rating-num">{{ review.rating }}/5</span>
                         </div>
                     </div>
-                    <i @click="toggleMenu($event)" style="position: absolute; right: 0px;top: 10px; cursor: pointer;" class="bi bi-three-dots-vertical"></i>
-                    <div v-if="isMenuVisible" class="dropdown-menu">
-                    <ul style="width: 100%;">
-                        <li @click="showPopupReport = true">
-                            <i class="bi bi-signal me-2"></i>
-                                Signaler
-                            </li>
-                        </ul>
+                    <button @click="toggleMenu($event)" class="review-card__menu-btn">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <div v-if="isMenuVisible" class="review-card__dropdown">
+                        <button @click="showPopupReport = true" class="review-card__dropdown-item">
+                            <i class="bi bi-flag"></i> Signaler
+                        </button>
                     </div>
                 </div>
-                <div class="review_card_content_text">
-                    <div class="review_text">{{ review.review }}</div>
+                <div class="review-card__text">
+                    <p>{{ review.review }}</p>
                 </div>
-                    
             </div>
-            <div class="illustration">
+            <div v-if="review.images && review.images.length > 0" class="review-card__images">
                 <ImageCarousel :images="review.images" />
             </div>
         </div>
     </div>
-    <!--------- Popup ---------->
     <report_card @closeReport="showPopupReport = false" :type="'rating'" :id="review._id" v-if="showPopupReport"></report_card>
-
-
 </template>
-  
+
   <script lang="ts">
     import ImageCarousel from '../components/ImageCarousel.vue';
     import report_card from '../components/report_card.vue';
-    import axios from 'axios';
-    import Cookies from "js-cookie";
 
     export default {
-
         name: "review_card",
-        components: {
-            ImageCarousel,
-            report_card
-
-        },
-        inheritAttrs: false, 
-
+        components: { ImageCarousel, report_card },
+        inheritAttrs: false,
         props: {
-            review: {
-                type: Object,
-                required: true,
-            },
+            review: { type: Object, required: true },
         },
         data() {
             return {
                 isMenuVisible: false,
-                showPopupReview: false,
-                signalReason: '', 
-                showPopupReport:false
-
+                showPopupReport: false
             };
         },
         methods: {
@@ -80,38 +59,18 @@
             },
             closeMenu() {
                 this.isMenuVisible = false;
-                this.showPopupReview = false;
             },
-            closePopup() {
-                this.showPopupReview = false;
-            },
-            async sendSignal(reason: string) {
-                const sessionToken = Cookies.get('sessionToken');
-                const id_review = this.review._id;
-                const data = {
-                    'reason': reason,
-                };
-                
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${id_review}/report`, data, {
-                    headers: {
-                    Authorization: `Bearer ${sessionToken}`,
-                    }
-                }).then(response => {
-                    if (response.status == 201 || response.status == 200) {
-                        //return true;
-                        this.closePopup();
-                    }else {
-                        console.error("Error reporting review:", response);
-                    }
-
-                })
+            onImgError(event: Event) {
+                const img = event.target as HTMLImageElement;
+                img.style.display = 'none';
+                if (img.parentElement) {
+                    img.parentElement.classList.add('review-card__avatar--fallback');
+                }
             },
             getUrlImage(url: string) {
-                if (url.startsWith('http')) {
-                    return url;
-                } else {
-                    return `${import.meta.env.VITE_API_URL}${url}`;
-                }
+                if (!url) return '';
+                if (url.startsWith('http')) return url;
+                return `${import.meta.env.VITE_API_URL}${url}`;
             },
             formatDate(dateString: string) {
                 const date = new Date(dateString);
@@ -119,140 +78,141 @@
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                }) + ' à ' + date.toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
                 });
             },
         },
     };
-
   </script>
-  
+
   <style lang="scss" scoped>
-    .card{
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        height: 300px;
-        position: relative;
+.review-card {
+    background: var(--bg-card);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow var(--transition-fast);
+    &:hover { box-shadow: var(--shadow-md); }
+}
+.review-card__date {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--surface-border);
+}
+.review-card__body {
+    display: flex;
+    min-height: 160px;
+}
+.review-card__content {
+    flex: 1;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 0;
+}
+.review-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    position: relative;
+}
+.review-card__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--accent-gradient);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    img { width: 100%; height: 100%; object-fit: cover; }
+    &--fallback::after {
+        content: '\F4DA';
+        font-family: 'bootstrap-icons';
+        color: white;
+        font-size: 1.2rem;
     }
-    .review_card_content_header{
-        display: flex;
-    }
-    .reviewer_username{
-        vertical-align: middle;
-        margin-left: 10px;
-    }
-    .reviewer_rating{
-
-    }
-    .inputReason{
-        width: calc(98% - 2px);
-        margin-left: 1%;
-        margin-right: 1%;
-        border: 2px solid var(--secondary-color-tint);
-        border-radius: 4px;
-    }
-    .review_card_content_header_content{
-        margin-top: 10px;
-    }
-    .dropdown-menu{
-        display: block;
-    }
-
-    .review_card_content{
-        height: 100%;
-        width: 50%;
-        flex-direction: column; 
-        display: flex;
-        justify-content: space-between;
-        overflow-x: scroll;
-        position: relative;
-    }
-
-    .review_card_content_text{
-        margin-top: 10px;
-        margin-left: 10px;
-        height: 100%; // ou une hauteur explicite si besoin
-        display: flex;
-        flex-direction: column;
-    }
-    .review_text{
-        font-size: small;
-        padding-bottom: 15px;
-        max-height: 60%; // ou la valeur que tu veux
-        overflow-y: auto;
+}
+.review-card__user { flex: 1; min-width: 0; }
+.review-card__username {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.review-card__stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
+    i { font-size: 0.75rem; color: #FFD485; }
+}
+.review-card__rating-num {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-left: 6px;
+}
+.review-card__menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-xs);
+    border-radius: var(--radius-sm);
+    &:hover { background: var(--surface-hover); }
+}
+.review-card__dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 10;
+    overflow: hidden;
+}
+.review-card__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 8px 16px;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    &:hover { background: var(--surface-hover); color: var(--danger); }
+}
+.review-card__text {
+    flex: 1;
+    p {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0;
         word-break: break-word;
-        padding-right: 3px;
     }
-    .review_text::-webkit-scrollbar {
-        width: 8px;
-        background: #eee;
-    }
-    .review_text::-webkit-scrollbar-thumb {
-        background: #bdbdbd;
-        border-radius: 4px;
-    }
-    .illustration{
-        display: flex;
-        flex-direction: column;
-        flex-wrap: nowrap;
-        width: 50%;
-        align-items: center;
-        justify-content: center;
-        background: black;
-        position: relative;
-        margin-left: 10px;
-        border-radius: 5px;
-    }
-    .picture_profile_review{
-        height: 80px;
-        width: 80px;
-        margin-left: 10px;
-        margin-top: 10px;
-        background-color: var(--primary-color);
-    }
-    .picture_profile_review img{
+}
+.review-card__images {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--bg-tertiary);
+    border-left: 1px solid var(--surface-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+@media (max-width: 768px) {
+    .review-card__body { flex-direction: column-reverse; }
+    .review-card__images {
         width: 100%;
+        height: 160px;
+        border-left: none;
+        border-bottom: 1px solid var(--surface-border);
     }
-    @media (max-width:980px){
-        .container_detail_card .card{
-            flex-direction: column-reverse;
-        }
-    }
-    @media (max-width:820px){
-        .review_card_content{
-            width: 100%;
-            height: auto;
-        }
-        .illustration{
-            width: 100%;
-            height: 30vh;      // 30% de la hauteur de la fenêtre (ou adapte à 30% du parent si besoin)
-            max-height: 30%;
-            min-height: 100px;
-        }
-        .container_detail_card{
-            height: 90%;
-        }
-        .review_card_content, .container_detail_card .card, .review_text{
-            overflow: hidden;
-        }
-        .container_detail_card .card {
-            flex-direction: column-reverse;
-            height: auto !important;
-            min-height: 0;
-        }
-    }
-    @media (max-width:550px){
-        .container_detail_card .card {
-            overflow-y: scroll;
-            display: flex;
-            flex-wrap: nowrap; 
-            white-space: nowrap; 
-            width: 100%;    
-        }
-    }
+}
   </style>
-  

@@ -40,8 +40,6 @@ export default defineComponent({
       // Récupérer les paramètres de query
       paymentToken.value = (route.query.token as string) || '';
       source.value = (route.query.source as string) || '';
-      
-      console.log('Payment cancelled - Token:', paymentToken.value, 'Source:', source.value);
     });
 
 

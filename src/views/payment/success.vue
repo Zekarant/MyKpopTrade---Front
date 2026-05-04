@@ -112,9 +112,6 @@ export default defineComponent({
       token.value = (route.query.token as string) || '';
       payerId.value = (route.query.PayerID as string) || '';
       source.value = (route.query.source as string) || '';
-      
-      console.log('Payment successful - Token:', token.value, 'PayerID:', payerId.value, 'Source:', source.value);
-      
       // Optionnel: envoyer les informations au serveur pour enregistrer la transaction
       // this.savePaymentInfo();
     });

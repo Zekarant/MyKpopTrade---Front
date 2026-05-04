@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 import router from "@/router";
+import { API_URL } from '@/config/api';
 
 interface ApiError {
   message: string;
@@ -17,7 +18,7 @@ type AuthToken = string | null;
 
 class authentificationService {
   private authApiClient: AxiosInstance;
-  private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
+  private API_BASE_URL: string = `${API_URL}/api`;
 
   constructor() {
     this.authApiClient = axios.create({
@@ -102,8 +103,8 @@ class authentificationService {
     const sessionToken = Cookies.get("sessionToken");
 
     if (!sessionToken) {
-      this.logout();
-      return;
+      await this.logout();
+      throw new Error("No session token");
     }
 
     try {
@@ -124,12 +125,17 @@ class authentificationService {
         Cookies.set("sessionToken", response.data.accessToken, { expires: 1 });
         Cookies.set("refreshToken", response.data.refreshToken, { expires: 1 });
       } else {
-        this.logout();
+        await this.logout();
+        throw new Error("Session refresh failed");
       }
     } catch (error) {
+      if ((error as Error).message === "No session token" || (error as Error).message === "Session refresh failed") {
+        throw error;
+      }
       const axiosError = error as AxiosError<ApiError>;
       console.error("Erreur lors de la vérification de session :", axiosError.response?.data);
-      this.logout();
+      await this.logout();
+      throw new Error("Session verification failed");
     }
   }
   clearCookies(): void {

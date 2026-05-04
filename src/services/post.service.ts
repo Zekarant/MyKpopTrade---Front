@@ -1,7 +1,8 @@
 import axios from 'axios';
-import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios'; 
+import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import Cookies from "js-cookie";
 import authentificationService  from '@/services/authentification.service';
+import { API_URL } from '@/config/api';
 
 import type {
   Post,
@@ -10,7 +11,7 @@ import type {
   PostsResponse,
   ApiResponse,
   SearchParams
-} from '@/types/post.types'; 
+} from '@/types/post.types';
 import router from '@/router';
 // Helper authentificationServicetions
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
@@ -25,10 +26,10 @@ interface ApiError {
 type AuthToken = string | null;
 class PostService {
   private apiClient: AxiosInstance;
-  private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
+  private API_BASE_URL: string = `${API_URL}/api`;
 
   constructor() {
-    
+
     this.apiClient = axios.create({
       baseURL: `${this.API_BASE_URL}`,
       headers: {
@@ -65,7 +66,7 @@ class PostService {
   }
   private handleUnauthorized(): void {
     localStorage.removeItem('token');
-    router.push('/login');
+    // Don't redirect here - let verifSession handle it to avoid duplicate redirects
   }
   private getAuthToken(): AuthToken {
     // Utilise js-cookie pour récupérer le sessionToken
@@ -82,10 +83,10 @@ class PostService {
     limit: number = 20,
     page: number = 1,
     kpopGroup: string | null = null,
-    type: string = 'photocard'
+    type: string = 'photocard',
+    _retried: boolean = false
   ): Promise<PostsResponse> {
     try {
-
       const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products', { params: {
           limit,
           page,
@@ -94,11 +95,11 @@ class PostService {
         }, });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.getPosts(limit, page, kpopGroup, type);
+        return this.getPosts(limit, page, kpopGroup, type, true);
       }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -106,13 +107,13 @@ class PostService {
   }
 
   // Récupérer un post par ID
-  async getPost(id: string | number | undefined): Promise<PostResponse> {
+  async getPost(id: string | number | undefined, _retried: boolean = false): Promise<PostResponse> {
     if (!id) {
       throw new Error('ID du post requis');
     }
-    
+
     const postId = id.toString();
-    
+
     try {
       const response: AxiosResponse<PostResponse> = await this.apiClient.get(`/products/${postId}`, {
         headers: {
@@ -122,11 +123,11 @@ class PostService {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.getPost(id);
+        return this.getPost(id, true);
       }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -134,13 +135,13 @@ class PostService {
   }
 
   // Supprimer un post
-  async deletePost(id: string | number | undefined): Promise<any> {
+  async deletePost(id: string | number | undefined, _retried: boolean = false): Promise<any> {
     if (!id) {
       throw new Error('ID du post requis');
     }
-    
+
     const postId = id.toString();
-    
+
     try {
       const response: AxiosResponse = await axios.delete(`${this.API_BASE_URL}/products/${postId}`, {
         headers: {
@@ -150,11 +151,11 @@ class PostService {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.deletePost(id);
+        return this.deletePost(id, true);
       }
       console.error('Erreur lors de la suppression :', error);
       throw error;
@@ -175,11 +176,11 @@ class PostService {
     data.append('kpopMember', postData.kpopMember);
     data.append('albumName', postData.albumName);
     data.append('allowOffers', postData.allowOffers.toString());
-    
+
     postData.images.forEach((file: File) => {
       data.append('productImages', file);
     });
-    
+
     data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
 
     try {
@@ -197,8 +198,8 @@ class PostService {
     } catch (error: any) {
       const res = error.response;
 
-      if (res && (res.data?.message === "Token invalide" || 
-                  res.data?.code === "TOKEN_EXPIRED" || 
+      if (res && (res.data?.message === "Token invalide" ||
+                  res.data?.code === "TOKEN_EXPIRED" ||
                   res.status === 401)) {
         await authentificationService.verifSession();
       }
@@ -212,9 +213,9 @@ class PostService {
     if (!id) {
       throw new Error('ID du post requis');
     }
-    
+
     const postId = id.toString();
-    
+
     const data = {
       title: postData.title,
       description: postData.description,
@@ -255,8 +256,8 @@ class PostService {
     } catch (error: any) {
       const res = error.response;
 
-      if (res && (res.data?.message === "Token invalide" || 
-                  res.data?.code === "TOKEN_EXPIRED" || 
+      if (res && (res.data?.message === "Token invalide" ||
+                  res.data?.code === "TOKEN_EXPIRED" ||
                   res.status === 401)) {
         await authentificationService.verifSession();
       }
@@ -267,14 +268,12 @@ class PostService {
 
   // Marquer comme vendu
   async sold(idUser: string | undefined, id: string | number | undefined): Promise<boolean> {
-    console.log('idUser', idUser);
-    console.log('id', id);
     if (!id || !idUser) {
       throw new Error('ID du post et ID utilisateur requis');
     }
-    
+
     const postId = id.toString();
-    
+
     try {
       const response: AxiosResponse = await axios.post(`${this.API_BASE_URL}/products/${postId}/sold/`, {
         buyerId: idUser
@@ -287,8 +286,8 @@ class PostService {
 
       return response.status === 200;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
+      if (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
           error.response?.status === 401) {
         await authentificationService.verifSession();
       }
@@ -302,7 +301,8 @@ class PostService {
     query: string,
     maxPrice: number | null = null,
     minPrice: number | null = null,
-    type: string | null = null
+    type: string | null = null,
+    _retried: boolean = false
   ): Promise<PostsResponse> {
     const tabParam: SearchParams = {
       search: query,
@@ -325,11 +325,11 @@ class PostService {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.search(query, maxPrice, minPrice, type);
+        return this.search(query, maxPrice, minPrice, type, true);
       }
       console.error('Erreur lors de la recherche :', error);
       throw error;
@@ -337,13 +337,13 @@ class PostService {
   }
 
   // Ajouter aux favoris
-  async addFavorite(id: string | number | undefined): Promise<boolean> {
+  async addFavorite(id: string | number | undefined, _retried: boolean = false): Promise<boolean> {
     if (!id) {
       throw new Error('ID du post requis');
     }
-    
+
     const postId = id.toString();
-    
+
     try {
       const response: AxiosResponse = await axios.post(`${this.API_BASE_URL}/products/${postId}/favorite`, {
         buyerId: getIdUser()
@@ -356,11 +356,11 @@ class PostService {
 
       return response.status === 200;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.addFavorite(id);
+        return this.addFavorite(id, true);
       }
       console.error('Erreur lors de l\'ajout aux favoris :', error);
       return false;
@@ -368,21 +368,19 @@ class PostService {
   }
 
   // Récupérer les favoris
-  async getFavorites(limit: number = 20, page: number = 1): Promise<PostsResponse> {
+  async getFavorites(limit: number = 20, page: number = 1, _retried: boolean = false): Promise<PostsResponse> {
     try {
       const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products/inventory/favorites/', { params: {
           limit,
           page
         } });
-
-      console.log('response', response);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.getFavorites(limit, page);
+        return this.getFavorites(limit, page, true);
       }
       console.error('Erreur lors de la récupération des favoris :', error);
       throw error;
@@ -390,7 +388,7 @@ class PostService {
   }
 
   // Obtenir les recommandations
-  async getRecommendations(): Promise<Post[]> {
+  async getRecommendations(_retried: boolean = false): Promise<Post[]> {
     const tabRecommendations: Post[] = [];
 
     try {
@@ -399,20 +397,97 @@ class PostService {
         response.data.products.forEach((productFav: Post) => {
           tabRecommendations.push(productFav);
         });
-        
       }
-   
     } catch (error: any) {
-      if (error.response?.data?.message === "Token invalide" || 
-          error.response?.data?.code === "TOKEN_EXPIRED" || 
-          error.response?.status === 401) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
         await authentificationService.verifSession();
-        return this.getRecommendations();
+        return this.getRecommendations(true);
       }
       console.error('Erreur lors de la récupération des recommandations :', error);
     }
 
     return tabRecommendations;
+  }
+
+  async addProductImage(productId: string, image: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('productImage', image);
+    try {
+      const response = await axios.post(
+        `${this.API_BASE_URL}/products/${productId}/images`,
+        formData,
+        { headers: { Authorization: `Bearer ${getSessionToken()}` } }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Erreur lors de l\'ajout d\'image :', error);
+      throw error;
+    }
+  }
+
+  async deleteProductImage(productId: string, imageUrl: string): Promise<any> {
+    try {
+      const response = await this.apiClient.delete(`/products/${productId}/images`, {
+        data: { imageUrl },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression d\'image :', error);
+      throw error;
+    }
+  }
+
+  async reorderProductImages(productId: string, images: string[]): Promise<any> {
+    try {
+      const response = await this.apiClient.put(`/products/${productId}/images/reorder`, { images });
+      return response.data;
+    } catch (error: any) {
+      console.error('Erreur lors de la réorganisation des images :', error);
+      throw error;
+    }
+  }
+
+  async getQuickRecommendations(limit = 4): Promise<Post[]> {
+    try {
+      const response = await this.apiClient.get('/products/quick-recommendations', { params: { limit } });
+      return response.data?.products || [];
+    } catch (error: any) {
+      console.error('Erreur quick-recommendations :', error);
+      return [];
+    }
+  }
+
+  async getProductStats(): Promise<any> {
+    try {
+      const response = await this.apiClient.get('/products/stats');
+      return response.data;
+    } catch (error: any) {
+      console.error('Erreur stats produits :', error);
+      throw error;
+    }
+  }
+
+  // Récupérer l'inventaire de l'utilisateur
+  async getInventory(status: string = 'available', limit: number = 20, page: number = 1, _retried: boolean = false): Promise<PostsResponse> {
+    try {
+      const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products/inventory/me', { params: {
+          status,
+          limit,
+          page
+        } });
+      return response.data;
+    } catch (error: any) {
+      if (!_retried && (error.response?.data?.message === "Token invalide" ||
+          error.response?.data?.code === "TOKEN_EXPIRED" ||
+          error.response?.status === 401)) {
+        await authentificationService.verifSession();
+        return this.getInventory(status, limit, page, true);
+      }
+      console.error('Erreur lors de la récupération de l\'inventaire :', error);
+      throw error;
+    }
   }
 }
 

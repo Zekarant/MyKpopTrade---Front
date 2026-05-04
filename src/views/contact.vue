@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="page">
     <Nav_bar></Nav_bar>
     <div class="contact-container">
       <div class="contact-card">
@@ -70,7 +70,7 @@
             ></textarea>
           </div>
 
-          <button type="submit" class="btn-primary w-100" :disabled="loading">
+          <button type="submit" class="contact-submit-btn" :disabled="loading">
             <span v-if="loading"><i class="bi bi-hourglass-split me-2"></i>Envoi en cours...</span>
             <span v-else><i class="bi bi-send me-2"></i>Envoyer le message</span>
           </button>
@@ -92,9 +92,11 @@
 <script lang="ts">
 import { defineComponent, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import Nav_bar from '@/components/adherents/nav_bar.vue';
 
 export default defineComponent({
   name: 'contact',
+  components: { Nav_bar },
   setup() {
     const router = useRouter();
     const loading = ref(false);
@@ -207,23 +209,23 @@ export default defineComponent({
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: calc(100vh - 50px);
-  padding: 40px 20px;
-  background-color: var(--light-color);
+  min-height: calc(100vh - var(--navbar-height));
+  padding: var(--space-2xl) var(--space-lg);
 }
 
 .contact-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2xl);
   width: 100%;
   max-width: 600px;
 }
 
 .contact-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-xl);
   position: relative;
 }
 
@@ -233,38 +235,39 @@ export default defineComponent({
   top: 0;
   background: none;
   border: none;
-  color: var(--secondary-color);
-  font-family: Sora;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  padding: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: all var(--transition-fast);
 
   &:hover {
-    color: var(--primary-color);
+    color: var(--accent-pink);
+    background: rgba(255, 45, 120, 0.05);
   }
 }
 
 .contact-icon {
-  font-size: 40px;
-  color: var(--primary-color);
+  font-size: 2.5rem;
+  color: var(--accent-pink);
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-sm);
 }
 
 .contact-title {
-  font-family: Sora;
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: var(--primary-color);
-  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-xs) 0;
 }
 
 .contact-subtitle {
-  color: var(--secondary-color);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
   margin: 0;
 }
 
@@ -276,15 +279,21 @@ export default defineComponent({
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 12px;
+  gap: 0 var(--space-md);
 }
 
 .input-group {
   display: flex;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--secondary-color-tint);
+  border: 1px solid var(--surface-border);
   height: 48px;
+  transition: border-color var(--transition-fast);
+
+  &:focus-within {
+    border-color: var(--accent-pink);
+    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.08);
+  }
 
   &.textarea-group {
     height: auto;
@@ -292,12 +301,12 @@ export default defineComponent({
 }
 
 .input-group-text {
-  background-color: #fff;
+  background-color: var(--bg-primary);
   border: none;
   display: flex;
   align-items: center;
   padding: 0 12px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 .form-control {
@@ -305,9 +314,10 @@ export default defineComponent({
   outline: none;
   box-shadow: none;
   padding: 0 12px;
-  font-family: Sora;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   width: 100%;
+  background: transparent;
+  color: var(--text-primary);
 
   &:focus {
     box-shadow: none;
@@ -315,7 +325,7 @@ export default defineComponent({
   }
 
   &.is-invalid {
-    border-color: var(--danger-color);
+    border-color: var(--danger);
   }
 }
 
@@ -326,30 +336,43 @@ textarea.form-control {
 
 select.form-control {
   cursor: pointer;
-  color: #333;
-
-  option[value=""] {
-    color: #bbb;
-  }
+  color: var(--text-primary);
 }
 
-.btn-primary {
-  margin-top: 4px;
+.contact-submit-btn {
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 14px 24px;
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 16px rgba(255, 45, 120, 0.25);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.35);
+  }
 
   &:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
   }
 }
 
 .alert {
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 600px) {
   .contact-card {
-    padding: 24px 16px;
+    padding: var(--space-lg);
   }
 
   .form-row {

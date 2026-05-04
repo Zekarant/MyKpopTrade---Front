@@ -20,19 +20,20 @@
             <input type="file" ref="fileInput" @change="updatePicture" accept="image/*" style="display: none;" />
         </div>
         <div  v-else class="picture">
-            <img v-if="localProfilInfo.profilePicture && localProfilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />           
+            <img v-if="localProfilInfo.profilePicture && localProfilInfo.profilePicture  != 'https://mykpoptrade.com/images/avatar-default.png'" :src="profilePictureUrl || undefined" alt="Profile Picture" />
             <div v-else class="empty-profile">
                 <i class="bi bi-camera"></i>
             </div>
         </div>
         <div class="profil">
-            <div class="row row_profil" style="height: 100%; ">
+            <div class="row row_profil">
                 <div class="empty_box"></div>
                 <div class="row row_name">
                     <div class="container_nickname col-md-4">
                         <div class="nickname">
                             <div class="nickname_block">
                                 <span class="nickname_text_field">{{ profilInfo.username }}</span>
+                                <i v-if="profilInfo.isIdentityVerified" class="bi bi-patch-check-fill verified-badge-icon"></i>
                             </div>
                             <div v-if="profilInfo.isSellerVerified" class="img_certif_container">
                                 <img src="@/assets/images/certif.svg">
@@ -43,17 +44,16 @@
                     <div class="container_infos col-md-7">
                         <div class="row">
                             <div class="col-md-5 subscription">
-                                <span class="bold">00</span> Abonnements
+                                <span class="bold">{{ followingCount }}</span> Abonnements
                             </div>
                             <div class="col-md-5 subscription">
-                                <span class="bold">00</span> Abonnés
-
+                                <span class="bold">{{ followersCount }}</span> Abonnés
                             </div>
                             <div v-if="admin" class="col-md-1 more_content" @click="toggleMenu($event)">
                                 <i class="bi bi-three-dots-vertical"></i>
                                 <div v-if="isMenuVisible" class="dropdown-menu">
                                     <ul >
-                                        <li @click="openSettings">
+                                        <li @click="router.push({ name: 'settings' })">
                                             <i class="bi bi-gear me-2"></i> Paramètres
                                         </li>
                                     </ul>
@@ -66,7 +66,7 @@
                                 <button @click="openMessagePopup" v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
                             </div>
                             <div class="col-md-5">
-                                <button v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-primary">Suivre</button>
+                                <button v-if="!isYouProfil" @click="toggleFollow" style="font-size: 12px;" type="button" :class="['btn', isFollowing ? 'btn-outline-secondary' : 'btn-primary']">{{ isFollowing ? 'Suivi' : 'Suivre' }}</button>
                             </div>
                         </div>
                     </div>
@@ -127,8 +127,32 @@
                     </div>
 
                     <div class="settings-section">
+                        <h5 class="section-title">Comptes liés</h5>
+                        <div class="setting-item-modern" @click="linkGoogle">
+                            <div class="setting-item-left">
+                                <i class="bi bi-google setting-icon" style="color: #4285F4;"></i>
+                                <span class="setting-label">Google</span>
+                            </div>
+                            <div class="setting-item-right">
+                                <i v-if="profilInfo.socialAuth?.google?.id" class="bi bi-check-circle-fill status-icon status-success"></i>
+                                <span v-else class="status-badge status-badge-info" style="cursor:pointer">Lier</span>
+                            </div>
+                        </div>
+                        <div class="setting-item-modern" @click="linkDiscord">
+                            <div class="setting-item-left">
+                                <i class="bi bi-discord setting-icon" style="color: #5865F2;"></i>
+                                <span class="setting-label">Discord</span>
+                            </div>
+                            <div class="setting-item-right">
+                                <i v-if="profilInfo.socialAuth?.discord?.id" class="bi bi-check-circle-fill status-icon status-success"></i>
+                                <span v-else class="status-badge status-badge-info" style="cursor:pointer">Lier</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
                         <h5 class="section-title">Vérifications</h5>
-                        
+
                         <div class="setting-item-modern" @click="getVerifIdentityState">
                             <div class="setting-item-left">
                                 <i class="bi bi-person-badge setting-icon"></i>
@@ -208,7 +232,7 @@
                                 <span class="setting-label">Messages directs</span>
                             </div>
                             <label class="switch-modern">
-                                <input 
+                                <input
                                     type="checkbox"
                                     :checked="profilInfo.preferences.allowDirectMessages"
                                     @change="changeAllowDirectMessages($event)"
@@ -250,10 +274,10 @@
                     <input type="password" v-model="newPassword" placeholder="Nouveau mot de passe" class="form-control mb-2">
                     <input type="password" v-model="confirmPassword" placeholder="Confirmer le mot de passe" class="form-control mb-2">
                 </div>
-                <button class="btnSave btn btn-primary" @click="saveSettingsPswd">Changer votre mot de passe</button>                  
+                <button class="btnSave btn btn-primary" @click="saveSettingsPswd">Changer votre mot de passe</button>
 
             </div>
-            
+
         </div>
         <!--------- Popup hide data ---------->
         <div v-if="anonymizePopup" class="popup-overlay" @click="closePopup()">
@@ -261,13 +285,13 @@
                 <i style="float: right;" @click="closePopup()" class="bi bi-x-lg display_phone_tablette"></i>
                 <h5 style="margin-bottom: 20px;">Voulez-vous anonymiser vos données ?</h5>
                 <div style="display: flex;">
-                    <button style="margin: 10px;" class="btn btn-primary-outline" @click="anonymizePopup = false">Annuler</button>                  
-                    <button style="margin: 10px;" class="btn btn-primary" @click="confirmAnonymize">Confirmer</button>  
+                    <button style="margin: 10px;" class="btn btn-primary-outline" @click="anonymizePopup = false">Annuler</button>
+                    <button style="margin: 10px;" class="btn btn-primary" @click="confirmAnonymize">Confirmer</button>
                 </div>
-                
+
 
             </div>
-            
+
         </div>
         <!--------- Popup delete account ---------->
         <div v-if="showDeleteAccount" class="popup-overlay" @click="closePopup()">
@@ -278,11 +302,11 @@
                     <input type="password" v-model="passwordForConfirm" placeholder="mot de passe" class="form-control mb-2">
                 </div>
                 <div style="display: flex;">
-                    <button style="margin: 10px;" class="btnSave btn btn-danger-outline" @click="showDeleteAccount = false">Annuler</button>                  
-                    <button style="margin: 10px;" class="btnSave btn btn-danger" @click="requestAccountDeletion">Supprimer le compte</button>      
+                    <button style="margin: 10px;" class="btnSave btn btn-danger-outline" @click="showDeleteAccount = false">Annuler</button>
+                    <button style="margin: 10px;" class="btnSave btn btn-danger" @click="requestAccountDeletion">Supprimer le compte</button>
                 </div>
             </div>
-            
+
         </div>
         <!--------- Popup verify identity  ---------->
         <div v-if="verifIdentityPopup" class="popup-overlay" @click="closePopup()">
@@ -295,15 +319,15 @@
                         <option value="driver_license">Permis de conduire</option>
                     </select>
                     <div class="file-input-container" @click="triggerFileInputIdentity">
-                        <img v-if="!pictureDocumentPreview" style="height: 150px; " 
+                        <img v-if="!pictureDocumentPreview" style="height: 150px; "
                         class="imgcenter" src="../../assets/images/camera-white.svg" >
-                        <img v-else style="height: 150px; " 
+                        <img v-else style="height: 150px; "
                         class="imgcenter" :src="pictureDocumentPreview" >
                         <input style="display: none;" ref="fileInputIdentity" type="file" accept="image/*"  @change="updatePictureDocument"  />
                     </div>
                     <label style="margin-top: 10px;" for="terms">J'autorise le traitement de mes données</label>
                     <input style="margin-left: 5px; vertical-align: sub;" class="cheeckbox-primary" v-model="consentUseData" type="checkbox" id="terms" required>
-                    <button style="margin-top: 10px;"  v-if="consentUseData && documentIamge"  class="btn btn-primary imgcenter" @click="verifIdentity">Vérifier mon identitée</button>      
+                    <button style="margin-top: 10px;"  v-if="consentUseData && documentIamge"  class="btn btn-primary imgcenter" @click="verifIdentity">Vérifier mon identitée</button>
                 </div>
                 <div v-else>
                     <div v-if="!verification.userVerification.isVerified && verification.verification.status == 'pending'">
@@ -325,7 +349,7 @@
                 </div>
             </div>
         </div>
-    
+
 </template>
 
 <script lang="ts">
@@ -334,6 +358,7 @@
     import Cookies from "js-cookie";
     import { PDFExportService } from '@/services/PDFExportService.service';
     import authentificationService from '@/services/authentification.service';
+    import followService from '@/services/follow.service';
     import send_message from './send_message.vue';
 
     interface LocalProfilInfo {
@@ -349,7 +374,7 @@
                 isYouProfil: false,
                 isMenuVisible: false,
                 verifIdentityPopup: false,
-                showDeletePictureConfirmation: false, 
+                showDeletePictureConfirmation: false,
                 showDeletePictureBannerConfirmation: false,
                 showSetting: false,
                 showSettingPswd: false,
@@ -381,11 +406,14 @@
                 documentType:'id_card',
                 newPassword: '',
                 confirmPassword: '',
+                isFollowing: false,
+                followersCount: 0,
+                followingCount: 0,
             };
         },
         components: {
             send_message,
-          
+
         },
         setup() {
             const route = useRoute();
@@ -400,18 +428,21 @@
                 this.localProfilInfo.isPhoneVerified = newValue;
             },
             'profilInfo.profileBanner'(newValue) {
-                this.localProfilInfo.profileBanner = newValue;  
+                this.localProfilInfo.profileBanner = newValue;
             },
             'profilInfo.profilePicture'(newValue) {
-                this.localProfilInfo.profilePicture = newValue;  
+                this.localProfilInfo.profilePicture = newValue;
             },
             'profilInfo.paypalEmail'(newValue) {
-                this.localProfilInfo.paypalEmail = newValue;  
+                this.localProfilInfo.paypalEmail = newValue;
             },
             profilInfo: {
                 handler(newValue) {
                     if (newValue) {
                         Object.assign(this.localProfilInfo, newValue);
+                        if (newValue.id || newValue._id) {
+                            this.loadFollowData();
+                        }
                     }
                 },
                 immediate: true,
@@ -430,6 +461,33 @@
                 const id = this.route.params.id;
                 if(id == 'me'){
                     this.isYouProfil = true;
+                }
+            },
+            async loadFollowData() {
+                const userId = this.profilInfo?.id || this.profilInfo?._id;
+                if (!userId) return;
+                try {
+                    if (!this.isYouProfil) {
+                        const status = await followService.getStatus(userId);
+                        this.isFollowing = status.isFollowing;
+                    }
+                    const followers = await followService.getFollowers(userId, 1, 1);
+                    this.followersCount = followers.total || 0;
+                    const following = await followService.getFollowing(userId, 1, 1);
+                    this.followingCount = following.total || 0;
+                } catch (e) {
+                    console.error('Erreur chargement follow:', e);
+                }
+            },
+            async toggleFollow() {
+                const userId = this.profilInfo?.id || this.profilInfo?._id;
+                if (!userId) return;
+                try {
+                    const res = await followService.toggleFollow(userId);
+                    this.isFollowing = res.isFollowing;
+                    this.followersCount += res.isFollowing ? 1 : -1;
+                } catch (e) {
+                    console.error('Erreur toggle follow:', e);
                 }
             },
             toggleMenu(event: Event){
@@ -460,7 +518,7 @@
                 this.verifIdentityPopup = false;
                 this.anonymizePopup = false;
                 this.showDeletePaypalPopup = false;
-                
+
             },
             openSettings(){
                 this.phoneNumber = this.profilInfo.phoneNumber || '';
@@ -477,7 +535,7 @@
             },
             async updatePictureBanner(event: Event) {
                 const file = (event.target as HTMLInputElement).files?.[0];
-          
+
                 if (file) {
                     const formData = new FormData();
 
@@ -500,22 +558,17 @@
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
                             authentificationService.verifSession();
                         }
-                        console.log(error);
                     });
                 }
             },
             async updatePicture(event: Event) {
                 const file = (event.target as HTMLInputElement).files?.[0];
-          
-                if (file) {
-                    console.log(file);
 
+                if (file) {
                     const formData = new FormData();
 
                     formData.append('profilePicture', file);
-                    console.log('Contenu de FormData :', Array.from(formData.entries()));
                     const sessionToken = Cookies.get('sessionToken');
-                    console.log(formData);
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, formData, {
                         headers: {
                         'Content-Type': 'multipart/form-data.',
@@ -532,7 +585,6 @@
                         if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
                            authentificationService.verifSession();
                         }
-                        console.log(error);
                     });
                 }
             },
@@ -557,9 +609,9 @@
                         'Authorization': `Bearer ${sessionToken}`,
                     },
                 }).then(() => {
-                    
+
                     this.localProfilInfo.profileBanner = null;
-                    this.showDeletePictureBannerConfirmation = false; 
+                    this.showDeletePictureBannerConfirmation = false;
                 })
                 .catch((error) => {
                     console.error(error);
@@ -596,9 +648,6 @@
                                 'Authorization': `Bearer ${sessionToken}`
                             }
                         });
-                        console.log(response.data.message);
-                        console.log(response.status);
-                        console.log(response.data.code);
                         if (response.status === 200) {
                             this.verification = response.data;
                         }else{
@@ -612,7 +661,6 @@
                                 this.verification = null;
                             }
                         } else {
-                            console.log(error);
                         }
 
                     }
@@ -669,7 +717,7 @@
                 });
             },
             async verifEmail(){
-    
+
                 const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, {
                     email: this.profilInfo.email,
@@ -691,10 +739,10 @@
                        authentificationService.verifSession();
                     }
                 });
-            
+
             },
             async verifTel(){
-    
+
                 const sessionToken = Cookies.get('sessionToken');
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-phone-verification`, {
                     phoneNumber: this.phoneNumber,
@@ -716,7 +764,7 @@
                        authentificationService.verifSession();
                     }
                 });
-            
+
             },
             async verifCodeTel(){
                 const sessionToken = Cookies.get('sessionToken');
@@ -732,7 +780,7 @@
 
                     if (response.status === 200) {
                         this.codeRequest = true;
-                    
+
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -740,12 +788,12 @@
                     }
                 });
             },
-            async changeAllowDirectMessages(event: Event){ 
+            async changeAllowDirectMessages(event: Event){
                 const target = event.target as HTMLInputElement
                 const value = target.checked;
                 const sessionToken = Cookies.get('sessionToken');
 
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, 
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`,
                 {
                     preferences: {
                         allowDirectMessages: value
@@ -757,7 +805,6 @@
 
                     }
                 }).then(response => {
-                        console.log(response);
                         if (response.status === 200) {
                             this.$func.showToastSuccess(response.data.message);
                         }
@@ -773,7 +820,7 @@
             saveTel(){
                 const sessionToken = Cookies.get('sessionToken');
 
-                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, 
+                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`,
                 {
                     phoneNumber: this.phoneNumber
                 }, {
@@ -789,7 +836,7 @@
                         this.telRequest = false;
                         this.codeRequest = false;
                         this.phoneCode = '';
-                        this.localProfilInfo.isPhoneVerified = false; 
+                        this.localProfilInfo.isPhoneVerified = false;
                     }
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
@@ -801,10 +848,20 @@
                 this.showSetting = false
                 this.showSettingPswd = true
             },
+            linkGoogle() {
+                if (!this.profilInfo.socialAuth?.google?.id) {
+                    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+                }
+            },
+            linkDiscord() {
+                if (!this.profilInfo.socialAuth?.discord?.id) {
+                    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/discord`;
+                }
+            },
             async saveSettingsPswd(){
                 const sessionToken = Cookies.get('sessionToken');
 
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`, 
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`,
                 {
                     currentPassword: this.currentPassword,
                     newPassword: this.newPassword,
@@ -816,7 +873,6 @@
 
                         }
                 }).then(response => {
-                    console.log(response);
                     if (response.status === 200) {
                         this.showSettingPswd = false;
                         this.showSetting = true;
@@ -830,8 +886,8 @@
                         this.$func.showToastError(error.response.data.message);
                     }
                 });
-            
-            }, 
+
+            },
             async exportUserData() {
                 const sessionToken = Cookies.get('sessionToken');
                 try {
@@ -865,7 +921,7 @@
                     headers: {
                         'Authorization': `Bearer ${sessionToken}`
                     },data: {
-                        password: this.passwordForConfirm  
+                        password: this.passwordForConfirm
                     }
                 }).then(response => {
                     this.$func.showToastSuccess(response.data.message);
@@ -887,13 +943,13 @@
                     "confirmation": true
                 }, {
                     headers: {
-                        'Authorization': `Bearer ${sessionToken}` 
+                        'Authorization': `Bearer ${sessionToken}`
                     }
                 }).then(response => {
                     this.$func.showToastSuccess(response.data.message);
                     this.anonymizePopup = false;
 
-            
+
                 }).catch(error => {
                     if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
                        authentificationService.verifSession();
@@ -904,7 +960,7 @@
             },
             deletePaypal(){
                 const sessionToken = Cookies.get('sessionToken');
-                axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
+                axios.delete(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -932,10 +988,10 @@
                 });
             },
             savePaypal(){
-                
+
                 const sessionToken = Cookies.get('sessionToken');
 
-                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`, 
+                axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile/paypal-email`,
                 {
                     paypalEmail: this.emailPaypal
                 }, {
@@ -945,7 +1001,6 @@
 
                     }
                 }).then(response => {
-                    console.log(response);
                     if (response.status === 200) {
                         this.$func.showToastSuccess(response.data.message);
                         this.saveMailPaypal = false;
@@ -965,7 +1020,7 @@
                 if (file) {
                     this.documentIamge = file;
                     const reader = new FileReader();
-       
+
                     reader.onload = (e) => {
                         if (e.target?.result) {
                             this.pictureDocumentPreview =  e.target.result as string;
@@ -977,7 +1032,7 @@
             openMessagePopup(){
                 this.popupMessage = !this.popupMessage;
             },
-         
+
         },
         computed: {
             profilePictureUrl() {
@@ -989,14 +1044,14 @@
                 ? `${baseUrl}${this.localProfilInfo.profilePicture}`
                 : null;
                 }
-          
+
             },
             banneerictureUrl() {
                 const baseUrl = import.meta.env.VITE_API_URL;
                 return this.localProfilInfo.profileBanner
                 ? `${baseUrl}${this.localProfilInfo.profileBanner}`
                 : null;
-          
+
             },
         },
         props: {
@@ -1019,17 +1074,19 @@
     width: 100%;
 }
 .content{
-    height:100%;
+    min-height: 320px;
+    position: relative;
     border-bottom: 0.5px solid var(--secondary-color-tint)
 }
 .profil{
-    height:100%;
+    min-height: 140px;
+    padding: 10px 0;
 }
 .background{
     background: var(--primary-color);
     width:100%;
     max-width: 100vw;
-    height:50%;
+    height: 160px;
     position: relative;
 }
 .background img{
@@ -1044,8 +1101,9 @@
     border-radius: 4px;
     border: 4px solid white;
     position: absolute;
-    top: 15%;
-    left: 30%;
+    top: 95px;
+    left: 30px;
+    z-index: 2;
 }
 .picture img{
     height: 100%;
@@ -1061,17 +1119,16 @@
 }
 .empty-profile i {
   font-size: 3rem;
-  color: white; 
+  color: white;
 }
 .empty_box{
-   width: calc(30% + 40px);
-   height:100%;
+   width: 170px;
+   min-height: 70px;
    margin:0px;
    padding:0px
 }
 .row_name{
-    width:calc(70% - 40px);
-    height:100%;
+    width: calc(100% - 170px);
     margin:0px;
     padding:0px;
     padding-top: 5px;
@@ -1080,7 +1137,13 @@
 
 }
 .nickname_block{
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.verified-badge-icon {
+    color: #ff2d78;
+    font-size: 16px;
 }
 .img_certif_container{
     display: inline-block;
@@ -1105,7 +1168,7 @@
     text-decoration-skip-ink: none;
     color: var(--primary-color);
 
-    
+
 }
 button.btn.btn-outline {
     color: var(--blue);
@@ -1642,9 +1705,9 @@ input:checked + .slider-modern:before {
     cursor: pointer;
 }
 .chevron-setting{
-    zoom: 1.3; 
-    vertical-align:sub; 
-    position: absolute; 
+    zoom: 1.3;
+    vertical-align:sub;
+    position: absolute;
     right: 15px;
 }
 .setting_item{
@@ -1655,7 +1718,7 @@ input:checked + .slider-modern:before {
     .picture{
         top: 15%;
         left: calc(calc(100% - 130px) / 2) !important;
-    } 
+    }
     .empty_box{
         display: none;
     }
@@ -1674,7 +1737,7 @@ input:checked + .slider-modern:before {
     .row_name{
         width: 100%;
     }
-  
+
     .row-banner{
         width: 100% !important;
     }

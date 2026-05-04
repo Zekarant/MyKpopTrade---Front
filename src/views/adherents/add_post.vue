@@ -1,194 +1,204 @@
 <template>
-    <main>
-        <Nav_bar></Nav_bar>        
+    <main class="page">
+        <Nav_bar></Nav_bar>
         <div class="content imgcenter">
-            <h3>Ajouter un post</h3>
+            <h3><i class="bi bi-plus-circle"></i> {{ isModyfy ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h3>
             <form @submit.prevent="save">
-            <div>
-                <label for="images">Images</label>
 
-                <!-- Zone Drag & Drop -->
-                <div v-if="imagesPreview.length == 0" class="image-drop-zone" @click="triggerFileInput" @dragover.prevent="onDragOver" @dragleave="onDragLeave"  @drop.prevent="onDrop" :class="{ 'drag-over': isDragOver }">
-                    <button class="btn-primary imgcenter"  type="button" >
-                        Ajouter une image ou déposer
-                    </button>
-
+            <!-- === Section Images === -->
+            <fieldset class="form-section">
+                <legend><i class="bi bi-images"></i> Photos</legend>
+                <div v-if="imagesPreview.length == 0" class="image-drop-zone" @click="triggerFileInput" @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop" :class="{ 'drag-over': isDragOver }">
+                    <i class="bi bi-cloud-arrow-up drop-icon"></i>
+                    <span class="drop-text">Glissez vos photos ici</span>
+                    <span class="drop-hint">ou cliquez pour parcourir</span>
                 </div>
-                <div v-else class="image-preview-container" @click="triggerFileInput" @dragover.prevent="onDragOver" @dragleave="onDragLeave"  @drop.prevent="onDrop" :class="{ 'drag-over': isDragOver }">
-                    <swiper 
+                <div v-else class="image-preview-container" @click="triggerFileInput" @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop" :class="{ 'drag-over': isDragOver }">
+                    <swiper
                         class="image-swiper"
                         :slides-per-view="5"
                         :breakpoints="{
                             0: { slidesPerView: 2 },
-                            720: { slidesPerView: 2 },
+                            720: { slidesPerView: 3 },
                             980: { slidesPerView: 4 }
                         }"
                         >
                         <swiper-slide v-for="(image, index) in imagesPreview" :key="index">
                             <div class="image-preview">
-                                <img class="imgcenter" :src="image" alt="Aperçu de l'image" />
-                                <i @click="removeImage(index)" class="bi bi-trash delete_img"></i>
+                                <img class="imgcenter" :src="image" alt="Aperçu" />
+                                <i @click.stop="removeImage(index)" class="bi bi-trash delete_img"></i>
                             </div>
                         </swiper-slide>
                         <swiper-slide class="add-image-slide">
-                            <button style="height: 100%;  margin-left: 10px;" class="btn-primary" type="button">+</button>
+                            <button style="height: 100%; margin-left: 10px;" class="btn-primary" type="button">+</button>
                         </swiper-slide>
                     </swiper>
                 </div>
-                <!-- input caché + bouton -->
-                <input
-                    type="file"
-                    id="imageUpload"
-                    @change="handleImageUpload"
-                    accept="image/*"
-                    hidden
-                    ref="fileInput"
-                />
+                <input type="file" id="imageUpload" @change="handleImageUpload" accept="image/*" hidden ref="fileInput" />
+                <small class="form-hint">{{ imagesPreview.length }}/10 photos · JPG, PNG</small>
+            </fieldset>
 
-            </div>
-  
-            <div>
-                <label for="title">Titre</label>
-                <input type="text" id="title" v-model="formData.title" required />
-            </div>
-            <div>
-                <label for="description">Description</label>
-                <textarea id="description" v-model="formData.description" required></textarea>
-            </div>
-            <div>
-                <label for="price">Prix</label>
-                <input type="number" id="price" v-model="formData.price" step="0.01" required />
-            </div>
-            <div>
-                <label for="currency">Devise</label>
-                <select id="currency" v-model="formData.currency">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                </select>
-            </div>
-            <div>
-                <label for="condition">État</label>
-                <select id="condition" v-model="formData.condition" required>
-                <option value="new">Neuf</option>
-                <option value="likeNew">Comme neuf</option>
-                <option value="good">Bon état</option>
-                <option value="fair">État moyen</option>
-                <option value="poor">Mauvais état</option>
-                </select>
-            </div>
-            <div>
-                <label for="category">Catégorie</label>
-                <input type="text" id="category" v-model="formData.category" required />
-            </div>
-            <div>
-                <label for="type">Type</label>
-                <select id="type" v-model="formData.type" required>
-                <option value="photocard">Photocard</option>
-                <option value="album">Album</option>
-                <option value="merch">Merch</option>
-                <option value="other">Autre</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="kpopGroup">Groupe Kpop</label>
-            <div class="select-searchable">
-                <input 
-                    type="text" 
-                    id="kpopGroup"
-                    v-model="searchGroupKpop"
-                    @focus="isGroupDropdownOpen = true"
-                    @blur="closeGroupDropdown"
-                    placeholder="Rechercher un groupe..."
-                    class="searchable-input"
-                />
-                <div v-if="isGroupDropdownOpen" class="dropdown-menu">
-                    <div 
-                        v-for="group in filteredGroupsKpop" 
-                        :key="group._id"
-                        @mousedown="selectGroupKpop(group)"
-                        class="dropdown-item"
-                    >
-                        {{ group.name }}
+            <!-- === Section Informations principales === -->
+            <fieldset class="form-section">
+                <legend><i class="bi bi-tag"></i> Informations</legend>
+                <div>
+                    <label for="title">Titre de l'annonce</label>
+                    <input type="text" id="title" v-model="formData.title" placeholder="Ex: Photocard Jimin BE Lucky Draw" required />
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <textarea id="description" v-model="formData.description" placeholder="Décrivez l'état, l'authenticité, les détails..." required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="price">Prix</label>
+                        <div class="input-with-addon">
+                            <input type="number" id="price" v-model="formData.price" step="0.01" min="0" required />
+                            <select class="input-addon" v-model="formData.currency">
+                                <option value="EUR">€</option>
+                                <option value="USD">$</option>
+                            </select>
+                        </div>
                     </div>
-                    <div v-if="filteredGroupsKpop.length === 0" class="dropdown-item disabled">
-                        Aucun groupe trouvé
+                    <div class="form-col">
+                        <label for="condition">État</label>
+                        <select id="condition" v-model="formData.condition" required>
+                            <option value="new">Neuf</option>
+                            <option value="likeNew">Comme neuf</option>
+                            <option value="good">Bon état</option>
+                            <option value="fair">État moyen</option>
+                            <option value="poor">Mauvais état</option>
+                        </select>
                     </div>
                 </div>
-            </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="type">Type d'article</label>
+                        <select id="type" v-model="formData.type" required>
+                            <option value="photocard">Photocard</option>
+                            <option value="album">Album</option>
+                            <option value="merch">Merch</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="category">Catégorie</label>
+                        <input type="text" id="category" v-model="formData.category" placeholder="Ex: Photocard, Lightstick..." required />
+                    </div>
+                </div>
+            </fieldset>
 
-
-
-
-            </div>
-
-            <div>
-                <label for="kpopMember">Membre Kpop</label>
-                <input type="text" id="kpopMember" v-model="formData.kpopMember" required />
-            </div>
-            <div>
-                <label for="albumName">Nom de l'album</label>
-                <div class="select-searchable">
-                    <input 
-                        type="text" 
-                        id="albumName"
-                        v-model="searchAlbumName"
-                        @focus="isAlbumDropdownOpen = true"
-                        @blur="closeAlbumDropdown"
-                        placeholder="Rechercher un album..."
-                        class="searchable-input"
-                    />
-                    <div v-if="isAlbumDropdownOpen" class="dropdown-menu">
-                        <div 
-                            v-for="album in filteredAlbums" 
-                            :key="album._id"
-                            @mousedown="selectAlbum(album)"
-                            class="dropdown-item"
-                        >
-                            {{ album.name }} - {{ album.artistName }}
-                        </div>
-                        <div v-if="filteredAlbums.length === 0" class="dropdown-item disabled">
-                            Aucun album trouvé
+            <!-- === Section K-pop === -->
+            <fieldset class="form-section">
+                <legend><i class="bi bi-music-note-beamed"></i> K-pop</legend>
+                <div>
+                    <label for="kpopGroup">Groupe</label>
+                    <div class="select-searchable">
+                        <input
+                            type="text"
+                            id="kpopGroup"
+                            v-model="searchGroupKpop"
+                            @focus="isGroupDropdownOpen = true"
+                            @blur="closeGroupDropdown"
+                            placeholder="Rechercher un groupe..."
+                            class="searchable-input"
+                        />
+                        <i v-if="formData.kpopGroup" class="bi bi-check-circle searchable-check"></i>
+                        <div v-if="isGroupDropdownOpen" class="dropdown-menu">
+                            <div
+                                v-for="group in filteredGroupsKpop"
+                                :key="group._id"
+                                @mousedown="selectGroupKpop(group)"
+                                class="dropdown-item"
+                            >
+                                {{ group.name }}
+                            </div>
+                            <div v-if="filteredGroupsKpop.length === 0" class="dropdown-item disabled">
+                                Aucun groupe trouvé
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                <div>
+                    <label for="kpopMember">Membre</label>
+                    <input type="text" id="kpopMember" v-model="formData.kpopMember" placeholder="Ex: Jimin, Lisa, Felix..." required />
+                </div>
+                <div>
+                    <label for="albumName">Album</label>
+                    <div class="select-searchable">
+                        <input
+                            type="text"
+                            id="albumName"
+                            v-model="searchAlbumName"
+                            @focus="isAlbumDropdownOpen = true"
+                            @blur="closeAlbumDropdown"
+                            :placeholder="formData.kpopGroup ? 'Rechercher dans les albums du groupe...' : 'Sélectionnez d\'abord un groupe'"
+                            :disabled="!formData.kpopGroup"
+                            class="searchable-input"
+                        />
+                        <i v-if="formData.albumName" class="bi bi-check-circle searchable-check"></i>
+                        <div v-if="isAlbumDropdownOpen && formData.kpopGroup" class="dropdown-menu">
+                            <div
+                                v-for="album in filteredAlbums"
+                                :key="album._id"
+                                @mousedown="selectAlbum(album)"
+                                class="dropdown-item"
+                            >
+                                {{ album.name }}
+                            </div>
+                            <div v-if="filteredAlbums.length === 0" class="dropdown-item disabled">
+                                Aucun album trouvé pour ce groupe
+                            </div>
+                        </div>
+                    </div>
+                    <small v-if="!formData.kpopGroup" class="form-hint">Choisissez un groupe pour voir ses albums</small>
+                </div>
+            </fieldset>
 
-            <div>
-                <label for="allowOffers">Accepter les offres <input type="checkbox" id="allowOffers" v-model="formData.allowOffers" /></label>
-            </div>
-            
-            <div>
-                <label>Options de livraison</label>
-                <div :class="{ disabled: formData.shippingOptions.nationalOnly }">
-                <label style="font-weight: normal;">
-                    Livraison mondiale
-                    <input style="width: auto;" type="checkbox" v-model="formData.shippingOptions.worldwide" />
-                </label>
-                </div>
-                <div :class="{ disabled: formData.shippingOptions.worldwide}">
-                <label style="font-weight: normal;">
-                    Livraison nationale uniquement
-                    <input style="width: auto;" type="checkbox" v-model="formData.shippingOptions.nationalOnly" />
-                </label>
-                </div>
-                <div>
-                <label style="font-weight: normal;">
-                    Retrait local
-                    <input style="width: auto;" type="checkbox" v-model="formData.shippingOptions.localPickup" />
-                </label>
+            <!-- === Section Livraison === -->
+            <fieldset class="form-section">
+                <legend><i class="bi bi-truck"></i> Livraison</legend>
+                <div class="shipping-options">
+                    <label class="checkbox-card" :class="{ active: formData.shippingOptions.worldwide, disabled: formData.shippingOptions.nationalOnly }">
+                        <input type="checkbox" v-model="formData.shippingOptions.worldwide" :disabled="formData.shippingOptions.nationalOnly" />
+                        <i class="bi bi-globe2"></i>
+                        <span>Mondiale</span>
+                    </label>
+                    <label class="checkbox-card" :class="{ active: formData.shippingOptions.nationalOnly, disabled: formData.shippingOptions.worldwide }">
+                        <input type="checkbox" v-model="formData.shippingOptions.nationalOnly" :disabled="formData.shippingOptions.worldwide" />
+                        <i class="bi bi-geo-alt"></i>
+                        <span>Nationale</span>
+                    </label>
+                    <label class="checkbox-card" :class="{ active: formData.shippingOptions.localPickup }">
+                        <input type="checkbox" v-model="formData.shippingOptions.localPickup" />
+                        <i class="bi bi-shop"></i>
+                        <span>Retrait local</span>
+                    </label>
                 </div>
                 <div>
-                <label for="shippingCost">Coût de livraison</label>
-                <input type="number" id="shippingCost" v-model="formData.shippingOptions.shippingCost" step="0.01" />
+                    <label for="shippingCost">Frais de livraison</label>
+                    <div class="input-with-addon">
+                        <input type="number" id="shippingCost" v-model="formData.shippingOptions.shippingCost" step="0.01" min="0" placeholder="0.00" />
+                        <span class="input-addon">€</span>
+                    </div>
                 </div>
-            </div>
-            
-            <div v-if="isModyfy" class="popup-buttons-footer">
-                <button class="btn-primary" type="submit">Modifier</button>
-            </div>
-            <div v-else class="popup-buttons-footer">
-                <button class="btn-primary" type="submit">Publier</button>
+            </fieldset>
+
+            <!-- === Section Options === -->
+            <fieldset class="form-section">
+                <legend><i class="bi bi-gear"></i> Options</legend>
+                <label class="checkbox-inline">
+                    <input type="checkbox" v-model="formData.allowOffers" />
+                    <span>Accepter les offres de prix</span>
+                </label>
+            </fieldset>
+
+            <!-- === Submit === -->
+            <div class="popup-buttons-footer">
+                <button class="btn-primary" type="submit">
+                    <i :class="isModyfy ? 'bi bi-pencil' : 'bi bi-rocket-takeoff'"></i>
+                    {{ isModyfy ? 'Enregistrer les modifications' : 'Publier l\'annonce' }}
+                </button>
             </div>
 
             </form>
@@ -196,7 +206,7 @@
 
     </main>
   </template>
-  
+
   <script lang="ts">
     import { defineComponent, ref, computed, watch } from 'vue';
     import postService from '@/services/post.service';
@@ -210,7 +220,7 @@
     // Import Swiper styles
     import 'swiper/css';
     import 'swiper/css/navigation';
-    
+
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import Cookies from "js-cookie";
@@ -230,7 +240,7 @@
             default: ''
         }
     },
-    data(): { 
+    data(): {
       isDragOver: boolean;
     } {
       return {
@@ -318,33 +328,9 @@
                 return [];
             }
         };
-        const getAllAlbums = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums?page=1&limit=100&sortBy=releaseDate&sortOrder=asc`);
-                return response.data.albums || [];
-            } catch (error) {
-                console.error('Erreur lors du chargement des albums:', error);
-                return [];
-            }
-        };
-
-        const searchAlbums = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums?page=1&limit=100&sortBy=releaseDate&sortOrder=asc`);
-                const allAlbums = response.data.albums || [];
-                return allAlbums.filter((album: any) =>
-                    album.name.toLowerCase().includes(searchAlbumName.value.toLowerCase()) ||
-                    album.artistName.toLowerCase().includes(searchAlbumName.value.toLowerCase())
-                );
-            } catch (error) {
-                console.error('Erreur lors de la recherche des albums:', error);
-                return [];
-            }
-        };
-
         const selectAlbum = (album: any) => {
             formData.value.albumName = album._id;
-            searchAlbumName.value = `${album.name} - ${album.artistName}`;
+            searchAlbumName.value = album.name;
             isAlbumDropdownOpen.value = false;
         };
 
@@ -359,9 +345,6 @@
         (async () => {
             groupsKpopList.value = await getAllGroupsKpop();
         })();
-        (async () => {
-            albumsList.value = await getAllAlbums();
-        })();
 
         watch(searchGroupKpop, async (newValue) => {
             if (newValue && newValue.trim() !== '') {
@@ -371,19 +354,17 @@
             }
         }, { immediate: false });
 
-        watch(searchAlbumName, async (newValue) => {
-            if (newValue && newValue.trim() !== '') {
-                albumsList.value = await searchAlbums();
-            } else {
-                albumsList.value = await getAllAlbums();
-            }
-        }, { immediate: false });
-
         const filteredGroupsKpop = computed(() => {
             return groupsKpopList.value;
         });
         const filteredAlbums = computed(() => {
-            return albumsList.value;
+            if (!searchAlbumName.value || searchAlbumName.value.trim() === '') {
+                return albumsList.value;
+            }
+            const search = searchAlbumName.value.toLowerCase();
+            return albumsList.value.filter((album: any) =>
+                album.name.toLowerCase().includes(search)
+            );
         });
 
 
@@ -391,9 +372,9 @@
             const file = (event.target as HTMLInputElement).files?.[0];
             if (file) {
                 formData.value.images.push(file);
-  
+
                 const reader = new FileReader();
-       
+
                 reader.onload = (e) => {
                     if (e.target?.result) {
                         imagesPreview.value.push(e.target.result as string);
@@ -420,7 +401,7 @@
             }else{
                 response = await postService.createPost(formData.value);
             }
-            
+
             if (response == 'ok') {
                 // Note: $func is not available in setup, you'll need to handle this differently
                 //this.showToastSuccess('Produit créé avec succès !');
@@ -440,9 +421,9 @@
             const file = files[0];
             if (file) {
                 formData.value.images.push(file);
-    
+
                 const reader = new FileReader();
-        
+
                 reader.onload = (e) => {
                     if (e.target?.result) {
                         imagesPreview.value.push(e.target.result as string);
@@ -455,6 +436,22 @@
             formData.value.kpopGroup = group._id;
             searchGroupKpop.value = group.name;
             isGroupDropdownOpen.value = false;
+            // Reset album when group changes
+            formData.value.albumName = '';
+            searchAlbumName.value = '';
+            albumsList.value = [];
+            // Load albums for this group
+            loadAlbumsForGroup(group._id);
+        };
+
+        const loadAlbumsForGroup = async (groupId: string) => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums/group/${groupId}`);
+                albumsList.value = response.data.albums || response.data || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des albums du groupe:', error);
+                albumsList.value = [];
+            }
         };
 
         const closeGroupDropdown = () => {
@@ -485,6 +482,7 @@
             filteredAlbums,
             selectAlbum,
             closeAlbumDropdown,
+            loadAlbumsForGroup,
         };
 
     },
@@ -510,7 +508,7 @@
   });
 
   </script>
-  
+
 <style lang="scss" scoped>
 @use '../../css/add_post.scss' as *;
 </style>

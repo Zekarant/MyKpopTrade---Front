@@ -1,161 +1,155 @@
 <template>
-   <div class="container_detail_card">
-        <div v-if="isLoading" class="loading-container">
+   <div class="post-modal">
+        <div v-if="isLoading" class="post-modal__loading">
+            <div class="post-modal__spinner"></div>
             <p>Chargement...</p>
         </div>
-        <div v-else-if="dataInitialized" class="card">
-            <div class="post_card_content">
-                <i style="position: absolute; top: 5px; right: 5px; width: 20px; zoom: 1.5; z-index: 3; color: var(--primary-color);" @click="closePost()" class="bi bi-x-lg display_phone_tablette"></i>
-                <div @click="viewUser()" class="post_card_content_header">
-                    <div class="userPicture" v-html="profilePictureUrl"></div>
-                    <div>
-                        <div class="identifier">@{{ dataSeller.username }}</div>
-                        <div v-if="dataSeller.isIdentityVerified" class="img_certif_container">
-                            <img src="@/assets/images/certif.svg">
-                        </div>
-                    </div>
-                    <div class="col-md-1 more_content" @click="toggleMenu($event)">
-                        <i class="bi bi-three-dots-vertical"></i>
-                        <div v-if="isMenuVisible" class="dropdown-menu">
-                                <ul style="width: 100%;">
-                                    <li v-if="!myProfile && !isRoot" @click="showPopupReport=true">
-                                        <i class="bi bi-signal me-2"></i>
-                                        Signaler
-                                    </li>
-                                    <li v-if="myProfile || isRoot" @click="hidePopup()">
-                                        <i class="bi bi-cart-check-fill me-2"></i>
-                                        Vendu
-                                    </li>
-                                    <li v-if="myProfile || isRoot" @click="showDeletePopup = !showDeletePopup">
-                                        <i class="bi bi-trash me-2"></i>
-                                        Supprimer
-                                    </li>
-                                    <li v-if="myProfile || isRoot" @click="modifyPost">
-                                        <i class="bi bi-pen me-2"></i>
-                                        Modifier
-                                    </li>
-                                    
-                                </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="post_card_detail">
-                    <div style="display: flex;">
-                        <b >{{ dataPost.title }} </b>
-                        <b class="price">
-                            {{ dataPost.price }} {{ currencySymbol }}
-                        </b>
-                    </div>
-                   <div class="description_container">
-                        <b class="post_description_label">Description : </b>
-                        <br>
-                        <div class="post_description">
-                            <p>{{ dataPost.description }}</p>
-                        </div>
-                    </div>
-              
-                    <div class="list_detail">
-                        <div class="bloc_detail condition">
-                            <div>
-                                <p>État :</p>
-                            </div>
-                            <div>
-                                <p>
-                                {{ dataPost.condition ? (dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1)) : '' }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="bloc_detail category">
-                            <div>
-                                <p> Catégorie :</p>
-                            </div>
-                            <div>
-                                <p>{{ dataPost.category }}</p>
-                            </div>
-                        </div>
-                        <div class="bloc_detail kpopGroup">
-                            <div>
-                                <p>Groupe :</p>
-                            </div>
-                            <div>
-                                <p>{{ dataPost.kpopGroupName }}</p>
-                            </div>
-                        </div>
-                        <div class="bloc_detail kpopMember">
-                            <div>
-                                <p>Membre :</p>
-                            </div>
-                            <div>
-                                <p>{{ dataPost.kpopMember }}</p>
-                            </div>
-                        </div>
-                        <div class="bloc_detail albumName">
-                            <div>
-                                <p>Album :</p>
-                            </div>
-                            <div>
-                                <p>{{ dataPost.albumNameStr }}</p>
-                            </div>
-                        </div>
-                        <div  v-if="dataPost.shippingOptions" class="bloc_detail shippingOptions">
-                            <div>
-                                <p>Livraison :</p>
-                            </div>
-                            <div>
-                                <div class="shippingOptions_line" v-if="dataPost.shippingOptions.worldwide">Mondiale</div>
-                                <div class="shippingOptions_line" v-if="dataPost.shippingOptions.nationalOnly"><span v-if="dataPost.shippingOptions.worldwide">,</span> Nationale</div>
-                                <div class="shippingOptions_line" v-if="dataPost.shippingOptions.localPickup"><span v-if="dataPost.shippingOptions.nationalOnly || dataPost.shippingOptions.worldwide ">,</span> Remise en main propre</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <div class="type_content">
-                        {{ dataPost.type ? (dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1)) : '' }}                        
-                        </div>
-                    </div>
-                </div>
-                <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post_card_content_footer">
-                    <button v-if="dataPost.allowOffers" class="btn-blue-outline" type="button" @click="showOfferOption = true">Faire une offre</button>
-                    <button class="btn-blue-outline"  @click="buyOption"  type="button">Acheter</button>
-                    <button @click="openMessagePopup" class="btn-blue-outline" type="button">Envoyer un message</button>
-                </div>
-            </div>
-            <div class="illustration">
-                <div v-if="dataPost.isReserved" class="banner_reserved">
-                    <div class="state">Réservé</div>
+        <div v-else-if="dataInitialized" class="post-modal__card">
+            <!-- Image section -->
+            <div class="post-modal__gallery">
+                <div v-if="dataPost.isReserved" class="post-modal__badge post-modal__badge--reserved">
+                    <i class="bi bi-lock-fill"></i> Réservé
                 </div>
                 <ImageCarousel :images="dataPost?.images || []" />
-                <button v-if="!myProfile && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="like">
-                    <i class="bi bi-heart imgcenter"></i>
+                <button v-if="!myProfile && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="post-modal__fav-btn">
+                    <i class="bi bi-heart"></i>
                 </button>
-                <button v-if="!myProfile && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="like">
-                    <i style="color:var(--danger-color)" class="bi bi-heart-fill imgcenter"></i>
+                <button v-if="!myProfile && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="post-modal__fav-btn post-modal__fav-btn--active">
+                    <i class="bi bi-heart-fill"></i>
                 </button>
             </div>
 
+            <!-- Content section -->
+            <div class="post-modal__content">
+                <!-- Close button -->
+                <button class="post-modal__close" @click="closePost()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
 
+                <!-- Seller header -->
+                <div class="post-modal__seller" @click="viewUser()">
+                    <div class="post-modal__avatar" v-html="profilePictureUrl"></div>
+                    <div class="post-modal__seller-info">
+                        <span class="post-modal__username">@{{ dataSeller.username }}</span>
+                        <span v-if="dataSeller.isIdentityVerified" class="post-modal__verified">
+                            <img src="@/assets/images/certif.svg" alt="Vérifié">
+                            Vérifié
+                        </span>
+                    </div>
+                    <div class="post-modal__actions-menu" @click.stop="toggleMenu($event)">
+                        <i class="bi bi-three-dots-vertical"></i>
+                        <div v-if="isMenuVisible" class="post-modal__dropdown">
+                            <button v-if="!myProfile && !isRoot" @click="showPopupReport=true">
+                                <i class="bi bi-flag"></i> Signaler
+                            </button>
+                            <button v-if="myProfile || isRoot" @click="hidePopup()">
+                                <i class="bi bi-cart-check"></i> Vendu
+                            </button>
+                            <button v-if="myProfile || isRoot" @click="showDeletePopup = !showDeletePopup">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </button>
+                            <button v-if="myProfile || isRoot" @click="modifyPost">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Title & Price -->
+                <div class="post-modal__header">
+                    <h2 class="post-modal__title">{{ dataPost.title }}</h2>
+                    <div class="post-modal__price">{{ dataPost.price }} {{ currencySymbol }}</div>
+                </div>
+
+                <!-- Description -->
+                <div class="post-modal__description">
+                    <p>{{ dataPost.description }}</p>
+                </div>
+
+                <!-- Details -->
+                <div class="post-modal__details">
+                    <div v-if="dataPost.condition" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">État</span>
+                        <span class="post-modal__detail-value">{{ dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1) }}</span>
+                    </div>
+                    <div v-if="dataPost.category" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Catégorie</span>
+                        <span class="post-modal__detail-value">{{ dataPost.category }}</span>
+                    </div>
+                    <div v-if="dataPost.kpopGroupName" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Groupe</span>
+                        <span class="post-modal__detail-value">{{ dataPost.kpopGroupName }}</span>
+                    </div>
+                    <div v-if="dataPost.kpopMember" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Membre</span>
+                        <span class="post-modal__detail-value">{{ dataPost.kpopMember }}</span>
+                    </div>
+                    <div v-if="dataPost.albumNameStr" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Album</span>
+                        <span class="post-modal__detail-value">{{ dataPost.albumNameStr }}</span>
+                    </div>
+                </div>
+
+                <!-- Shipping -->
+                <div v-if="dataPost.shippingOptions" class="post-modal__shipping">
+                    <span class="post-modal__detail-label">Livraison</span>
+                    <div class="post-modal__shipping-tags">
+                        <span v-if="dataPost.shippingOptions.worldwide" class="post-modal__tag">
+                            <i class="bi bi-globe"></i> Mondiale
+                        </span>
+                        <span v-if="dataPost.shippingOptions.nationalOnly" class="post-modal__tag">
+                            <i class="bi bi-geo-alt"></i> Nationale
+                        </span>
+                        <span v-if="dataPost.shippingOptions.localPickup" class="post-modal__tag">
+                            <i class="bi bi-hand-index"></i> Main propre
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Type badge -->
+                <div class="post-modal__type">
+                    <span class="post-modal__type-badge">
+                        {{ dataPost.type ? (dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1)) : '' }}
+                    </span>
+                </div>
+
+                <!-- Action buttons -->
+                <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post-modal__footer">
+                    <button v-if="dataPost.allowOffers" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
+                        <i class="bi bi-tag"></i> Faire une offre
+                    </button>
+                    <button class="post-modal__btn post-modal__btn--primary" @click="buyOption">
+                        <i class="bi bi-bag"></i> Acheter
+                    </button>
+                    <button class="post-modal__btn post-modal__btn--ghost" @click="openMessagePopup">
+                        <i class="bi bi-chat-dots"></i> Message
+                    </button>
+                </div>
+            </div>
         </div>
-
-
     </div>
+
+    <!-- Offer modal -->
     <div v-if="showOfferOption">
-      <send_offer :product="dataPost" @offerSent="handleOfferSent"  @close="showOfferOption = false" ></send_offer>
+      <send_offer :product="dataPost" @offerSent="handleOfferSent" @close="showOfferOption = false"></send_offer>
     </div>
-    <!--------- Popup Pour envoyer un message ---------->
+
+    <!-- Send message -->
     <send_message :id_user="dataSeller.id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
 
-
-    <!--------- Popup ---------->
-    <div v-if="showSoldPopup" class="popup-overlay" @click.self="hidePopup">
-        <div class="popup-content">
-            <p>Voulez-vous vraiment mettre cet article comme vendu ?</p>
-            <div class="popup-buttons-footer">
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="hidePopup">Annuler</button>
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="sold(dataPost._id, dataSeller.id)">Vendu</button>
+    <!-- Sold confirmation -->
+    <div v-if="showSoldPopup" class="post-modal__confirm-overlay" @click.self="hidePopup">
+        <div class="post-modal__confirm">
+            <i class="bi bi-cart-check post-modal__confirm-icon"></i>
+            <p>Marquer cet article comme vendu ?</p>
+            <div class="post-modal__confirm-actions">
+                <button class="post-modal__btn post-modal__btn--outline" @click="hidePopup">Annuler</button>
+                <button class="post-modal__btn post-modal__btn--danger" @click="sold(dataPost._id, dataSeller.id)">Confirmer</button>
             </div>
         </div>
     </div>
-    <!-- Option d'achat Modal -->
+
+    <!-- Checkout -->
     <CheckoutDialog
       v-if="showBuyOption && dataInitialized"
       :product-id="dataPost._id"
@@ -167,23 +161,22 @@
       @cancel="showBuyOption = false"
     />
 
-
-    <!--------- Popup Suppression ---------->
-    <div v-if="showDeletePopup" class="popup-overlay" @click.self="closeDeletePopup">
-        <div class="popup-content">
-            <p>Voulez-vous vraiment supprimer cet article  ?</p>
-            <div class="popup-buttons-footer">
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-primary-outline" @click="closeDeletePopup">Annuler</button>
-                <button style="border-radius: 2px; width: 100%;" class="btn btn-danger" @click="deletePost(dataPost._id)">Supprimer</button>
+    <!-- Delete confirmation -->
+    <div v-if="showDeletePopup" class="post-modal__confirm-overlay" @click.self="closeDeletePopup">
+        <div class="post-modal__confirm">
+            <i class="bi bi-trash post-modal__confirm-icon post-modal__confirm-icon--danger"></i>
+            <p>Supprimer définitivement cet article ?</p>
+            <div class="post-modal__confirm-actions">
+                <button class="post-modal__btn post-modal__btn--outline" @click="closeDeletePopup">Annuler</button>
+                <button class="post-modal__btn post-modal__btn--danger" @click="deletePost(dataPost._id)">Supprimer</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Report -->
     <report_card @closeReport="showPopupReport = false" :type="'product'" :id="dataPost._id" v-if="showPopupReport"></report_card>
-
-
 </template>
-  
+
 
 
 <script lang="ts">
@@ -381,7 +374,6 @@
                         if (modal && document.body.contains(modal)) {
                             modal.remove();
                         }
-                        console.log('Iframe PayPal fermée');
                         checkPaymentStatus(paymentId);
                     };
 
@@ -389,18 +381,14 @@
                     messageHandler = (event: MessageEvent) => {
                         // Ignorer les messages de télémétrie PayPal
                         if (event.data.p2Sent || event.data.utils) {
-                            console.log('Message de télémétrie PayPal ignoré');
                             return;
                         }
-                        
+
                         // Vérifier l'origine pour la sécurité
-                        if (event.origin !== 'https://www.sandbox.paypal.com' && 
+                        if (event.origin !== 'https://www.sandbox.paypal.com' &&
                             event.origin !== 'https://www.paypal.com') {
                             return;
                         }
-                        
-                        console.log('Message reçu de PayPal iframe:', event.data);
-                        
                         if (event.data.type === 'payment_success') {
                             closeModal();
                             onPaymentSuccess(event.data.paymentId || paymentId);
@@ -417,7 +405,6 @@
                         if (loaderElement) {
                             loaderElement.style.display = 'none';
                         }
-                        console.log('Iframe PayPal chargée avec succès');
                     };
 
                     // Gérer les erreurs de l'iframe
@@ -436,7 +423,7 @@
                     if (closeButton) {
                         closeButton.addEventListener('click', closeModal);
                     }
-                    
+
                     // Fermer en cliquant sur l'arrière-plan
                     modal.addEventListener('click', (event) => {
                         if (event.target === modal) {
@@ -459,9 +446,6 @@
                     modalContent.appendChild(iframe);
                     modal.appendChild(modalContent);
                     document.body.appendChild(modal);
-
-                    console.log('Iframe PayPal créée et ajoutée à la page');
-                    
                     // Focus sur l'iframe après un court délai
                     setTimeout(() => {
                         if (iframe) {
@@ -506,18 +490,14 @@
                 messageHandler = (event: MessageEvent) => {
                     // Ignorer les messages de télémétrie PayPal
                     if (event.data.p2Sent || event.data.utils) {
-                        console.log('Message de télémétrie PayPal ignoré');
                         return;
                     }
-                    
+
                     // Vérifier l'origine pour la sécurité
-                    if (event.origin !== 'https://www.sandbox.paypal.com' && 
+                    if (event.origin !== 'https://www.sandbox.paypal.com' &&
                         event.origin !== 'https://www.paypal.com') {
                         return;
                     }
-                    
-                    console.log('Message reçu de PayPal onglet:', event.data);
-                    
                     if (event.data.type === 'payment_success') {
                         tabWindow.close();
                         cleanup();
@@ -534,7 +514,6 @@
                     try {
                         if (tabWindow.closed) {
                             cleanup();
-                            console.log('Onglet PayPal fermé');
                             checkPaymentStatus(paymentId);
                         }
                     } catch (error) {
@@ -554,8 +533,6 @@
                 } catch (error) {
                     console.error('Impossible de donner le focus à l\'onglet'+error);
                 }
-
-                console.log('Onglet PayPal ouvert et surveillé');
             };
 
             const onCheckoutConfirmed = (result: any) => {
@@ -589,17 +566,13 @@
 
             const checkPaymentStatus = async (paymentId: string) => {
                 try {
-                    console.log('Vérification du statut de paiement:', paymentId);
                     const statusResponse = await paymentService.checkPaymentStatus(paymentId);
-                    console.log('Statut du paiement:', statusResponse);
-                    
                     if (statusResponse.success) {
                         if (statusResponse.status === 'approved' || statusResponse.status === 'completed') {
                             onPaymentSuccess(paymentId);
                         } else if (statusResponse.status === 'cancelled') {
                             onPaymentCancelled();
                         } else {
-                            console.log('Paiement en attente ou statut inconnu:', statusResponse.status);
                         }
                     }
                 } catch (error) {
@@ -609,7 +582,6 @@
 
             const onPaymentSuccess = async (paymentId: string) => {
                 try {
-                    console.log('Paiement réussi:', paymentId);
                     alert('Paiement réussi ! Le produit a été marqué comme vendu.');
                     // Recharger les données du post
                     window.location.reload();
@@ -620,7 +592,6 @@
             };
 
             const onPaymentCancelled = () => {
-                console.log('Paiement annulé par l\'utilisateur');
                 alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
             };
 
@@ -663,10 +634,10 @@
                 };
                 return symbols[this.dataPost.currency as keyof typeof symbols] || '';
             },
-       
+
         },
         methods: {
-            
+
             async initializeComponent() {
                 try {
                     this.isLoading = true;
@@ -674,10 +645,10 @@
                     if (!this.dataPost || Object.keys(this.dataPost).length === 0) {
                         throw new Error('Données du post non chargées');
                     }
-                    
+
                     this.initializeUserData();
                     this.dataInitialized = true;
-                    
+
                 } catch (error) {
                     console.error('Erreur lors de l\'initialisation:', error);
                 } finally {
@@ -691,7 +662,7 @@
                     this.dataSeller = this.dataPost.seller ? { ...this.dataPost.seller } : {};
                     this.isRoot = false;
                 }
-                
+
                 if (this.dataSeller._id && this.dataSeller._id === this.myId) {
                     this.isRoot = true;
                 }
@@ -699,11 +670,9 @@
             async getData() {
                 const response = await postService.getPost(this.idPost);
                 if (response && response.product) {
-                    console.log(response);
                     this.dataPost = response.product;
                     this.isFav = response.isFavorite || false;
                 }else{
-                    console.log('pas de reponse');
                 }
             },
             toggleMenu(event: Event){
@@ -739,24 +708,24 @@
                 });
             },
             async addFav(id: string){
-                await postService.addFavorite(id).then(() => {                
+                await postService.addFavorite(id).then(() => {
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
                     this.isFav = true;
                 });;
             },
             async rmFav(id: string){
-                await postService.addFavorite(id).then(() => {                
+                await postService.addFavorite(id).then(() => {
                     this.$func.showToastSuccess('Supprimé de mes favoris');
                     this.isFav = false;
                 });;
             },
-            
+
             closePost() {
                 this.$emit('closePost');
             },
             viewUser(){
                 this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
-            }, 
+            },
             openMessagePopup(){
                 this.popupMessage = !this.popupMessage;
             },
@@ -777,13 +746,13 @@
                     this.$func.showToastError('Erreur lors de l\'envoi de l\'offre.');
                 })
             }
-      
+
         },
     });
 
 
 </script>
-  
+
 <style lang="scss" scoped>
 @use '../css/post.scss';
 </style>

@@ -8,7 +8,7 @@ import type {
     UserResponse
 } from "@/types/user.types";
 import router from "@/router";
-import authentificationService from "./authentification.service";
+import { API_URL } from '@/config/api';
 
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
@@ -64,10 +64,10 @@ type AuthToken = string | null;
 
 class paymentService {
     private paymentsApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
+    private API_BASE_URL: string = `${API_URL}/api`;
 
     constructor() {
-    
+
         this.paymentsApiClient = axios.create({
         baseURL: `${this.API_BASE_URL}/payments`,
         headers: {
@@ -118,64 +118,80 @@ class paymentService {
     }
 
     async checkPaymentStatus(payment_id: string): Promise<PaypalSatus> {
-      const sessionToken = Cookies.get("sessionToken");
-          try {
-
-            const response: AxiosResponse<PaypalSatus> = await this.paymentsApiClient.post(
-              '/'+payment_id,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${sessionToken}`,
-                },
-              }
-            );
-
-            if (response.status === 200) {
-              return response.data;
-
-            } else {
-              await authentificationService.verifSession();
-              return this.checkPaymentStatus(payment_id);
-            }
-          } catch (error) {
-            const axiosError = error as AxiosError<ApiError>;
-            console.error("Erreur lors de la vérification de session :", axiosError.response?.data);
-            throw error;
-
-          }
+      try {
+        const response: AxiosResponse<PaypalSatus> = await this.paymentsApiClient.get('/' + payment_id);
+        return response.data;
+      } catch (error) {
+        const axiosError = error as AxiosError<ApiError>;
+        console.error("Erreur lors de la vérification du paiement :", axiosError.response?.data);
+        throw error;
+      }
     }
 
   async initPayPal(payload: InitPayPalPayload): Promise<PaypalConfig> {
-    const sessionToken = Cookies.get("sessionToken");
-
     try {
-
-      const response: AxiosResponse<PaypalConfig> = await this.paymentsApiClient.post(
-        '/paypal/create',
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionToken}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        return response.data;
-
-      } else {
-        await authentificationService.verifSession();
-        return this.initPayPal(payload);
-
-      }
+      const response: AxiosResponse<PaypalConfig> = await this.paymentsApiClient.post('/paypal/create', payload);
+      return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<ApiError>;
       console.error("Erreur lors de l'initialisation PayPal :", axiosError.response?.data);
       throw error;
-
     }
+  }
+
+  async capturePayPal(payload: { paymentId?: string; paypalOrderId?: string }) {
+    const response = await this.paymentsApiClient.post('/paypal/capture', payload);
+    return response.data;
+  }
+
+  async confirmPayPal(params: { token?: string; PayerID?: string; paymentId?: string }) {
+    const response = await this.paymentsApiClient.get('/paypal/confirm', { params });
+    return response.data;
+  }
+
+  async getPayPalConnectUrl(): Promise<{ success: boolean; connectUrl: string; message?: string }> {
+    const response = await this.paymentsApiClient.get('/paypal/connect');
+    return response.data;
+  }
+
+  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; expiresAt?: string }> {
+    const response = await this.paymentsApiClient.get('/paypal/connection-status');
+    return response.data;
+  }
+
+  async disconnectPayPal() {
+    const response = await this.paymentsApiClient.post('/paypal/disconnect');
+    return response.data;
+  }
+
+  async refundPayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
+    const response = await this.paymentsApiClient.post(`/${paymentId}/refund`, payload);
+    return response.data;
+  }
+
+  async createShipment(paymentId: string, payload: { carrier: string; trackingNumber: string; estimatedDelivery?: string }) {
+    const response = await this.paymentsApiClient.post(`/${paymentId}/shipment`, payload);
+    return response.data;
+  }
+
+  async getShipment(paymentId: string) {
+    const response = await this.paymentsApiClient.get(`/${paymentId}/shipment`);
+    return response.data;
+  }
+
+  async markShipmentDelivered(paymentId: string) {
+    const response = await this.paymentsApiClient.post(`/${paymentId}/shipment/delivered`);
+    return response.data;
+  }
+
+  async exportPaymentData() {
+    const response = await this.paymentsApiClient.get('/export');
+    return response.data;
+  }
+
+  async anonymizeMyPaymentData(payload: { password: string }) {
+    const response = await this.paymentsApiClient.post('/gdpr/anonymize', payload);
+    return response.data;
   }
 
   async getMyPayments(params: { role?: 'buyer' | 'seller' | 'all'; status?: string; page?: number; limit?: number } = {}) {

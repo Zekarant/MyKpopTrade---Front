@@ -1,16 +1,19 @@
 <template>
-  <swiper 
-    v-if="images && images.length > 0"
-    :navigation="true" 
-    :pagination="true" 
+  <swiper
+    v-if="imagesWithDomain && imagesWithDomain.length > 0"
+    :navigation="true"
+    :pagination="true"
     :modules="modules"
     :initial-slide="predefinedIndex"
     ref="swiperRef"
   >
     <swiper-slide v-for="(image, index) in imagesWithDomain" :key="index">
-      <img style="width: 100%; height: 100%; object-fit: contain;" :src="image" alt="Slide image" />
+      <img style="width: 100%; height: 100%; object-fit: cover;" :src="image" alt="Slide image" @error="onImageError($event)" />
     </swiper-slide>
   </swiper>
+  <div v-else class="carousel-placeholder">
+    <i class="bi bi-image"></i>
+  </div>
 </template>
 
 <script lang="ts">
@@ -58,7 +61,7 @@ export default {
     imagesWithDomain() {
       const baseUrl = import.meta.env.VITE_API_URL;
       return (this.images as Array<string | undefined>).filter(Boolean).map((img: string | undefined): string => {
-        // Si l'image commence par 'data:' (base64) ou 'http' (URL complète), 
+        // Si l'image commence par 'data:' (base64) ou 'http' (URL complète),
         // on la retourne telle quelle
         if (img?.startsWith('data:') || img?.startsWith('http')) {
           return img!;
@@ -75,6 +78,16 @@ export default {
         (this.$refs.swiperRef as any).swiper.slideTo(newIndex, 0); // 0 = pas d'animation
       }
     }
+  },
+  methods: {
+    onImageError(event: Event) {
+      const img = event.target as HTMLImageElement;
+      img.style.display = 'none';
+      const placeholder = document.createElement('div');
+      placeholder.className = 'img-fallback';
+      placeholder.innerHTML = '<i class="bi bi-image" style="font-size:2rem;color:var(--text-muted)"></i>';
+      img.parentElement?.appendChild(placeholder);
+    }
   }
 };
 </script>
@@ -83,6 +96,33 @@ export default {
 .swiper {
   display: block;
   width: 100%;
+  height: 100%;
+}
+
+:deep(.swiper-slide) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-size: 2.5rem;
+}
+
+:deep(.img-fallback) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
 }
 
 .sliderWrapper {

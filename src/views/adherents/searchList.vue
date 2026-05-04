@@ -1,6 +1,6 @@
 <template>
-    <main>
-        <Nav_bar @toggle-popup-add="showPopup"></Nav_bar>        
+    <main class="page">
+        <Nav_bar @toggle-popup-add="showPopup"></Nav_bar>
         <popup_add_item v-if="isPopupVisible" @close="isPopupVisible=false"></popup_add_item>
         <div class="content" style="display: flex;">
           <div style="width: 2%;"></div>
@@ -11,13 +11,20 @@
           <div class="content_grid" ref="scrollContainer">
             <search_bar_2  :query="queryLocal" :filters="filters" @search="searchEvent" class="search_bar_content"></search_bar_2>
             <div class="title_content" style="font-weight: bold; font-size: 20px;margin-left: 24px;">
-              <span class="result_title">Résultat de la recherche <span v-if="queryLocal"> : {{ queryLocal }}</span></span>
+              <span class="result_title">
+                <template v-if="event === 'morePageFavorites'">Mes favoris</template>
+                <template v-else-if="queryLocal">Résultat de la recherche : {{ queryLocal }}</template>
+                <template v-else>Tous les articles</template>
+              </span>
               <div v-if="isMobile" class="filter_content">
                 <filter_list @saveFilter="applyFilter"></filter_list>
               </div>
             </div>
             <br>
             <Grid :dataList="posts"></Grid>
+            <div v-if="pagination.page < pagination.pages" class="load-more-wrap">
+              <button class="load-more-btn" @click="loadMoreResults">Voir plus de résultats</button>
+            </div>
             <img v-if="loading" class="imgcenter" style="height: 50px;" src="../../assets/images/infinity_scroll.gif">
           </div>
 
@@ -29,13 +36,14 @@
 
     </main>
   </template>
-  
+
   <script lang="ts">
     import { defineComponent, ref } from 'vue';
     import { useInfiniteScroll } from '@vueuse/core'
     import { useRoute, useRouter } from 'vue-router';
     import postService from '@/services/post.service';
-    
+    import searchService from '@/services/search.service';
+
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import search_bar_2 from '@/components/search_bar_2.vue';
@@ -52,7 +60,7 @@
     setup(props) {
       const route = useRoute();
       const router = useRouter();
-      
+
       const scrollContainer = ref<HTMLElement | null>(null);
       const isLoadingMore = ref(false);
       const pagination = ref({
@@ -60,7 +68,7 @@
         page: 1,
         pages: 1
       });
-      
+
       var loading = false;
       const posts = ref<any[]>([]);
 
@@ -69,7 +77,6 @@
 
 
       const loadMoreData = async () => {
-        console.log('more');
         loading = true;
         if (isLoadingMore.value) return;
         if (pagination.value.page >= pagination.value.pages) return; // plus de pages
@@ -93,8 +100,6 @@
       };
 
       const moreFavorites = async () => {
-        console.log('more favorites');
-
         loading = true;
         if (isLoadingMore.value) return;
         if (pagination.value.page >= pagination.value.pages) return; // plus de pages
@@ -129,19 +134,19 @@
       // Setup infinite scroll
       useInfiniteScroll(
         scrollContainer,
-        
+
         loadMore,
         {
-          distance: 200, 
+          distance: 200,
           direction: 'bottom',
           canLoadMore: () => {
             if(pagination.value.pages == pagination.value.page){
               return false;
             }
-            return true 
+            return true
           },
 
-        },        
+        },
 
       );
 
@@ -157,14 +162,14 @@
         required: false,
       },
     },
-    
+
     data() {
       return {
         queryLocal:'',
         isMobile: window.innerWidth <= 769,
         posts: [] as any[],
         pagination: {
-          limit: 10,
+          limit: 500,
           page: 1,
           pages: 1
         },
@@ -197,23 +202,22 @@
       },
     methods: {
       loadSearchInformation(){
-        const postsStr = sessionStorage.getItem('posts_str') || '[]';
-        const pagination_str = sessionStorage.getItem('pagination_str') || '[]';
-        this.queryLocal = this.query ?? '';
-        if(this.event !=''){
-          console.log('event', this.event);
+        // Don't show internal event names in search bar
+        const internalEvents = ['morePage', 'morePageFavorites', 'moreFavorites', 'search'];
+        this.queryLocal = (this.query && !internalEvents.includes(this.query)) ? this.query : '';
+        if(this.event && this.event !== ''){
           if(this.event === 'morePage') {
-            this.loadMore(); // Affiche la popup si l'événement est 'add'
+            this.loadMore();
           }else if(this.event === 'morePageFavorites') {
             this.moreFavorites();
           }
           else if(this.event === 'search'){
             this.searchEvent(this.queryLocal)
           }
+        } else {
+          // Par défaut, charger tous les articles
+          this.runSearch();
         }
-
-        this.posts = JSON.parse(postsStr as string);
-        this.pagination = JSON.parse(pagination_str as string);
       },
       showPopup() {
         this.isPopupVisible = true; // Affiche la popup
@@ -221,14 +225,58 @@
       handleResize() {
         this.isMobile = window.innerWidth <= 769;
       },
+      buildAdvancedPayload() {
+        const payload: any = {
+          page: 1,
+          limit: this.pagination.limit || 500,
+          sortBy: 'relevance',
+        };
+        if (this.queryLocal) payload.query = this.queryLocal;
+        if (this.filters.type) payload.type = this.filters.type;
+        if (this.filters.conditions && Array.isArray(this.filters.conditions) && this.filters.conditions.length) {
+          payload.condition = this.filters.conditions;
+        }
+        if (this.filters.group) {
+          payload.groups = [this.filters.group];
+        }
+        if (this.filters.member) {
+          payload.members = [this.filters.member];
+        }
+        const min = this.filters.min !== null && this.filters.min !== undefined ? Number(this.filters.min) : undefined;
+        const max = this.filters.max !== null && this.filters.max !== undefined ? Number(this.filters.max) : undefined;
+        if (min !== undefined || max !== undefined) {
+          payload.priceRange = { ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}) };
+        }
+        return payload;
+      },
+      async runSearch() {
+        try {
+          const result = await searchService.advancedSearch(this.buildAdvancedPayload());
+          this.posts = result.products || [];
+          this.pagination = result.pagination || { limit: 500, page: 1, pages: 1 };
+        } catch (error) {
+          console.error('Erreur lors de la recherche avancée :', error);
+          postService.search(this.queryLocal, this.filters.max, this.filters.min, this.filters.type)
+            .then((res) => { this.posts = res.products; this.pagination = res.pagination; })
+            .catch((e) => console.error('Erreur fallback :', e));
+        }
+      },
+      async loadMoreResults() {
+        try {
+          this.pagination.page++;
+          const payload = this.buildAdvancedPayload();
+          payload.page = this.pagination.page;
+          const result = await searchService.advancedSearch(payload);
+          this.posts.push(...(result.products || []));
+          this.pagination.pages = result.pagination?.pages || this.pagination.pages;
+        } catch (error) {
+          console.error('Erreur chargement supplémentaire:', error);
+          this.pagination.page--;
+        }
+      },
       applyFilter(valFilters: any){
         this.filters = valFilters;
-        postService.search(this.queryLocal, this.filters.max,this.filters.min,this.filters.type).then((postsServiceItems) => {
-          this.posts = postsServiceItems.products;
-          this.pagination = postsServiceItems.pagination;
-        }).catch((error) => {
-          console.error('Erreur lors de la récupération des posts:', error);
-        });
+        this.runSearch();
       },
       searchEvent(query: string){
         if(this.queryLocal != query){
@@ -240,21 +288,34 @@
               params: { combined }
           });
         }
-
-        
-        postService.search(this.queryLocal, this.filters.max,this.filters.min,this.filters.type).then((postsServiceItems) => {
-          this.posts = postsServiceItems.products;
-          this.pagination = postsServiceItems.pagination;
-        }).catch((error) => {
-          console.error('Erreur lors de la récupération des posts:', error);
-        });
+        this.runSearch();
       }
-   
+
     },
   })
   </script>
-  
+
   <style scoped lang="scss">
   @use '../../css/searchList.scss' as *;
+
+  .load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+  }
+  .load-more-btn {
+    padding: 12px 32px;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover {
+      background: var(--surface-hover);
+      transform: translateY(-1px);
+    }
+  }
   </style>
-  

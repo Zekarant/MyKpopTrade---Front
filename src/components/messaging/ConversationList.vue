@@ -56,7 +56,10 @@
 
         <div class="conversation-details">
           <div class="conversation-header">
-            <span class="username">{{ getParticipantUsername(conversation.otherParticipant) }}</span>
+            <span class="username">
+              {{ getParticipantUsername(conversation.otherParticipant) }}
+              <i v-if="conversation.otherParticipant?.isIdentityVerified" class="bi bi-patch-check-fill verified-icon"></i>
+            </span>
             <span class="country">{{ getParticipantLocation(conversation.otherParticipant) }}</span>
             <span v-if="(conversation.unreadCount ?? 0) > 0" class="unread-badge">
               {{ conversation.unreadCount ?? 0 }}
@@ -844,6 +847,15 @@ $dark-gray: #343a40;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.verified-icon {
+  color: #ff2d78;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 

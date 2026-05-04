@@ -1,29 +1,27 @@
 <template>
-    <div class="card">
-        <div class="back" href="#">
-            <div v-if="admin && !data.isAvailable" class="banner_draft">
-                <div class="state_draft">Brouillon</div>
+    <div class="product-card">
+        <div class="product-card__image">
+            <div v-if="admin && !data.isAvailable" class="product-card__badge product-card__badge--draft">
+                Brouillon
             </div>
-            <div v-else-if="data.isReserved" class="banner_reserved">
-                <div class="state_reserved">Réservé</div>
+            <div v-else-if="data.isReserved" class="product-card__badge product-card__badge--reserved">
+                Réservé
             </div>
-            <!--<card_illu class="screen" :frontImage="data.imgFront" :backImage="data.imgBack"></card_illu>-->
-            <ImageCarousel class="screen"  :images="data.images" />
-
+            <ImageCarousel class="product-card__carousel" :images="data.images" />
         </div>
-        <div style="padding-bottom: 8px;padding-left: 5px;">
-            <div class="name"><a href="#">{{ data.title }}</a></div>
-            <div class="state">
-                <span>{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>            
+        <div class="product-card__info">
+            <h3 class="product-card__title">{{ data.title }}</h3>
+            <div v-if="data.seller" class="product-card__seller">
+              <span class="product-card__seller-name">@{{ data.seller.username || data.seller }}</span>
+              <i v-if="data.seller.isIdentityVerified" class="bi bi-patch-check-fill product-card__verified"></i>
             </div>
-            <div class="shop">
-                <span>€ {{ data.price }}</span>            
-            </div>
+            <span class="product-card__condition">{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>
+            <span class="product-card__price">{{ data.price }} €</span>
         </div>
     </div>
 </template>
-  
-  <script lang="ts">
+
+<script lang="ts">
     import ImageCarousel from '@/components/ImageCarousel.vue';
 
     export default {
@@ -39,135 +37,137 @@
             admin: {
                 type: Boolean,
                 required: false,
-                default: false,        
+                default: false,
             },
         },
     };
+</script>
 
-  </script>
-  
-  <style lang="scss" scoped>
-    .card {
-        height: 100%;
-        margin-bottom: 15px;        
-        width: 90%;
-        border-radius: 8px;
-        font-family: monospace;
-        text-decoration: none;
-        transition: all 0.3s;
-        border: none;
-        cursor: pointer;
+<style lang="scss" scoped>
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all var(--transition-base);
+
+      &:hover {
+        border-color: rgba(255, 45, 120, 0.3);
+        box-shadow: var(--shadow-md), 0 0 20px rgba(255, 45, 120, 0.1);
+        transform: translateY(-4px);
+      }
     }
-    .card:hover {
-    box-shadow: 0 0 0 1px #d2d2d22b, 
-        0 0 20px #ff00002b;
+
+    .product-card__image {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--bg-tertiary);
+      overflow: hidden;
     }
-    .card .back {
-        display: flex;
+
+    .product-card__carousel {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+
+      :deep(.swiper) {
         width: 100%;
-        aspect-ratio: 1 / 1;        
-        border-radius: 8px;
-        position: relative;
-        text-decoration: none;
+        height: 100%;
+      }
+
+      :deep(.swiper-slide) {
+        display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--primary-color);
-    }
-    .card .screen {
-        display: block;
-        margin-right: auto;
-        margin-left: auto;
+      }
 
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        border-radius: 3px 3px 0 0;
-        z-index: 1;
-
-    }
-    .card .name a{
-        font-family: "Sora", serif;
-        font-size: small;
-        font-weight: 600;
-        line-height: 7.56px;
-        text-align: left;
-        text-decoration-skip-ink: none;
-        color: var(--primary-color);
-        text-decoration: none;
-
-    }
-
-    .card .back h4 {
+      :deep(.swiper-slide img) {
         width: 100%;
         height: 100%;
-        margin: 0;
-        z-index: 5;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        display: flex;
-        color: #ffffff00;
-        font-size: 1.2rem;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    /*    background: radial-gradient( #0000, #000000d1 ); */
-        opacity: 0;
-        transition: all 0.2s;
-        text-shadow: 2px 2px 0px #00000000;
-    }
-    .card .back:hover h4 {
-        opacity: 1;
-    }
-    .card .state{
-        font-family: "Sora", serif;
-        font-size: x-small;
-        font-weight: 504;
-        line-height: 7.56px;
-        text-align: left;
-        text-decoration-skip-ink: none;
-        color: var(--primary-color);
-
-    }
-    .card .shop {
-        display: flex;
-        width: calc(100% - 2rem);
-        align-items: start;
-        color: var(--blue);
-        flex-direction: column;    
-        font-family: "Sora", serif;
-        font-size: small;
-        font-weight: 504;
-        line-height: 10.08px;
-        text-align: left;
-        text-decoration-skip-ink: none;
-        margin-top: 10px;
-
+        object-fit: cover;
+      }
     }
 
-    .shop span {
-        padding-left: 2px;
-    }
-    .card .shop:before {
-        content: '';
-        display: flex;
-        align-self: flex-start;
-        width: calc(100% - 2rem);
-        margin: 0 1rem;
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 1px;
-        background: #e6e6e6;
-    }
-    @media (max-width:720px){
+    .product-card__badge {
+      position: absolute;
+      top: var(--space-sm);
+      left: var(--space-sm);
+      z-index: 2;
+      padding: 4px 10px;
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      border-radius: var(--radius-full);
 
-        .card{
-            margin-left: auto; 
-            margin-right: auto; 
-            display: block;
-            width: 70%;
-        }
+      &--draft {
+        background: var(--warning-light);
+        color: var(--warning);
+      }
+
+      &--reserved {
+        background: var(--info-light);
+        color: var(--info);
+      }
     }
-  </style>
-  
+
+    .product-card__info {
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .product-card__title {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-card__seller {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .product-card__seller-name {
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+    }
+
+    .product-card__verified {
+      color: var(--accent-pink);
+      font-size: 11px;
+    }
+
+    .product-card__condition {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .product-card__price {
+      font-size: var(--font-size-base);
+      font-weight: 700;
+      color: var(--accent-pink);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .product-card__info {
+        padding: var(--space-sm);
+      }
+
+      .product-card__title {
+        font-size: var(--font-size-xs);
+      }
+
+      .product-card__price {
+        font-size: var(--font-size-sm);
+      }
+    }
+</style>

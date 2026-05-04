@@ -2,13 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import './css/main.scss'
-import './css/responsive/phone.scss'
-import './css/responsive/tablette.scss'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import { func } from "./function"
 

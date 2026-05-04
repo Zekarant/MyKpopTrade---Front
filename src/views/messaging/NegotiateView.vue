@@ -140,8 +140,8 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useMessagingStore } from '@/stores/messaging.store';
-import productService from '@/services/products'; // À adapter selon votre service
+import { useMessagingStore } from '@/store/messaging.store';
+import postService from '@/services/post.service'; // product service
 
 export default defineComponent({
   name: 'NegotiateView',
@@ -192,7 +192,7 @@ export default defineComponent({
       loading.value = true;
       try {
         // Remplacer par votre service de produits
-        const response = await productService.getProduct(productId.value);
+        const response = await postService.getPost(productId.value);
         product.value = response;
 
         // Définir une offre initiale

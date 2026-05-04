@@ -1,11 +1,20 @@
 <template>
     <div v-if="isRoot" class="responseReviewContent">
-        <textarea v-model="textResponse" @keyup="showSendResponseBtn = true"></textarea>
-        <button v-if="showSendResponseBtn && !review.response.content" @click="response" class="btn-primary">Répondre</button>
-        <button v-if="showSendResponseBtn && review.response.content" @click="modify" class="btn-primary">Modifier</button>
+        <div v-if="review.response.content && !isEditing" class="response-display">
+            <p class="response-text">{{ review.response.content }}</p>
+            <button @click="isEditing = true" class="btn-edit"><i class="bi bi-pencil"></i> Modifier</button>
+        </div>
+        <div v-if="!review.response.content || isEditing">
+            <textarea v-model="textResponse" :placeholder="review.response.content ? 'Modifier votre réponse...' : 'Répondre à cet avis...'" @keyup="showSendResponseBtn = true"></textarea>
+            <div class="response-actions">
+                <button v-if="isEditing" @click="isEditing = false" class="btn-cancel-edit">Annuler</button>
+                <button v-if="showSendResponseBtn && !review.response.content" @click="response" class="btn-primary">Répondre</button>
+                <button v-if="showSendResponseBtn && review.response.content" @click="modify" class="btn-primary">Enregistrer</button>
+            </div>
+        </div>
     </div>
-    <div v-else-if="!isRoot" class="responseReviewContent">
-        <div>{{ textResponse }}</div>
+    <div v-else-if="!isRoot && review.response.content" class="responseReviewContent">
+        <p class="response-text">{{ review.response.content }}</p>
     </div>
 </template>
 
@@ -31,9 +40,10 @@
         },
         data() {
             return {
-                textResponse: '', 
+                textResponse: '',
                 showSendResponseBtn: false,
-                isRoot: false
+                isRoot: false,
+                isEditing: false
             };
         },
         methods: {
@@ -48,16 +58,17 @@
                     if (response.status == 201 || response.status == 200) {
                         this.$func.showToastSuccess(response.data.message);
                         this.showSendResponseBtn = false;
-                        this.$emit('update-review', { 
-                            review: { ...this.review, response: { ...this.review.response, content: this.textResponse } }, 
-                            index: this.index 
-                        }); 
+                        this.isEditing = false;
+                        this.$emit('update-review', {
+                            review: { ...this.review, response: { ...this.review.response, content: this.textResponse } },
+                            index: this.index
+                        });
                     }else {
                         this.$func.showToastError(response);
                         console.error("Error reporting review:", response);
                     }
                 })
-            }, 
+            },
             async modify(){
                 if(this.textResponse != ''){
                     await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/ratings/${this.review._id}/response`, {
@@ -70,9 +81,9 @@
                         if (response.status == 201 || response.status == 200) {
                             this.$func.showToastSuccess(response.data.message);
                             this.showSendResponseBtn = false;
-                            this.$emit('update-review', { 
-                                review: { ...this.review, response: { ...this.review.response, content: this.textResponse } }, 
-                                index: this.index 
+                            this.$emit('update-review', {
+                                review: { ...this.review, response: { ...this.review.response, content: this.textResponse } },
+                                index: this.index
                             });
                         }else {
                             this.$func.showToastError(response);
@@ -88,9 +99,9 @@
                         if (response.status == 201 || response.status == 200) {
                             this.$func.showToastSuccess(response.data.message);
                             this.showSendResponseBtn = false;
-                            this.$emit('update-review', { 
-                                review: { ...this.review, response: { ...this.review.response, content: '' } }, 
-                                index: this.index 
+                            this.$emit('update-review', {
+                                review: { ...this.review, response: { ...this.review.response, content: '' } },
+                                index: this.index
                             });
                         }else {
                             this.$func.showToastError(response);
@@ -113,28 +124,77 @@
             if(this.review.response.content){
                 this.textResponse = this.review.response.content;
             }
-        },           
+        },
     };
 </script>
 
 <style lang="scss" scoped>
     .responseReviewContent{
         position: absolute;
-        bottom: 5px; 
+        bottom: 5px;
         left: 10px;
         padding: 10px;
     }
     .responseReviewContent textarea {
         height: 70px;
         width: 100%;
-        border: 2px solid var(--secondary-color-tint);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--surface-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-sm);
+        color: var(--text-primary);
+        font-size: var(--font-size-xs);
+        font-family: var(--font-sans);
+        resize: none;
+
+        &::placeholder { color: var(--text-muted); }
+        &:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+        }
     }
-    textarea:focus{
-        outline: none;
+    .response-text {
+        font-size: var(--font-size-xs);
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
     }
-    .btn-primary{
-        margin-top: 10px;
-        width: 100%;
-        font-size: x-small;
+    .response-actions {
+        display: flex;
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+    }
+    .btn-primary {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+        background: var(--accent-gradient);
+        border: none;
+        border-radius: var(--radius-md);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-edit {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+        background: transparent;
+        border: 1px solid var(--surface-border);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        cursor: pointer;
+        margin-top: var(--space-sm);
+
+        &:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+    }
+    .btn-cancel-edit {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+        background: transparent;
+        border: 1px solid var(--surface-border);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        cursor: pointer;
+
+        &:hover { color: var(--text-primary); }
     }
 </style>

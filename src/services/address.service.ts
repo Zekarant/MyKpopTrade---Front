@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 import Cookies from 'js-cookie';
+import { API_URL } from '@/config/api';
 
 export interface AddressResult {
   label: string;
@@ -25,7 +26,7 @@ class AddressService {
   private client: AxiosInstance;
 
   constructor() {
-    const baseUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/addresses`;
+    const baseUrl = `${API_URL}/api/addresses`;
     this.client = axios.create({
       baseURL: baseUrl,
       headers: { 'Content-Type': 'application/json' }

@@ -58,17 +58,23 @@
           </div>
 
 
-          <div>
+          <div class="autocomplete-field">
             <label for="kpopGroup">Groupe Kpop</label>
-            <input type="text" id="kpopGroup" v-model="formData.kpopGroup" required />
+            <input type="text" id="kpopGroup" v-model="formData.kpopGroup" @input="searchGroups" autocomplete="off" required />
+            <ul v-if="groupSuggestions.length" class="autocomplete-list">
+              <li v-for="g in groupSuggestions" :key="g._id" @click="pickGroup(g)">{{ g.name }}</li>
+            </ul>
           </div>
           <div>
             <label for="kpopMember">Membre Kpop</label>
             <input type="text" id="kpopMember" v-model="formData.kpopMember" required />
           </div>
-          <div>
+          <div class="autocomplete-field">
             <label for="albumName">Nom de l'album</label>
-            <input type="text" id="albumName" v-model="formData.albumName" required />
+            <input type="text" id="albumName" v-model="formData.albumName" @input="searchAlbums" autocomplete="off" required />
+            <ul v-if="albumSuggestions.length" class="autocomplete-list">
+              <li v-for="a in albumSuggestions" :key="a._id" @click="pickAlbum(a)">{{ a.name }}</li>
+            </ul>
           </div>
           <div>
             <label>Options de livraison</label>
@@ -105,10 +111,12 @@
       </div>
     </div>
   </template>
-  
+
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
   import postService from '@/services/post.service';
+  import groupService from '@/services/group.service';
+  import albumService from '@/services/album.service';
 
 
   export default defineComponent({
@@ -141,9 +149,9 @@
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
           formData.value.images.push(file);
-  
+
           const reader = new FileReader();
-       
+
           reader.onload = (e) => {
             if (e.target?.result) {
               imagesPreview.value.push(e.target.result as string);
@@ -166,19 +174,65 @@
     };
 
 
+      const groupSuggestions = ref<any[]>([]);
+      let groupTimer: any = null;
+
+      const searchGroups = () => {
+        clearTimeout(groupTimer);
+        groupTimer = setTimeout(async () => {
+          if (formData.value.kpopGroup.trim().length >= 2) {
+            try {
+              groupSuggestions.value = await groupService.searchGroups(formData.value.kpopGroup);
+            } catch { groupSuggestions.value = []; }
+          } else {
+            groupSuggestions.value = [];
+          }
+        }, 250);
+      };
+
+      const pickGroup = (group: any) => {
+        formData.value.kpopGroup = group.name;
+        groupSuggestions.value = [];
+      };
+
+      const albumSuggestions = ref<any[]>([]);
+      let albumTimer: any = null;
+
+      const searchAlbums = () => {
+        clearTimeout(albumTimer);
+        albumTimer = setTimeout(async () => {
+          if (formData.value.albumName.trim().length >= 2) {
+            try {
+              albumSuggestions.value = await albumService.searchAlbums(formData.value.albumName);
+            } catch { albumSuggestions.value = []; }
+          } else {
+            albumSuggestions.value = [];
+          }
+        }, 250);
+      };
+
+      const pickAlbum = (album: any) => {
+        formData.value.albumName = album.name;
+        albumSuggestions.value = [];
+      };
+
       return {
         formData,
         imagesPreview,
         handleImageUpload,
         removeImage,
         triggerFileInput,
+        groupSuggestions,
+        searchGroups,
+        pickGroup,
+        albumSuggestions,
+        searchAlbums,
+        pickAlbum,
       };
     },
     methods:{
       async save(){
         const response = await postService.createPost(this.formData);
-        console.log(response);
-        
         if (response) {
           this.$func.showToastSuccess('Produit créé avec succès !');
 
@@ -193,7 +247,7 @@
     }
   });
   </script>
-  
+
   <style scoped>
   .popup-overlay {
     position: fixed;
@@ -207,7 +261,7 @@
     align-items: center;
     z-index: 1000;
   }
-  
+
   .popup-content {
     background: white;
     padding: 20px;
@@ -217,17 +271,17 @@
     max-height: 90%;
     overflow-y: auto;
   }
-  
+
   form div {
     margin-bottom: 15px;
   }
-  
+
   label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
   }
-  
+
   input,
   textarea,
   select {
@@ -236,7 +290,7 @@
     border: 1px solid #ccc;
     border-radius: 4px;
   }
-  
+
 
 
 
@@ -260,15 +314,15 @@
   align-items: center;
 }
 .delete_img{
-  position: absolute; 
-  right: 5px; 
-  top: 0px; 
-  color: white;  
-  border-radius: 4px; 
+  position: absolute;
+  right: 5px;
+  top: 0px;
+  color: white;
+  border-radius: 4px;
   cursor: pointer;
 }
 .delete_img:hover{
-  color: var(--primary-color);  
+  color: var(--primary-color);
 }
 .image-preview img {
   max-width: 100%;
@@ -296,21 +350,21 @@
   margin: 2%;
 }
 .disabled {
-  opacity: 0.5; 
-  pointer-events: none; 
+  opacity: 0.5;
+  pointer-events: none;
 }
 input[type="checkbox"] {
   appearance: none;
   width: 20px;
   height: 20px;
-  margin-right: 10px; 
-  border: 2px solid var(--primary-color); 
-  border-radius: 4px; 
-  background-color: white; 
+  margin-right: 10px;
+  border: 2px solid var(--primary-color);
+  border-radius: 4px;
+  background-color: white;
   cursor: pointer;
   display: inline-block;
   vertical-align: middle;
-  position: relative; 
+  position: relative;
 
 
 }
@@ -318,20 +372,46 @@ input[type="checkbox"] {
 
 input[type="checkbox"]:checked {
   background-color: var(--primary-color);
-  border-color: var(--primary-color); 
+  border-color: var(--primary-color);
   color: white;
 }
 input[type="checkbox"]:checked::after {
   content: '✔';
-  color: white; 
-  font-size: 14px; 
+  color: white;
+  font-size: 14px;
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); 
+  transform: translate(-50%, -50%);
   font-weight: bold;
-  line-height: 1; 
+  line-height: 1;
 }
 
+.autocomplete-field {
+  position: relative;
+}
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0;
+}
+.autocomplete-list li {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.autocomplete-list li:hover {
+  background: #f0f0f0;
+}
 
 </style>

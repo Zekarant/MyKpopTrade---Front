@@ -8,6 +8,7 @@
                     <button type="button" :class="{ clicked: part === 'annoucement' }" @click="btnClick('annoucement')" class="btn">Annonces</button>
                     <button type="button" :class="{ clicked: part === 'about' }" @click="btnClick('about')" class="btn">À propos</button>
                     <button type="button" :class="{ clicked: part === 'review' }" @click="btnClick('review')" class="btn">Avis</button>
+                    <button type="button" :class="{ clicked: part === 'followers' }" @click="btnClick('followers')" class="btn">Abonnés</button>
                     <button type="button" :class="{ clicked: part === 'wishlist' }" @click="btnClick('wishlist')" class="btn">Wishlist</button>
                 </div>
             </div>

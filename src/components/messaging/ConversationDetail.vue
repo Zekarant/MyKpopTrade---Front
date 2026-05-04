@@ -14,16 +14,52 @@
             v-html="renderAvatar(otherParticipant)"
           ></div>
           <div>
-            <h3>{{ conversationTitle }}</h3>
+            <h3>{{ conversationTitle }} <i v-if="otherParticipant?.isIdentityVerified" class="bi bi-patch-check-fill" style="color: #ff2d78; font-size: 13px;"></i></h3>
             <span class="status">{{ getStatusText() }}</span>
           </div>
         </div>
       </div>
 
       <div class="header-actions">
+        <button @click="openMediaGallery" class="action-btn" title="Galerie média">
+          <i class="bi bi-images"></i>
+        </button>
         <button @click="toggleInfo" class="action-btn">
           <i class="bi bi-info-circle"></i>
         </button>
+      </div>
+    </div>
+
+    <!-- Galerie média -->
+    <div v-if="mediaGallery.open" class="media-overlay" @click.self="mediaGallery.open = false">
+      <div class="media-panel">
+        <div class="media-panel__head">
+          <h3><i class="bi bi-images"></i> Galerie de la conversation</h3>
+          <button class="action-btn" @click="mediaGallery.open = false"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div v-if="mediaGallery.loading" class="media-panel__empty">Chargement…</div>
+        <div v-else-if="!mediaGallery.items.length" class="media-panel__empty">
+          <i class="bi bi-image"></i>
+          <p>Aucun média partagé</p>
+        </div>
+        <div v-else class="media-panel__grid">
+          <a
+            v-for="(item, idx) in mediaGallery.items"
+            :key="idx"
+            class="media-tile"
+            :href="getAttachmentHref(item.messageId, item.name)"
+            target="_blank"
+            rel="noopener"
+            :title="item.name"
+            @click.prevent="downloadAttachment(item.messageId, item.name)"
+          >
+            <img v-if="isImage(item.name)" :src="getAttachmentHref(item.messageId, item.name)" :alt="item.name" />
+            <div v-else class="media-tile__file">
+              <i class="bi bi-file-earmark"></i>
+              <span>{{ item.name }}</span>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -295,7 +331,7 @@
           class="participant"
         >
           <div class="avatar-small" v-html="renderAvatar(participant)"></div>
-          <span>{{ participant.username }}</span>
+          <span>{{ participant.username }} <i v-if="participant.isIdentityVerified" class="bi bi-patch-check-fill" style="color: #ff2d78; font-size: 11px;"></i></span>
         </div>
       </div>
     </div>
@@ -461,6 +497,55 @@ export default defineComponent({
     const viewAttachment = (messageId: string, attachmentName: string) => {
       const url = messagingService.getAttachmentUrl(messageId, attachmentName);
       window.open(url, '_blank');
+    };
+
+    const mediaGallery = ref<{
+      open: boolean;
+      loading: boolean;
+      items: Array<{ messageId: string; name: string }>;
+    }>({ open: false, loading: false, items: [] });
+
+    const openMediaGallery = async () => {
+      mediaGallery.value.open = true;
+      mediaGallery.value.loading = true;
+      try {
+        const data = await messagingService.getConversationMedia(conversationId.value);
+        const items: Array<{ messageId: string; name: string }> = [];
+        const list = data?.media || data?.attachments || data?.data || [];
+        for (const entry of list) {
+          if (entry.attachments && Array.isArray(entry.attachments)) {
+            for (const name of entry.attachments) {
+              items.push({ messageId: entry._id || entry.messageId, name });
+            }
+          } else if (entry.name && entry.messageId) {
+            items.push({ messageId: entry.messageId, name: entry.name });
+          }
+        }
+        mediaGallery.value.items = items;
+      } catch (e) {
+        mediaGallery.value.items = [];
+      } finally {
+        mediaGallery.value.loading = false;
+      }
+    };
+
+    const isImage = (name: string): boolean => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
+
+    const getAttachmentHref = (messageId: string, name: string): string =>
+      messagingService.getAttachmentUrl(messageId, name);
+
+    const downloadAttachment = async (messageId: string, name: string) => {
+      try {
+        const blob = await messagingService.downloadAttachment(messageId, name);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch {
+        window.open(messagingService.getAttachmentUrl(messageId, name), '_blank');
+      }
     };
 
     const scrollToBottom = () => {
@@ -678,7 +763,12 @@ export default defineComponent({
       submitNegotiationResponse,
       openPwywModal,
       closePwywModal,
-      submitPwywOffer
+      submitPwywOffer,
+      mediaGallery,
+      openMediaGallery,
+      isImage,
+      getAttachmentHref,
+      downloadAttachment,
     };
   }
 });
@@ -1457,5 +1547,75 @@ export default defineComponent({
     margin: 15px 0;
     font-size: 11px;
   }
+}
+
+// Media gallery overlay
+.media-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.media-panel {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 720px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.media-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  h3 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+}
+.media-panel__empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+  i { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+}
+.media-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.media-tile {
+  aspect-ratio: 1 / 1;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  &:hover { opacity: 0.85; }
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+.media-tile__file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  i { font-size: 1.8rem; }
+  span { word-break: break-all; }
 }
 </style>

@@ -1,236 +1,305 @@
 <template>
-  <main>
- <div class="d-flex align-items-center position-absolute top-0 start-0 p-3 p-md-5 pt-4 logo-container">
-   <img src="@/assets/images/logo.png" class="logo-img" alt="Logo" />
-   <span class="main-title ms-3">
-     MyKpop <br />Trade
-   </span>
- </div>
- <div class="container-custom">
-   <div class="d-flex flex-column justify-content-center w-50 position-relative">
-     <div class="ms-lg-5 ms-md-5">
-       <form @submit.prevent="submitForm" class="d-flex flex-column">
-         <div class="input-group mb-3">
-           <span class="input-group-text bg-white border-0">
-             <i class="material-icons">person</i>
-           </span>
-           <input type="text" v-model="email" class="form-control border-0" :class="{ 'is-invalid': ErroruserName }"
-             placeholder="Votre email" required />
-         </div>
-         <button class="btn-primary" @click="reset" aria-label="reset"  variant="primary">Rénitialiser</button>
-         <br>
-         <div v-if="ErroruserName || successMessage || passwordError"
-           :class="['alert', 'alert-dismissible', 'd-flex', 'align-items-center', { 'alert-success': successMessage, 'alert-danger': ErroruserName }]"
-           role="alert">
-           <i class="material-icons me-3">
-             {{ errorBase ? 'error' : 'check' }}
-           </i>
-           <div>
-             {{ errorBase || successMessage }}
-           </div>
-         </div>
-       </form>
-     </div>
-   </div>
-   <div class="image-column ms-3">
-     <img src="@/assets/images/image.png" class="w-100" alt="Image Kpop Exchange" />
-   </div>
- </div>
-</main>
+  <main class="auth-page">
+    <div class="auth-bg">
+      <div class="auth-bg__orb auth-bg__orb--purple"></div>
+      <div class="auth-bg__orb auth-bg__orb--pink"></div>
+    </div>
+
+    <div class="auth-container">
+      <!-- Left: Form -->
+      <div class="auth-form-section">
+        <div class="auth-form-wrapper">
+          <!-- Logo -->
+          <div class="auth-brand">
+            <span class="auth-brand__logo">K</span>
+            <div>
+              <h1 class="auth-brand__title">MyKpopTrade</h1>
+              <p class="auth-brand__subtitle">Réinitialisation du mot de passe</p>
+            </div>
+          </div>
+
+          <form @submit.prevent="reset" class="auth-form">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <div class="input-group--custom" :class="{ 'input-group--error': errorBase }">
+                <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                <input type="email" v-model="email" placeholder="Votre adresse email" required />
+              </div>
+            </div>
+
+            <!-- Errors -->
+            <Transition name="fade">
+              <div v-if="errorBase" class="auth-message auth-message--error">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>{{ errorBase }}</span>
+              </div>
+            </Transition>
+
+            <Transition name="fade">
+              <div v-if="successMessage" class="auth-message auth-message--success">
+                <i class="bi bi-check-circle"></i>
+                <span>{{ successMessage }}</span>
+              </div>
+            </Transition>
+
+            <button class="btn btn-primary w-full" type="submit">Réinitialiser le mot de passe</button>
+
+            <!-- Links -->
+            <div class="auth-links">
+              <router-link to="/login" class="auth-links__item">
+                <i class="bi bi-arrow-left"></i> Retour à la connexion
+              </router-link>
+              <router-link to="/register" class="auth-links__item auth-links__item--muted">
+                Pas encore de compte ? <strong>S'inscrire</strong>
+              </router-link>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right: Visual -->
+      <div class="auth-visual">
+        <div class="auth-visual__content">
+          <img src="@/assets/images/image.png" alt="K-pop Exchange" class="auth-visual__image" />
+          <div class="auth-visual__overlay"></div>
+        </div>
+      </div>
+    </div>
+  </main>
 </template>
-<script>
+
+<script lang="ts">
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-import Cookies from 'js-cookie';
 
-export default defineComponent ({
- name: "forgot_psw",
- setup() {
-   var email = ref('');
-   var errorBase = ref('');
-   var successMessage = ref('');
-   
-   
-   var router = useRouter();
+export default defineComponent({
+  name: 'ForgotPassword',
+  setup() {
+    const email = ref('');
+    const errorBase = ref('');
+    const successMessage = ref('');
+    const router = useRouter();
 
-   const reset = async () => {
-     var verif_login = true;
+    const reset = async () => {
+      errorBase.value = '';
+      successMessage.value = '';
 
-     if(email.value == '' || email.value.length < 5) {
-       verif_register = false;
-       errorBase.value  = 'L\'email est invalide';
-     } else {
-       errorBase.value = '';
-     }
-     if(verif_login){
-       await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
-         email: email.value,
-       }, {
-         headers: {
-           'Content-Type': 'application/json'
-         }
-       }).then(response => {
-           console.log(response);
-           if (response.status === 200) {
-            successMessage.value = response.data.message;
-            setTimeout(() => {
-              router.push('/login');
-            }, 2000);
-         } else {
-           errorBase.value = response.data.message;
-         }
-       }).catch(error => {
-         console.log(error);
-         errorBase.value = error.response.data.message;
+      if (!email.value || email.value.length < 5) {
+        errorBase.value = "L'email est invalide";
+        return;
+      }
 
-       });
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
+          { email: email.value },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
 
+        if (response.status === 200) {
+          successMessage.value = response.data.message;
+          setTimeout(() => router.push('/login'), 2000);
+        } else {
+          errorBase.value = response.data.message;
+        }
+      } catch (error: any) {
+        errorBase.value = error.response?.data?.message || 'Une erreur est survenue.';
+      }
+    };
 
-
-
-
-     }
-   }
-   return {
-    email,
-    errorBase,
-    successMessage,
-    reset
-     
-   };
- }
-
-
+    return { email, errorBase, successMessage, reset };
+  }
 });
 </script>
+
 <style lang="scss" scoped>
-.registerBtn{
-width: 100%;
-text-align:center
-}
-.container-custom {
-display: flex;
-justify-content: space-between;
-height: 100vh;
-padding: 20px;
+.auth-page {
+  min-height: 100vh;
+  position: relative;
 }
 
-.main-title {
-color: #121212;
-font-weight: 900;
-text-transform: uppercase;
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.logo-img {
-max-height: 100px;
+.auth-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+
+  &--pink {
+    width: 400px;
+    height: 400px;
+    background: var(--accent-pink);
+    bottom: -100px;
+    left: -100px;
+  }
+
+  &--purple {
+    width: 500px;
+    height: 500px;
+    background: var(--accent-purple);
+    top: -150px;
+    right: -150px;
+  }
 }
 
-.image-column {
-display: flex;
-justify-content: center;
-align-items: center;
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
-.image-column img {
-max-height: 90vh;
-object-fit: contain;
+.auth-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
 }
 
-.input-group {
-display: flex;
-width: 100%;
-border-radius: 10px;
-overflow: hidden;
-border: 1px solid #ccc;
-height: 50px;
+.auth-form-wrapper {
+  width: 100%;
+  max-width: 420px;
+  animation: fadeInUp 0.5s ease;
 }
 
-.input-group-text {
-background-color: #fff;
-border: none;
-display: flex;
-align-items: center;
-padding: 0.5rem;
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
 }
 
-.form-control {
-border: none;
-outline: none;
-box-shadow: none;
-padding-left: 0.5rem;
+.auth-brand__logo {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-gradient);
+  color: white;
+  font-weight: 800;
+  font-size: 1.4rem;
+  border-radius: var(--radius-md);
 }
 
-.btn-dark {
-background-color: #000;
-color: #fff;
-border-radius: 0;
-border: none;
-padding: 0.5rem 1rem;
-font-size: 0.9rem;
-text-transform: lowercase;
+.auth-brand__title {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
 }
 
-.form-control:focus {
-box-shadow: none;
+.auth-brand__subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: 4px 0 0;
 }
 
-input::placeholder {
-color: #bbb;
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
-.input-group-text img {
-height: 1rem;
+.input-group--error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
 }
 
-.form-control.is-invalid {
-border-color: var(--danger-color);
+.auth-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+
+  &--success {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  &--error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
 }
 
-.text-danger {
-color: var(--danger-color);
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
 }
 
-.text-success {
-color:  var(--success-color);
+.auth-links__item {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+
+  &:hover { color: var(--accent-pink); }
+
+  &--muted {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  strong { color: var(--accent-pink-light); }
 }
 
-@media only screen and (max-width: 600px) {
-.image-column.ms-3 {
- margin-left: 0px !important;
- padding-bottom: 20px;
-}
-.logo-container {
- position: relative !important;
-}
-
-
-
-
-.container-custom {
- display: flex;
- flex-direction: column-reverse;
- align-items: center; // Centre les éléments pour mieux gérer l'espace
- height: auto; // Ajuste la hauteur automatiquement
+.auth-visual {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
 }
 
-.image-column {
- width: 100%; // S'assure que le conteneur de l'image occupe toute la largeur
- display: flex;
- justify-content: center;
+.auth-visual__content {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
-.image-column img {
- max-width: 100%; // Limite la largeur de l'image au parent
- height: auto; // Maintient le ratio d'aspect
- max-height: 50vh; // Limite la hauteur pour éviter de prendre trop de place
- object-fit: contain; // S'assure que l'image s'ajuste bien dans son conteneur
+.auth-visual__image {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  animation: float 4s ease-in-out infinite;
 }
 
-.w-50 {
- width: 100% !important;
-}
+.auth-visual__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, var(--bg-primary) 100%);
+  pointer-events: none;
 }
 
-/****** Responcive ******/
+.fade-enter-active, .fade-leave-active {
+  transition: all var(--transition-base);
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+@media (max-width: 768px) {
+  .auth-visual { display: none; }
+  .auth-form-section { padding: var(--space-lg); }
+}
 </style>

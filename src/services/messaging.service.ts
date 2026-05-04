@@ -26,8 +26,9 @@ import type {
 } from '@/types/messaging.types';
 import type { IUser, UserResponse } from '@/types/user.types';
 import Cookies from 'js-cookie';
+import { API_URL } from '@/config/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL + '/api' || 'http://localhost:3000/api';
+const API_BASE_URL = `${API_URL}/api`;
 
 interface ApiError {
   message: string;
@@ -228,7 +229,7 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
-  
+
   // Archiver une coneversation
   async favorite(conversationId: string): Promise<void> {
     if (!conversationId.trim()) {
@@ -242,7 +243,7 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
-  
+
   // Archiver une coneversation
   async archiveConversation(conversationId: string): Promise<void> {
     if (!conversationId.trim()) {
@@ -310,15 +311,15 @@ class MessagingService {
       const response: AxiosResponse<CancelOfferResponse> = await this.apiClient.delete(
         `/${conversationId}/cancel-offer`,
         {
-          data: { 
+          data: {
             productId,
             initialOffer,
             message
           }
         }
       );
-      
-      return response.data; 
+
+      return response.data;
     } catch (error) {
       console.error('Erreur lors de l\'annulation de la négociation:', error);
       throw this.handleError(error);
@@ -376,7 +377,7 @@ class MessagingService {
       throw this.handleError(error);
     }
   }
-   
+
   // Faire une proposition PWYW
   async makePayWhatYouWantOffer(
     conversationId: string,
@@ -420,7 +421,7 @@ class MessagingService {
     }
   }
   async getUserByName(name: string): Promise<UserResponse> {
-    try {        
+    try {
       const response: AxiosResponse<UserResponse> = await this.userApiClient.get(
         `/users/search?query=${name}`
       );
@@ -430,7 +431,7 @@ class MessagingService {
         (response as any).data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
-        authentificationService.verifSession();
+        await authentificationService.verifSession().catch(() => {});
       }
 
       return response.data;
@@ -440,10 +441,49 @@ class MessagingService {
         error?.response?.data?.code === "TOKEN_EXPIRED" ||
         error?.response?.status === 401
       ) {
-        authentificationService.verifSession();
+        await authentificationService.verifSession().catch(() => {});
       }
       console.error("Erreur lors de la recherche :", error);
       throw error;
+    }
+  }
+
+  async getConversationOffers(conversationId: string) {
+    try {
+      const response = await this.apiClient.get(`/${conversationId}/offers`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getConversationMedia(conversationId: string) {
+    try {
+      const response = await this.apiClient.get(`/${conversationId}/media`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async markMessageAsRead(messageId: string) {
+    try {
+      const response = await this.apiClient.put(`/messages/${messageId}/read`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async downloadAttachment(messageId: string, attachment: string): Promise<Blob> {
+    try {
+      const response = await this.apiClient.get(
+        `/messages/${messageId}/attachments/${encodeURIComponent(attachment)}`,
+        { responseType: 'blob' }
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
     }
   }
 

@@ -1,4 +1,5 @@
 <template>
+  <main class="page">
   <nav_bar></nav_bar>
   <div class="messaging-container">
     <!-- Sidebar Navigation -->
@@ -72,7 +73,7 @@
             :key="conversation._id || conversation.id"
             class="conversation-item"
             :class="{
-              active: (selectedConversation?._id && selectedConversation._id === conversation._id) || 
+              active: (selectedConversation?._id && selectedConversation._id === conversation._id) ||
             (selectedConversation?.id && selectedConversation.id === conversation.id),
               unread: conversation.unreadCount > 0,
               favorite: isFavoriteConversation(conversation)
@@ -184,7 +185,7 @@
           </div>
           <div class="chat-actions">
             <button v-if="selectedConversation.productId" class="action-btn btn_computer" @click="expandSalesOptions" @click.stop title="sold">
-              <i class="bi bi-cash-coin"></i>           
+              <i class="bi bi-cash-coin"></i>
             </button>
             <button
               class="action-btn btn_computer"
@@ -202,15 +203,15 @@
               <!-- Dropdown Options de vente -->
               <div class="dropdown-menu" v-if="showSalesOptions" @click.stop>
                 <button v-if="selectedConversation.productId" @click="sendOfferOption" class="dropdown-item">
-                  <i class="bi bi-wallet"></i>      
-                  Faire une offre            
+                  <i class="bi bi-wallet"></i>
+                  Faire une offre
                 </button>
                 <button v-if="selectedConversation.productId && !selectedConversation.isOwner" @click="buyOption" class="dropdown-item">
-                  <i class="bi bi-credit-card"></i>                  
+                  <i class="bi bi-credit-card"></i>
                   Acheter
                 </button>
               </div>
-   
+
             <!-- Dropdown Options -->
             <div class="dropdown-menu" v-if="showConversationOptions" @click.stop>
               <button @click="archiveConversation(selectedConversation)" class="dropdown-item">
@@ -218,15 +219,15 @@
                 {{ isArchived(selectedConversation)? 'Désarchiver' : 'Archiver' }}
               </button>
               <button @click="showRightBar" class="dropdown-item information">
-                <i class="bi bi-info-circle"></i>               
+                <i class="bi bi-info-circle"></i>
                 Information
               </button>
               <button v-if="selectedConversation.productId" @click="sendOfferOption" class="dropdown-item btn_mobile">
-                <i class="bi bi-wallet"></i>      
-                Faire une offre            
+                <i class="bi bi-wallet"></i>
+                Faire une offre
               </button>
               <button v-if="selectedConversation.productId && !selectedConversation.isOwner"  @click="buyOption" class="dropdown-item btn_mobile">
-                <i class="bi bi-credit-card"></i>                  
+                <i class="bi bi-credit-card"></i>
                 Acheter
               </button>
               <button class="dropdown-item btn_mobile" @click="toggleFavorite(selectedConversation)" :title="isFavoriteConversation(selectedConversation) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
@@ -309,11 +310,11 @@
                       </span>
                       <div v-else-if="getOfferStatus(message) === 'pending'" style="display: flex;">
                         <button class="btn-outline btn-offer" @click="declineOffer_popup = true">
-                          <i class="bi bi-x-circle"></i> 
+                          <i class="bi bi-x-circle"></i>
                           Refuser
                         </button>
                         <button class="btn-success btn-offer" @click="acceptOffer(message)">
-                          <i class="bi bi-check-circle"></i>  
+                          <i class="bi bi-check-circle"></i>
                           Accepter
                         </button>
                       </div>
@@ -342,7 +343,7 @@
             </div>
           </div>
           <div class="input-container">
-            
+
             <!-- input caché + bouton -->
             <input type="file" id="imageUpload" @change="handleImageUpload" accept="image/*" hidden multiple  ref="fileInput"/>
 
@@ -373,8 +374,8 @@
 
           <!-- Emoji Picker Popup -->
           <div v-if="showEmojiPicker" class="emoji-picker-popup" @click.stop>
-            <EmojiPicker 
-              :native="true" 
+            <EmojiPicker
+              :native="true"
               @select="onSelectEmoji"
               :display-recent="true"
             />
@@ -406,7 +407,7 @@
             </div>
           </div>
           <button @click="closeInformation" @click.stop class="close-btn-information-mobile">
-            <i class="bi bi-x-lg"></i>        
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
@@ -495,8 +496,8 @@
       <div class="media-section" v-if="selectedConversation?.media?.length">
         <h3 class="section-title">Médias partagés</h3>
         <div class="media-grid">
-          <div 
-            v-for="(media, index) in selectedConversation.media.slice(0, 4)" 
+          <div
+            v-for="(media, index) in selectedConversation.media.slice(0, 4)"
             :key="index"
             class="media-item"
             :class="`media-${index + 1}`"
@@ -520,7 +521,7 @@
       @closeSendMessage="closeModal"
       @newConversationCreated="onNewConversationCreated"
     />
-    
+
     <!-- Image Ouvert Modal -->
     <div v-if="openAttachment"  @click.self="closePopupImgList" class="popup-overlay">
       <div class="popup-content" style="height: 100%; flex-direction: column; display: flex; position: relative; min-width: 50%;">
@@ -583,9 +584,9 @@
       <div class="popup-content">
         <h3 class="popup-title">Refuser l'offre</h3>
         <p class="popup-message">Êtes-vous sûr de vouloir refuser cette offre ?</p>
-        <textarea 
-          v-model="declineMessage" 
-          class="popup-textarea" 
+        <textarea
+          v-model="declineMessage"
+          class="popup-textarea"
           placeholder="Ajouter un message (optionnel)">
         </textarea>
         <div class="popup-actions">
@@ -595,6 +596,7 @@
       </div>
     </div>
   </div>
+  </main>
 </template>
 
 <script setup>
@@ -611,6 +613,7 @@ import EmojiPicker from 'vue3-emoji-picker'
 import Cookies from 'js-cookie';
 import 'vue3-emoji-picker/css'
 import messagingService from '@/services/messaging.service';
+import { API_URL } from '@/config/api';
 
 // Store
 const messagingStore = useMessagingStore()
@@ -637,7 +640,7 @@ const showEmojiPicker = ref(false)
 const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
-const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const domain_api = API_URL;
 const declineOffer_popup = ref(false);
 const counterOfferAmount = ref(null);
 const counterOfferMessage = ref('');
@@ -659,7 +662,7 @@ const filteredConversations = computed(() => {
   // Filter by tab
   switch (activeTab.value) {
     case 'favorites':
-      conversations = conversations.filter((conv) => 
+      conversations = conversations.filter((conv) =>
         isFavoriteConversation(conv)
       );
       break
@@ -716,7 +719,7 @@ const getAllConversationsCount = () => {
 }
 
 const getFavoritesCount = () => {
-  return messagingStore.conversations.filter((conv) => 
+  return messagingStore.conversations.filter((conv) =>
       isFavoriteConversation(conv)
     ).length;
 }
@@ -743,13 +746,13 @@ const getOtherParticipant = (conversation) => {
 
   // Sinon, on cherche dans participants celui qui n'est pas l'utilisateur actuel
   const currentUserId = localStorage.getItem('iduser') || getCookie('iduser') || userInfo.value?.id;
-  
+
   if (conversation.participants && conversation.participants.length > 0) {
     const other = conversation.participants.find(p => {
       const participantId = p.id || p._id || p;
       return participantId !== currentUserId && participantId.toString() !== currentUserId;
     });
-    
+
     if (other) {
       return other;
     }
@@ -841,9 +844,9 @@ const loadMoreMessages = async () => {
 
     const response = await messagingStore.fetchConversation(
       selectedConversation.value.id || selectedConversation.value._id,
-      { 
-        page: nextPage, 
-        limit: messagePagination.value.limit 
+      {
+        page: nextPage,
+        limit: messagePagination.value.limit
       }
     );
 
@@ -906,19 +909,19 @@ const toggleFavorite = async (conversation) => {
   try {
     const id_user = localStorage.getItem('id_user');
     const wasFavorite = isFavoriteConversation(conversation);
-    
+
     showConversationMenu.value = null;
 
     await messagingStore.favorite(conversation._id || conversation.id);
-    
+
     // Mettre à jour localement
     if (!conversation.favoritedBy) {
       conversation.favoritedBy = [];
     }
-    
+
     await messagingStore.fetchConversations();
     selectConversation(selectedConversation.value);
-    
+
   } catch (error) {
     console.error('Erreur lors de la mise à jour des favoris:', error);
   }
@@ -969,14 +972,10 @@ const handleOfferSent = async (offerInfo) => {
     initialOffer: offerInfo.amount,
     message:  offerInfo.message
   };
-  console.log('offerData');
-  console.log(offerData);
   messagingService.initiateNegotiation(
     offerData
   ).then(response => {
     selectedConversation.value = response.conversation;
-
-    console.log('Offre envoyée avec succès:', response)
     currentMessages.value.push(response.conversation.lastMessage)
     scrollToBottom()
   }).catch(error => {
@@ -987,10 +986,9 @@ const handleOfferSent = async (offerInfo) => {
 }
 const acceptOffer = async (message) => {
   try {
-    console.log('Acceptation de l\'offre pour le message:', message);
     const response = await messagingStore.respondToNegotiation(
       message.conversation || message.id,
-      'accept'  
+      'accept'
     )
     proxy.$func.showToastSuccess('Offre acceptée avec succès.');
     selectConversation(response.conversation);
@@ -1004,7 +1002,7 @@ const declineOffer = async (message, text) => {
   try {
     const response = await messagingStore.respondToNegotiation(
       message._id || message.id,
-      'reject',  
+      'reject',
       text
     )
     declineOffer_popup.value = false;
@@ -1017,19 +1015,19 @@ const declineOffer = async (message, text) => {
 
 const getOfferStatus = (message) => {
 
-  
+
   if (!selectedConversation.value || !selectedConversation.value.offerHistory) {
     return null;
   }
-  
+
 
   const offer = selectedConversation.value.offerHistory.find(offer => {
     // Tronquer les millisecondes en divisant par 1000 puis multipliant
     const offerDateSeconds = Math.floor(new Date(offer.createdAt).getTime() / 1000);
     const messageDateSeconds = Math.floor(new Date(message.createdAt).getTime() / 1000);
-    
+
     const isSameDate = offerDateSeconds === messageDateSeconds;
-    
+
     return isSameDate;
   });
 
@@ -1041,8 +1039,6 @@ const getOfferStatus = (message) => {
 }
 
 const cancelOffer = async (message) => {
-  console.log('Annulation de l\'offre pour le message:', message);
-  console.log(selectedConversation.value);
   try {
     const response = await messagingStore.cancelNegotiation(
       selectedConversation.value.negotiation.initialPrice,
@@ -1269,23 +1265,18 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       if (modal && document.body.contains(modal)) {
         modal.remove();
       }
-      console.log('Iframe PayPal fermée');
       checkPaymentStatus(paymentId);
     };
 
     messageHandler = (event) => {
       if (event.data.p2Sent || event.data.utils) {
-        console.log('Message de télémétrie PayPal ignoré');
         return;
       }
-      
-      if (event.origin !== 'https://www.sandbox.paypal.com' && 
+
+      if (event.origin !== 'https://www.sandbox.paypal.com' &&
           event.origin !== 'https://www.paypal.com') {
         return;
       }
-      
-      console.log('Message reçu de PayPal iframe:', event.data);
-      
       if (event.data.type === 'payment_success') {
         closeModal();
         onPaymentSuccess(event.data.paymentId || paymentId);
@@ -1301,7 +1292,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
       if (loaderElement) {
         loaderElement.style.display = 'none';
       }
-      console.log('Iframe PayPal chargée avec succès');
     };
 
     iframeErrorHandler = () => {
@@ -1314,7 +1304,7 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
     window.addEventListener('message', messageHandler);
 
     modalHeader.querySelector('#close-paypal-modal').addEventListener('click', closeModal);
-    
+
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
         closeModal();
@@ -1334,9 +1324,6 @@ const createPaypalIframe = (approvalUrl, paymentId) => {
     modalContent.appendChild(iframe);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
-
-    console.log('Iframe PayPal créée et ajoutée à la page');
-    
     setTimeout(() => {
       if (iframe) {
         iframe.focus();
@@ -1375,17 +1362,13 @@ const handleTabEvents = (tabWindow, paymentId) => {
 
   messageHandler = (event) => {
     if (event.data.p2Sent || event.data.utils) {
-      console.log('Message de télémétrie PayPal ignoré');
       return;
     }
-    
-    if (event.origin !== 'https://www.sandbox.paypal.com' && 
+
+    if (event.origin !== 'https://www.sandbox.paypal.com' &&
         event.origin !== 'https://www.paypal.com') {
       return;
     }
-    
-    console.log('Message reçu de PayPal onglet:', event.data);
-    
     if (event.data.type === 'payment_success') {
       tabWindow.close();
       cleanup();
@@ -1401,12 +1384,10 @@ const handleTabEvents = (tabWindow, paymentId) => {
     try {
       if (tabWindow.closed) {
         cleanup();
-        console.log('Onglet PayPal fermé');
         checkPaymentStatus(paymentId);
       }
     } catch (error) {
       cleanup();
-      console.log('Onglet PayPal fermé (cross-origin)');
       checkPaymentStatus(paymentId);
     }
   }, 1000);
@@ -1416,25 +1397,18 @@ const handleTabEvents = (tabWindow, paymentId) => {
   try {
     tabWindow.focus();
   } catch (error) {
-    console.log('Impossible de donner le focus à l\'onglet');
   }
-
-  console.log('Onglet PayPal ouvert et surveillé');
 };
 
 const checkPaymentStatus = async (paymentId) => {
   try {
-    console.log('Vérification du statut de paiement:', paymentId);
     const statusResponse = await paymentService.checkPaymentStatus(paymentId);
-    console.log('Statut du paiement:', statusResponse);
-    
     if (statusResponse.success) {
       if (statusResponse.status === 'approved' || statusResponse.status === 'completed') {
         onPaymentSuccess(paymentId);
       } else if (statusResponse.status === 'cancelled') {
         onPaymentCancelled();
       } else {
-        console.log('Paiement en attente ou statut inconnu:', statusResponse.status);
       }
     }
   } catch (error) {
@@ -1444,26 +1418,24 @@ const checkPaymentStatus = async (paymentId) => {
 
 const onPaymentSuccess = async (paymentId) => {
   try {
-    console.log('Paiement réussi:', paymentId);
-    
     const soldResponse = await postService.sold(
       selectedConversation.value.otherParticipant._id,
       selectedConversation.value.productId._id
     );
-    
+
     if (soldResponse) {
       await messagingStore.sendMessage(
         selectedConversation.value._id,
         `✅ Paiement confirmé ! Transaction réussie pour "${selectedConversation.value.productId.title}".`
       );
-      
+
       await messagingStore.fetchConversation(selectedConversation.value._id);
-      
+
       alert('Paiement réussi ! Le produit a été marqué comme vendu.');
     } else {
       alert('Paiement réussi mais erreur lors de la mise à jour du produit. Contactez le support.');
     }
-    
+
   } catch (error) {
     console.error('Erreur lors du traitement du succès:', error);
     alert('Paiement réussi mais erreur lors du traitement. Contactez le support.');
@@ -1471,7 +1443,6 @@ const onPaymentSuccess = async (paymentId) => {
 };
 
 const onPaymentCancelled = () => {
-  console.log('Paiement annulé par l\'utilisateur');
   alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
 };
 
@@ -1526,7 +1497,6 @@ const deleteConversation = async (conversation) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')){
     try {
       const response = await messagingStore.deleteConversation(conversation._id || conversation.id)
-      console.log('Conversation supprimée:', response)
       const index = messagingStore.conversations.findIndex(c =>
         (c._id || c.id) === (conversation._id || conversation.id)
       )
@@ -1569,7 +1539,7 @@ const closeInformation = () => {
 const onNewConversationCreated = (newConversation) => {
   const currentUserId = localStorage.getItem('iduser') || getCookie('iduser') || userInfo.value?.id;
   const newConvId = newConversation.id || newConversation._id;
-  
+
   // Vérifier si la conversation existe déjà par son ID
   const existingById = messagingStore.conversations.find((conv) => {
     const convId = conv.id || conv._id;
@@ -1590,15 +1560,15 @@ const onNewConversationCreated = (newConversation) => {
   const existingConversation = messagingStore.conversations.find((conv) => {
     const convOtherParticipant = getOtherParticipant(conv);
     const convProductId = conv.productId?._id || conv.productId;
-    
+
     // Même utilisateur
-    const sameUser = convOtherParticipant?.id === otherParticipant?.id || 
+    const sameUser = convOtherParticipant?.id === otherParticipant?.id ||
                      convOtherParticipant?._id === otherParticipant?._id;
-    
+
     // Même produit (ou tous deux sans produit)
-    const sameProduct = (!convProductId && !newProductId) || 
+    const sameProduct = (!convProductId && !newProductId) ||
                         (convProductId === newProductId);
-    
+
     return sameUser && sameProduct;
   });
 
@@ -1643,7 +1613,6 @@ const deleteAttachement = (index) => {
 }
 
 const openImgList = (attachments, index) => {
-  console.log(attachments);
   for (let index = 0; index < attachments.length; index++) {
     const attachment = attachments[index];
     openAttachmentView.value[index] = domain_api + '/uploads/chat_attachments/' + attachment;
@@ -1801,7 +1770,7 @@ onMounted(async () => {
 
     const userResponse = await userService.getMyInformation()
     userInfo.value = userResponse.user || userResponse.profile
-    
+
 
     await messagingStore.fetchConversations()
 
@@ -1836,9 +1805,10 @@ showConversationMenu.value = null
 /* Base styles - White theme only */
 .messaging-container {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - var(--navbar-height, 64px));
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
 }
 
 /* Sidebar */
@@ -2581,7 +2551,7 @@ showConversationMenu.value = null
     display: grid;
     gap: 4px;
     margin-bottom: 10px;
-    width: 300px; 
+    width: 300px;
 
     grid-template-columns: 1fr;
 
@@ -2606,13 +2576,13 @@ showConversationMenu.value = null
         grid-template-rows: repeat(2, 1fr);
         width: 300px;
         height: 300px;
-        
+
         .message-attachement:first-child {
             grid-column: auto;
             grid-row: auto;
             height: 100%;
         }
-        
+
         .message-attachement {
             width: 100%;
             height: 100%;
@@ -2730,7 +2700,7 @@ showConversationMenu.value = null
   top: -5px;
   color: var(--primary-color);
   z-index: 9;
-  
+
 }
 .popup-content .screen{
   height: 100%;
@@ -2830,7 +2800,7 @@ showConversationMenu.value = null
   margin-bottom: 10px;
 }
 .attachment-preview {
-  width: 100px; 
+  width: 100px;
   height: 100px;
   border-radius: 8px;
   overflow: hidden;
@@ -2838,9 +2808,9 @@ showConversationMenu.value = null
 }
 
 .attachment-image {
-  width: 100%; 
-  height: 100%; 
-  object-fit: cover; 
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 .input-container {
@@ -2956,7 +2926,7 @@ showConversationMenu.value = null
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  overflow: hidden; 
+  overflow: hidden;
   position: relative;
   display: block;
 }
@@ -3422,7 +3392,7 @@ showConversationMenu.value = null
   .right-sidebar {
     width: 280px;
   }
-  
+
   .emoji-picker-popup {
     right: 10px;
     bottom: 70px;
@@ -3438,7 +3408,7 @@ showConversationMenu.value = null
     z-index: 11;
     top: 0px;
     position: absolute;
-    width: 100%;  
+    width: 100%;
   }
 }
 
@@ -3452,7 +3422,7 @@ showConversationMenu.value = null
 
   .sidebar {
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - var(--navbar-height, 64px));
   }
 
   .chat-area {
@@ -3519,7 +3489,7 @@ showConversationMenu.value = null
     z-index: 11;
     position: absolute;
   }
-  
+
   .emoji-picker-popup {
     position: fixed;
     bottom: 80px;
@@ -3610,14 +3580,14 @@ showConversationMenu.value = null
     grid-template-rows: repeat(2, 150px);
     gap: 8px;
     max-width: 100%;
-    
+
     .media-item {
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
       transition: transform 0.2s;
       position: relative;
-      
+
       &:hover {
         transform: scale(1.02);
       }
@@ -3639,7 +3609,7 @@ showConversationMenu.value = null
         align-items: center;
         justify-content: center;
         border-radius: 12px;
-        
+
         .media-count {
           color: white;
           font-size: 18px;

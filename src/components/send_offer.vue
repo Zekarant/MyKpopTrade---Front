@@ -7,7 +7,7 @@
         <i class="bi bi-x"></i>
       </button>
     </div>
-    
+
     <div class="product-summary">
       <div class="product-image">
         <img :src="domain_api + images[0]" :alt="title">
@@ -19,15 +19,15 @@
         </div>
       </div>
     </div>
-    
+
     <form @submit.prevent="submitOffer" class="offer-form">
       <div class="form-group">
         <label for="offerAmount">Votre offre (€)</label>
-        <input 
-          type="number" 
-          id="offerAmount" 
-          v-model="offerAmount" 
-          :min="1" 
+        <input
+          type="number"
+          id="offerAmount"
+          v-model="offerAmount"
+          :min="1"
           :max="price - 1"
           step="0.01"
           placeholder="Montant de votre offre"
@@ -39,19 +39,19 @@
           </span>
         </div>
       </div>
-      
+
       <div class="form-group">
         <label for="offerMessage">Message (optionnel)</label>
-        <textarea 
-          id="offerMessage" 
-          v-model="offerMessage" 
+        <textarea
+          id="offerMessage"
+          v-model="offerMessage"
           placeholder="Ajoutez un message pour expliquer votre offre..."
           rows="3"
           maxlength="500"
         ></textarea>
         <div class="character-count">{{ offerMessage.length }}/500</div>
       </div>
-      
+
       <div class="form-group">
            <input class="form-check-input" type="checkbox" v-model="offerTermsAccepted" required>
 
@@ -59,14 +59,14 @@
             J'accepte les <a href="#" class="terms-link">conditions d'utilisation</a> pour les offres
             </label>
       </div>
-      
+
       <div class="offer-actions">
         <button type="button" class="btn-secondary" @click="$emit('close')">
           Annuler
         </button>
-        <button 
-          type="submit" 
-          class="btn-primary" 
+        <button
+          type="submit"
+          class="btn-primary"
           :disabled="!offerAmount || !offerTermsAccepted || sendingOffer"
         >
           <i class="bi" :class="sendingOffer ? 'bi-arrow-clockwise' : 'bi-wallet'"></i>
@@ -77,9 +77,10 @@
   </div>
 </div>
 </template>
-  
+
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import { API_URL } from '@/config/api';
 
 export default defineComponent({
     name: 'send_offer',
@@ -100,11 +101,10 @@ export default defineComponent({
         const offerMessage = ref('')
         const offerTermsAccepted = ref(false)
         const sendingOffer = ref(false)
-        const domain_api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const domain_api = API_URL;
         const price = ref(0);
         const title = ref('');
         const images = ref<string[]>([]);
-        console.log(props);
         if(props.product) {
           price.value = props.product.price;
           title.value = props.product.title;
@@ -120,7 +120,7 @@ export default defineComponent({
             if (!offerAmount.value || !offerTermsAccepted.value) return
             try {
                 sendingOffer.value = true
-                
+
                 // Appel API pour envoyer l'offre
                 if(!props.conversation) {
                   if(props.product) {
@@ -140,20 +140,20 @@ export default defineComponent({
                   }
 
                 }
-     
-                
+
+
                 // Émettre l'événement avec les données de l'offre
                 emit('offerSent', {
                     amount: offerAmount.value,
                     message: offerMessage.value,
                     offerData
                 })
-                
+
                 // Réinitialiser le formulaire
                 offerAmount.value = ''
                 offerMessage.value = ''
                 offerTermsAccepted.value = false
-                
+
             } catch (error) {
                 console.error('Erreur lors de l\'envoi de l\'offre:', error)
             } finally {
@@ -175,7 +175,7 @@ export default defineComponent({
     }
 })
 </script>
-  
+
 <style lang="scss" scoped>
 .offer-modal {
   max-width: 480px;
@@ -461,23 +461,23 @@ export default defineComponent({
     max-height: 95vh;
     margin: 20px;
   }
-  
+
   .product-summary {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .product-image {
     width: 60px;
     height: 60px;
     align-self: flex-start;
   }
-  
+
   .offer-actions {
     flex-direction: column-reverse;
     gap: 8px;
   }
-  
+
   .btn-primary,
   .btn-secondary {
     width: 100%;
