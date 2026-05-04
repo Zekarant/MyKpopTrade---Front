@@ -43,7 +43,7 @@ type AuthToken = string | null;
 
 class paymentService {
     private paymentsApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
+    private API_BASE_URL: string = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
 
     constructor() {
     
