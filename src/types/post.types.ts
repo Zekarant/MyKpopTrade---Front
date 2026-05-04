@@ -26,7 +26,10 @@ export interface PostData {
     worldwide: boolean;
     nationalOnly: boolean;
     localPickup: boolean;
-    shippingCost: number | null;
+    nationalCost?: number | null;
+    worldwideCost?: number | null;
+    /** @deprecated remplacé par nationalCost/worldwideCost — gardé pour compat */
+    shippingCost?: number | null;
   };
 }
 

@@ -156,14 +156,16 @@
         </div>
     </div>
     <!-- Option d'achat Modal -->
-    <div class="popup-overlay" v-if="showBuyOption" @click.self="buyOption">
-      <div @click.stop class="popup-content">
-        <div style="cursor: pointer;" @click="initPaypal" >
-          <i class="bi bi-paypal"></i>          
-          Payer avec PayPal
-        </div>
-      </div>
-    </div>
+    <CheckoutDialog
+      v-if="showBuyOption && dataInitialized"
+      :product-id="dataPost._id"
+      :product-title="dataPost.title"
+      :product-price="dataPost.price"
+      :currency="dataPost.currency || 'EUR'"
+      :shipping-options="dataPost.shippingOptions || {}"
+      @confirm="onCheckoutConfirmed"
+      @cancel="showBuyOption = false"
+    />
 
 
     <!--------- Popup Suppression ---------->
@@ -190,7 +192,8 @@
     import ImageCarousel from '../components/ImageCarousel.vue';
     import send_message from '../components/adherents/send_message.vue';
     import send_offer from '../components/send_offer.vue';
-    
+    import CheckoutDialog from '../components/checkout/CheckoutDialog.vue';
+
     import postService from '@/services/post.service';
     import paymentService from '@/services/payment.service';
     import { useRoute, useRouter } from "vue-router";
@@ -206,7 +209,8 @@
             ImageCarousel,
             report_card,
             send_message,
-            send_offer
+            send_offer,
+            CheckoutDialog
         },
         props: {
             dataUser: {
@@ -554,58 +558,33 @@
                 console.log('Onglet PayPal ouvert et surveillé');
             };
 
-            const initPaypal = async () => {
-                try {
-                    showBuyOption.value = false;
-                    // Utiliser props.idPost au lieu de route.params.id
-                    console.log('Initialisation PayPal pour le produit:', props.idPost);
-                    
-                    if (!props.idPost) {
-                        alert('Erreur: ID du produit non disponible');
+            const onCheckoutConfirmed = (result: any) => {
+                showBuyOption.value = false;
+
+                const approvalUrl = result?.payment?.approvalUrl
+                    || (result?.payment?.paypalOrderId
+                        ? `https://www.sandbox.paypal.com/checkoutnow?token=${result.payment.paypalOrderId}`
+                        : null);
+
+                if (!result?.success || !approvalUrl) {
+                    alert('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
+                    return;
+                }
+
+                const iframeResult: any = createPaypalIframe(approvalUrl, result.payment.id);
+
+                setTimeout(() => {
+                    if (iframeResult && iframeResult.isVisible && iframeResult.isVisible()) {
                         return;
                     }
-                    
-                    const retour_initPayPal = await paymentService.initPayPal(props.idPost);
-                    console.log(retour_initPayPal);
-                    
-                    if (retour_initPayPal.success && retour_initPayPal.payment?.approvalUrl) {
-                        console.log('Ouverture PayPal avec iframe...');
-                        
-                        // Essayer d'abord l'iframe
-                        const iframeResult = createPaypalIframe(retour_initPayPal.payment.approvalUrl, retour_initPayPal.payment.id);
-                        
-                        // Vérifier si l'iframe s'est bien créée
-                        setTimeout(() => {
-                            if (iframeResult && iframeResult.isVisible()) {
-                                console.log('Iframe PayPal active et fonctionnelle');
-                            } else {
-                                console.error('Iframe PayPal non fonctionnelle, ouverture nouvel onglet...');
-                                
-                                // Fermer l'iframe si elle existe
-                                if (iframeResult && iframeResult.close) {
-                                    iframeResult.close();
-                                }
-                                
-                                // Fallback : ouvrir dans un nouvel onglet
-                                const newTab = window.open(retour_initPayPal.payment.approvalUrl, '_blank');
-                                if (newTab) {
-                                    console.log('Nouvel onglet PayPal ouvert');
-                                    handleTabEvents(newTab, retour_initPayPal.payment.id);
-                                } else {
-                                    console.error('Impossible d\'ouvrir un nouvel onglet');
-                                    alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups/onglets ou copier ce lien : ' + retour_initPayPal.payment.approvalUrl);
-                                }
-                            }
-                        }, 500);
-                        
+                    if (iframeResult && iframeResult.close) iframeResult.close();
+                    const newTab = window.open(approvalUrl, '_blank');
+                    if (newTab) {
+                        handleTabEvents(newTab, result.payment.id);
                     } else {
-                        console.error('Erreur lors de l\'initialisation PayPal:', retour_initPayPal);
-                        alert('Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
+                        alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups ou copier ce lien : ' + approvalUrl);
                     }
-                } catch (error) {
-                    console.error('Erreur PayPal:', error);
-                    alert('Une erreur est survenue lors de l\'initialisation du paiement PayPal.');
-                }
+                }, 500);
             };
 
             const checkPaymentStatus = async (paymentId: string) => {
@@ -653,7 +632,7 @@
                 myId,
                 showBuyOption,
                 buyOption,
-                initPaypal,
+                onCheckoutConfirmed,
                 handleTabEvents,
                 createPaypalIframe,
                 checkPaymentStatus,

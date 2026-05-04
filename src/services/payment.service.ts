@@ -18,10 +18,31 @@ interface ApiError {
   status?: number;
   code?: string;
 }
+export type ShippingMethod = 'national' | 'worldwide' | 'localPickup';
+
+export interface ShippingAddressPayload {
+  recipientName: string;
+  streetLine1: string;
+  streetLine2?: string;
+  postalCode: string;
+  city: string;
+  country?: string;
+  phone?: string;
+}
+
+export interface InitPayPalPayload {
+  productId: string | number;
+  shippingMethod: ShippingMethod;
+  shippingAddress?: ShippingAddressPayload;
+}
+
 interface PaymentDetails {
   id: string;
   paypalOrderId: string;
   amount: number;
+  productAmount?: number;
+  shippingAmount?: number;
+  shippingMethod?: ShippingMethod;
   currency: string;
   approvalUrl: string;
 }
@@ -125,16 +146,14 @@ class paymentService {
           }
     }
 
-  async initPayPal(idProduct: string | number | undefined): Promise<PaypalConfig> {
+  async initPayPal(payload: InitPayPalPayload): Promise<PaypalConfig> {
     const sessionToken = Cookies.get("sessionToken");
 
     try {
 
       const response: AxiosResponse<PaypalConfig> = await this.paymentsApiClient.post(
         '/paypal/create',
-        { 
-          productId: idProduct
-        },
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -148,15 +167,20 @@ class paymentService {
 
       } else {
         await authentificationService.verifSession();
-        return this.initPayPal(idProduct);
+        return this.initPayPal(payload);
 
       }
     } catch (error) {
       const axiosError = error as AxiosError<ApiError>;
-      console.error("Erreur lors de la vérification de session :", axiosError.response?.data);
+      console.error("Erreur lors de l'initialisation PayPal :", axiosError.response?.data);
       throw error;
 
     }
+  }
+
+  async getMyPayments(params: { role?: 'buyer' | 'seller' | 'all'; status?: string; page?: number; limit?: number } = {}) {
+    const response = await this.paymentsApiClient.get('/my', { params });
+    return response.data;
   }
 
 };

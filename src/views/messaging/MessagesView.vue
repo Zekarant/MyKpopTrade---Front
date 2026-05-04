@@ -529,14 +529,16 @@
       </div>
     </div>
     <!-- Option d'achat Modal -->
-    <div class="popup-overlay" v-if="showBuyOption">
-      <div @click.stop class="popup-content">
-        <div style="cursor: pointer;" @click="initPaypal" >
-          <i class="bi bi-paypal"></i>          
-          Payer avec PayPal
-        </div>
-      </div>
-    </div>
+    <CheckoutDialog
+      v-if="showBuyOption && selectedConversation && selectedConversation.productId"
+      :product-id="selectedConversation.productId._id"
+      :product-title="selectedConversation.productId.title"
+      :product-price="checkoutProductPrice"
+      :currency="selectedConversation.productId.currency || 'EUR'"
+      :shipping-options="selectedConversation.productId.shippingOptions || {}"
+      @confirm="onCheckoutConfirmed"
+      @cancel="showBuyOption = false"
+    />
 
     <!--Faire offre Modal -->
     <div v-if="showOfferOption && selectedConversation.productId">
@@ -604,6 +606,7 @@ import nav_bar from '@/components/adherents/nav_bar.vue';
 import ImageCarousel from '@/components/ImageCarousel.vue';
 import send_message from '@/components/adherents/send_message.vue';
 import send_offer from '@/components/send_offer.vue';
+import CheckoutDialog from '@/components/checkout/CheckoutDialog.vue';
 import EmojiPicker from 'vue3-emoji-picker'
 import Cookies from 'js-cookie';
 import 'vue3-emoji-picker/css'
@@ -1111,53 +1114,42 @@ const sendOfferOption = () => {
     showOfferOption.value = !showOfferOption.value
   }
 }
-const initPaypal = async () => {
-  try {
-    showBuyOption.value = false;
-    console.log(selectedConversation.value)
-    const retour_initPayPal = await paymentService.initPayPal(selectedConversation.value.productId._id);
-    console.log(retour_initPayPal);
-    
-    if (retour_initPayPal.success) {
-      let paypalUrl = '';
-      if(!retour_initPayPal.payment?.approvalUrl && retour_initPayPal.payment?.paypalOrderId){
-        paypalUrl = "https://www.sandbox.paypal.com/checkoutnow?token="+retour_initPayPal.payment?.paypalOrderId;
-      }else{
-        paypalUrl =retour_initPayPal.payment?.approvalUrl;
-      }
-      console.log('Ouverture PayPal avec iframe...');
-      
-      const iframeResult = createPaypalIframe(paypalUrl, retour_initPayPal.payment.id);
-      
-      setTimeout(() => {
-        if (iframeResult && iframeResult.isVisible()) {
-          console.log('Iframe PayPal active et fonctionnelle');
-        } else {
-          console.error('Iframe PayPal non fonctionnelle, ouverture nouvel onglet...');
-          
-          if (iframeResult && iframeResult.close) {
-            iframeResult.close();
-          }
-          
-          const newTab = window.open(retour_initPayPal.payment.approvalUrl, '_blank');
-          if (newTab) {
-            console.log('Nouvel onglet PayPal ouvert');
-            handleTabEvents(newTab, retour_initPayPal.payment.id);
-          } else {
-            console.error('Impossible d\'ouvrir un nouvel onglet');
-            alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups/onglets ou copier ce lien : ' + retour_initPayPal.payment.approvalUrl);
-          }
-        }
-      }, 500);
-      
-    } else {
-      console.error('Erreur lors de l\'initialisation PayPal:', retour_initPayPal);
-      alert('Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
-    }
-  } catch (error) {
-    console.error('Erreur PayPal:', error);
-    alert('Une erreur est survenue lors de l\'initialisation du paiement PayPal.');
+const checkoutProductPrice = computed(() => {
+  const conv = selectedConversation.value;
+  if (!conv) return 0;
+  const accepted = conv.negotiation?.status === 'accepted'
+    ? conv.negotiation.currentOffer
+    : null;
+  return accepted ?? conv.productId?.price ?? 0;
+});
+
+const onCheckoutConfirmed = (result) => {
+  showBuyOption.value = false;
+
+  const approvalUrl = result?.payment?.approvalUrl
+    || (result?.payment?.paypalOrderId
+      ? `https://www.sandbox.paypal.com/checkoutnow?token=${result.payment.paypalOrderId}`
+      : null);
+
+  if (!result?.success || !approvalUrl) {
+    alert('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
+    return;
   }
+
+  const iframeResult = createPaypalIframe(approvalUrl, result.payment.id);
+
+  setTimeout(() => {
+    if (iframeResult && iframeResult.isVisible && iframeResult.isVisible()) {
+      return;
+    }
+    if (iframeResult && iframeResult.close) iframeResult.close();
+    const newTab = window.open(approvalUrl, '_blank');
+    if (newTab) {
+      handleTabEvents(newTab, result.payment.id);
+    } else {
+      alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups ou copier ce lien : ' + approvalUrl);
+    }
+  }, 500);
 };
 
 const createPaypalIframe = (approvalUrl, paymentId) => {
