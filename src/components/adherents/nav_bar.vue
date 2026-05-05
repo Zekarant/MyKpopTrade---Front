@@ -114,6 +114,10 @@
               <i class="bi bi-receipt"></i>
               Mes paiements
             </a>
+            <a @click="navPage('disputes', null)" href="#" class="navbar__dropdown-item">
+              <i class="bi bi-shield-exclamation"></i>
+              Mes litiges
+            </a>
             <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__dropdown-item navbar__dropdown-item--admin">
               <i class="bi bi-shield-check"></i>
               Administration
@@ -174,6 +178,10 @@
         <a @click="navPage('payments', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-receipt"></i>
           <span>Mes paiements</span>
+        </a>
+        <a @click="navPage('disputes', null)" href="#" class="navbar__mobile-link">
+          <i class="bi bi-shield-exclamation"></i>
+          <span>Mes litiges</span>
         </a>
         <a @click="logout" href="#" class="navbar__mobile-link navbar__mobile-link--danger">
           <i class="bi bi-box-arrow-right"></i>

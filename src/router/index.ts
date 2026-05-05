@@ -36,6 +36,12 @@ const routes = [
     component: Register
   },
   {
+    path: '/profile-completion',
+    name: 'profile_completion',
+    component: () => import('@/views/ProfileCompletion.vue'),
+    meta: { title: 'Finaliser ton profil' }
+  },
+  {
     path: '/adherents/dashboard',
     name: 'dashboard',
     component: Dashboard

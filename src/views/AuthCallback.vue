@@ -27,6 +27,7 @@ export default defineComponent({
       const userId = route.query.userId as string | undefined;
       const errParam = route.query.error as string | undefined;
       const isNewAccount = route.query.newAccount === '1';
+      const requiresProfileCompletion = route.query.completeProfile === '1';
       const provider = (route.query.provider as string | undefined) || '';
       const providerLabel =
         provider === 'discord' ? 'Discord' : provider === 'google' ? 'Google' : '';
@@ -48,11 +49,16 @@ export default defineComponent({
       Cookies.set('id_user', userId, { expires: 1 });
       sessionStorage.removeItem('favorites');
 
-      if (isNewAccount) {
+      if (requiresProfileCompletion) {
         welcome.value = providerLabel
-          ? `Bienvenue ! Votre compte a été créé via ${providerLabel}. Pensez à compléter votre profil.`
-          : 'Bienvenue ! Votre compte a été créé. Pensez à compléter votre profil.';
-        setTimeout(() => router.replace('/adherents/dashboard'), 1500);
+          ? `Bienvenue ! Quelques infos à compléter pour finaliser ton compte ${providerLabel}.`
+          : 'Bienvenue ! Quelques infos à compléter pour finaliser ton compte.';
+        setTimeout(() => router.replace('/profile-completion'), 800);
+      } else if (isNewAccount) {
+        welcome.value = providerLabel
+          ? `Bienvenue ! Votre compte a été créé via ${providerLabel}.`
+          : 'Bienvenue ! Votre compte a été créé.';
+        setTimeout(() => router.replace('/adherents/dashboard'), 1200);
       } else {
         router.replace('/adherents/dashboard');
       }

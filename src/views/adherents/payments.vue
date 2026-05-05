@@ -152,18 +152,23 @@
         <h2><i class="bi bi-arrow-counterclockwise"></i> Rembourser l'acheteur</h2>
         <p class="modal-subtitle">L'acheteur sera remboursé via PayPal et notifié automatiquement.</p>
 
+        <p class="modal-info">
+          Restant remboursable : <strong>{{ formatAmount(refundModal.maxAmount, refundModal.currency) }}</strong>
+        </p>
+
         <label>Raison</label>
         <textarea v-model="refundModal.reason" rows="3" placeholder="Pourquoi remboursez-vous ?"></textarea>
 
-        <label>Montant (laisser vide pour remboursement total)</label>
-        <input v-model.number="refundModal.amount" type="number" min="0" step="0.01" placeholder="Montant" />
+        <label>Montant (laisser vide pour rembourser le restant : {{ formatAmount(refundModal.maxAmount, refundModal.currency) }})</label>
+        <input v-model.number="refundModal.amount" type="number" min="0.01" :max="refundModal.maxAmount" step="0.01" :placeholder="`max ${refundModal.maxAmount}`" />
+        <small v-if="refundAmountError" class="modal-error">{{ refundAmountError }}</small>
 
         <label>Mot de passe (confirmation)</label>
         <input v-model="refundModal.password" type="password" placeholder="Votre mot de passe" />
 
         <div class="modal-actions">
           <button class="btn btn--ghost" @click="closeRefundModal">Annuler</button>
-          <button class="btn btn--danger" :disabled="!refundModal.reason || !refundModal.password" @click="submitRefund">Confirmer le remboursement</button>
+          <button class="btn btn--danger" :disabled="!canSubmitRefund" @click="submitRefund">Confirmer le remboursement</button>
         </div>
       </div>
     </div>
@@ -187,6 +192,7 @@ interface Payment {
   product: any;
   buyer: string | { _id: string };
   seller: string | { _id: string };
+  totalRefunded?: number;
   shipment?: {
     carrier: string;
     trackingNumber: string;
@@ -233,6 +239,8 @@ export default defineComponent({
         reason: '',
         amount: undefined as number | undefined,
         password: '',
+        currency: 'EUR',
+        maxAmount: 0,
       },
       disputeModal: {
         open: false,
@@ -255,6 +263,24 @@ export default defineComponent({
   },
   async mounted() {
     await this.fetchPayments();
+  },
+  computed: {
+    refundAmountError(): string {
+      const a = this.refundModal.amount;
+      if (a === undefined || a === null || a === ('' as any)) return '';
+      if (typeof a !== 'number' || !isFinite(a) || a <= 0) return 'Montant invalide';
+      if (a > this.refundModal.maxAmount + 0.001) {
+        return `Le montant dépasse le restant remboursable (${this.refundModal.maxAmount})`;
+      }
+      return '';
+    },
+    canSubmitRefund(): boolean {
+      return Boolean(
+        this.refundModal.reason.trim() &&
+        this.refundModal.password &&
+        !this.refundAmountError
+      );
+    },
   },
   methods: {
     async fetchPayments() {
@@ -294,7 +320,13 @@ export default defineComponent({
       return this.isSeller(p) && !!p.shipment && p.shipment.status === 'shipped';
     },
     canRefund(p: Payment): boolean {
-      return this.isSeller(p) && p.status === 'completed';
+      if (!this.isSeller(p)) return false;
+      if (p.status !== 'completed' && p.status !== 'partially_refunded') return false;
+      return this.refundableAmount(p) > 0.005;
+    },
+    refundableAmount(p: Payment): number {
+      const already = Number(p.totalRefunded || 0);
+      return Math.max(0, Math.round((p.amount - already) * 100) / 100);
     },
     canOpenDispute(p: Payment): boolean {
       // Acheteur ou vendeur d'un paiement complété peut ouvrir un litige
@@ -407,7 +439,15 @@ export default defineComponent({
       }
     },
     openRefundModal(p: Payment) {
-      this.refundModal = { open: true, paymentId: p._id, reason: '', amount: undefined, password: '' };
+      this.refundModal = {
+        open: true,
+        paymentId: p._id,
+        reason: '',
+        amount: undefined,
+        password: '',
+        currency: p.currency,
+        maxAmount: this.refundableAmount(p),
+      } as any;
     },
     closeRefundModal() {
       this.refundModal.open = false;

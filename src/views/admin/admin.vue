@@ -781,6 +781,91 @@
       </div>
 
       <!-- Tab: Audit -->
+      <!-- Disputes -->
+      <div v-if="currentTab === 'disputes'" class="admin__panel">
+        <div class="admin__panel-header">
+          <h2>Litiges</h2>
+          <select v-model="disputesStatusFilter" @change="disputesPage = 1; loadDisputes()" class="admin__select">
+            <option value="opened">Ouverts</option>
+            <option value="under_review">En arbitrage</option>
+            <option value="">Tous</option>
+            <option value="resolved">Résolus (vendeur)</option>
+            <option value="refunded">Remboursés</option>
+            <option value="rejected">Rejetés</option>
+            <option value="cancelled">Annulés</option>
+          </select>
+        </div>
+        <div v-if="disputes.length === 0" class="admin__empty">
+          <i class="bi bi-shield-check"></i>
+          <p>Aucun litige à afficher</p>
+        </div>
+        <div v-else class="admin__table-wrapper">
+          <table class="admin__table">
+            <thead>
+              <tr>
+                <th>Acheteur</th>
+                <th>Vendeur</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th>Ouvert le</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in disputes" :key="d._id">
+                <td>{{ d.buyer?.username || '—' }}</td>
+                <td>{{ d.seller?.username || '—' }}</td>
+                <td>{{ disputeReasonLabels[d.reason] || d.reason }}</td>
+                <td><span class="admin__badge admin__badge--info">{{ disputeStatusLabels[d.status] || d.status }}</span></td>
+                <td>{{ formatDate(d.createdAt) }}</td>
+                <td>
+                  <button v-if="d.status === 'opened'" class="admin__btn admin__btn--secondary" @click="takeDispute(d)">
+                    <i class="bi bi-hand-index"></i> Prendre
+                  </button>
+                  <button v-if="d.status === 'opened' || d.status === 'under_review'" class="admin__btn admin__btn--primary" @click="openDisputeModal(d)">
+                    <i class="bi bi-gavel"></i> Trancher
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="disputesPagination.totalPages > 1" class="admin__pagination">
+            <button :disabled="disputesPage <= 1" @click="disputesPage--; loadDisputes()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span>{{ disputesPage }} / {{ disputesPagination.totalPages }}</span>
+            <button :disabled="disputesPage >= disputesPagination.totalPages" @click="disputesPage++; loadDisputes()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispute resolution modal -->
+      <div v-if="openDispute" class="admin__modal-overlay" @click.self="closeDisputeModal">
+        <div class="admin__modal">
+          <h3>Trancher le litige</h3>
+          <p style="margin-bottom: var(--space-md); color: var(--text-secondary);">
+            <strong>Motif :</strong> {{ disputeReasonLabels[openDispute.reason] || openDispute.reason }}<br>
+            <strong>Description :</strong> {{ openDispute.description }}
+          </p>
+          <label>Décision</label>
+          <select v-model="disputeResolution.outcome" class="admin__select">
+            <option value="resolved">Résolu en faveur du vendeur</option>
+            <option value="refunded">Rembourser l'acheteur</option>
+            <option value="rejected">Rejeter le litige</option>
+          </select>
+          <label v-if="disputeResolution.outcome === 'refunded'">Montant à rembourser (vide = total)</label>
+          <input v-if="disputeResolution.outcome === 'refunded'" type="number" min="0.01" step="0.01" v-model.number="disputeResolution.refundAmount" placeholder="Montant" />
+          <label>Notes (visible par les deux parties)</label>
+          <textarea v-model="disputeResolution.notes" rows="4" maxlength="2000" placeholder="Justification de la décision"></textarea>
+          <div class="admin__modal-actions">
+            <button class="admin__btn admin__btn--ghost" @click="closeDisputeModal">Annuler</button>
+            <button class="admin__btn admin__btn--primary" @click="submitDisputeResolution">Confirmer</button>
+          </div>
+        </div>
+      </div>
+
       <div v-if="currentTab === 'audit'" class="admin__panel">
         <div class="admin__panel-header">
           <h2>Journal d'audit</h2>
@@ -803,6 +888,8 @@
             <option value="post">Posts</option>
             <option value="report">Signalements</option>
             <option value="verification">Vérifications</option>
+            <option value="dispute">Litiges</option>
+            <option value="payment">Paiements</option>
           </select>
         </div>
         <div v-if="auditLogs.length === 0" class="admin__empty">
@@ -858,6 +945,7 @@
   import adminService from '@/services/admin.service';
   import albumService from '@/services/album.service';
   import groupService from '@/services/group.service';
+  import disputeService from '@/services/dispute.service';
   import { func } from '@/function';
   import { API_URL } from '@/config/api';
 
@@ -931,9 +1019,19 @@
       const groupFollowers = ref<any[]>([]);
       const followersGroupName = ref('');
 
+      // Disputes
+      const disputes = ref<any[]>([]);
+      const disputesStatusFilter = ref('opened');
+      const disputesPage = ref(1);
+      const disputesPagination = ref({ page: 1, totalPages: 1 });
+      const openDispute = ref<any>(null);
+      const disputeResolution = ref({ outcome: 'resolved' as 'resolved' | 'refunded' | 'rejected', notes: '', refundAmount: undefined as number | undefined });
+      const pendingDisputesCount = ref(0);
+
       const tabs = computed(() => [
         { id: 'overview', label: 'Vue d\'ensemble', icon: 'bi bi-speedometer2', badge: null },
         { id: 'reports', label: 'Signalements', icon: 'bi bi-flag', badge: pendingReportsCount.value || null },
+        { id: 'disputes', label: 'Litiges', icon: 'bi bi-shield-exclamation', badge: pendingDisputesCount.value || null },
         { id: 'users', label: 'Utilisateurs', icon: 'bi bi-people', badge: null },
         { id: 'products', label: 'Produits', icon: 'bi bi-box-seam', badge: null },
         { id: 'moderation', label: 'Modération', icon: 'bi bi-chat-left-text', badge: null },
@@ -992,6 +1090,86 @@
         if (tabId === 'moderation') loadModPosts();
         if (tabId === 'audit') loadAuditLogs();
         if (tabId === 'kpop') loadKpopData();
+        if (tabId === 'disputes') loadDisputes();
+      };
+
+      // === Disputes (admin) ===
+      const loadDisputes = async () => {
+        try {
+          const data = await disputeService.adminList({
+            status: (disputesStatusFilter.value || undefined) as any,
+            page: disputesPage.value,
+            limit: 20
+          });
+          disputes.value = data.disputes || [];
+          disputesPagination.value = data.pagination || { page: 1, totalPages: 1 };
+          if (!disputesStatusFilter.value || disputesStatusFilter.value === 'opened') {
+            pendingDisputesCount.value = data.pagination?.totalItems
+              ?? data.pagination?.total
+              ?? disputes.value.length;
+          }
+        } catch (e: any) {
+          func.showToastError(e?.response?.data?.message || 'Impossible de charger les litiges');
+          disputes.value = [];
+        }
+      };
+
+      const openDisputeModal = (d: any) => {
+        openDispute.value = d;
+        disputeResolution.value = { outcome: 'resolved', notes: '', refundAmount: undefined };
+      };
+
+      const closeDisputeModal = () => {
+        openDispute.value = null;
+      };
+
+      const takeDispute = async (d: any) => {
+        try {
+          await disputeService.adminTake(d._id);
+          func.showToastSuccess('Litige pris en arbitrage');
+          await loadDisputes();
+        } catch (e: any) {
+          func.showToastError(e?.response?.data?.message || 'Erreur lors de la prise en charge');
+        }
+      };
+
+      const submitDisputeResolution = async () => {
+        if (!openDispute.value) return;
+        const payload: any = {
+          outcome: disputeResolution.value.outcome,
+          notes: disputeResolution.value.notes || undefined
+        };
+        if (disputeResolution.value.outcome === 'refunded' && disputeResolution.value.refundAmount) {
+          payload.refundAmount = Number(disputeResolution.value.refundAmount);
+        }
+        try {
+          await disputeService.adminResolve(openDispute.value._id, payload);
+          func.showToastSuccess('Litige clôturé');
+          closeDisputeModal();
+          await loadDisputes();
+        } catch (e: any) {
+          func.showToastError(e?.response?.data?.message || 'Erreur lors de la résolution');
+        }
+      };
+
+      const disputeStatusLabels: Record<string, string> = {
+        opened: 'Ouvert',
+        under_review: 'En arbitrage',
+        resolved: 'Résolu (vendeur)',
+        refunded: 'Remboursé',
+        rejected: 'Rejeté',
+        cancelled: 'Annulé'
+      };
+      const disputeReasonLabels: Record<string, string> = {
+        not_received: 'Colis non reçu',
+        damaged: 'Colis endommagé',
+        not_as_described: 'Non conforme',
+        counterfeit: 'Contrefaçon',
+        wrong_item: 'Mauvais article',
+        partial_delivery: 'Livraison partielle',
+        seller_unresponsive: 'Vendeur silencieux',
+        buyer_abuse: 'Comportement acheteur',
+        other: 'Autre'
       };
 
       // === Loaders ===
@@ -1401,7 +1579,7 @@
       onMounted(async () => {
         try {
           await authentificationService.verifSession();
-          await Promise.all([loadStats(), loadProductStats(), loadReports(), loadUsers(), loadProducts(), loadVerifications()]);
+          await Promise.all([loadStats(), loadProductStats(), loadReports(), loadUsers(), loadProducts(), loadVerifications(), loadDisputes()]);
         } catch (e) {
           router.push({ name: 'login' });
         }
@@ -1493,6 +1671,20 @@
         groupFollowers,
         followersGroupName,
         onProductImgError,
+        disputes,
+        disputesStatusFilter,
+        disputesPage,
+        disputesPagination,
+        openDispute,
+        disputeResolution,
+        pendingDisputesCount,
+        loadDisputes,
+        openDisputeModal,
+        closeDisputeModal,
+        takeDispute,
+        submitDisputeResolution,
+        disputeStatusLabels,
+        disputeReasonLabels,
       };
     },
   });
