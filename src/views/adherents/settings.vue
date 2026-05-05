@@ -138,22 +138,35 @@
                   Connexion valide jusqu'au {{ formatDate(paypalExpiresAt) }}
                 </p>
 
+                <p v-if="paypalConnected && paypalEmail" class="paypal-card__meta">
+                  <i class="bi bi-envelope-check"></i>
+                  Lié à <strong>{{ paypalEmail }}</strong>
+                </p>
+
                 <p v-if="!paypalConnected" class="paypal-card__hint">
                   Sans cette connexion, vous ne pourrez pas être payé pour vos ventes.
                 </p>
 
-                <div class="paypal-card__actions">
-                  <button v-if="!paypalConnected" @click="connectPaypal" class="btn-settings btn-settings--primary">
-                    <i class="bi bi-link-45deg"></i> Connecter mon compte PayPal
+                <!-- Manual email input -->
+                <div v-if="!paypalConnected" class="paypal-card__email-form">
+                  <div class="paypal-card__input-group">
+                    <i class="bi bi-envelope"></i>
+                    <input
+                      v-model="paypalEmailInput"
+                      type="email"
+                      placeholder="votre-email@paypal.com"
+                      class="paypal-card__input"
+                    />
+                  </div>
+                  <button @click="connectPaypalByEmail" :disabled="!paypalEmailInput || paypalConnecting" class="btn-settings btn-settings--primary">
+                    <i class="bi bi-link-45deg"></i> {{ paypalConnecting ? 'Connexion...' : 'Lier mon PayPal' }}
                   </button>
-                  <template v-else>
-                    <button @click="connectPaypal" class="btn-settings btn-settings--ghost">
-                      <i class="bi bi-arrow-repeat"></i> Reconnecter
-                    </button>
+                </div>
+
+                <div v-if="paypalConnected" class="paypal-card__actions">
                     <button @click="disconnectPaypal" class="btn-settings btn-settings--danger">
                       <i class="bi bi-x-circle"></i> Déconnecter
                     </button>
-                  </template>
                 </div>
               </div>
             </div>
@@ -256,6 +269,9 @@ export default defineComponent({
       deleteConfirmText: '',
       paypalConnected: false,
       paypalExpiresAt: null as string | null,
+      paypalEmail: null as string | null,
+      paypalEmailInput: '',
+      paypalConnecting: false,
       pendingDeletion: null as { scheduledFor: string } | null,
     };
   },
@@ -432,9 +448,11 @@ export default defineComponent({
         const res = await paymentService.getPayPalConnectionStatus();
         this.paypalConnected = !!res.connected;
         this.paypalExpiresAt = res.expiresAt || null;
+        this.paypalEmail = res.email || null;
       } catch {
         this.paypalConnected = false;
         this.paypalExpiresAt = null;
+        this.paypalEmail = null;
       }
     },
     async connectPaypal() {
@@ -445,6 +463,20 @@ export default defineComponent({
         }
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer l\'URL PayPal');
+      }
+    },
+    async connectPaypalByEmail() {
+      if (!this.paypalEmailInput) return;
+      this.paypalConnecting = true;
+      try {
+        await paymentService.connectPayPalByEmail(this.paypalEmailInput.trim());
+        (this as any).$func.showToastSuccess('Compte PayPal lié avec succès !');
+        this.paypalConnected = true;
+        this.paypalEmailInput = '';
+      } catch (e: any) {
+        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur lors de la liaison');
+      } finally {
+        this.paypalConnecting = false;
       }
     },
     async disconnectPaypal() {
@@ -806,6 +838,34 @@ export default defineComponent({
 }
 .paypal-card__meta { color: var(--text-muted); }
 .paypal-card__hint { color: #e0a800; }
+.paypal-card__email-form {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+.paypal-card__input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-secondary, #f5f5f5);
+  border: 1px solid var(--surface-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 200px;
+
+  i { color: var(--text-muted); }
+}
+.paypal-card__input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
 .paypal-card__actions {
   display: flex;
   gap: var(--space-sm);

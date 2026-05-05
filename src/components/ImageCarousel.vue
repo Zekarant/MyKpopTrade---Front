@@ -82,10 +82,13 @@ export default {
   methods: {
     onImageError(event: Event) {
       const img = event.target as HTMLImageElement;
+      img.src = '';
       img.style.display = 'none';
+      // Avoid duplicating fallback
+      if (img.parentElement?.querySelector('.img-fallback')) return;
       const placeholder = document.createElement('div');
       placeholder.className = 'img-fallback';
-      placeholder.innerHTML = '<i class="bi bi-image" style="font-size:2rem;color:var(--text-muted)"></i>';
+      placeholder.innerHTML = '<i class="bi bi-image" style="font-size:2.5rem;color:var(--text-muted, #999)"></i><span style="font-size:0.8rem;color:var(--text-muted, #999);margin-top:0.5rem">Image indisponible</span>';
       img.parentElement?.appendChild(placeholder);
     }
   }
@@ -120,9 +123,10 @@ export default {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-tertiary);
+  background: var(--bg-tertiary, #f5f5f5);
 }
 
 .sliderWrapper {

@@ -140,7 +140,14 @@ class paymentService {
   }
 
   async capturePayPal(payload: { paymentId?: string; paypalOrderId?: string }) {
-    const response = await this.paymentsApiClient.post('/paypal/capture', payload);
+    const response = await this.paymentsApiClient.post('/paypal/capture', {
+      orderId: payload.paypalOrderId || payload.paymentId
+    });
+    return response.data;
+  }
+
+  async cancelPayPal(orderId: string) {
+    const response = await this.paymentsApiClient.post('/paypal/cancel', { orderId });
     return response.data;
   }
 
@@ -154,13 +161,18 @@ class paymentService {
     return response.data;
   }
 
-  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; expiresAt?: string }> {
+  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; expiresAt?: string; email?: string }> {
     const response = await this.paymentsApiClient.get('/paypal/connection-status');
     return response.data;
   }
 
   async disconnectPayPal() {
     const response = await this.paymentsApiClient.post('/paypal/disconnect');
+    return response.data;
+  }
+
+  async connectPayPalByEmail(paypalEmail: string) {
+    const response = await this.paymentsApiClient.post('/paypal/connect-email', { paypalEmail });
     return response.data;
   }
 

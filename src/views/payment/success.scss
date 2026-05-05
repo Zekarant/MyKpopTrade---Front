@@ -128,6 +128,16 @@
     color: #10b981;
     text-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
   }
+
+  &.warning i {
+    color: #f0ad4e;
+    text-shadow: 0 4px 15px rgba(240, 173, 78, 0.3);
+  }
+
+  &.error i {
+    color: #d9534f;
+    text-shadow: 0 4px 15px rgba(217, 83, 79, 0.3);
+  }
 }
 
 h1 {
@@ -438,5 +448,38 @@ h1 {
   .btn {
     padding: 12px 20px;
     font-size: 15px;
+  }
+}
+
+// Error state styles
+.error-state {
+  background: linear-gradient(135deg, var(--bg-color) 0%, #fef2f2 100%);
+}
+
+.error-card {
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+
+    &:hover {
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    }
+  }
+}
+
+.error-details {
+  background: #fef2f2;
+  border-color: #fecaca;
+
+  .label {
+    color: #dc2626;
+  }
+
+  .value {
+    color: #991b1b;
+  }
+
+  .detail-item {
+    border-bottom-color: #fecaca;
   }
 }

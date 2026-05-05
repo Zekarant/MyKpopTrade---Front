@@ -39,16 +39,41 @@
             </div>
 
             <div v-if="p.shipment" class="payment-card__shipment">
-              <i class="bi bi-truck"></i>
-              <div>
-                <div><strong>{{ p.shipment.carrier }}</strong> — {{ p.shipment.trackingNumber }}</div>
-                <small>
-                  {{ p.shipment.status === 'delivered' ? 'Livré le ' + formatDate(p.shipment.deliveredAt) : 'Expédié le ' + formatDate(p.shipment.shippedAt) }}
-                </small>
+              <div class="payment-card__shipment-head">
+                <i class="bi bi-truck"></i>
+                <div class="shipment-summary">
+                  <div><strong>{{ p.shipment.carrier }}</strong> — {{ p.shipment.trackingNumber }}</div>
+                  <small>
+                    {{ p.shipment.status === 'delivered'
+                      ? 'Livré le ' + formatDate(p.shipment.deliveredAt)
+                      : 'Expédié le ' + formatDate(p.shipment.shippedAt) }}
+                    <template v-if="p.shipment.status !== 'delivered' && p.shipment.estimatedDeliveryAt">
+                      · Livraison estimée le {{ formatDate(p.shipment.estimatedDeliveryAt) }}
+                    </template>
+                    <template v-if="p.shipment.autoConfirmedAt">
+                      · <em>auto-confirmée</em>
+                    </template>
+                  </small>
+                </div>
+                <a v-if="p.shipment.trackingUrl" :href="p.shipment.trackingUrl" target="_blank" rel="noopener" class="btn-link">
+                  Suivre <i class="bi bi-box-arrow-up-right"></i>
+                </a>
               </div>
-              <a v-if="p.shipment.trackingUrl" :href="p.shipment.trackingUrl" target="_blank" rel="noopener" class="btn-link">
-                Suivre <i class="bi bi-box-arrow-up-right"></i>
-              </a>
+
+              <ol v-if="getTimeline(p).length" class="shipment-timeline">
+                <li v-for="(ev, i) in getTimeline(p)" :key="i" :class="['timeline-item', `timeline-item--${ev.status}`]">
+                  <span class="timeline-dot"><i :class="timelineIcon(ev.status)"></i></span>
+                  <div class="timeline-body">
+                    <div class="timeline-title">{{ timelineLabel(ev.status) }}</div>
+                    <div v-if="ev.description" class="timeline-desc">{{ ev.description }}</div>
+                    <small>
+                      {{ formatDateTime(ev.occurredAt) }}
+                      <span v-if="ev.location"> · {{ ev.location }}</span>
+                      <span class="timeline-source">· {{ sourceLabel(ev.source) }}</span>
+                    </small>
+                  </div>
+                </li>
+              </ol>
             </div>
 
             <div class="payment-card__actions">
@@ -60,6 +85,9 @@
               </button>
               <button v-if="canRefund(p)" class="btn btn--danger btn--sm" @click="openRefundModal(p)">
                 <i class="bi bi-arrow-counterclockwise"></i> Rembourser l'acheteur
+              </button>
+              <button v-if="canOpenDispute(p)" class="btn btn--ghost btn--sm" @click="openDisputeModal(p)">
+                <i class="bi bi-shield-exclamation"></i> Ouvrir un litige
               </button>
             </div>
           </article>
@@ -95,6 +123,29 @@
       </div>
     </div>
 
+    <!-- Dispute modal -->
+    <div v-if="disputeModal.open" class="modal-overlay" @click.self="closeDisputeModal">
+      <div class="modal-card">
+        <h2><i class="bi bi-shield-exclamation"></i> Ouvrir un litige</h2>
+        <p class="modal-subtitle">Décrivez précisément le problème. L'autre partie sera notifiée.</p>
+
+        <label>Motif</label>
+        <select v-model="disputeModal.reason">
+          <option v-for="r in disputeReasons" :key="r.value" :value="r.value">{{ r.label }}</option>
+        </select>
+
+        <label>Description (max 2000 caractères)</label>
+        <textarea v-model="disputeModal.description" rows="5" maxlength="2000" placeholder="Donnez tous les détails utiles..."></textarea>
+
+        <div class="modal-actions">
+          <button class="btn btn--ghost" @click="closeDisputeModal">Annuler</button>
+          <button class="btn btn--danger" :disabled="!disputeModal.description.trim()" @click="submitDispute">
+            Ouvrir le litige
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Refund modal -->
     <div v-if="refundModal.open" class="modal-overlay" @click.self="closeRefundModal">
       <div class="modal-card">
@@ -124,6 +175,7 @@ import { defineComponent } from 'vue';
 import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import paymentService from '@/services/payment.service';
+import disputeService, { type DisputeReason } from '@/services/dispute.service';
 import { API_URL } from '@/config/api';
 
 interface Payment {
@@ -142,7 +194,18 @@ interface Payment {
     status: 'shipped' | 'delivered';
     shippedAt: string;
     deliveredAt?: string;
+    estimatedDeliveryAt?: string;
+    autoConfirmedAt?: string;
+    events?: ShipmentEvent[];
   };
+}
+
+interface ShipmentEvent {
+  status: string;
+  description?: string;
+  location?: string;
+  occurredAt: string;
+  source: 'system' | 'seller' | 'buyer' | 'carrier';
 }
 
 export default defineComponent({
@@ -171,6 +234,23 @@ export default defineComponent({
         amount: undefined as number | undefined,
         password: '',
       },
+      disputeModal: {
+        open: false,
+        paymentId: '',
+        reason: 'not_received' as DisputeReason,
+        description: ''
+      },
+      disputeReasons: [
+        { value: 'not_received', label: 'Colis non reçu' },
+        { value: 'damaged', label: 'Colis endommagé' },
+        { value: 'not_as_described', label: 'Produit non conforme à la description' },
+        { value: 'counterfeit', label: 'Contrefaçon' },
+        { value: 'wrong_item', label: 'Mauvais article' },
+        { value: 'partial_delivery', label: 'Livraison partielle' },
+        { value: 'seller_unresponsive', label: 'Vendeur ne répond pas' },
+        { value: 'buyer_abuse', label: 'Comportement abusif de l\'acheteur' },
+        { value: 'other', label: 'Autre' }
+      ] as { value: DisputeReason; label: string }[],
     };
   },
   async mounted() {
@@ -216,6 +296,11 @@ export default defineComponent({
     canRefund(p: Payment): boolean {
       return this.isSeller(p) && p.status === 'completed';
     },
+    canOpenDispute(p: Payment): boolean {
+      // Acheteur ou vendeur d'un paiement complété peut ouvrir un litige
+      return (this.isBuyer(p) || this.isSeller(p))
+        && (p.status === 'completed' || p.status === 'partially_refunded');
+    },
     getProductTitle(p: Payment): string {
       return p.product?.title || 'Produit supprimé';
     },
@@ -234,6 +319,51 @@ export default defineComponent({
     formatDate(iso?: string): string {
       if (!iso) return '';
       return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
+    formatDateTime(iso?: string): string {
+      if (!iso) return '';
+      return new Date(iso).toLocaleString('fr-FR', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    },
+    getTimeline(p: Payment): ShipmentEvent[] {
+      const events = p.shipment?.events ?? [];
+      return [...events].sort(
+        (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
+      );
+    },
+    timelineLabel(status: string): string {
+      const labels: Record<string, string> = {
+        shipped: 'Expédié',
+        in_transit: 'En transit',
+        out_for_delivery: 'En cours de livraison',
+        delivered: 'Livré',
+        exception: 'Anomalie de livraison',
+        returned: 'Retourné',
+        unknown: 'Mise à jour'
+      };
+      return labels[status] || status;
+    },
+    timelineIcon(status: string): string {
+      const icons: Record<string, string> = {
+        shipped: 'bi bi-box-seam',
+        in_transit: 'bi bi-truck',
+        out_for_delivery: 'bi bi-geo-alt',
+        delivered: 'bi bi-check2-circle',
+        exception: 'bi bi-exclamation-triangle',
+        returned: 'bi bi-arrow-counterclockwise',
+        unknown: 'bi bi-info-circle'
+      };
+      return icons[status] || 'bi bi-info-circle';
+    },
+    sourceLabel(source: string): string {
+      const labels: Record<string, string> = {
+        seller: 'vendeur',
+        buyer: 'acheteur',
+        carrier: 'transporteur',
+        system: 'auto'
+      };
+      return labels[source] || source;
     },
     statusLabel(status: Payment['status']): string {
       switch (status) {
@@ -281,6 +411,26 @@ export default defineComponent({
     },
     closeRefundModal() {
       this.refundModal.open = false;
+    },
+    openDisputeModal(p: Payment) {
+      this.disputeModal = { open: true, paymentId: p._id, reason: 'not_received', description: '' };
+    },
+    closeDisputeModal() {
+      this.disputeModal.open = false;
+    },
+    async submitDispute() {
+      try {
+        const res = await disputeService.open({
+          paymentId: this.disputeModal.paymentId,
+          reason: this.disputeModal.reason,
+          description: this.disputeModal.description
+        });
+        (this as any).$func?.showToastSuccess?.('Litige ouvert');
+        this.closeDisputeModal();
+        this.$router.push(`/disputes/${res.dispute._id}`);
+      } catch (e: any) {
+        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+      }
     },
     async submitRefund() {
       try {
@@ -364,13 +514,56 @@ export default defineComponent({
 }
 
 .payment-card__shipment {
-  display: flex; align-items: center; gap: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  i { color: var(--accent-pink); font-size: 1.25rem; }
-  > div { flex: 1; small { color: var(--text-muted); display: block; } }
+}
+.payment-card__shipment-head {
+  display: flex; align-items: center; gap: var(--space-md);
+  > i { color: var(--accent-pink); font-size: 1.25rem; }
+  .shipment-summary { flex: 1; small { color: var(--text-muted); display: block; em { font-style: italic; } } }
+}
+
+.shipment-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-sm);
+  border-left: 2px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.timeline-item {
+  position: relative;
+  padding-left: var(--space-md);
+  &--delivered .timeline-dot { background: #28a745; color: white; }
+  &--exception .timeline-dot { background: #dc3545; color: white; }
+  &--returned .timeline-dot { background: #ffc107; color: #1f1f1f; }
+}
+.timeline-dot {
+  position: absolute;
+  left: calc(-1 * var(--space-sm) - 11px);
+  top: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent-pink);
+  color: white;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  box-shadow: 0 0 0 3px var(--bg-tertiary);
+}
+.timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  .timeline-title { font-weight: 600; color: var(--text-primary); }
+  .timeline-desc { color: var(--text-secondary); }
+  small { color: var(--text-muted); }
+  .timeline-source { margin-left: 4px; font-style: italic; opacity: 0.8; }
 }
 
 .payment-card__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
@@ -404,7 +597,7 @@ export default defineComponent({
   h2 { margin: 0 0 var(--space-sm); font-size: var(--font-size-xl); }
   .modal-subtitle { color: var(--text-muted); margin-bottom: var(--space-lg); font-size: var(--font-size-sm); }
   label { display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-xs); margin-top: var(--space-md); }
-  input, textarea {
+  input, textarea, select {
     width: 100%; padding: 10px 14px; border: 1px solid var(--surface-border);
     border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary);
     font-size: var(--font-size-sm); font-family: inherit;

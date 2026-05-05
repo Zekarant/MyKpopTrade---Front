@@ -26,6 +26,7 @@ import Vue3Lottie from 'vue3-lottie'
 import PrimeVue from 'primevue/config'
 import Aura from '../node_modules/@primevue/themes/aura'
 import Slider from 'primevue/slider'
+import pushService from './services/push.service'
 
 const app = createApp(App)
 
@@ -53,3 +54,8 @@ app.component("post-card", card)
 app.component("response_review", response_review)
 app.component("Slider", Slider)
 app.mount('#app')
+
+// Enregistre le service worker au démarrage (PWA + push). On NE demande PAS
+// la permission de notification ici : c'est fait à la demande, depuis un
+// geste utilisateur (cf. pushService.subscribe).
+pushService.registerServiceWorker().catch(() => { /* silently ignored */ })

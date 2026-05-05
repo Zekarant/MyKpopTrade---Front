@@ -71,18 +71,14 @@ export const useMessagingStore = defineStore('messaging', {
         if (index !== -1) {
           this.conversations[index].unreadCount = response.conversation.unreadCount || 0;
           if(this.conversations[index].participants.length > 0) {
-            for (let index = 0; index < this.conversations[index].participants.length; index++) {
-              const participant = this.conversations[index].participants[index];
+            for (let i = 0; i < this.conversations[index].participants.length; i++) {
+              const participant = this.conversations[index].participants[i];
 
               if(participant._id != Cookies.get('id_user')) {
                 if(!this.conversations[index].otherParticipant){
                   this.conversations[index].otherParticipant = participant;
                 }
-           
-                
-                
               }
-              
             }
           }
         }
@@ -148,24 +144,24 @@ export const useMessagingStore = defineStore('messaging', {
         throw error;
       }
     },
-    
+
     async favorite(messageId: string) {
       try {
         await messagingService.favorite(messageId);
 
         // Trouver le message dans la liste
         const index = this.messages.findIndex(m => m._id === messageId);
-        
+
         if (index !== -1) {
-          const myId = Cookies.get('id_user') || '';          
+          const myId = Cookies.get('id_user') || '';
           // Initialiser favoritedBy si undefined
           if (!this.messages[index].favoritedBy) {
             this.messages[index].favoritedBy = [];
           }
-          
+
           // Vérifier si l'utilisateur est déjà dans favoritedBy
           const userIndex = this.messages[index].favoritedBy.indexOf(myId);
-          
+
           if (userIndex !== -1) {
             // L'utilisateur est déjà dans favoritedBy, le retirer
             this.messages[index].favoritedBy.splice(userIndex, 1);
@@ -185,7 +181,7 @@ export const useMessagingStore = defineStore('messaging', {
     async archiveConversation(messageId: string) {
       try {
         await messagingService.archiveConversation(messageId);
-        const myId = Cookies.get('id_user') || '';          
+        const myId = Cookies.get('id_user') || '';
 
         // Retirer le message de la liste
         const index = this.messages.findIndex(m => m._id === messageId);
@@ -202,7 +198,7 @@ export const useMessagingStore = defineStore('messaging', {
     async unarchiveConversation(messageId: string) {
       try {
         await messagingService.unarchiveConversation(messageId);
-        const myId = Cookies.get('id_user') || '';          
+        const myId = Cookies.get('id_user') || '';
 
         // Retirer le message de la liste
         const index = this.messages.findIndex(m => m._id === messageId);

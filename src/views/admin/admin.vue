@@ -329,7 +329,8 @@
               <tr v-for="product in products" :key="product._id">
                 <td>
                   <div class="admin__product-cell">
-                    <img v-if="product.images?.length" :src="apiUrl + product.images[0]" class="admin__product-img" />
+                    <img v-if="product.images?.length" :src="apiUrl + product.images[0]" class="admin__product-img" @error="onProductImgError($event)" />
+                    <div v-else class="admin__product-img admin__product-img--placeholder"><i class="bi bi-image"></i></div>
                     <span>{{ product.title }}</span>
                   </div>
                 </td>
@@ -1384,6 +1385,18 @@
         showFollowersModal.value = true;
       };
 
+      const onProductImgError = (event: Event) => {
+        const img = event.target as HTMLImageElement;
+        img.style.display = 'none';
+        const parent = img.parentElement;
+        if (parent && !parent.querySelector('.admin__product-img--placeholder')) {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'admin__product-img admin__product-img--placeholder';
+          placeholder.innerHTML = '<i class="bi bi-image"></i>';
+          parent.insertBefore(placeholder, parent.firstChild);
+        }
+      };
+
       // === Init ===
       onMounted(async () => {
         try {
@@ -1479,6 +1492,7 @@
         showFollowersModal,
         groupFollowers,
         followersGroupName,
+        onProductImgError,
       };
     },
   });
@@ -1976,6 +1990,15 @@
   height: 36px;
   border-radius: var(--radius-sm);
   object-fit: cover;
+
+  &--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary, #f0f0f0);
+    color: var(--text-muted, #999);
+    font-size: 1rem;
+  }
 }
 
 .admin__price {

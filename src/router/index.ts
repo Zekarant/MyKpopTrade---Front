@@ -190,6 +190,49 @@ const routes = [
     meta: {
       title: 'Nous contacter'
     }
+  },
+  {
+    path: '/disputes',
+    name: 'disputes',
+    component: () => import('@/views/disputes/DisputesList.vue'),
+    meta: { requiresAuth: true, title: 'Mes litiges' }
+  },
+  {
+    path: '/disputes/:id',
+    name: 'dispute_detail',
+    component: () => import('@/views/disputes/DisputeDetail.vue'),
+    props: true,
+    meta: { requiresAuth: true, title: 'Litige' }
+  },
+  {
+    path: '/cart',
+    name: 'cart',
+    component: () => import('@/views/cart/CartView.vue'),
+    meta: { requiresAuth: true, title: 'Mon panier' }
+  },
+  {
+    path: '/cgu',
+    name: 'cgu',
+    component: () => import('@/views/legal/Cgu.vue'),
+    meta: { title: 'Conditions Générales d\'Utilisation' }
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/views/legal/Privacy.vue'),
+    meta: { title: 'Politique de confidentialité' }
+  },
+  {
+    path: '/legal',
+    name: 'legal',
+    component: () => import('@/views/legal/Legal.vue'),
+    meta: { title: 'Mentions légales' }
+  },
+  {
+    path: '/cookies',
+    name: 'cookies',
+    component: () => import('@/views/legal/Cookies.vue'),
+    meta: { title: 'Politique cookies' }
   }
 
 

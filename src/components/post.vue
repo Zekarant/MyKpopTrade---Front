@@ -121,6 +121,9 @@
                     <button class="post-modal__btn post-modal__btn--primary" @click="buyOption">
                         <i class="bi bi-bag"></i> Acheter
                     </button>
+                    <button class="post-modal__btn post-modal__btn--cart" :class="{ 'post-modal__btn--cart-added': addedToCart }" @click="addToCart" :disabled="addingToCart || addedToCart">
+                        <i :class="addedToCart ? 'bi bi-cart-check-fill' : 'bi bi-cart-plus'"></i> {{ addedToCart ? 'Ajouté ✓' : addingToCart ? '...' : 'Panier' }}
+                    </button>
                     <button class="post-modal__btn post-modal__btn--ghost" @click="openMessagePopup">
                         <i class="bi bi-chat-dots"></i> Message
                     </button>
@@ -189,6 +192,8 @@
 
     import postService from '@/services/post.service';
     import paymentService from '@/services/payment.service';
+    import cartService from '@/services/cart.service';
+    import eventBus from '@/eventBus';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
@@ -236,6 +241,8 @@
                 isLoading: true,
                 dataInitialized: false,
                 showOfferOption: false,
+                addingToCart: false,
+                addedToCart: false,
             };
         },
         setup(props){
@@ -249,292 +256,6 @@
                 showBuyOption.value = !showBuyOption.value;
             };
 
-            // Fonction pour créer une iframe modale PayPal avec détection d'erreur
-            const createPaypalIframe = (approvalUrl: string, paymentId: string) => {
-                try {
-                    // Vérifier si une iframe PayPal existe déjà
-                    const existingModal = document.getElementById('paypal-iframe-modal');
-                    if (existingModal) {
-                        existingModal.remove();
-                    }
-
-                    // Créer la modale avec iframe
-                    const modal = document.createElement('div');
-                    modal.id = 'paypal-iframe-modal';
-                    modal.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0, 0, 0, 0.8);
-                        z-index: 9999;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                    `;
-
-                    const modalContent = document.createElement('div');
-                    modalContent.style.cssText = `
-                        position: relative;
-                        width: 90%;
-                        height: 90%;
-                        max-width: 500px;
-                        max-height: 700px;
-                        background: white;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                    `;
-
-                    // Header de la modale
-                    const modalHeader = document.createElement('div');
-                    modalHeader.style.cssText = `
-                        padding: 15px 20px;
-                        background: #0070ba;
-                        color: white;
-                        font-family: Arial, sans-serif;
-                        font-size: 16px;
-                        font-weight: bold;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    `;
-                    modalHeader.innerHTML = `
-                        <span>Paiement PayPal</span>
-                        <button id="close-paypal-modal" style="
-                            background: none;
-                            border: none;
-                            color: white;
-                            font-size: 20px;
-                            cursor: pointer;
-                            padding: 0;
-                            width: 30px;
-                            height: 30px;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        " title="Fermer">×</button>
-                    `;
-
-                    // Iframe PayPal
-                    const iframe = document.createElement('iframe');
-                    iframe.src = approvalUrl;
-                    iframe.style.cssText = `
-                        width: 100%;
-                        height: calc(100% - 60px);
-                        border: none;
-                        display: block;
-                    `;
-
-                    // Loader pendant le chargement
-                    const loader = document.createElement('div');
-                    loader.id = 'paypal-loader';
-                    loader.style.cssText = `
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        background: white;
-                        padding: 20px;
-                        border-radius: 8px;
-                        text-align: center;
-                        font-family: Arial, sans-serif;
-                    `;
-                    loader.innerHTML = `
-                        <div style="margin-bottom: 10px;">Chargement PayPal...</div>
-                        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0070ba; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                        <style>
-                            @keyframes spin {
-                                0% { transform: rotate(0deg); }
-                                100% { transform: rotate(360deg); }
-                            }
-                        </style>
-                    `;
-
-                    // Variables pour gérer les événements
-                    let messageHandler: ((event: MessageEvent) => void) | null = null;
-                    let iframeLoadHandler: (() => void) | null = null;
-                    let iframeErrorHandler: (() => void) | null = null;
-                    let isIframeLoaded = false;
-                    let iframeError = false;
-
-                    // Fonction pour nettoyer et fermer la modale
-                    const closeModal = () => {
-                        if (messageHandler) {
-                            window.removeEventListener('message', messageHandler);
-                        }
-                        if (iframeLoadHandler) {
-                            iframe.removeEventListener('load', iframeLoadHandler);
-                        }
-                        if (iframeErrorHandler) {
-                            iframe.removeEventListener('error', iframeErrorHandler);
-                        }
-                        if (modal && document.body.contains(modal)) {
-                            modal.remove();
-                        }
-                        checkPaymentStatus(paymentId);
-                    };
-
-                    // Gérer les messages de PayPal dans l'iframe
-                    messageHandler = (event: MessageEvent) => {
-                        // Ignorer les messages de télémétrie PayPal
-                        if (event.data.p2Sent || event.data.utils) {
-                            return;
-                        }
-
-                        // Vérifier l'origine pour la sécurité
-                        if (event.origin !== 'https://www.sandbox.paypal.com' &&
-                            event.origin !== 'https://www.paypal.com') {
-                            return;
-                        }
-                        if (event.data.type === 'payment_success') {
-                            closeModal();
-                            onPaymentSuccess(event.data.paymentId || paymentId);
-                        } else if (event.data.type === 'payment_cancelled') {
-                            closeModal();
-                            onPaymentCancelled();
-                        }
-                    };
-
-                    // Gérer le chargement de l'iframe
-                    iframeLoadHandler = () => {
-                        isIframeLoaded = true;
-                        const loaderElement = document.getElementById('paypal-loader');
-                        if (loaderElement) {
-                            loaderElement.style.display = 'none';
-                        }
-                    };
-
-                    // Gérer les erreurs de l'iframe
-                    iframeErrorHandler = () => {
-                        iframeError = true;
-                        console.error('Erreur lors du chargement de l\'iframe PayPal');
-                    };
-
-                    // Event listeners
-                    iframe.addEventListener('load', iframeLoadHandler);
-                    iframe.addEventListener('error', iframeErrorHandler);
-                    window.addEventListener('message', messageHandler);
-
-                    // Event listener pour fermer la modale
-                    const closeButton = modalHeader.querySelector('#close-paypal-modal');
-                    if (closeButton) {
-                        closeButton.addEventListener('click', closeModal);
-                    }
-
-                    // Fermer en cliquant sur l'arrière-plan
-                    modal.addEventListener('click', (event) => {
-                        if (event.target === modal) {
-                            closeModal();
-                        }
-                    });
-
-                    // Fermer avec la touche Escape
-                    const escapeHandler = (event: KeyboardEvent) => {
-                        if (event.key === 'Escape') {
-                            document.removeEventListener('keydown', escapeHandler);
-                            closeModal();
-                        }
-                    };
-                    document.addEventListener('keydown', escapeHandler);
-
-                    // Assembler la modale
-                    modalContent.appendChild(modalHeader);
-                    modalContent.appendChild(loader);
-                    modalContent.appendChild(iframe);
-                    modal.appendChild(modalContent);
-                    document.body.appendChild(modal);
-                    // Focus sur l'iframe après un court délai
-                    setTimeout(() => {
-                        if (iframe) {
-                            iframe.focus();
-                        }
-                    }, 500);
-
-                    // Retourner une référence à la modale pour vérifications ultérieures
-                    return {
-                        modal: modal,
-                        iframe: iframe,
-                        isVisible: () => document.body.contains(modal) && modal.style.display !== 'none',
-                        isLoaded: () => isIframeLoaded,
-                        hasError: () => iframeError,
-                        close: closeModal
-                    };
-
-                } catch (error) {
-                    console.error('Erreur lors de la création de l\'iframe PayPal:', error);
-                    return null;
-                }
-            };
-
-            // Fonction pour gérer les événements de l'onglet
-            const handleTabEvents = (tabWindow: Window, paymentId: string) => {
-                let checkClosedInterval: number | null = null;
-                let messageHandler: ((event: MessageEvent) => void) | null = null;
-
-                // Fonction pour nettoyer les listeners et intervals
-                const cleanup = () => {
-                    if (checkClosedInterval) {
-                        clearInterval(checkClosedInterval);
-                        checkClosedInterval = null;
-                    }
-                    if (messageHandler) {
-                        window.removeEventListener('message', messageHandler);
-                        messageHandler = null;
-                    }
-                };
-
-                // Gérer les messages de PayPal
-                messageHandler = (event: MessageEvent) => {
-                    // Ignorer les messages de télémétrie PayPal
-                    if (event.data.p2Sent || event.data.utils) {
-                        return;
-                    }
-
-                    // Vérifier l'origine pour la sécurité
-                    if (event.origin !== 'https://www.sandbox.paypal.com' &&
-                        event.origin !== 'https://www.paypal.com') {
-                        return;
-                    }
-                    if (event.data.type === 'payment_success') {
-                        tabWindow.close();
-                        cleanup();
-                        onPaymentSuccess(event.data.paymentId || paymentId);
-                    } else if (event.data.type === 'payment_cancelled') {
-                        tabWindow.close();
-                        cleanup();
-                        onPaymentCancelled();
-                    }
-                };
-
-                // Surveiller la fermeture de l'onglet
-                checkClosedInterval = window.setInterval(() => {
-                    try {
-                        if (tabWindow.closed) {
-                            cleanup();
-                            checkPaymentStatus(paymentId);
-                        }
-                    } catch (error) {
-                        // Erreur d'accès cross-origin, considérer comme fermé
-                        console.error('Onglet PayPal fermé (cross-origin) :', error);
-                        cleanup();
-                        checkPaymentStatus(paymentId);
-                    }
-                }, 1000);
-
-                // Écouter les messages
-                window.addEventListener('message', messageHandler);
-
-                // Donner le focus à l'onglet
-                try {
-                    tabWindow.focus();
-                } catch (error) {
-                    console.error('Impossible de donner le focus à l\'onglet'+error);
-                }
-            };
-
             const onCheckoutConfirmed = (result: any) => {
                 showBuyOption.value = false;
 
@@ -544,55 +265,15 @@
                         : null);
 
                 if (!result?.success || !approvalUrl) {
+                    if (result?.payment?.paypalOrderId) {
+                        paymentService.cancelPayPal(result.payment.paypalOrderId).catch(() => {});
+                    }
                     alert('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
                     return;
                 }
 
-                const iframeResult: any = createPaypalIframe(approvalUrl, result.payment.id);
-
-                setTimeout(() => {
-                    if (iframeResult && iframeResult.isVisible && iframeResult.isVisible()) {
-                        return;
-                    }
-                    if (iframeResult && iframeResult.close) iframeResult.close();
-                    const newTab = window.open(approvalUrl, '_blank');
-                    if (newTab) {
-                        handleTabEvents(newTab, result.payment.id);
-                    } else {
-                        alert('Impossible d\'ouvrir PayPal. Veuillez autoriser les popups ou copier ce lien : ' + approvalUrl);
-                    }
-                }, 500);
-            };
-
-            const checkPaymentStatus = async (paymentId: string) => {
-                try {
-                    const statusResponse = await paymentService.checkPaymentStatus(paymentId);
-                    if (statusResponse.success) {
-                        if (statusResponse.status === 'approved' || statusResponse.status === 'completed') {
-                            onPaymentSuccess(paymentId);
-                        } else if (statusResponse.status === 'cancelled') {
-                            onPaymentCancelled();
-                        } else {
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erreur lors de la vérification du statut:', error);
-                }
-            };
-
-            const onPaymentSuccess = async (paymentId: string) => {
-                try {
-                    alert('Paiement réussi ! Le produit a été marqué comme vendu.');
-                    // Recharger les données du post
-                    window.location.reload();
-                } catch (error) {
-                    console.error('Erreur lors du traitement du succès:', error);
-                    alert('Paiement réussi mais erreur lors du traitement. Contactez le support.');
-                }
-            };
-
-            const onPaymentCancelled = () => {
-                alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
+                // Redirection complète vers PayPal — l'acheteur approuve puis revient sur /payment/success
+                window.location.href = approvalUrl;
             };
 
             const id = route.params.id;
@@ -604,11 +285,6 @@
                 showBuyOption,
                 buyOption,
                 onCheckoutConfirmed,
-                handleTabEvents,
-                createPaypalIframe,
-                checkPaymentStatus,
-                onPaymentSuccess,
-                onPaymentCancelled
             };
         },
         async mounted() {
@@ -745,6 +421,21 @@
                     console.error('Erreur lors de l\'envoi de l\'offre:', error);
                     this.$func.showToastError('Erreur lors de l\'envoi de l\'offre.');
                 })
+            },
+            async addToCart() {
+                if (this.addingToCart || this.addedToCart) return;
+                this.addingToCart = true;
+                try {
+                    await cartService.addItem(this.dataPost._id);
+                    this.addedToCart = true;
+                    this.$func.showToastSuccess('Article ajouté au panier !');
+                    eventBus.emit('cart:updated');
+                } catch (error: any) {
+                    const msg = error?.response?.data?.message || 'Erreur lors de l\'ajout au panier';
+                    this.$func.showToastError(msg);
+                } finally {
+                    this.addingToCart = false;
+                }
             }
 
         },

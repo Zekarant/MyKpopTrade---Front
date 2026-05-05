@@ -415,6 +415,31 @@
     }
   }
 
+  &--cart {
+    background: transparent;
+    border: 1.5px solid var(--accent-purple, #7c3aed);
+    color: var(--accent-purple, #7c3aed);
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(124, 58, 237, 0.08);
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &--cart-added {
+    background: var(--accent-purple, #7c3aed) !important;
+    color: #fff !important;
+    border-color: var(--accent-purple, #7c3aed) !important;
+    opacity: 1 !important;
+    cursor: default !important;
+  }
+
   &--danger {
     background: var(--danger);
     color: white;

@@ -65,6 +65,12 @@
           <i class="bi bi-chat-dots"></i>
         </button>
 
+        <!-- Cart -->
+        <button class="navbar__icon-btn" @click="navPage('cart', null)" aria-label="Panier">
+          <i class="bi bi-cart3"></i>
+          <span v-if="cartCount > 0" class="navbar__badge">{{ cartCount > 9 ? '9+' : cartCount }}</span>
+        </button>
+
         <!-- Profile dropdown trigger -->
         <div class="navbar__profile" @click.stop="toggleDropdown">
           <div v-if="profilePicture" class="navbar__avatar" v-html="profilePicture"></div>
@@ -183,6 +189,8 @@ import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
 import userService from '@/services/user.service';
 import authentificationService from '@/services/authentification.service';
 import notificationService from '@/services/notification.service';
+import cartService from '@/services/cart.service';
+import eventBus from '@/eventBus';
 import type { ImgUserProfile } from '@/types/user.types';
 
 
@@ -211,6 +219,7 @@ declare global {
                 htmlImgProfile: '',
                 unreadNotifications: 0,
                 notifications: [] as any[],
+                cartCount: 0,
                 itemMenu: [
                     {
                     label: 'Accueil',
@@ -269,9 +278,12 @@ declare global {
           }
           window.addEventListener('click', this.handleWindowClick);
           this.fetchNotifications();
+          this.fetchCartCount();
+          eventBus.on('cart:updated', this.fetchCartCount);
         },
         beforeUnmount() {
             window.removeEventListener('click', this.handleWindowClick);
+            eventBus.off('cart:updated', this.fetchCartCount);
         },
         computed: {
           profilePicture() {
@@ -379,6 +391,14 @@ declare global {
                 const data = await notificationService.getNotifications();
                 this.unreadNotifications = data.pagination?.unreadCount || 0;
                 this.notifications = data.notifications || [];
+              } catch {
+                // silently fail
+              }
+            },
+            async fetchCartCount() {
+              try {
+                const cart = await cartService.getCart();
+                this.cartCount = cart.items?.length || 0;
               } catch {
                 // silently fail
               }

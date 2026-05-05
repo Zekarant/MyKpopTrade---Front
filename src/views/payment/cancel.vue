@@ -26,6 +26,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import paymentService from '@/services/payment.service';
 
 export default defineComponent({
   name: 'PaymentCancel',
@@ -36,10 +37,36 @@ export default defineComponent({
     const paymentToken = ref<string>('');
     const source = ref<string>('');
 
-    onMounted(() => {
+    onMounted(async () => {
       // Récupérer les paramètres de query
       paymentToken.value = (route.query.token as string) || '';
       source.value = (route.query.source as string) || '';
+
+      // Annuler le paiement et libérer la réservation
+      if (paymentToken.value) {
+        try {
+          await paymentService.cancelPayPal(paymentToken.value);
+        } catch {
+          // Ignorer les erreurs (paiement déjà annulé, etc.)
+        }
+      }
+
+      // Annuler et nettoyer les paiements multi en attente
+      const pendingRaw = localStorage.getItem('pendingPaypalPayments');
+      if (pendingRaw) {
+        try {
+          const pending: any[] = JSON.parse(pendingRaw);
+          for (const item of pending) {
+            const orderId = typeof item === 'string' ? null : item.orderId;
+            if (orderId) {
+              try {
+                await paymentService.cancelPayPal(orderId);
+              } catch { /* ignore */ }
+            }
+          }
+        } catch { /* ignore parse errors */ }
+        localStorage.removeItem('pendingPaypalPayments');
+      }
     });
 
 
@@ -80,7 +107,7 @@ export default defineComponent({
 
 .icon-container {
   margin-bottom: 20px;
-  
+
   i {
     font-size: 80px;
     color: #dc3545;
@@ -122,7 +149,7 @@ h1 {
   padding: 10px;
   border-radius: 6px;
   margin-bottom: 20px;
-  
+
   p {
     margin: 0;
     font-size: 14px;
@@ -151,7 +178,7 @@ h1 {
 .btn-primary {
   background: var(--blue, #007bff);
   color: white;
-  
+
   &:hover {
     opacity: 0.9;
     transform: translateY(-2px);
@@ -161,7 +188,7 @@ h1 {
 .btn-secondary {
   background: #6c757d;
   color: white;
-  
+
   &:hover {
     background: #5a6268;
     transform: translateY(-2px);
@@ -172,11 +199,11 @@ h1 {
   .cancel-card {
     padding: 30px 20px;
   }
-  
+
   h1 {
     font-size: 24px;
   }
-  
+
   .icon-container i {
     font-size: 60px;
   }
