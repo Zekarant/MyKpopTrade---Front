@@ -504,3 +504,62 @@
         grid-template-columns: 1fr;
       }
     }
+
+    // === PayPal Required Banner ===
+    .paypal-required-banner {
+      background: var(--bg-card);
+      border: 2px solid #f59e0b;
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      text-align: center;
+
+      > i {
+        font-size: 2rem;
+        color: #f59e0b;
+      }
+
+      strong {
+        display: block;
+        font-size: var(--font-size-lg);
+        color: var(--text-primary);
+        margin-bottom: var(--space-xs);
+      }
+
+      p {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        margin: 0;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        background-color: #0070ba !important;
+        border-color: #0070ba !important;
+        color: #fff !important;
+        font-weight: 600;
+        padding: 0.7rem 1.5rem;
+        font-size: 1rem;
+
+        i {
+          font-size: 1.2rem;
+        }
+
+        &:hover {
+          background-color: #005c99 !important;
+          border-color: #005c99 !important;
+          color: #fff !important;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }

@@ -161,7 +161,7 @@ class paymentService {
     return response.data;
   }
 
-  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; expiresAt?: string; email?: string }> {
+  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; oauthConnected: boolean; expiresAt?: string; email?: string }> {
     const response = await this.paymentsApiClient.get('/paypal/connection-status');
     return response.data;
   }
@@ -178,6 +178,11 @@ class paymentService {
 
   async refundPayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
     const response = await this.paymentsApiClient.post(`/${paymentId}/refund`, payload);
+    return response.data;
+  }
+
+  async confirmManualRefund(paymentId: string) {
+    const response = await this.paymentsApiClient.post(`/${paymentId}/confirm-refund`);
     return response.data;
   }
 

@@ -3,7 +3,20 @@
         <Nav_bar></Nav_bar>
         <div class="content imgcenter">
             <h3><i class="bi bi-plus-circle"></i> {{ isModyfy ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h3>
-            <form @submit.prevent="save">
+
+            <!-- Blocage PayPal OAuth -->
+            <div v-if="!paypalOAuthConnected && !loadingPaypalStatus" class="paypal-required-banner">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Connexion PayPal requise</strong>
+                    <p>Pour vendre sur MyKpopTrade, vous devez connecter votre compte PayPal via OAuth. Cela permet les remboursements automatiques en cas de besoin.</p>
+                </div>
+                <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">
+                    <i class="bi bi-paypal"></i> Connecter mon compte PayPal
+                </button>
+            </div>
+
+            <form @submit.prevent="save" v-if="paypalOAuthConnected">
 
             <!-- === Section Images === -->
             <fieldset class="form-section">
@@ -208,9 +221,10 @@
   </template>
 
   <script lang="ts">
-    import { defineComponent, ref, computed, watch } from 'vue';
+    import { defineComponent, ref, computed, watch, onMounted } from 'vue';
     import postService from '@/services/post.service';
     import  authentification from '@/services/authentification.service';
+    import paymentService from '@/services/payment.service';
     import { Navigation, A11y } from 'swiper/modules';
 
     // Import Swiper Vue.js components
@@ -262,6 +276,40 @@
         const searchAlbumName = ref('');
         const isAlbumDropdownOpen = ref(false);
         const albumsList = ref<any[]>([]);
+
+        // PayPal OAuth check
+        const paypalOAuthConnected = ref(false);
+        const loadingPaypalStatus = ref(true);
+        const connectingPaypal = ref(false);
+
+        const checkPaypalConnection = async () => {
+            try {
+                loadingPaypalStatus.value = true;
+                const status = await paymentService.getPayPalConnectionStatus();
+                paypalOAuthConnected.value = Boolean(status.oauthConnected);
+            } catch (error) {
+                paypalOAuthConnected.value = false;
+            } finally {
+                loadingPaypalStatus.value = false;
+            }
+        };
+
+        const connectPayPal = async () => {
+            try {
+                connectingPaypal.value = true;
+                const result = await paymentService.getPayPalConnectUrl();
+                if (result.connectUrl) {
+                    window.location.href = result.connectUrl;
+                }
+            } catch (error) {
+                console.error('Erreur lors de la connexion PayPal:', error);
+            } finally {
+                connectingPaypal.value = false;
+            }
+        };
+
+        // Vérifier la connexion PayPal au montage
+        checkPaypalConnection();
 
         const formData = ref({
             title: '',
@@ -483,6 +531,10 @@
             selectAlbum,
             closeAlbumDropdown,
             loadAlbumsForGroup,
+            paypalOAuthConnected,
+            loadingPaypalStatus,
+            connectingPaypal,
+            connectPayPal,
         };
 
     },
