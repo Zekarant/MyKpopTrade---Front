@@ -144,22 +144,13 @@
                 </p>
 
                 <p v-if="!paypalConnected" class="paypal-card__hint">
-                  Sans cette connexion, vous ne pourrez pas être payé pour vos ventes.
+                  Sans cette connexion, vous ne pourrez pas être payé pour vos ventes
+                  ni rembourser vos acheteurs.
                 </p>
 
-                <!-- Manual email input -->
-                <div v-if="!paypalConnected" class="paypal-card__email-form">
-                  <div class="paypal-card__input-group">
-                    <i class="bi bi-envelope"></i>
-                    <input
-                      v-model="paypalEmailInput"
-                      type="email"
-                      placeholder="votre-email@paypal.com"
-                      class="paypal-card__input"
-                    />
-                  </div>
-                  <button @click="connectPaypalByEmail" :disabled="!paypalEmailInput || paypalConnecting" class="btn-settings btn-settings--primary">
-                    <i class="bi bi-link-45deg"></i> {{ paypalConnecting ? 'Connexion...' : 'Lier mon PayPal' }}
+                <div v-if="!paypalConnected" class="paypal-card__actions">
+                  <button @click="connectPaypal" :disabled="paypalConnecting" class="btn-settings btn-settings--primary">
+                    <i class="bi bi-paypal"></i> {{ paypalConnecting ? 'Redirection...' : 'Connecter mon compte PayPal' }}
                   </button>
                 </div>
 
@@ -167,6 +158,50 @@
                     <button @click="disconnectPaypal" class="btn-settings btn-settings--danger">
                       <i class="bi bi-x-circle"></i> Déconnecter
                     </button>
+                </div>
+              </div>
+
+              <!-- Stripe Connect -->
+              <div class="paypal-card" style="margin-top: var(--space-md);">
+                <div class="paypal-card__head">
+                  <div class="paypal-card__brand">
+                    <i class="bi bi-credit-card-2-front"></i>
+                    <div>
+                      <div class="paypal-card__title">Stripe</div>
+                      <div class="paypal-card__subtitle">Recevez des paiements par carte bancaire (Visa, Mastercard, etc.)</div>
+                    </div>
+                  </div>
+                  <span v-if="stripeOnboarded && stripePayoutsEnabled" class="setting-badge setting-badge--success">
+                    <i class="bi bi-check-circle-fill"></i> Activé
+                  </span>
+                  <span v-else-if="stripeOnboarded" class="setting-badge setting-badge--warning">
+                    <i class="bi bi-clock"></i> En vérification
+                  </span>
+                  <span v-else class="setting-badge setting-badge--warning">
+                    <i class="bi bi-exclamation-circle"></i> Non activé
+                  </span>
+                </div>
+
+                <p v-if="!stripeOnboarded" class="paypal-card__hint">
+                  Activez Stripe pour recevoir les paiements par carte bancaire de vos acheteurs
+                  directement sur votre compte (KYC géré par Stripe).
+                </p>
+
+                <p v-else-if="!stripePayoutsEnabled" class="paypal-card__hint">
+                  Stripe vérifie encore vos informations. Vous pouvez vendre dès maintenant,
+                  mais les virements seront retenus jusqu'à la fin de la vérification.
+                </p>
+
+                <div class="paypal-card__actions">
+                  <button
+                    v-if="!stripeOnboarded || !stripePayoutsEnabled"
+                    @click="startStripeOnboarding"
+                    :disabled="stripeOnboarding"
+                    class="btn-settings btn-settings--primary"
+                  >
+                    <i class="bi bi-credit-card-2-front"></i>
+                    {{ stripeOnboarding ? 'Redirection...' : (stripeOnboarded ? 'Compléter mes infos Stripe' : 'Activer mes paiements Stripe') }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -270,14 +305,18 @@ export default defineComponent({
       paypalConnected: false,
       paypalExpiresAt: null as string | null,
       paypalEmail: null as string | null,
-      paypalEmailInput: '',
       paypalConnecting: false,
+      stripeOnboarded: false,
+      stripePayoutsEnabled: false,
+      stripeChargesEnabled: false,
+      stripeOnboarding: false,
       pendingDeletion: null as { scheduledFor: string } | null,
     };
   },
   async mounted() {
     await this.loadProfile();
     await this.loadPaypalStatus();
+    await this.loadStripeStatus();
     this.loadDeletionStatus();
   },
   methods: {
@@ -456,6 +495,7 @@ export default defineComponent({
       }
     },
     async connectPaypal() {
+      this.paypalConnecting = true;
       try {
         const res = await paymentService.getPayPalConnectUrl();
         if (res.connectUrl) {
@@ -463,20 +503,31 @@ export default defineComponent({
         }
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer l\'URL PayPal');
+        this.paypalConnecting = false;
       }
     },
-    async connectPaypalByEmail() {
-      if (!this.paypalEmailInput) return;
-      this.paypalConnecting = true;
+    async loadStripeStatus() {
       try {
-        await paymentService.connectPayPalByEmail(this.paypalEmailInput.trim());
-        (this as any).$func.showToastSuccess('Compte PayPal lié avec succès !');
-        this.paypalConnected = true;
-        this.paypalEmailInput = '';
+        const res = await paymentService.getStripeAccountStatus();
+        this.stripeOnboarded = !!res.onboarded;
+        this.stripePayoutsEnabled = !!res.payoutsEnabled;
+        this.stripeChargesEnabled = !!res.chargesEnabled;
+      } catch {
+        this.stripeOnboarded = false;
+        this.stripePayoutsEnabled = false;
+        this.stripeChargesEnabled = false;
+      }
+    },
+    async startStripeOnboarding() {
+      this.stripeOnboarding = true;
+      try {
+        const res = await paymentService.getStripeOnboardingLink();
+        if (res.url) {
+          window.location.href = res.url;
+        }
       } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur lors de la liaison');
-      } finally {
-        this.paypalConnecting = false;
+        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer le lien Stripe');
+        this.stripeOnboarding = false;
       }
     },
     async disconnectPaypal() {

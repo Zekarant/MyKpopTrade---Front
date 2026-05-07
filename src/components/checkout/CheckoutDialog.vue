@@ -85,16 +85,32 @@
         <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
       </div>
 
-      <div class="actions">
-        <button class="btn-cancel" @click="cancel" :disabled="submitting">Annuler</button>
+      <div class="actions actions--column">
         <button
-          class="btn-submit"
+          class="btn-pay btn-pay--stripe"
           :disabled="!canSubmit || submitting"
-          @click="submit"
+          @click="submit('stripe')"
         >
-          <span v-if="submitting"><i class="bi bi-arrow-repeat spin"></i> En cours…</span>
-          <span v-else>Confirmer et payer</span>
+          <span v-if="submitting && submittingMethod === 'stripe'">
+            <i class="bi bi-arrow-repeat spin"></i> Redirection…
+          </span>
+          <span v-else>
+            <i class="bi bi-credit-card"></i> Payer par carte (Stripe)
+          </span>
         </button>
+        <button
+          class="btn-pay btn-pay--paypal"
+          :disabled="!canSubmit || submitting"
+          @click="submit('paypal')"
+        >
+          <span v-if="submitting && submittingMethod === 'paypal'">
+            <i class="bi bi-arrow-repeat spin"></i> Redirection…
+          </span>
+          <span v-else>
+            <i class="bi bi-paypal"></i> Payer avec PayPal
+          </span>
+        </button>
+        <button class="btn-cancel" @click="cancel" :disabled="submitting">Annuler</button>
       </div>
     </div>
   </div>
@@ -125,6 +141,17 @@ interface PaypalLikeResult {
   };
 }
 
+interface StripeCheckoutResult {
+  success: boolean;
+  payment?: {
+    id: string;
+    stripeSessionId: string;
+    checkoutUrl: string;
+  };
+}
+
+type PaymentProvider = 'paypal' | 'stripe';
+
 export default defineComponent({
   name: 'CheckoutDialog',
   components: { AddressAutocomplete },
@@ -138,6 +165,7 @@ export default defineComponent({
   emits: ['confirm', 'cancel'],
   setup(props, { emit }) {
     const submitting = ref(false);
+    const submittingMethod = ref<PaymentProvider | ''>('');
     const errorMessage = ref('');
 
     const resolveCost = (method: ShippingMethod): number | null => {
@@ -240,12 +268,24 @@ export default defineComponent({
       return payload;
     };
 
-    const submit = async () => {
+    const submit = async (provider: PaymentProvider) => {
       if (!canSubmit.value || submitting.value) return;
       submitting.value = true;
+      submittingMethod.value = provider;
       errorMessage.value = '';
       try {
-        const result = await paymentService.initPayPal(buildPayload()) as PaypalLikeResult;
+        if (provider === 'stripe') {
+          const result = (await paymentService.initStripeCheckout(buildPayload())) as StripeCheckoutResult;
+          if (!result.success || !result.payment?.checkoutUrl) {
+            errorMessage.value = 'Le paiement Stripe n\'a pas pu être initialisé.';
+            return;
+          }
+          // Redirige direct vers Stripe Checkout (host page)
+          window.location.href = result.payment.checkoutUrl;
+          return;
+        }
+
+        const result = (await paymentService.initPayPal(buildPayload())) as PaypalLikeResult;
         if (!result.success || !result.payment) {
           errorMessage.value = 'Le paiement n\'a pas pu être initialisé.';
           return;
@@ -257,6 +297,7 @@ export default defineComponent({
           'Une erreur est survenue lors de l\'initialisation du paiement.';
       } finally {
         submitting.value = false;
+        submittingMethod.value = '';
       }
     };
 
@@ -266,7 +307,7 @@ export default defineComponent({
     };
 
     return {
-      submitting, errorMessage, availableMethods, selectedMethod, address,
+      submitting, submittingMethod, errorMessage, availableMethods, selectedMethod, address,
       shippingCost, totalAmount, canSubmit, formatAmount,
       onAddressPicked, submit, cancel
     };
@@ -483,10 +524,15 @@ h3 {
   display: flex;
   gap: var(--space-md);
   justify-content: flex-end;
+
+  &--column {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 }
 
 .btn-cancel,
-.btn-submit {
+.btn-pay {
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-md);
   border: none;
@@ -507,16 +553,29 @@ h3 {
   }
 }
 
-.btn-submit {
-  background: var(--accent-gradient);
-  color: white;
+.btn-pay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
 
-  &:hover { opacity: 0.9; transform: translateY(-1px); }
+  &:hover { opacity: 0.92; transform: translateY(-1px); }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+  }
+
+  &--stripe {
+    background: #635bff;
+    color: white;
+  }
+
+  &--paypal {
+    background: #ffc439;
+    color: #003087;
   }
 }
 

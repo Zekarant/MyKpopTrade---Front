@@ -27,7 +27,7 @@
         {{ captureError }}
       </p>
       <p class="message" v-else>
-        Votre paiement via PayPal a été traité avec succès.
+        Votre paiement{{ source === 'stripe' ? ' par carte' : ' via PayPal' }} a été traité avec succès.
         Merci de votre confiance !
       </p>
 

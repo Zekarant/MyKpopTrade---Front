@@ -171,18 +171,49 @@ class paymentService {
     return response.data;
   }
 
-  async connectPayPalByEmail(paypalEmail: string) {
-    const response = await this.paymentsApiClient.post('/paypal/connect-email', { paypalEmail });
-    return response.data;
-  }
-
   async refundPayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
     const response = await this.paymentsApiClient.post(`/${paymentId}/refund`, payload);
     return response.data;
   }
 
-  async confirmManualRefund(paymentId: string) {
-    const response = await this.paymentsApiClient.post(`/${paymentId}/confirm-refund`);
+  // ─── Stripe Connect ─────────────────────────────────────────────────────
+
+  async getStripeOnboardingLink(): Promise<{ success: boolean; url: string }> {
+    const response = await this.paymentsApiClient.post('/stripe/onboarding-link');
+    return response.data;
+  }
+
+  async getStripeAccountStatus(): Promise<{
+    success: boolean;
+    onboarded: boolean;
+    payoutsEnabled: boolean;
+    chargesEnabled: boolean;
+    accountId?: string;
+  }> {
+    const response = await this.paymentsApiClient.get('/stripe/account-status');
+    return response.data;
+  }
+
+  async initStripeCheckout(payload: InitPayPalPayload): Promise<{
+    success: boolean;
+    payment: {
+      id: string;
+      stripeSessionId: string;
+      checkoutUrl: string;
+      amount: number;
+      productAmount?: number;
+      shippingAmount?: number;
+      shippingMethod?: ShippingMethod;
+      currency: string;
+    };
+    message: string;
+  }> {
+    const response = await this.paymentsApiClient.post('/stripe/checkout', payload);
+    return response.data;
+  }
+
+  async refundStripePayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
+    const response = await this.paymentsApiClient.post(`/stripe/${paymentId}/refund`, payload);
     return response.data;
   }
 
