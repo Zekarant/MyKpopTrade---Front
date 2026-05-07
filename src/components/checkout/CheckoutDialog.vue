@@ -1,6 +1,6 @@
 <template>
-  <div class="checkout-overlay" @click.self="cancel">
-    <div class="checkout-modal">
+  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop>
+    <div class="checkout-modal" @click.stop @mousedown.stop>
       <button class="close-btn" @click="cancel" aria-label="Fermer">
         <i class="bi bi-x-lg"></i>
       </button>

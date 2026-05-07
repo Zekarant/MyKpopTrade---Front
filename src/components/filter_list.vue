@@ -190,7 +190,9 @@ export default {
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
   position: sticky;
-  top: calc(var(--navbar-height) + var(--space-lg));
+  top: 20px;
+  z-index: 10;
+  height: fit-content;
 }
 
 .filter-panel__header {

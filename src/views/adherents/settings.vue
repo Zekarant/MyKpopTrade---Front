@@ -192,7 +192,9 @@
                   mais les virements seront retenus jusqu'à la fin de la vérification.
                 </p>
 
-                <div class="paypal-card__actions">
+                <div v-if="showStripeEmbed" ref="stripeEmbedContainer" class="stripe-embed"></div>
+
+                <div v-if="!showStripeEmbed" class="paypal-card__actions">
                   <button
                     v-if="!stripeOnboarded || !stripePayoutsEnabled"
                     @click="startStripeOnboarding"
@@ -200,7 +202,7 @@
                     class="btn-settings btn-settings--primary"
                   >
                     <i class="bi bi-credit-card-2-front"></i>
-                    {{ stripeOnboarding ? 'Redirection...' : (stripeOnboarded ? 'Compléter mes infos Stripe' : 'Activer mes paiements Stripe') }}
+                    {{ stripeOnboarding ? 'Chargement…' : (stripeOnboarded ? 'Compléter mes infos Stripe' : 'Activer mes paiements Stripe') }}
                   </button>
                 </div>
               </div>
@@ -282,6 +284,7 @@ import { defineComponent } from 'vue';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import { loadConnectAndInitialize } from '@stripe/connect-js';
 import authentificationService from '@/services/authentification.service';
 import paymentService from '@/services/payment.service';
 import userService from '@/services/user.service';
@@ -310,6 +313,7 @@ export default defineComponent({
       stripePayoutsEnabled: false,
       stripeChargesEnabled: false,
       stripeOnboarding: false,
+      showStripeEmbed: false,
       pendingDeletion: null as { scheduledFor: string } | null,
     };
   },
@@ -521,12 +525,31 @@ export default defineComponent({
     async startStripeOnboarding() {
       this.stripeOnboarding = true;
       try {
-        const res = await paymentService.getStripeOnboardingLink();
-        if (res.url) {
-          window.location.href = res.url;
-        }
+        const { clientSecret } = await paymentService.getStripeAccountSession();
+        this.showStripeEmbed = true;
+
+        await this.$nextTick();
+
+        const instance = await loadConnectAndInitialize({
+          publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string,
+          fetchClientSecret: () => Promise.resolve(clientSecret),
+        });
+
+        const component = instance.create('account-onboarding');
+        component.setCollectionOptions({
+          fields: 'currently_due',
+          futureRequirements: 'omit',
+        });
+        component.setOnExit(async () => {
+          this.showStripeEmbed = false;
+          await this.loadStripeStatus();
+        });
+
+        (this.$refs.stripeEmbedContainer as HTMLElement).appendChild(component);
       } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer le lien Stripe');
+        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de charger le formulaire Stripe');
+        this.showStripeEmbed = false;
+      } finally {
         this.stripeOnboarding = false;
       }
     },
@@ -922,6 +945,11 @@ export default defineComponent({
   gap: var(--space-sm);
   flex-wrap: wrap;
   margin-top: var(--space-xs);
+}
+
+.stripe-embed {
+  width: 100%;
+  margin-top: var(--space-sm);
 }
 
 // Responsive

@@ -178,8 +178,8 @@ class paymentService {
 
   // ─── Stripe Connect ─────────────────────────────────────────────────────
 
-  async getStripeOnboardingLink(): Promise<{ success: boolean; url: string }> {
-    const response = await this.paymentsApiClient.post('/stripe/onboarding-link');
+  async getStripeAccountSession(): Promise<{ success: boolean; clientSecret: string; accountId: string }> {
+    const response = await this.paymentsApiClient.post('/stripe/account-session');
     return response.data;
   }
 

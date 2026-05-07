@@ -6,89 +6,81 @@
         <h2>Vérification de votre compte Stripe…</h2>
       </div>
 
-      <div v-else-if="status?.payoutsEnabled" class="state state--success">
+      <div v-else-if="payoutsEnabled" class="state state--success">
         <i class="bi bi-check-circle-fill icon-lg"></i>
         <h2>Stripe est activé ! 🎉</h2>
         <p>Vos virements vendeur sont opérationnels. Vous pouvez mettre des produits en vente.</p>
         <router-link to="/adherents/settings" class="btn-link">Retour aux paramètres</router-link>
       </div>
 
-      <div v-else-if="status?.onboarded" class="state state--warning">
-        <i class="bi bi-clock icon-lg"></i>
-        <h2>Vérification Stripe en cours</h2>
-        <p>
-          Stripe a bien reçu vos infos et procède aux vérifications.
-          Vous pouvez vendre dès maintenant, mais les virements seront retenus
-          jusqu'à validation. Repassez un peu plus tard pour voir le statut.
-        </p>
-        <button class="btn-link" @click="resumeOnboarding" :disabled="resuming">
-          {{ resuming ? 'Redirection…' : 'Compléter mes informations' }}
-        </button>
-        <router-link to="/adherents/settings" class="btn-link btn-link--ghost">Retour aux paramètres</router-link>
-      </div>
-
-      <div v-else class="state state--error">
-        <i class="bi bi-exclamation-triangle icon-lg"></i>
-        <h2>Onboarding Stripe non terminé</h2>
-        <p>
-          Vous n'avez pas encore activé Stripe sur votre compte. Reprenez
-          l'onboarding pour pouvoir recevoir des paiements.
-        </p>
-        <button class="btn-link" @click="resumeOnboarding" :disabled="resuming">
-          {{ resuming ? 'Redirection…' : 'Démarrer l\'onboarding' }}
-        </button>
-      </div>
+      <template v-else>
+        <div ref="stripeContainer" class="stripe-embed"></div>
+        <div v-if="embedError" class="state state--error">
+          <i class="bi bi-exclamation-triangle icon-lg"></i>
+          <p>Impossible de charger le formulaire Stripe. Réessayez plus tard.</p>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { loadConnectAndInitialize } from '@stripe/connect-js';
 import paymentService from '@/services/payment.service';
-
-interface StripeStatus {
-  onboarded: boolean;
-  payoutsEnabled: boolean;
-  chargesEnabled: boolean;
-}
 
 export default defineComponent({
   name: 'StripeOnboarding',
   setup() {
+    const router = useRouter();
     const loading = ref(true);
-    const resuming = ref(false);
-    const status = ref<StripeStatus | null>(null);
+    const payoutsEnabled = ref(false);
+    const embedError = ref(false);
+    const stripeContainer = ref<HTMLElement | null>(null);
 
-    const fetchStatus = async () => {
+    const mountEmbeddedOnboarding = async () => {
+      try {
+        const { clientSecret } = await paymentService.getStripeAccountSession();
+
+        const instance = await loadConnectAndInitialize({
+          publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string,
+          fetchClientSecret: () => Promise.resolve(clientSecret),
+        });
+
+        const component = instance.create('account-onboarding');
+        component.setCollectionOptions({
+          fields: 'currently_due',
+          futureRequirements: 'omit',
+        });
+        component.setOnExit(() => {
+          router.push('/adherents/settings');
+        });
+
+        if (stripeContainer.value) {
+          stripeContainer.value.appendChild(component);
+        }
+      } catch {
+        embedError.value = true;
+      }
+    };
+
+    onMounted(async () => {
       try {
         const res = await paymentService.getStripeAccountStatus();
-        status.value = {
-          onboarded: !!res.onboarded,
-          payoutsEnabled: !!res.payoutsEnabled,
-          chargesEnabled: !!res.chargesEnabled
-        };
+        payoutsEnabled.value = !!res.payoutsEnabled;
       } catch {
-        status.value = { onboarded: false, payoutsEnabled: false, chargesEnabled: false };
+        payoutsEnabled.value = false;
       } finally {
         loading.value = false;
       }
-    };
 
-    const resumeOnboarding = async () => {
-      resuming.value = true;
-      try {
-        const res = await paymentService.getStripeOnboardingLink();
-        if (res.url) {
-          window.location.href = res.url;
-        }
-      } catch {
-        resuming.value = false;
+      if (!payoutsEnabled.value) {
+        await mountEmbeddedOnboarding();
       }
-    };
+    });
 
-    onMounted(fetchStatus);
-
-    return { loading, resuming, status, resumeOnboarding };
+    return { loading, payoutsEnabled, embedError, stripeContainer };
   }
 });
 </script>
@@ -108,10 +100,9 @@ export default defineComponent({
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-xl);
   padding: var(--space-xl);
-  max-width: 520px;
+  max-width: 720px;
   width: 100%;
   box-shadow: var(--shadow-lg);
-  text-align: center;
 }
 
 .state {
@@ -119,6 +110,11 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   gap: var(--space-md);
+  text-align: center;
+}
+
+.stripe-embed {
+  width: 100%;
 }
 
 .icon-lg {
@@ -127,7 +123,6 @@ export default defineComponent({
 }
 
 .state--success .icon-lg { color: #10b981; }
-.state--warning .icon-lg { color: #f59e0b; }
 .state--error .icon-lg { color: #ef4444; }
 
 h2 {
@@ -156,13 +151,6 @@ p {
   transition: opacity var(--transition-fast);
 
   &:hover { opacity: 0.9; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  &--ghost {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--surface-border);
-  }
 }
 
 .spin {
