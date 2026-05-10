@@ -247,6 +247,11 @@ class paymentService {
     return response.data;
   }
 
+  async verifyStripeSession(sessionId: string): Promise<{ success: boolean; status: string; message?: string }> {
+    const response = await this.paymentsApiClient.get('/stripe/verify-session', { params: { session_id: sessionId } });
+    return response.data;
+  }
+
 };
 
 export default new paymentService();

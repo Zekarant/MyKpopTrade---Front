@@ -199,14 +199,7 @@ import authentificationService from '@/services/authentification.service';
 import notificationService from '@/services/notification.service';
 import cartService from '@/services/cart.service';
 import eventBus from '@/eventBus';
-import type { ImgUserProfile } from '@/types/user.types';
-
-
-interface UserProfile {
-  username: string;
-  profilePicture?: string;
-  role?: string;
-}
+import type { ImgUserProfile, IUser } from '@/types/user.types';
 
 declare global {
   interface Window {
@@ -254,7 +247,7 @@ declare global {
                 itemMenuEnd: [
                     {},{},{},{}
                 ],
-                dataUser: {} as UserProfile,
+                dataUser: {} as IUser,
                 showFullMenu:false
             };
         },
@@ -269,7 +262,7 @@ declare global {
             return this.htmlImgProfile;
           }else{
             userService.getMyInformation().then((data: any) => {
-              this.dataUser = data.profile as UserProfile;
+              this.dataUser = data.profile as IUser;
               if(this.dataUser){
                 const profileImgInfo : ImgUserProfile = {
                   username: this.dataUser.username,

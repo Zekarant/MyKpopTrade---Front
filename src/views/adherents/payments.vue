@@ -38,6 +38,24 @@
               </div>
             </div>
 
+            <div v-if="p.refunds && p.refunds.length > 0" class="payment-card__refunds">
+              <div v-for="refund in p.refunds" :key="refund._id">
+                <span
+                  v-if="refund.status === 'completed'"
+                  class="refund-badge refund-badge--completed"
+                  :data-tooltip="refund.reason || ''"
+                >
+                  <i class="bi bi-arrow-counterclockwise"></i> Remboursement envoyé
+                </span>
+                <span v-else-if="refund.status === 'pending'" class="refund-badge refund-badge--pending">
+                  <i class="bi bi-hourglass-split"></i> Remboursement en cours
+                </span>
+                <span v-else-if="refund.status === 'failed'" class="refund-badge refund-badge--failed">
+                  <i class="bi bi-x-circle"></i> Remboursement échoué
+                </span>
+              </div>
+            </div>
+
             <div v-if="p.shipment" class="payment-card__shipment">
               <div class="payment-card__shipment-head">
                 <i class="bi bi-truck"></i>
@@ -77,17 +95,8 @@
             </div>
 
             <div class="payment-card__actions">
-              <button v-if="canCreateShipment(p)" class="btn btn--primary btn--sm" @click="openShipmentModal(p)">
-                <i class="bi bi-truck"></i> Saisir l'expédition
-              </button>
               <button v-if="canMarkDelivered(p)" class="btn btn--ghost btn--sm" @click="markDelivered(p)">
                 <i class="bi bi-check2-circle"></i> Marquer livré
-              </button>
-              <button v-if="canRefund(p)" class="btn btn--danger btn--sm" @click="openRefundModal(p)">
-                <i class="bi bi-arrow-counterclockwise"></i> Rembourser l'acheteur
-              </button>
-              <button v-if="canOpenDispute(p)" class="btn btn--ghost btn--sm" @click="openDisputeModal(p)">
-                <i class="bi bi-shield-exclamation"></i> Ouvrir un litige
               </button>
             </div>
           </article>
@@ -193,6 +202,7 @@ interface Payment {
   buyer: string | { _id: string };
   seller: string | { _id: string };
   totalRefunded?: number;
+  refunds?: Array<{ _id: string; status: 'completed' | 'pending' | 'failed'; reason?: string }>;
   shipment?: {
     carrier: string;
     trackingNumber: string;
@@ -604,6 +614,66 @@ export default defineComponent({
   .timeline-desc { color: var(--text-secondary); }
   small { color: var(--text-muted); }
   .timeline-source { margin-left: 4px; font-style: italic; opacity: 0.8; }
+}
+
+.payment-card__refunds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.refund-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  position: relative;
+
+  &--completed {
+    background: rgba(40, 167, 69, 0.12);
+    border: 1.5px solid #28a745;
+    color: #28a745;
+
+    &[data-tooltip]:not([data-tooltip=''])::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--font-size-xs);
+      font-weight: 400;
+      white-space: nowrap;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      border: 1px solid var(--surface-border);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+
+    &[data-tooltip]:not([data-tooltip='']):hover::after {
+      opacity: 1;
+    }
+  }
+
+  &--pending {
+    background: rgba(255, 193, 7, 0.12);
+    border: 1.5px solid #e0a800;
+    color: #e0a800;
+  }
+
+  &--failed {
+    background: rgba(220, 53, 69, 0.12);
+    border: 1.5px solid #dc3545;
+    color: #dc3545;
+  }
 }
 
 .payment-card__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }

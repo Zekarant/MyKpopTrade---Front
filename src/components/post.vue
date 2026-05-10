@@ -91,7 +91,7 @@
                 </div>
 
                 <!-- Shipping -->
-                <div v-if="dataPost.shippingOptions" class="post-modal__shipping">
+                <div v-if="dataPost.shippingOptions" :title="`${dataPost.shippingPrice} €`" class="post-modal__shipping">
                     <span class="post-modal__detail-label">Livraison</span>
                     <div class="post-modal__shipping-tags">
                         <span v-if="dataPost.shippingOptions.worldwide" class="post-modal__tag">
