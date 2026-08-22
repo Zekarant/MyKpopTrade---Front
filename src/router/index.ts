@@ -2,13 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
-import searchList from '../views/adherents/searchList.vue';
-import Dashboard from '@p_v/dashboard.vue';
-import Collection from '@p_v/collection.vue';
-import profile from '@p_v/profile.vue';
-import add_post from '@p_v/add_post.vue';
-import add_review from '@p_v/add_review.vue';
-import Admin from '@/views/admin/admin.vue';
 
 
 const routes = [
@@ -44,12 +37,12 @@ const routes = [
   {
     path: '/adherents/dashboard',
     name: 'dashboard',
-    component: Dashboard
+    component: () => import('@p_v/dashboard.vue')
   },
   {
     path: '/adherents/admin',
     name: 'admin',
-    component: Admin
+    component: () => import('@/views/admin/admin.vue')
   },
 {
     path: '/payment/cancel',
@@ -82,17 +75,17 @@ const routes = [
     {
     path: '/adherents/',
     name: 'adherents',
-    component: Dashboard
+    component: () => import('@p_v/dashboard.vue')
   },
   {
     path: '/adherents/collection',
     name: 'collection',
-    component: Collection
+    component: () => import('@p_v/collection.vue')
   },
   {
     path: '/adherents/profile/:id',
     name: 'profile',
-    component: profile
+    component: () => import('@p_v/profile.vue')
   },
   {
     path: '/adherents/settings',
@@ -114,7 +107,7 @@ const routes = [
 {
   path: '/search-:combined?',
   name: 'searchList',
-  component: searchList,
+  component: () => import('../views/adherents/searchList.vue'),
   props: (route: { params: { combined: any; }; }) => {
     const combined = route.params.combined || '';
     const parts = combined.split('-');
@@ -182,19 +175,19 @@ const routes = [
   },{
     path: '/adherents/new',
     name: 'add_post',
-    component: add_post,
+    component: () => import('@p_v/add_post.vue'),
     props: true
   },
   {
     path: '/adherents/modify',
     name: 'modify_post',
-    component: add_post,
+    component: () => import('@p_v/add_post.vue'),
     props: true
   },
   {
     path: '/adherents/review/:id',
     name: 'add_review',
-    component: add_review,
+    component: () => import('@p_v/add_review.vue'),
     props: true,
     meta: {
       requiresAuth: true,

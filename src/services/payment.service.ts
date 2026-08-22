@@ -189,8 +189,28 @@ class paymentService {
     payoutsEnabled: boolean;
     chargesEnabled: boolean;
     accountId?: string;
+    currently_due: string[];
+    past_due: string[];
+    pending_verification: string[];
+    disabled_reason: string | null;
   }> {
     const response = await this.paymentsApiClient.get('/stripe/account-status');
+    return response.data;
+  }
+
+  async getStripeAccountRequirements(): Promise<{
+    success: boolean;
+    requirements: {
+      currently_due: string[];
+      eventually_due: string[];
+      past_due: string[];
+      pending_verification: string[];
+      disabled_reason: string | null;
+      errors: { code: string; reason: string; requirement: string }[];
+      current_deadline: number | null;
+    };
+  }> {
+    const response = await this.paymentsApiClient.get('/stripe/account-requirements');
     return response.data;
   }
 

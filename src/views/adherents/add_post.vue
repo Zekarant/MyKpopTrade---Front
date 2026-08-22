@@ -15,9 +15,11 @@
                     <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">
                         <i class="bi bi-paypal"></i> Connecter PayPal
                     </button>
+                    <!-- Stripe temporairement désactivé
                     <button class="btn-secondary" @click="goToStripeOnboarding" type="button">
                         <i class="bi bi-credit-card"></i> Configurer Stripe
                     </button>
+                    -->
                 </div>
             </div>
 
