@@ -277,7 +277,7 @@
         const isAlbumDropdownOpen = ref(false);
         const albumsList = ref<any[]>([]);
 
-        // PayPal OAuth check
+        // Onboarding PayPal : un vendeur ne peut publier que s'il peut encaisser
         const paypalOAuthConnected = ref(false);
         const loadingPaypalStatus = ref(true);
         const connectingPaypal = ref(false);
@@ -285,8 +285,8 @@
         const checkPaypalConnection = async () => {
             try {
                 loadingPaypalStatus.value = true;
-                const status = await paymentService.getPayPalConnectionStatus();
-                paypalOAuthConnected.value = Boolean(status.oauthConnected);
+                const status = await paymentService.getPayPalAccountStatus();
+                paypalOAuthConnected.value = Boolean(status.connected);
             } catch (error) {
                 paypalOAuthConnected.value = false;
             } finally {
@@ -297,9 +297,9 @@
         const connectPayPal = async () => {
             try {
                 connectingPaypal.value = true;
-                const result = await paymentService.getPayPalConnectUrl();
-                if (result.connectUrl) {
-                    window.location.href = result.connectUrl;
+                const result = await paymentService.getPayPalOnboardingLink();
+                if (result.actionUrl) {
+                    window.location.href = result.actionUrl;
                 }
             } catch (error) {
                 console.error('Erreur lors de la connexion PayPal:', error);

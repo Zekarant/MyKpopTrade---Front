@@ -59,6 +59,32 @@ interface PaypalSatus {
   payment: PaymentDetails;
 
 }
+
+/** Raison pour laquelle un vendeur ne peut pas encore encaisser via PayPal. */
+export type PayPalBlockReason =
+  | 'NOT_ONBOARDED'
+  | 'STATUS_UNKNOWN'
+  | 'EMAIL_UNCONFIRMED'
+  | 'PAYMENTS_NOT_RECEIVABLE'
+  | 'CONSENT_MISSING';
+
+export interface PayPalAccountStatus {
+  success: boolean;
+  /** `true` uniquement si le vendeur peut réellement recevoir des paiements. */
+  connected: boolean;
+  merchantId: string | null;
+  email: string | null;
+  legalName: string | null;
+  paymentsReceivable: boolean;
+  primaryEmailConfirmed: boolean;
+  consentGranted: boolean;
+  scopes: string[];
+  checkedAt: string | null;
+  blockReason: PayPalBlockReason | null;
+  /** Message prêt à afficher, fourni par le back. */
+  blockMessage: string | null;
+}
+
 type AuthToken = string | null;
 
 
@@ -156,13 +182,21 @@ class paymentService {
     return response.data;
   }
 
-  async getPayPalConnectUrl(): Promise<{ success: boolean; connectUrl: string; message?: string }> {
-    const response = await this.paymentsApiClient.get('/paypal/connect');
+  /** Génère le lien d'inscription PayPal (Partner Referrals) du vendeur. */
+  async getPayPalOnboardingLink(): Promise<{ success: boolean; actionUrl: string; message?: string }> {
+    const response = await this.paymentsApiClient.post('/paypal/onboarding-link');
     return response.data;
   }
 
-  async getPayPalConnectionStatus(): Promise<{ success: boolean; connected: boolean; oauthConnected: boolean; expiresAt?: string; email?: string }> {
-    const response = await this.paymentsApiClient.get('/paypal/connection-status');
+  /**
+   * Statut d'onboarding PayPal du vendeur.
+   * `refresh` force MyKpopTrade à réinterroger PayPal — à utiliser quand le
+   * vendeur vient de corriger son compte (email confirmé, restriction levée).
+   */
+  async getPayPalAccountStatus(refresh = false): Promise<PayPalAccountStatus> {
+    const response = await this.paymentsApiClient.get('/paypal/account-status', {
+      params: refresh ? { refresh: 'true' } : undefined
+    });
     return response.data;
   }
 

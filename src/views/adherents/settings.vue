@@ -133,31 +133,55 @@
                   </span>
                 </div>
 
-                <p v-if="paypalConnected && paypalExpiresAt" class="paypal-card__meta">
-                  <i class="bi bi-clock"></i>
-                  Connexion valide jusqu'au {{ formatDate(paypalExpiresAt) }}
-                </p>
-
-                <p v-if="paypalConnected && paypalEmail" class="paypal-card__meta">
+                <p v-if="paypalEmail || paypalLegalName" class="paypal-card__meta">
                   <i class="bi bi-envelope-check"></i>
-                  Lié à <strong>{{ paypalEmail }}</strong>
+                  Lié à <strong>{{ paypalEmail || paypalLegalName }}</strong>
                 </p>
 
-                <p v-if="!paypalConnected" class="paypal-card__hint">
-                  Sans cette connexion, vous ne pourrez pas être payé pour vos ventes
-                  ni rembourser vos acheteurs.
+                <p v-if="paypalMerchantId" class="paypal-card__meta">
+                  <i class="bi bi-hash"></i>
+                  Identifiant PayPal : <strong>{{ paypalMerchantId }}</strong>
                 </p>
 
-                <div v-if="!paypalConnected" class="paypal-card__actions">
-                  <button @click="connectPaypal" :disabled="paypalConnecting" class="btn-settings btn-settings--primary">
-                    <i class="bi bi-paypal"></i> {{ paypalConnecting ? 'Redirection...' : 'Connecter mon compte PayPal' }}
+                <p v-if="paypalConnected && paypalScopes.length" class="paypal-card__meta">
+                  <i class="bi bi-shield-check"></i>
+                  Autorisations accordées à MyKpopTrade :
+                  <strong>{{ paypalScopeLabels }}</strong>
+                </p>
+
+                <!-- Vendeur relié mais bloqué : on affiche l'action exacte à mener. -->
+                <p v-if="paypalBlockMessage" class="paypal-card__hint">
+                  {{ paypalBlockMessage }}
+                </p>
+
+                <div class="paypal-card__actions">
+                  <button
+                    v-if="!paypalMerchantId || paypalBlockReason === 'CONSENT_MISSING'"
+                    @click="connectPaypal"
+                    :disabled="paypalConnecting"
+                    class="btn-settings btn-settings--primary"
+                  >
+                    <i class="bi bi-paypal"></i>
+                    {{ paypalConnecting ? 'Redirection...' : (paypalMerchantId ? 'Relancer la connexion PayPal' : 'Connecter mon compte PayPal') }}
                   </button>
-                </div>
 
-                <div v-if="paypalConnected" class="paypal-card__actions">
-                    <button @click="disconnectPaypal" class="btn-settings btn-settings--danger">
-                      <i class="bi bi-x-circle"></i> Déconnecter
-                    </button>
+                  <button
+                    v-if="paypalMerchantId && paypalBlockReason && paypalBlockReason !== 'CONSENT_MISSING'"
+                    @click="refreshPaypalStatus"
+                    :disabled="paypalRefreshing"
+                    class="btn-settings btn-settings--primary"
+                  >
+                    <i class="bi bi-arrow-clockwise"></i>
+                    {{ paypalRefreshing ? 'Vérification...' : 'Rafraîchir mon statut' }}
+                  </button>
+
+                  <button
+                    v-if="paypalMerchantId"
+                    @click="disconnectPaypal"
+                    class="btn-settings btn-settings--danger"
+                  >
+                    <i class="bi bi-x-circle"></i> Déconnecter
+                  </button>
                 </div>
               </div>
 
@@ -284,6 +308,7 @@ import Cookies from 'js-cookie';
 import axios from 'axios';
 import authentificationService from '@/services/authentification.service';
 import paymentService from '@/services/payment.service';
+import type { PayPalBlockReason } from '@/services/payment.service';
 import userService from '@/services/user.service';
 
 export default defineComponent({
@@ -303,9 +328,14 @@ export default defineComponent({
       showDeleteConfirm: false,
       deleteConfirmText: '',
       paypalConnected: false,
-      paypalExpiresAt: null as string | null,
       paypalEmail: null as string | null,
+      paypalLegalName: null as string | null,
+      paypalMerchantId: null as string | null,
+      paypalScopes: [] as string[],
+      paypalBlockReason: null as PayPalBlockReason | null,
+      paypalBlockMessage: null as string | null,
       paypalConnecting: false,
+      paypalRefreshing: false,
       stripeOnboarded: false,
       stripePayoutsEnabled: false,
       stripeChargesEnabled: false,
@@ -313,9 +343,41 @@ export default defineComponent({
       pendingDeletion: null as { scheduledFor: string } | null,
     };
   },
+  computed: {
+    /** Traduit les scopes PayPal en libellés lisibles par le vendeur. */
+    paypalScopeLabels(): string {
+      const labels: Record<string, string> = {
+        'https://uri.paypal.com/services/payments/realtimepayment': 'encaissement',
+        'https://uri.paypal.com/services/payments/payment/authcapture': 'capture',
+        'https://uri.paypal.com/services/payments/refund': 'remboursement',
+        'https://uri.paypal.com/services/payments/partnerfee': 'commission plateforme'
+      };
+      const readable = this.paypalScopes
+        .map((scope) => labels[scope])
+        .filter(Boolean);
+      return readable.length ? readable.join(', ') : `${this.paypalScopes.length} autorisation(s)`;
+    }
+  },
   async mounted() {
     await this.loadProfile();
-    await this.loadPaypalStatus();
+    // Retour du parcours d'onboarding PayPal : on force un statut frais plutôt
+    // que de croire le query param.
+    const params = new URLSearchParams(window.location.search);
+    const justOnboarded = params.get('paypal_onboarding') === 'complete';
+    const onboardingError = params.get('paypal_error');
+
+    await this.loadPaypalStatus(justOnboarded);
+
+    if (justOnboarded && !this.paypalConnected && this.paypalBlockMessage) {
+      (this as any).$func.showToastError(this.paypalBlockMessage);
+    } else if (justOnboarded) {
+      (this as any).$func.showToastSuccess('Votre compte PayPal est connecté.');
+    } else if (onboardingError) {
+      (this as any).$func.showToastError(
+        'La connexion PayPal n\'a pas pu être finalisée. Merci de réessayer.'
+      );
+    }
+
     await this.loadStripeStatus();
     this.loadDeletionStatus();
   },
@@ -482,27 +544,52 @@ export default defineComponent({
       const scheduled = (this.userProfile as any)?.scheduledDeletionDate;
       this.pendingDeletion = scheduled ? { scheduledFor: scheduled } : null;
     },
-    async loadPaypalStatus() {
+    async loadPaypalStatus(refresh = false) {
       try {
-        const res = await paymentService.getPayPalConnectionStatus();
+        const res = await paymentService.getPayPalAccountStatus(refresh);
         this.paypalConnected = !!res.connected;
-        this.paypalExpiresAt = res.expiresAt || null;
         this.paypalEmail = res.email || null;
+        this.paypalLegalName = res.legalName || null;
+        this.paypalMerchantId = res.merchantId || null;
+        this.paypalScopes = res.scopes || [];
+        this.paypalBlockReason = res.blockReason;
+        // Pas de message d'alerte tant que le vendeur n'a rien connecté :
+        // la carte affiche déjà le bouton de connexion.
+        this.paypalBlockMessage = res.merchantId ? res.blockMessage : null;
       } catch {
         this.paypalConnected = false;
-        this.paypalExpiresAt = null;
         this.paypalEmail = null;
+        this.paypalLegalName = null;
+        this.paypalMerchantId = null;
+        this.paypalScopes = [];
+        this.paypalBlockReason = null;
+        this.paypalBlockMessage = null;
+      }
+    },
+    /**
+     * Réinterroge PayPal — le vendeur vient typiquement de confirmer son email
+     * ou de lever une restriction sur paypal.com.
+     */
+    async refreshPaypalStatus() {
+      this.paypalRefreshing = true;
+      try {
+        await this.loadPaypalStatus(true);
+        if (this.paypalConnected) {
+          (this as any).$func.showToastSuccess('Votre compte PayPal est prêt à recevoir des paiements.');
+        }
+      } finally {
+        this.paypalRefreshing = false;
       }
     },
     async connectPaypal() {
       this.paypalConnecting = true;
       try {
-        const res = await paymentService.getPayPalConnectUrl();
-        if (res.connectUrl) {
-          window.location.href = res.connectUrl;
+        const res = await paymentService.getPayPalOnboardingLink();
+        if (res.actionUrl) {
+          window.location.href = res.actionUrl;
         }
       } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer l\'URL PayPal');
+        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer le lien d\'inscription PayPal');
         this.paypalConnecting = false;
       }
     },
@@ -531,12 +618,11 @@ export default defineComponent({
       }
     },
     async disconnectPaypal() {
-      if (!confirm('Voulez-vous vraiment déconnecter votre compte PayPal ? Vous ne pourrez plus recevoir de paiements tant qu\'il n\'est pas reconnecté.')) return;
+      if (!confirm('Déconnecter votre compte PayPal vous empêchera de proposer des services et produits PayPal sur MyKpopTrade. Voulez-vous continuer ?')) return;
       try {
         const res = await paymentService.disconnectPayPal();
         (this as any).$func.showToastSuccess(res.message || 'Compte PayPal déconnecté');
-        this.paypalConnected = false;
-        this.paypalExpiresAt = null;
+        await this.loadPaypalStatus();
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
