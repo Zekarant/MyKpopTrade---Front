@@ -33,9 +33,10 @@ export const useMessagingStore = defineStore('messaging', {
     },
 
     sortedConversations: (state) => {
-      return [...state.conversations].sort((a, b) => {
-        return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
-      });
+      // Une conversation sans message retombe sur sa date de création : sans ce
+      // repli, `new Date(undefined)` donne NaN et la place au hasard dans le tri.
+      const lastActivity = (c: Conversation) => new Date(c.lastMessageAt || c.createdAt).getTime();
+      return [...state.conversations].sort((a, b) => lastActivity(b) - lastActivity(a));
     }
   },
 
@@ -379,7 +380,7 @@ export const useMessagingStore = defineStore('messaging', {
         // Incrémenter le compteur de non-lus si ce n'est pas notre message
 
         const currentUserId = Cookies.get('id_user') || '';
-        if (message.sender !== currentUserId && !message.readBy.includes(currentUserId || '')) {
+        if (message.sender._id !== currentUserId && !message.readBy.includes(currentUserId || '')) {
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
           this.updateUnreadCount();
         }

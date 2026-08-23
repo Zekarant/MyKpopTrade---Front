@@ -49,6 +49,17 @@
     import search_bar_2 from '@/components/search_bar_2.vue';
     import filter_list from '@/components/filter_list.vue';
 
+    /** Filtres émis par `filter_list` via `saveFilter`. */
+    interface SearchFilters {
+      min: number | null;
+      max: number | null;
+      /** Le `<select>` n'en renvoie qu'un ; le tableau reste toléré par sécurité. */
+      conditions: string | string[] | null;
+      type: string | null;
+      group: string | null;
+      member: string | null;
+    }
+
   export default defineComponent({
     name: 'searchList',
     components: {
@@ -177,8 +188,10 @@
           min: null,
           max: null,
           conditions: null,
-          type: null
-        },
+          type: null,
+          group: null,
+          member: null
+        } as SearchFilters,
         isPopupVisible: false
       };
 
@@ -274,7 +287,7 @@
           this.pagination.page--;
         }
       },
-      applyFilter(valFilters: any){
+      applyFilter(valFilters: SearchFilters){
         this.filters = valFilters;
         this.runSearch();
       },

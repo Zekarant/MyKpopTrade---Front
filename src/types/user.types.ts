@@ -57,6 +57,7 @@ export interface IUserParticipant {
   profilePicture?: string;
   location?: string;
   bio?: string;
+  isIdentityVerified?: boolean;
   preferences?: {
     kpopGroups?: string[];
     allowDirectMessages?: boolean;

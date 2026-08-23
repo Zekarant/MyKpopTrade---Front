@@ -94,6 +94,7 @@ export interface Member {
     bio?: string;
     location?: string;
     email?: string;
+    isIdentityVerified?: boolean;
 }
 
 interface SearchMembersResponse {

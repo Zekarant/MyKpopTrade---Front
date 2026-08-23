@@ -169,7 +169,7 @@
           console.error('Erreur lors de la récupération des posts:', error);
         });
       },
-      loadMore({ products, pagination, type }: { products: any[]; pagination: any[], type: '' }) {
+      loadMore({ products, pagination, type }: { products: any[]; pagination: any[], type: string }) {
         sessionStorage.setItem('posts_str', JSON.stringify(products));
         sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
         const combined = this.$func.buildCombinedSlug('', 'more'+type);

@@ -3,36 +3,31 @@ import type { IUserParticipant } from './user.types';
 
 export type { IUserParticipant } from './user.types';
 
+/** Utilisateur tel qu'affiché dans le fil (participant ou expéditeur). */
+export type User = IUserParticipant;
+
 export interface MessageSender {
   _id: string;
   username: string;
   profilePicture?: string;
 }
 
-export interface MessageAttachment {
-  filename: string;
-  originalName: string;
-  mimeType: string;
-  size: number;
-  url?: string;
-}
-
 export interface Message {
   _id: string;
-  conversationId: string;
+  /** Le back renvoie le champ Mongoose `conversation`, pas `conversationId`. */
+  conversation: string;
   sender: MessageSender;
   content: string;
   contentType: 'text' | 'image' | 'file' | 'audio' | 'system_notification' | 'offer' | 'counter_offer' | 'shipping_update' | 'mixed';
-  attachments?: MessageAttachment[];
+  /** Noms de fichiers stockés, pas des objets : `attachments: [String]` côté back. */
+  attachments?: string[];
   isEncrypted: boolean;
   isEdited?: boolean;
   editedAt?: string;
   isDeleted?: boolean;
   deletedAt?: string;
-  readBy?: Array<{
-    userId: string;
-    readAt: string;
-  }>;
+  /** Identifiants des utilisateurs ayant lu — toujours présent, `[]` par défaut. */
+  readBy: string[];
   createdAt: string;
   updatedAt?: string;
   preview?: string;
@@ -52,17 +47,10 @@ export interface ProductReference {
 }
 
 export interface NegotiationStatus {
-  status: 'pending' | 'accepted' | 'rejected' | 'counter' | 'expired';
-  originalPrice?: number;
-  proposedPrice?: number;
-  counterOffers?: Array<{
-    price: number;
-    proposedBy: string;
-    proposedAt: string;
-    message?: string;
-  }>;
-  acceptedPrice?: number;
-  acceptedAt?: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'completed';
+  initialPrice: number;
+  currentOffer: number;
+  counterOffer?: number;
   expiresAt?: string;
 }
 
@@ -96,18 +84,23 @@ export interface Conversation {
   title?: string;
   unreadCount?: number;
   otherParticipant?: IUserParticipant;
+  /** Ajouté par le back : l'appelant est-il le vendeur du produit concerné. */
+  isOwner?: boolean;
+}
+
+/** Pagination renvoyée par le module messagerie du back (toujours présente). */
+export interface MessagingPagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export interface ConversationListResponse {
   success: boolean;
   message?: string;
   conversations: Conversation[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: MessagingPagination;
 }
 
 export interface ConversationDetailResponse {
@@ -115,12 +108,7 @@ export interface ConversationDetailResponse {
   message?: string;
   conversation: Conversation;
   messages: Message[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: MessagingPagination;
 }
 
 export interface SendMessageRequest {
