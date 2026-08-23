@@ -1,6 +1,6 @@
 <template>
-  <div class="checkout-overlay" @click.self="cancel">
-    <div class="checkout-modal">
+  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop>
+    <div class="checkout-modal" @click.stop @mousedown.stop>
       <button class="close-btn" @click="cancel" aria-label="Fermer">
         <i class="bi bi-x-lg"></i>
       </button>
@@ -12,7 +12,7 @@
         <span class="price">{{ formatAmount(productPrice) }}</span>
       </div>
 
-      <section class="section">
+      <section class="checkout-section">
         <h3>Méthode de livraison</h3>
         <p v-if="availableMethods.length === 0" class="empty">
           Le vendeur n'a configuré aucune méthode de livraison disponible. Contactez-le via la messagerie.
@@ -29,7 +29,7 @@
         </label>
       </section>
 
-      <section class="section" v-if="selectedMethod && selectedMethod !== 'localPickup'">
+      <section class="checkout-section" v-if="selectedMethod && selectedMethod !== 'localPickup'">
         <h3>Adresse de livraison</h3>
         <div class="form-grid">
           <div class="full">
@@ -86,6 +86,7 @@
       </div>
 
       <div class="actions actions--column">
+        <!-- Stripe temporairement désactivé
         <button
           class="btn-pay btn-pay--stripe"
           :disabled="!canSubmit || submitting"
@@ -98,6 +99,7 @@
             <i class="bi bi-credit-card"></i> Payer par carte (Stripe)
           </span>
         </button>
+        -->
         <button
           class="btn-pay btn-pay--paypal"
           :disabled="!canSubmit || submitting"
@@ -395,7 +397,7 @@ h3 {
   }
 }
 
-.section {
+.checkout-section {
   margin-bottom: var(--space-xl);
 
   .empty {
@@ -408,7 +410,7 @@ h3 {
 .method-option {
   display: flex;
   align-items: center;
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-sm);
@@ -446,7 +448,7 @@ h3 {
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  gap: var(--space-sm) var(--space-md);
 
   .full { grid-column: 1 / -1; }
 
@@ -454,7 +456,7 @@ h3 {
     display: block;
     font-size: var(--font-size-xs);
     font-weight: 600;
-    margin-bottom: var(--space-xs);
+    margin-bottom: 2px;
     color: var(--text-secondary);
 
     .optional {

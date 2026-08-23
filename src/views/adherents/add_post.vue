@@ -4,19 +4,26 @@
         <div class="content imgcenter">
             <h3><i class="bi bi-plus-circle"></i> {{ isModyfy ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h3>
 
-            <!-- Blocage PayPal OAuth -->
-            <div v-if="!paypalOAuthConnected && !loadingPaypalStatus" class="paypal-required-banner">
+            <!-- Blocage paiement : PayPal ou Stripe requis -->
+            <div v-if="!paymentConfigured && !loadingPaymentStatus" class="paypal-required-banner">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <div>
-                    <strong>Connexion PayPal requise</strong>
-                    <p>Pour vendre sur MyKpopTrade, vous devez connecter votre compte PayPal via OAuth. Cela permet les remboursements automatiques en cas de besoin.</p>
+                    <strong>Configuration paiement requise</strong>
+                    <p>Pour vendre sur MyKpopTrade, vous devez connecter au moins un moyen de paiement : PayPal ou Stripe.</p>
                 </div>
-                <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">
-                    <i class="bi bi-paypal"></i> Connecter mon compte PayPal
-                </button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">
+                        <i class="bi bi-paypal"></i> Connecter PayPal
+                    </button>
+                    <!-- Stripe temporairement désactivé
+                    <button class="btn-secondary" @click="goToStripeOnboarding" type="button">
+                        <i class="bi bi-credit-card"></i> Configurer Stripe
+                    </button>
+                    -->
+                </div>
             </div>
 
-            <form @submit.prevent="save" v-if="paypalOAuthConnected">
+            <form @submit.prevent="save" v-if="paymentConfigured">
 
             <!-- === Section Images === -->
             <fieldset class="form-section">
@@ -207,9 +214,13 @@
             </fieldset>
 
             <!-- === Submit === -->
+            <div v-if="errorMessage" class="form-error-message">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {{ errorMessage }}
+            </div>
             <div class="popup-buttons-footer">
-                <button class="btn-primary" type="submit">
-                    <i :class="isModyfy ? 'bi bi-pencil' : 'bi bi-rocket-takeoff'"></i>
+                <button class="btn-primary" type="submit" :disabled="saveLoading">
+                    <i :class="saveLoading ? 'bi bi-hourglass-split' : (isModyfy ? 'bi bi-pencil' : 'bi bi-rocket-takeoff')"></i>
                     {{ isModyfy ? 'Enregistrer les modifications' : 'Publier l\'annonce' }}
                 </button>
             </div>
@@ -277,20 +288,27 @@
         const isAlbumDropdownOpen = ref(false);
         const albumsList = ref<any[]>([]);
 
-        // Onboarding PayPal : un vendeur ne peut publier que s'il peut encaisser
+        // Un vendeur ne peut publier que s'il peut encaisser, via PayPal ou Stripe
         const paypalOAuthConnected = ref(false);
-        const loadingPaypalStatus = ref(true);
+        const stripeConnected = ref(false);
+        const loadingPaymentStatus = ref(true);
         const connectingPaypal = ref(false);
 
-        const checkPaypalConnection = async () => {
+        const paymentConfigured = computed(() => paypalOAuthConnected.value || stripeConnected.value);
+
+        const checkPaymentConfiguration = async () => {
             try {
-                loadingPaypalStatus.value = true;
-                const status = await paymentService.getPayPalAccountStatus();
-                paypalOAuthConnected.value = Boolean(status.connected);
-            } catch (error) {
-                paypalOAuthConnected.value = false;
+                loadingPaymentStatus.value = true;
+                const [paypalStatus, stripeStatus] = await Promise.allSettled([
+                    paymentService.getPayPalAccountStatus(),
+                    paymentService.getStripeAccountStatus(),
+                ]);
+                // `connected` reflète la capacité réelle à encaisser, pas la seule
+                // présence d'un compte relié.
+                paypalOAuthConnected.value = paypalStatus.status === 'fulfilled' && Boolean(paypalStatus.value.connected);
+                stripeConnected.value = stripeStatus.status === 'fulfilled' && Boolean(stripeStatus.value.chargesEnabled);
             } finally {
-                loadingPaypalStatus.value = false;
+                loadingPaymentStatus.value = false;
             }
         };
 
@@ -308,8 +326,11 @@
             }
         };
 
-        // Vérifier la connexion PayPal au montage
-        checkPaypalConnection();
+        const goToStripeOnboarding = () => {
+            router.push({ name: 'seller_onboarding' });
+        };
+
+        checkPaymentConfiguration();
 
         const formData = ref({
             title: '',
@@ -442,26 +463,31 @@
             fileInput.click();
         };
 
+        const errorMessage = ref('');
+        const saveLoading = ref(false);
+
         const save = async () => {
-            var response = null;
-            if(isModyfy.value){
-                response = await postService.updatePost(postDataObjet.id,formData.value);
-            }else{
-                response = await postService.createPost(formData.value);
+            errorMessage.value = '';
+            saveLoading.value = true;
+            let response = null;
+            try {
+                if(isModyfy.value){
+                    response = await postService.updatePost(postDataObjet._id || postDataObjet.id, formData.value);
+                }else{
+                    response = await postService.createPost(formData.value);
+                }
+            } catch(e) {
+                const err = e as { response?: { data?: { message?: string } }; message?: string };
+                errorMessage.value = err?.response?.data?.message || err?.message || 'Erreur lors de la création du produit';
+                saveLoading.value = false;
+                return;
             }
+            saveLoading.value = false;
 
             if (response == 'ok') {
-                // Note: $func is not available in setup, you'll need to handle this differently
-                //this.showToastSuccess('Produit créé avec succès !');
                 router.push({ name: 'profile' , params: { id: 'me' }});
             } else {
-                const alert = document.createElement('div');
-                alert.className = 'alert error-alert';
-                alert.innerText = response.message || response.error.message || 'Erreur lors de la création du produit';
-                document.body.appendChild(alert);
-                setTimeout(() => {
-                    alert.remove();
-                }, 3000);
+                errorMessage.value = response?.message || response?.error?.message || 'Erreur lors de la création du produit';
             }
         };
 
@@ -532,9 +558,14 @@
             closeAlbumDropdown,
             loadAlbumsForGroup,
             paypalOAuthConnected,
-            loadingPaypalStatus,
+            stripeConnected,
+            paymentConfigured,
+            loadingPaymentStatus,
             connectingPaypal,
             connectPayPal,
+            goToStripeOnboarding,
+            errorMessage,
+            saveLoading,
         };
 
     },

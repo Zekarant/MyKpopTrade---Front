@@ -10,8 +10,10 @@
   margin-right: 24px 
 }
 .filter_content{
-  width: 20%; 
-  height: 100%;
+  width: 20%;
+  height: fit-content;
+  display: block;
+  padding-top: var(--space-lg);
 }
 .title_content{
   font-weight: bold;
