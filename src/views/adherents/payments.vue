@@ -38,6 +38,55 @@
               </div>
             </div>
 
+            <!-- Détail du montant : évite que l'acheteur prenne les frais de
+                 port pour des frais de service. -->
+            <div v-if="p.shippingAmount" class="payment-breakdown">
+              <div class="payment-breakdown__row">
+                <span>Article</span>
+                <span>{{ formatAmount(p.productAmount || 0, p.currency) }}</span>
+              </div>
+              <div class="payment-breakdown__row">
+                <span>Frais de port</span>
+                <span>{{ formatAmount(p.shippingAmount, p.currency) }}</span>
+              </div>
+              <div class="payment-breakdown__row payment-breakdown__row--total">
+                <span>Total payé</span>
+                <span>{{ formatAmount(p.amount, p.currency) }}</span>
+              </div>
+            </div>
+
+            <div v-if="completedRefunds(p).length" class="refund-block">
+              <div class="refund-block__head">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>{{ completedRefunds(p).length > 1 ? 'Remboursements' : 'Remboursement' }}</span>
+              </div>
+
+              <ul class="refund-list">
+                <li v-for="r in completedRefunds(p)" :key="r.refundId" class="refund-item">
+                  <div class="refund-item__main">
+                    <span class="refund-item__amount">− {{ formatAmount(r.amount, r.currency || p.currency) }}</span>
+                    <small>{{ formatDateTime(r.settledAt || r.initiatedAt) }}</small>
+                  </div>
+                  <div v-if="r.reason" class="refund-item__reason">{{ r.reason }}</div>
+                </li>
+              </ul>
+
+              <div class="refund-block__totals">
+                <div class="refund-block__row">
+                  <span>Total remboursé</span>
+                  <strong>{{ formatAmount(refundedAmount(p), p.currency) }}</strong>
+                </div>
+                <div v-if="refundableAmount(p) > 0.005" class="refund-block__row refund-block__row--muted">
+                  <span>Restant remboursable</span>
+                  <strong>{{ formatAmount(refundableAmount(p), p.currency) }}</strong>
+                </div>
+                <div class="refund-block__row refund-block__row--net">
+                  <span>{{ isSeller(p) ? 'Net encaissé' : 'Reste à votre charge' }}</span>
+                  <strong>{{ formatAmount(p.amount - refundedAmount(p), p.currency) }}</strong>
+                </div>
+              </div>
+            </div>
+
             <div v-if="p.shipment" class="payment-card__shipment">
               <div class="payment-card__shipment-head">
                 <i class="bi bi-truck"></i>
@@ -192,7 +241,10 @@ interface Payment {
   product: any;
   buyer: string | { _id: string };
   seller: string | { _id: string };
+  productAmount?: number;
+  shippingAmount?: number;
   totalRefunded?: number;
+  refunds?: Refund[];
   shipment?: {
     carrier: string;
     trackingNumber: string;
@@ -204,6 +256,16 @@ interface Payment {
     autoConfirmedAt?: string;
     events?: ShipmentEvent[];
   };
+}
+
+interface Refund {
+  refundId: string;
+  amount: number;
+  currency: string;
+  reason?: string;
+  status: 'pending' | 'completed' | 'failed';
+  initiatedAt: string;
+  settledAt?: string;
 }
 
 interface ShipmentEvent {
@@ -324,9 +386,22 @@ export default defineComponent({
       if (p.status !== 'completed' && p.status !== 'partially_refunded') return false;
       return this.refundableAmount(p) > 0.005;
     },
+    /** Remboursements réellement aboutis — les entrées en attente ne comptent pas. */
+    completedRefunds(p: Payment): Refund[] {
+      return (p.refunds || []).filter((r) => r.status === 'completed');
+    },
+    /**
+     * Total remboursé, calculé sur l'historique plutôt que sur `totalRefunded`
+     * seul : le back retient la valeur la plus prudente des deux, on fait pareil
+     * pour que l'affichage ne contredise jamais le restant remboursable.
+     */
+    refundedAmount(p: Payment): number {
+      const fromHistory = this.completedRefunds(p)
+        .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      return Math.round(Math.max(fromHistory, Number(p.totalRefunded || 0)) * 100) / 100;
+    },
     refundableAmount(p: Payment): number {
-      const already = Number(p.totalRefunded || 0);
-      return Math.max(0, Math.round((p.amount - already) * 100) / 100);
+      return Math.max(0, Math.round((p.amount - this.refundedAmount(p)) * 100) / 100);
     },
     canOpenDispute(p: Payment): boolean {
       // Acheteur ou vendeur d'un paiement complété peut ouvrir un litige
@@ -562,6 +637,83 @@ export default defineComponent({
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
 }
+
+.payment-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+.payment-breakdown__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  color: var(--text-secondary);
+}
+.payment-breakdown__row--total {
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.refund-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent-pink);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+.refund-block__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  > i { color: var(--accent-pink); }
+}
+
+.refund-list { list-style: none; margin: 0; padding: 0; }
+.refund-item + .refund-item {
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px dashed var(--surface-border);
+}
+.refund-item__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+  small { color: var(--text-muted); white-space: nowrap; }
+}
+.refund-item__amount { font-weight: 600; color: var(--accent-pink); }
+.refund-item__reason {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+}
+
+.refund-block__totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--surface-border);
+}
+.refund-block__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  color: var(--text-secondary);
+}
+.refund-block__row--muted { color: var(--text-muted); }
+.refund-block__row--net { color: var(--text-primary); }
 .payment-card__shipment-head {
   display: flex; align-items: center; gap: var(--space-md);
   > i { color: var(--accent-pink); font-size: 1.25rem; }
