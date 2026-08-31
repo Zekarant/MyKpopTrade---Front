@@ -64,18 +64,39 @@
               </div>
             </div>
 
+            <!-- Beta notice -->
+            <div class="auth-beta-notice">
+              <span class="auth-beta-notice__tag">BÊTA</span>
+              <p>
+                MyKpopTrade est en version bêta : des bugs, interruptions ou réinitialisations de
+                données peuvent survenir. Le service est fourni « en l'état », sans garantie.
+                <router-link to="/beta" target="_blank">En savoir plus</router-link>
+              </p>
+            </div>
+
+            <!-- Beta acknowledgement checkbox -->
+            <label class="auth-checkbox">
+              <input type="checkbox" v-model="acceptBeta" :class="{ 'is-invalid': betaError }" />
+              <span>Je comprends que MyKpopTrade est en bêta et j'utilise le service à mes risques.</span>
+            </label>
+
             <!-- Policy checkbox -->
             <label class="auth-checkbox">
               <input type="checkbox" v-model="acceptPolicy" :class="{ 'is-invalid': policyError }" />
-              <span>J'accepte la <a href="/politique-confidentialite" target="_blank">politique de confidentialité</a></span>
+              <span>
+                J'accepte les
+                <router-link to="/cgu" target="_blank">CGU</router-link>
+                et la
+                <router-link to="/privacy" target="_blank">politique de confidentialité</router-link>.
+              </span>
             </label>
 
             <!-- Errors -->
             <Transition name="fade">
-              <div v-if="emailError || passwordError || nameError || telError || errorBase || policyError"
+              <div v-if="emailError || passwordError || nameError || telError || errorBase || policyError || betaError"
                 class="auth-message auth-message--error">
                 <i class="bi bi-exclamation-circle"></i>
-                <span>{{ emailError || passwordError || nameError || telError || errorBase || policyError }}</span>
+                <span>{{ emailError || passwordError || nameError || telError || errorBase || policyError || betaError }}</span>
               </div>
             </Transition>
 
@@ -162,6 +183,8 @@
       var passwordError = ref('');
       var acceptPolicy = ref(false);
       var policyError = ref('');
+      var acceptBeta = ref(false);
+      var betaError = ref('');
 
       const register = async () => {
         nameError.value = '';
@@ -179,8 +202,13 @@
           nameError.value  = 'Le pseudo doit être plus long';
         }
         policyError.value = '';
+        betaError.value = '';
+        if (!acceptBeta.value) {
+          betaError.value = 'Vous devez reconnaître que le service est en version bêta.';
+          return;
+        }
         if (!acceptPolicy.value) {
-          policyError.value = 'Vous devez accepter la politique de confidentialité.';
+          policyError.value = 'Vous devez accepter les CGU et la politique de confidentialité.';
           return;
         }
         /*if(firstname.value == '' || firstname.value.length < 5) {
@@ -263,6 +291,8 @@
         password_confirm,
         acceptPolicy,
         policyError,
+        acceptBeta,
+        betaError,
         registerWithGoogle,
         registerWithDiscord,
       };
@@ -400,6 +430,41 @@
     color: var(--accent-pink-light);
     text-decoration: underline;
   }
+}
+
+.auth-beta-notice {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--warning-light);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+
+  p {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  a {
+    color: var(--accent-pink);
+    font-weight: 600;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+}
+
+.auth-beta-notice__tag {
+  flex-shrink: 0;
+  height: fit-content;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
 }
 
 .auth-message {

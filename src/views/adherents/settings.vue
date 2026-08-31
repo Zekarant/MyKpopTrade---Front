@@ -180,6 +180,41 @@
             </div>
           </section>
 
+          <!-- Billing info (pré-remplissage PayPal) -->
+          <section class="settings-card">
+            <h3 class="settings-card__title"><i class="bi bi-receipt"></i> Informations de facturation</h3>
+            <div class="settings-card__body">
+              <div class="setting-row setting-row--column">
+                <div class="setting-row__top">
+                  <div class="setting-row__left">
+                    <i class="bi bi-person-vcard"></i>
+                    <span>Nom légal</span>
+                  </div>
+                </div>
+                <div class="setting-row__inline">
+                  <input type="text" v-model="legalName" maxlength="300" class="settings-input settings-input--sm" placeholder="Nom légal complet" />
+                  <button @click="saveLegalName" class="btn-settings btn-settings--sm" v-if="legalNameChanged">Enregistrer</button>
+                </div>
+              </div>
+              <div class="setting-row setting-row--column">
+                <div class="setting-row__top">
+                  <div class="setting-row__left">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Adresse</span>
+                  </div>
+                </div>
+                <input type="text" v-model="addressStreetLine1" maxlength="200" class="settings-input" placeholder="Rue et numéro" style="margin-top: 8px;" />
+                <input type="text" v-model="addressStreetLine2" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" />
+                <div class="setting-row__inline" style="margin-top: 0;">
+                  <input type="text" v-model="addressPostalCode" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" />
+                  <input type="text" v-model="addressCity" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" />
+                  <input type="text" v-model="addressCountry" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" style="flex: 0 0 70px;" />
+                </div>
+                <button @click="saveAddress" class="btn-settings btn-settings--sm" v-if="addressChanged" style="align-self: flex-start; margin-top: 8px;">Enregistrer</button>
+              </div>
+            </div>
+          </section>
+
           <!-- Payment -->
           <section class="settings-card">
             <h3 class="settings-card__title"><i class="bi bi-credit-card"></i> Paiement</h3>
@@ -433,6 +468,46 @@
         </div>
       </div>
     </div>
+
+    <!-- Popup de pré-remplissage PayPal : on confirme l'identité du vendeur
+         avant de générer le lien d'onboarding, pour que PayPal réconcilie
+         un compte existant plutôt que d'en créer un doublon. -->
+    <div v-if="paypalInfoModal.open" class="modal-overlay" @click.self="closePaypalInfoModal">
+      <div class="modal-card">
+        <h2>Vérifiez vos informations</h2>
+
+        <label>E-mail</label>
+        <input type="email" :value="userProfile.email" disabled />
+
+        <label>Nom légal complet</label>
+        <input
+          type="text"
+          v-model.trim="legalName"
+          maxlength="300"
+          placeholder="Prénom et nom"
+        />
+
+        <label>Adresse</label>
+        <input type="text" v-model.trim="addressStreetLine1" maxlength="200" placeholder="Rue et numéro" />
+        <input type="text" v-model.trim="addressStreetLine2" maxlength="200" placeholder="Complément (optionnel)" />
+        <div class="modal-inline">
+          <input type="text" v-model.trim="addressPostalCode" maxlength="16" placeholder="Code postal" />
+          <input type="text" v-model.trim="addressCity" maxlength="100" placeholder="Ville" />
+          <input type="text" v-model.trim="addressCountry" maxlength="2" placeholder="FR" style="flex: 0 0 70px;" />
+        </div>
+
+        <p v-if="paypalInfoError" class="modal-error">{{ paypalInfoError }}</p>
+
+        <div class="modal-actions">
+          <button class="btn-settings btn-settings--ghost" @click="closePaypalInfoModal" :disabled="paypalConnecting">
+            Annuler
+          </button>
+          <button class="btn-settings btn-settings--primary" @click="submitPaypalInfoAndConnect" :disabled="paypalConnecting">
+            {{ paypalConnecting ? 'Redirection...' : 'Continuer vers PayPal' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -461,6 +536,12 @@ export default defineComponent({
       phoneCode: '',
       telRequest: false,
       codeVerified: false,
+      legalName: '',
+      addressStreetLine1: '',
+      addressStreetLine2: '',
+      addressPostalCode: '',
+      addressCity: '',
+      addressCountry: 'FR',
       showDeleteConfirm: false,
       deleteConfirmText: '',
       paypalConnected: false,
@@ -472,6 +553,8 @@ export default defineComponent({
       paypalBlockMessage: null as string | null,
       paypalConnecting: false,
       paypalRefreshing: false,
+      paypalInfoModal: { open: false },
+      paypalInfoError: '',
       stripeOnboarded: false,
       stripePayoutsEnabled: false,
       stripeChargesEnabled: false,
@@ -505,6 +588,19 @@ export default defineComponent({
         .map((scope) => labels[scope])
         .filter(Boolean);
       return readable.length ? readable.join(', ') : `${this.paypalScopes.length} autorisation(s)`;
+    },
+    legalNameChanged(): boolean {
+      return this.legalName !== (this.userProfile.legalName || '');
+    },
+    addressChanged(): boolean {
+      const current = this.userProfile.address || {};
+      return (
+        this.addressStreetLine1 !== (current.streetLine1 || '') ||
+        this.addressStreetLine2 !== (current.streetLine2 || '') ||
+        this.addressPostalCode !== (current.postalCode || '') ||
+        this.addressCity !== (current.city || '') ||
+        this.addressCountry !== (current.country || 'FR')
+      );
     }
   },
   async mounted() {
@@ -539,6 +635,12 @@ export default defineComponent({
         });
         this.userProfile = res.data.user || res.data;
         this.phoneNumber = this.userProfile.phoneNumber || '';
+        this.legalName = this.userProfile.legalName || '';
+        this.addressStreetLine1 = this.userProfile.address?.streetLine1 || '';
+        this.addressStreetLine2 = this.userProfile.address?.streetLine2 || '';
+        this.addressPostalCode = this.userProfile.address?.postalCode || '';
+        this.addressCity = this.userProfile.address?.city || '';
+        this.addressCountry = this.userProfile.address?.country || 'FR';
       } catch (e: any) {
         if (e.response?.status === 401) authentificationService.verifSession();
       }
@@ -617,6 +719,43 @@ export default defineComponent({
         this.codeVerified = true;
         this.telRequest = false;
         (this as any).$func.showToastSuccess('Téléphone vérifié');
+      } catch (e: any) {
+        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+      }
+    },
+    async saveLegalName() {
+      const sessionToken = Cookies.get('sessionToken');
+      try {
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+          legalName: this.legalName
+        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        (this as any).$func.showToastSuccess('Nom légal enregistré');
+        this.userProfile.legalName = this.legalName;
+      } catch (e: any) {
+        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+      }
+    },
+    async saveAddress() {
+      const hasAny = this.addressStreetLine1 || this.addressStreetLine2 || this.addressPostalCode || this.addressCity;
+      const hasRequired = this.addressStreetLine1 && this.addressPostalCode && this.addressCity;
+      if (hasAny && !hasRequired) {
+        (this as any).$func.showToastError('Adresse incomplète : rue, code postal et ville sont requis');
+        return;
+      }
+      const address = hasRequired ? {
+        streetLine1: this.addressStreetLine1,
+        streetLine2: this.addressStreetLine2 || undefined,
+        postalCode: this.addressPostalCode,
+        city: this.addressCity,
+        country: this.addressCountry || 'FR'
+      } : null;
+      const sessionToken = Cookies.get('sessionToken');
+      try {
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+          address
+        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        (this as any).$func.showToastSuccess('Adresse enregistrée');
+        this.userProfile.address = address;
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
@@ -730,16 +869,64 @@ export default defineComponent({
         this.paypalRefreshing = false;
       }
     },
-    async connectPaypal() {
+    /**
+     * Avant de rediriger vers PayPal, on ouvre un popup pour confirmer /
+     * compléter le nom légal et l'adresse : ces champs pré-remplissent le
+     * parcours PayPal et évitent qu'un doublon de compte soit créé.
+     */
+    connectPaypal() {
+      this.paypalInfoError = '';
+      this.paypalInfoModal.open = true;
+    },
+    closePaypalInfoModal() {
+      if (this.paypalConnecting) return;
+      this.paypalInfoModal.open = false;
+      this.paypalInfoError = '';
+    },
+    async submitPaypalInfoAndConnect() {
+      if (!this.legalName || this.legalName.trim().length < 2) {
+        this.paypalInfoError = 'Merci d\'indiquer votre nom légal complet.';
+        return;
+      }
+      if (!this.addressStreetLine1 || !this.addressPostalCode || !this.addressCity) {
+        this.paypalInfoError = 'Adresse incomplète : rue, code postal et ville sont requis.';
+        return;
+      }
+      this.paypalInfoError = '';
       this.paypalConnecting = true;
+
+      const sessionToken = Cookies.get('sessionToken');
+      const address = {
+        streetLine1: this.addressStreetLine1,
+        streetLine2: this.addressStreetLine2 || undefined,
+        postalCode: this.addressPostalCode,
+        city: this.addressCity,
+        country: this.addressCountry || 'FR'
+      };
+      try {
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+          legalName: this.legalName,
+          address
+        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        this.userProfile.legalName = this.legalName;
+        this.userProfile.address = address;
+      } catch (e: any) {
+        this.paypalConnecting = false;
+        this.paypalInfoError = e.response?.data?.message || 'Impossible d\'enregistrer vos informations. Réessayez.';
+        return;
+      }
+
       try {
         const res = await paymentService.getPayPalOnboardingLink();
         if (res.actionUrl) {
           window.location.href = res.actionUrl;
+        } else {
+          this.paypalConnecting = false;
+          this.paypalInfoError = 'Impossible de générer le lien d\'inscription PayPal.';
         }
       } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de générer le lien d\'inscription PayPal');
         this.paypalConnecting = false;
+        this.paypalInfoError = e.response?.data?.message || 'Impossible de générer le lien d\'inscription PayPal.';
       }
     },
     async loadStripeStatus() {
@@ -1157,6 +1344,16 @@ export default defineComponent({
     box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
   }
 
+  // Neutralise le fond gris/jaune que Chrome applique aux champs auto-remplis.
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
   &--sm {
     flex: 1;
     margin-bottom: 0;
@@ -1489,6 +1686,98 @@ export default defineComponent({
   line-height: 1.4;
 
   input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
+}
+
+// PayPal info modal
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  z-index: 1000;
+}
+
+.modal-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  h2 {
+    font-size: var(--font-size-lg);
+    margin: 0 0 var(--space-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: var(--space-sm) 0 4px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-xs);
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    }
+
+    &:disabled {
+      color: var(--text-muted);
+      background: var(--bg-primary);
+      cursor: not-allowed;
+    }
+
+    // Neutralise le fond gris/jaune que Chrome applique aux champs auto-remplis.
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+      -webkit-text-fill-color: var(--text-primary);
+      caret-color: var(--text-primary);
+      transition: background-color 9999s ease-in-out 0s;
+    }
+  }
+}
+
+.modal-inline {
+  display: flex;
+  gap: var(--space-xs);
+
+  input { flex: 1; }
+}
+
+.modal-error {
+  color: #c82333;
+  font-size: var(--font-size-xs);
+  margin: var(--space-xs) 0 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-md);
 }
 
 // Responsive

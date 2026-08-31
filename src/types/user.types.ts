@@ -27,6 +27,14 @@ export interface IUser {
   location?: string;
   bio?: string;
   phoneNumber?: string;
+  legalName?: string;
+  address?: {
+    streetLine1: string;
+    streetLine2?: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
   preferences?: {
     kpopGroups?: string[];
     allowDirectMessages?: boolean;

@@ -244,6 +244,12 @@ const routes = [
     name: 'cookies',
     component: () => import('@/views/legal/Cookies.vue'),
     meta: { title: 'Politique cookies' }
+  },
+  {
+    path: '/beta',
+    name: 'beta',
+    component: () => import('@/views/legal/Beta.vue'),
+    meta: { title: 'À propos de la bêta' }
   }
 
 

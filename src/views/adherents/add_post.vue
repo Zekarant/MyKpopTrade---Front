@@ -4,12 +4,12 @@
         <div class="content imgcenter">
             <h3><i class="bi bi-plus-circle"></i> {{ isModyfy ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h3>
 
-            <!-- Blocage paiement : PayPal ou Stripe requis -->
+            <!-- Blocage paiement : PayPal requis -->
             <div v-if="!paymentConfigured && !loadingPaymentStatus" class="paypal-required-banner">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <div>
                     <strong>Configuration paiement requise</strong>
-                    <p>Pour vendre sur MyKpopTrade, vous devez connecter au moins un moyen de paiement : PayPal ou Stripe.</p>
+                    <p>Pour vendre sur MyKpopTrade, vous devez connecter votre compte PayPal.</p>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">

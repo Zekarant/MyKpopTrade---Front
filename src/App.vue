@@ -1,6 +1,7 @@
 <template>
   <RouterView />
       <Vue3Lottie v-if="showLoader" :animationData="animationData"  />
+  <BetaBanner />
 
 </template>
 <script setup lang="ts">
@@ -9,6 +10,7 @@ import './css/main.scss'
 import { RouterView } from 'vue-router';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
+import BetaBanner from '@/components/BetaBanner.vue';
 import * as animationData from '@/assets/Animation/loadAnim.json';
 //import eventBus from '@/eventBus'
 

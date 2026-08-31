@@ -49,9 +49,26 @@
               <input type="password" v-model="password_confirm" placeholder="Confirmer le mot de passe" required />
             </div>
 
+            <div class="landing__beta-notice">
+              <span class="landing__beta-tag">BÊTA</span>
+              <p>
+                MyKpopTrade est en version bêta : bugs, interruptions et réinitialisations de données
+                possibles. Service fourni « en l'état », sans garantie.
+                <router-link to="/beta" target="_blank">En savoir plus</router-link>
+              </p>
+            </div>
+
+            <label class="landing__checkbox">
+              <input type="checkbox" v-model="acceptBeta" />
+              <span>Je comprends que MyKpopTrade est en bêta et j'utilise le service à mes risques.</span>
+            </label>
+
             <label class="landing__checkbox">
               <input type="checkbox" v-model="acceptPolicy" />
-              <span>J'accepte la <a href="/politique-confidentialite" target="_blank">politique de confidentialité</a></span>
+              <span>
+                J'accepte les <router-link to="/cgu" target="_blank">CGU</router-link>
+                et la <router-link to="/privacy" target="_blank">politique de confidentialité</router-link>.
+              </span>
             </label>
 
             <Transition name="fade">
@@ -99,6 +116,7 @@ export default defineComponent({
     const password = ref('');
     const password_confirm = ref('');
     const acceptPolicy = ref(false);
+    const acceptBeta = ref(false);
     const registerError = ref('');
     const successMessage = ref('');
 
@@ -126,8 +144,12 @@ export default defineComponent({
         registerError.value = 'Les mots de passe ne correspondent pas.';
         return;
       }
+      if (!acceptBeta.value) {
+        registerError.value = 'Vous devez reconnaître que le service est en version bêta.';
+        return;
+      }
       if (!acceptPolicy.value) {
-        registerError.value = 'Vous devez accepter la politique de confidentialité.';
+        registerError.value = 'Vous devez accepter les CGU et la politique de confidentialité.';
         return;
       }
 
@@ -156,7 +178,7 @@ export default defineComponent({
 
     return {
       username, tel, email, password, password_confirm,
-      acceptPolicy, registerError, successMessage, register
+      acceptPolicy, acceptBeta, registerError, successMessage, register
     };
   },
 });
@@ -276,7 +298,9 @@ export default defineComponent({
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-xl);
   padding: var(--space-xl);
+  width: 100%;
   max-width: 420px;
+  align-self: center;
 }
 
 .landing__register-title {
@@ -324,6 +348,43 @@ export default defineComponent({
 
     &::placeholder { color: var(--text-muted); }
   }
+}
+
+.landing__beta-notice {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-top: var(--space-xs);
+  background: var(--warning-light);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+
+  p {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  a {
+    color: var(--accent-pink-light);
+    font-weight: 600;
+    text-decoration: underline;
+    white-space: nowrap;
+    &:hover { color: var(--accent-pink); }
+  }
+}
+
+.landing__beta-tag {
+  flex-shrink: 0;
+  height: fit-content;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
 }
 
 .landing__checkbox {
