@@ -391,25 +391,25 @@
       }
     },
     setup() {
-        var partView = ref('post');
+        const partView = ref('post');
         const route = useRoute();
         const id = route.params.id;
-        var myProfile = ref(false);
+        const myProfile = ref(false);
         const apiUrl = API_URL;
 
         if (id === 'me') {
             myProfile.value = true;
         }
-        var profilInfo = ref({
+        const profilInfo = ref({
 
         } as { username?: string; [key: string]: any })
-        var dataCardList = ref([]);
-        var feedPosts = ref<any[]>([]);
-        var newPostContent = ref('');
-        var followersList = ref<any[]>([]);
-        var followersTotal = ref(0);
-        var followersPage = ref(1);
-        var followersTotalPages = ref(1);
+        const dataCardList = ref([]);
+        const feedPosts = ref<any[]>([]);
+        const newPostContent = ref('');
+        const followersList = ref<any[]>([]);
+        const followersTotal = ref(0);
+        const followersPage = ref(1);
+        const followersTotalPages = ref(1);
         return {
           dataCardList,
           profilInfo,

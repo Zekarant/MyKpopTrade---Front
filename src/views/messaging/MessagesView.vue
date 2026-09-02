@@ -271,8 +271,8 @@
                     v-for="(attachement, index) in message.attachments.slice(0, 4)"
                     :key="index"
                     :class="{ 'has-more': index === 3 && message.attachments.length > 4 }"
-                    :data-count="index === 3 && message.attachments.length > 4 ? `+${message.attachments.length - 4}` : ''" @click="openImgList(message.attachments, index)">
-                    <img :src="domain_api+'/uploads/chat_attachments/'+attachement">
+                    :data-count="index === 3 && message.attachments.length > 4 ? `+${message.attachments.length - 4}` : ''" @click="openImgList(messageAttachmentUrls(message), index)">
+                    <img :src="attachmentUrl(message._id || message.id, attachement)">
                   </div>
                 </div>
                 <p>{{ message.content }}</p>
@@ -503,10 +503,10 @@
             :class="`media-${index + 1}`"
             :data-has-more="index === 3 && selectedConversation.media.length > 4"
             :data-count="index === 3 && selectedConversation.media.length > 4 ? `+${selectedConversation.media.length - 4}` : ''"
-            @click="openImgList(selectedConversation.media.map(item => item.filename), index)"
+            @click="openImgList(conversationMediaUrls(selectedConversation), index)"
 
           >
-            <img :src="domain_api + '/uploads/chat_attachments/' + media.filename" alt="Media">
+            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Media">
             <div v-if="index === 3 && selectedConversation.media.length > 4" class="media-overlay">
               <span class="media-count">+{{ selectedConversation.media.length - 4 }}</span>
             </div>
@@ -690,8 +690,8 @@ const filteredConversations = computed(() => {
   return conversations
 })
 function isFavoriteConversation(conversation){
-  let id_user = Cookies.get('id_user');
-  let favoritedBy = conversation['favoritedBy'] || conversation.favoritedBy || [];
+  const id_user = Cookies.get('id_user');
+  const favoritedBy = conversation['favoritedBy'] || conversation.favoritedBy || [];
 
   if(favoritedBy.length == 0){
     return false;
@@ -702,8 +702,8 @@ function isFavoriteConversation(conversation){
   }
 };
 function isArchived(conversation){
-  let id_user = Cookies.get('id_user');
-  let archivedBy = conversation['archivedBy'] || conversation.archivedBy || [];
+  const id_user = Cookies.get('id_user');
+  const archivedBy = conversation['archivedBy'] || conversation.archivedBy || [];
 
   if(archivedBy.length == 0){
     return false;
@@ -967,7 +967,7 @@ const confirmCounterOffer = async () => {
 const handleOfferSent = async (offerInfo) => {
   showOfferOption.value = false
 
-  let offerData = {
+  const offerData = {
     productId: offerInfo.offerData.productId,
     initialOffer: offerInfo.amount,
     message:  offerInfo.message
@@ -1122,25 +1122,20 @@ const checkoutProductPrice = computed(() => {
 const onCheckoutConfirmed = (result) => {
   showBuyOption.value = false;
 
-  const approvalUrl = result?.payment?.approvalUrl
-    || (result?.payment?.paypalOrderId
-      ? `https://www.sandbox.paypal.com/checkoutnow?token=${result.payment.paypalOrderId}`
-      : null);
+  // L'URL d'approbation vient de PayPal via l'API : elle pointe donc toujours
+  // vers le bon environnement. Ne jamais la reconstruire en dur côté client.
+  const approvalUrl = result?.payment?.approvalUrl ?? null;
 
   if (!result?.success || !approvalUrl) {
     if (result?.payment?.paypalOrderId) {
       paymentService.cancelPayPal(result.payment.paypalOrderId).catch(() => {});
     }
-    alert('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
+    proxy.$func.showToastError('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
     return;
   }
 
   // Redirection complète vers PayPal — l'acheteur approuve puis revient sur /payment/success
   window.location.href = approvalUrl;
-};
-
-const onPaymentCancelled = () => {
-  alert('Paiement annulé. Vous pouvez réessayer à tout moment.');
 };
 
 const archiveConversation = async (conversation) => {
@@ -1309,11 +1304,31 @@ const deleteAttachement = (index) => {
   attachmentView.value.splice(index, 1);
 }
 
-const openImgList = (attachments, index) => {
-  for (let index = 0; index < attachments.length; index++) {
-    const attachment = attachments[index];
-    openAttachmentView.value[index] = domain_api + '/uploads/chat_attachments/' + attachment;
-  }
+/**
+ * URL d'une pièce jointe, via la route authentifiée qui vérifie l'appartenance
+ * à la conversation.
+ *
+ * Ces images étaient auparavant chargées depuis /uploads/chat_attachments/,
+ * servi en statique sans authentification : n'importe qui connaissant le nom du
+ * fichier pouvait lire une pièce jointe de conversation privée.
+ */
+const attachmentUrl = (messageId, attachmentName) => {
+  if (!messageId || !attachmentName) return '';
+  return messagingService.getAttachmentUrl(String(messageId), String(attachmentName));
+};
+
+/** URLs des pièces jointes d'un message, dans l'ordre d'affichage. */
+const messageAttachmentUrls = (message) => {
+  const messageId = message?._id || message?.id;
+  return (message?.attachments || []).map((name) => attachmentUrl(messageId, name));
+};
+
+/** URLs des médias d'une conversation ; chaque média porte son propre messageId. */
+const conversationMediaUrls = (conversation) =>
+  (conversation?.media || []).map((item) => attachmentUrl(item.messageId, item.filename));
+
+const openImgList = (urls, index) => {
+  openAttachmentView.value = [...urls];
   openAttachmentIndex.value = index;
   openAttachment.value = true;
 }

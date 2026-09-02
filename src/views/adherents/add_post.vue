@@ -15,11 +15,6 @@
                     <button class="btn-primary" @click="connectPayPal" :disabled="connectingPaypal">
                         <i class="bi bi-paypal"></i> Connecter PayPal
                     </button>
-                    <!-- Stripe temporairement désactivé
-                    <button class="btn-secondary" @click="goToStripeOnboarding" type="button">
-                        <i class="bi bi-credit-card"></i> Configurer Stripe
-                    </button>
-                    -->
                 </div>
             </div>
 
@@ -288,25 +283,21 @@
         const isAlbumDropdownOpen = ref(false);
         const albumsList = ref<any[]>([]);
 
-        // Un vendeur ne peut publier que s'il peut encaisser, via PayPal ou Stripe
+        // Un vendeur ne peut publier que s'il peut réellement encaisser.
+        // PayPal est le seul canal depuis le retrait de Stripe.
         const paypalOAuthConnected = ref(false);
-        const stripeConnected = ref(false);
         const loadingPaymentStatus = ref(true);
         const connectingPaypal = ref(false);
 
-        const paymentConfigured = computed(() => paypalOAuthConnected.value || stripeConnected.value);
+        const paymentConfigured = computed(() => paypalOAuthConnected.value);
 
         const checkPaymentConfiguration = async () => {
             try {
                 loadingPaymentStatus.value = true;
-                const [paypalStatus, stripeStatus] = await Promise.allSettled([
-                    paymentService.getPayPalAccountStatus(),
-                    paymentService.getStripeAccountStatus(),
-                ]);
                 // `connected` reflète la capacité réelle à encaisser, pas la seule
                 // présence d'un compte relié.
-                paypalOAuthConnected.value = paypalStatus.status === 'fulfilled' && Boolean(paypalStatus.value.connected);
-                stripeConnected.value = stripeStatus.status === 'fulfilled' && Boolean(stripeStatus.value.chargesEnabled);
+                const paypalStatus = await paymentService.getPayPalAccountStatus().catch(() => null);
+                paypalOAuthConnected.value = Boolean(paypalStatus?.connected);
             } finally {
                 loadingPaymentStatus.value = false;
             }
@@ -324,10 +315,6 @@
             } finally {
                 connectingPaypal.value = false;
             }
-        };
-
-        const goToStripeOnboarding = () => {
-            router.push({ name: 'seller_onboarding' });
         };
 
         checkPaymentConfiguration();
@@ -372,8 +359,8 @@
         if (postDataObjet) {
             formData.value = { ...formData.value, ...postDataObjet };
             postDataObjet.images.forEach((image: string) => {
-                let API_URL = import.meta.env.VITE_API_URL;
-                let imgTmp = API_URL+image;
+                const API_URL = import.meta.env.VITE_API_URL;
+                const imgTmp = API_URL+image;
                 imagesPreview.value.push(imgTmp);
             });
         }
@@ -558,12 +545,10 @@
             closeAlbumDropdown,
             loadAlbumsForGroup,
             paypalOAuthConnected,
-            stripeConnected,
             paymentConfigured,
             loadingPaymentStatus,
             connectingPaypal,
             connectPayPal,
-            goToStripeOnboarding,
             errorMessage,
             saveLoading,
         };

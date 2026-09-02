@@ -194,6 +194,7 @@
     import paymentService from '@/services/payment.service';
     import cartService from '@/services/cart.service';
     import eventBus from '@/eventBus';
+    import { func } from '@/function';
     import { useRoute, useRouter } from "vue-router";
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
@@ -259,16 +260,15 @@
             const onCheckoutConfirmed = (result: any) => {
                 showBuyOption.value = false;
 
-                const approvalUrl = result?.payment?.approvalUrl
-                    || (result?.payment?.paypalOrderId
-                        ? `https://www.sandbox.paypal.com/checkoutnow?token=${result.payment.paypalOrderId}`
-                        : null);
+                // L'URL d'approbation vient de PayPal via l'API : elle pointe donc
+                // toujours vers le bon environnement. Ne jamais la reconstruire en dur.
+                const approvalUrl = result?.payment?.approvalUrl ?? null;
 
                 if (!result?.success || !approvalUrl) {
                     if (result?.payment?.paypalOrderId) {
                         paymentService.cancelPayPal(result.payment.paypalOrderId).catch(() => {});
                     }
-                    alert('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
+                    func.showToastError('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
                     return;
                 }
 

@@ -71,8 +71,8 @@
         },
         setup() {
             const router = useRouter();
-            var dataCardPost = ref<any>(null);
-            var stateCardPost = ref(false);
+            const dataCardPost = ref<any>(null);
+            const stateCardPost = ref(false);
             return {
                 dataCardPost,
                 stateCardPost,

@@ -60,18 +60,6 @@ const routes = [
       title: 'Paiement confirmé'
     }
   },
-  {
-    path: '/seller/onboarding',
-    name: 'seller_onboarding',
-    component: () => import('@/views/payment/stripeOnboarding.vue'),
-    meta: { title: 'Activer Stripe' }
-  },
-  {
-    path: '/seller/onboarding-complete',
-    name: 'seller_onboarding_complete',
-    component: () => import('@/views/payment/stripeOnboarding.vue'),
-    meta: { title: 'Stripe configuré' }
-  },
     {
     path: '/adherents/',
     name: 'adherents',

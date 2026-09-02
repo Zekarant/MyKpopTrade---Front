@@ -19,7 +19,7 @@
             </div>
           </div>
 
-          <form @submit.prevent="submitForm" class="auth-form">
+          <form v-if="!awaitingTwoFactor" @submit.prevent="submitForm" class="auth-form">
             <!-- Username -->
             <div class="form-group">
               <label class="form-label">Identifiant</label>
@@ -102,6 +102,59 @@
               </div>
             </Transition>
           </form>
+
+          <!-- Deuxième facteur : le mot de passe est validé, la session n'est
+               pas encore ouverte. -->
+          <form v-else @submit.prevent="submitTwoFactor" class="auth-form">
+            <div class="twofa-intro">
+              <i class="bi bi-shield-lock"></i>
+              <p>
+                Saisissez le code à 6 chiffres de votre application
+                d'authentification.
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="twofa-code">
+                {{ useRecoveryCode ? 'Code de secours' : 'Code de vérification' }}
+              </label>
+              <div class="input-group--custom" :class="{ 'input-group--error': twoFactorError }">
+                <span class="input-icon"><i class="bi bi-123"></i></span>
+                <input
+                  id="twofa-code"
+                  ref="twoFactorInput"
+                  type="text"
+                  v-model="twoFactorCode"
+                  class="form-control--custom"
+                  :placeholder="useRecoveryCode ? 'XXXX-XXXX-XXXX' : '000000'"
+                  :inputmode="useRecoveryCode ? 'text' : 'numeric'"
+                  :autocomplete="useRecoveryCode ? 'off' : 'one-time-code'"
+                  :maxlength="useRecoveryCode ? 14 : 6"
+                  autofocus
+                />
+              </div>
+            </div>
+
+            <button class="btn btn-primary w-full" type="submit" :disabled="verifyingTwoFactor">
+              {{ verifyingTwoFactor ? 'Vérification…' : 'Valider' }}
+            </button>
+
+            <div class="twofa-actions">
+              <button type="button" class="twofa-link" @click="toggleRecoveryCode">
+                {{ useRecoveryCode ? 'Utiliser mon application' : 'Utiliser un code de secours' }}
+              </button>
+              <button type="button" class="twofa-link" @click="cancelTwoFactor">
+                Annuler
+              </button>
+            </div>
+
+            <Transition name="fade">
+              <div v-if="twoFactorError" class="auth-message auth-message--error">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>{{ twoFactorError }}</span>
+              </div>
+            </Transition>
+          </form>
         </div>
       </div>
 
@@ -139,6 +192,16 @@ export default defineComponent({
     const ErroruserName = ref("");
     const successMessage = ref("");
 
+    // Étape de double authentification. `twoFactorToken` est le jeton de défi
+    // rendu par /auth/login ; il ne donne accès à rien d'autre qu'à sa propre
+    // vérification, et expire en 5 minutes.
+    const awaitingTwoFactor = ref(false);
+    const twoFactorToken = ref("");
+    const twoFactorCode = ref("");
+    const twoFactorError = ref("");
+    const verifyingTwoFactor = ref(false);
+    const useRecoveryCode = ref(false);
+
     const router = useRouter();
     const route = useRoute();
 
@@ -167,13 +230,58 @@ export default defineComponent({
       }
       if (verif_login) {
         try {
-          await authentificationService.login(username.value, password.value);
+          const result = await authentificationService.login(username.value, password.value);
+
+          if (result.requiresTwoFactor) {
+            twoFactorToken.value = result.twoFactorToken;
+            awaitingTwoFactor.value = true;
+            // Le mot de passe n'a plus à rester en mémoire à ce stade.
+            password.value = "";
+            return;
+          }
+
           successMessage.value = "Connexion réussie.";
           router.push("/adherents/dashboard");
         } catch (error) {
-          ErroruserName.value = error;
+          ErroruserName.value = error instanceof Error ? error.message : String(error);
         }
       }
+    };
+
+    const submitTwoFactor = async () => {
+      const code = twoFactorCode.value.trim();
+      if (!code) {
+        twoFactorError.value = "Saisissez le code de vérification.";
+        return;
+      }
+
+      verifyingTwoFactor.value = true;
+      twoFactorError.value = "";
+      try {
+        await authentificationService.verifyTwoFactor(twoFactorToken.value, code);
+        successMessage.value = "Connexion réussie.";
+        router.push("/adherents/dashboard");
+      } catch (error) {
+        twoFactorError.value = error instanceof Error ? error.message : String(error);
+        twoFactorCode.value = "";
+      } finally {
+        verifyingTwoFactor.value = false;
+      }
+    };
+
+    const toggleRecoveryCode = () => {
+      useRecoveryCode.value = !useRecoveryCode.value;
+      twoFactorCode.value = "";
+      twoFactorError.value = "";
+    };
+
+    /** Revient à la saisie du mot de passe et abandonne le défi en cours. */
+    const cancelTwoFactor = () => {
+      awaitingTwoFactor.value = false;
+      twoFactorToken.value = "";
+      twoFactorCode.value = "";
+      twoFactorError.value = "";
+      useRecoveryCode.value = false;
     };
 
     const loginWithGoogle = () => {
@@ -195,6 +303,14 @@ export default defineComponent({
       submitForm,
       loginWithGoogle,
       loginWithDiscord,
+      awaitingTwoFactor,
+      twoFactorCode,
+      twoFactorError,
+      verifyingTwoFactor,
+      useRecoveryCode,
+      submitTwoFactor,
+      toggleRecoveryCode,
+      cancelTwoFactor,
     };
   },
 });
@@ -294,6 +410,54 @@ export default defineComponent({
 }
 
 // Form
+.twofa-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+
+  i {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--accent-pink);
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.twofa-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.twofa-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover { color: var(--accent-pink); }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-pink);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;

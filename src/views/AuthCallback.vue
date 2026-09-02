@@ -11,7 +11,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Cookies from 'js-cookie';
+import { setSessionCookies } from '@/services/session.cookies';
 
 export default defineComponent({
   name: 'AuthCallback',
@@ -44,9 +44,7 @@ export default defineComponent({
         return;
       }
 
-      Cookies.set('sessionToken', accessToken, { expires: 15 / 1440 });
-      Cookies.set('refreshToken', refreshToken, { expires: 1 });
-      Cookies.set('id_user', userId, { expires: 1 });
+      setSessionCookies({ accessToken, refreshToken, userId });
       sessionStorage.removeItem('favorites');
 
       if (requiresProfileCompletion) {

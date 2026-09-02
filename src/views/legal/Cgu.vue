@@ -3,10 +3,10 @@
     <h2>1. Objet</h2>
     <p>
       Les présentes Conditions Générales d'Utilisation (« CGU ») régissent l'accès et l'utilisation
-      de la plateforme MyKpopTrade, exploitée par <span class="placeholder">[NOM_SOCIÉTÉ]</span>,
-      <span class="placeholder">[FORME_JURIDIQUE]</span> au capital de <span class="placeholder">[CAPITAL]</span>,
-      immatriculée au RCS de <span class="placeholder">[VILLE]</span> sous le numéro <span class="placeholder">[SIREN]</span>,
-      dont le siège social est situé <span class="placeholder">[ADRESSE_SIÈGE]</span>.
+      de la plateforme MyKpopTrade, exploitée par <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span>,
+      <span :class="{ placeholder: isLegalMissing('legalForm') }">{{ legal('legalForm') }}</span> au capital de <span :class="{ placeholder: isLegalMissing('capital') }">{{ legal('capital') }}</span>,
+      immatriculée au RCS de <span :class="{ placeholder: isLegalMissing('rcsCity') }">{{ legal('rcsCity') }}</span> sous le numéro <span :class="{ placeholder: isLegalMissing('siren') }">{{ legal('siren') }}</span>,
+      dont le siège social est situé <span :class="{ placeholder: isLegalMissing('headquarters') }">{{ legal('headquarters') }}</span>.
     </p>
 
     <h2>2. Définitions</h2>
@@ -44,7 +44,7 @@
 
     <h3>5.2 Paiement</h3>
     <p>
-      Les paiements sont traités par PayPal. <span class="placeholder">[NOM_SOCIÉTÉ]</span> peut
+      Les paiements sont traités par PayPal. <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> peut
       prélever une commission de service précisée au moment de la vente.
     </p>
 
@@ -64,26 +64,26 @@
     <p>
       Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation ne s'applique pas
       aux ventes entre particuliers. Les conditions de retour sont précisées entre le Vendeur et l'Acheteur,
-      sous l'arbitrage de <span class="placeholder">[NOM_SOCIÉTÉ]</span> en cas de litige.
+      sous l'arbitrage de <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> en cas de litige.
     </p>
 
     <h2>7. Litiges entre Utilisateurs</h2>
     <p>
       En cas de désaccord, les parties peuvent ouvrir un litige depuis leur espace personnel.
-      <span class="placeholder">[NOM_SOCIÉTÉ]</span> agit en qualité d'arbitre et tranche le litige
+      <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> agit en qualité d'arbitre et tranche le litige
       sur la base des éléments fournis par les parties dans un délai indicatif de 7 jours ouvrés.
     </p>
 
     <h2>8. Responsabilité</h2>
     <p>
-      <span class="placeholder">[NOM_SOCIÉTÉ]</span> agit en qualité d'intermédiaire technique et n'est
+      <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> agit en qualité d'intermédiaire technique et n'est
       pas partie au contrat de vente entre Utilisateurs. Sa responsabilité est limitée aux dommages directs
       résultant d'un manquement avéré à ses obligations.
     </p>
 
     <h2>9. Suspension et résiliation</h2>
     <p>
-      <span class="placeholder">[NOM_SOCIÉTÉ]</span> peut suspendre ou supprimer un compte en cas de
+      <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> peut suspendre ou supprimer un compte en cas de
       violation des CGU, sans préjudice de poursuites éventuelles. L'Utilisateur peut supprimer son compte
       à tout moment depuis ses paramètres.
     </p>
@@ -92,7 +92,7 @@
     <p>
       Les marques, logos, contenus éditoriaux et fonctionnalités de la Plateforme sont protégés.
       Les Utilisateurs conservent les droits sur les contenus qu'ils publient mais accordent à
-      <span class="placeholder">[NOM_SOCIÉTÉ]</span> une licence non exclusive d'utilisation à des
+      <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> une licence non exclusive d'utilisation à des
       fins de fonctionnement et de promotion de la Plateforme.
     </p>
 
@@ -104,14 +104,14 @@
 
     <h2>12. Modification des CGU</h2>
     <p>
-      <span class="placeholder">[NOM_SOCIÉTÉ]</span> peut modifier les CGU à tout moment. Les Utilisateurs
+      <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span> peut modifier les CGU à tout moment. Les Utilisateurs
       sont notifiés au moins 15 jours avant l'entrée en vigueur des modifications substantielles.
     </p>
 
     <h2>13. Droit applicable et juridiction</h2>
     <p>
       Les présentes CGU sont soumises au droit français. Tout litige relève des tribunaux compétents de
-      <span class="placeholder">[VILLE_TRIBUNAL]</span>, sous réserve des dispositions impératives en
+      <span :class="{ placeholder: isLegalMissing('courtCity') }">{{ legal('courtCity') }}</span>, sous réserve des dispositions impératives en
       matière de consommation.
     </p>
   </LegalLayout>
@@ -120,12 +120,18 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import LegalLayout from './LegalLayout.vue';
+import { legal, isLegalMissing, analyticsToolName } from '@/config/legal';
 
 export default defineComponent({
   name: 'CguPage',
   components: { LegalLayout },
   data() {
     return { updatedAt: '5 mai 2026' };
+  },
+  // Identité légale résolue depuis src/config/legal.ts : un seul endroit à
+  // renseigner pour les 4 pages légales.
+  setup() {
+    return { legal, isLegalMissing, analyticsToolName };
   }
 });
 </script>

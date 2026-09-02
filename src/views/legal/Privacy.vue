@@ -1,7 +1,7 @@
 <template>
   <LegalLayout title="Politique de confidentialité" :updated-at="updatedAt">
     <p>
-      La présente politique décrit comment <span class="placeholder">[NOM_SOCIÉTÉ]</span>
+      La présente politique décrit comment <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span>
       (ci-après « <strong>nous</strong> ») collecte, utilise et protège vos données personnelles dans
       le cadre de l'utilisation de MyKpopTrade, conformément au Règlement Général sur la Protection des
       Données (RGPD) et à la loi Informatique et Libertés.
@@ -9,9 +9,9 @@
 
     <h2>1. Responsable de traitement</h2>
     <p>
-      Le responsable de traitement est <span class="placeholder">[NOM_SOCIÉTÉ]</span>,
-      <span class="placeholder">[ADRESSE_SIÈGE]</span>.<br />
-      Délégué à la protection des données (DPO) : <span class="placeholder">[EMAIL_DPO]</span>.
+      Le responsable de traitement est <span :class="{ placeholder: isLegalMissing('companyName') }">{{ legal('companyName') }}</span>,
+      <span :class="{ placeholder: isLegalMissing('headquarters') }">{{ legal('headquarters') }}</span>.<br />
+      Délégué à la protection des données (DPO) : <span :class="{ placeholder: isLegalMissing('dpoEmail') }">{{ legal('dpoEmail') }}</span>.
     </p>
 
     <h2>2. Données collectées</h2>
@@ -88,8 +88,29 @@
       <li><strong>Retrait du consentement</strong> : à tout moment, sans effet rétroactif.</li>
     </ul>
     <p>
-      Pour exercer ces droits : <span class="placeholder">[EMAIL_DPO]</span>. Vous pouvez également
-      saisir la CNIL (cnil.fr).
+      Plusieurs de ces droits s'exercent directement, sans nous écrire :
+    </p>
+    <ul>
+      <li>
+        <strong>Accès et portabilité</strong> : bouton « Exporter mes données » dans
+        <router-link to="/adherents/settings">vos paramètres</router-link>.
+      </li>
+      <li>
+        <strong>Retrait du consentement marketing</strong> : case « Recevoir les actualités » dans
+        <router-link to="/adherents/settings">vos paramètres</router-link>.
+      </li>
+      <li>
+        <strong>Cookies de mesure d'audience</strong> : lien « Gérer mes cookies » dans le pied de page.
+      </li>
+      <li>
+        <strong>Effacement</strong> : « Anonymiser mes données » ou la demande de suppression de
+        compte, dans <router-link to="/adherents/settings">vos paramètres</router-link>.
+      </li>
+    </ul>
+    <p>
+      Pour tout autre droit, ou en cas de difficulté :
+      <span :class="{ placeholder: isLegalMissing('dpoEmail') }">{{ legal('dpoEmail') }}</span>.
+      Vous pouvez également saisir la CNIL (cnil.fr).
     </p>
 
     <h2>8. Sécurité</h2>
@@ -113,12 +134,18 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import LegalLayout from './LegalLayout.vue';
+import { legal, isLegalMissing, analyticsToolName } from '@/config/legal';
 
 export default defineComponent({
   name: 'PrivacyPage',
   components: { LegalLayout },
   data() {
     return { updatedAt: '5 mai 2026' };
+  },
+  // Identité légale résolue depuis src/config/legal.ts : un seul endroit à
+  // renseigner pour les 4 pages légales.
+  setup() {
+    return { legal, isLegalMissing, analyticsToolName };
   }
 });
 </script>

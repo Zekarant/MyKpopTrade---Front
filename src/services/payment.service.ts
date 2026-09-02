@@ -210,67 +210,6 @@ class paymentService {
     return response.data;
   }
 
-  // ─── Stripe Connect ─────────────────────────────────────────────────────
-
-  async getStripeAccountSession(): Promise<{ success: boolean; clientSecret: string; accountId: string }> {
-    const response = await this.paymentsApiClient.post('/stripe/account-session');
-    return response.data;
-  }
-
-  async getStripeAccountStatus(): Promise<{
-    success: boolean;
-    onboarded: boolean;
-    payoutsEnabled: boolean;
-    chargesEnabled: boolean;
-    accountId?: string;
-    currently_due: string[];
-    past_due: string[];
-    pending_verification: string[];
-    disabled_reason: string | null;
-  }> {
-    const response = await this.paymentsApiClient.get('/stripe/account-status');
-    return response.data;
-  }
-
-  async getStripeAccountRequirements(): Promise<{
-    success: boolean;
-    requirements: {
-      currently_due: string[];
-      eventually_due: string[];
-      past_due: string[];
-      pending_verification: string[];
-      disabled_reason: string | null;
-      errors: { code: string; reason: string; requirement: string }[];
-      current_deadline: number | null;
-    };
-  }> {
-    const response = await this.paymentsApiClient.get('/stripe/account-requirements');
-    return response.data;
-  }
-
-  async initStripeCheckout(payload: InitPayPalPayload): Promise<{
-    success: boolean;
-    payment: {
-      id: string;
-      stripeSessionId: string;
-      checkoutUrl: string;
-      amount: number;
-      productAmount?: number;
-      shippingAmount?: number;
-      shippingMethod?: ShippingMethod;
-      currency: string;
-    };
-    message: string;
-  }> {
-    const response = await this.paymentsApiClient.post('/stripe/checkout', payload);
-    return response.data;
-  }
-
-  async refundStripePayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
-    const response = await this.paymentsApiClient.post(`/stripe/${paymentId}/refund`, payload);
-    return response.data;
-  }
-
   async createShipment(paymentId: string, payload: { carrier: string; trackingNumber: string; estimatedDelivery?: string }) {
     const response = await this.paymentsApiClient.post(`/${paymentId}/shipment`, payload);
     return response.data;
@@ -298,11 +237,6 @@ class paymentService {
 
   async getMyPayments(params: { role?: 'buyer' | 'seller' | 'all'; status?: string; page?: number; limit?: number } = {}) {
     const response = await this.paymentsApiClient.get('/my', { params });
-    return response.data;
-  }
-
-  async verifyStripeSession(sessionId: string): Promise<{ success: boolean; status: string; message?: string }> {
-    const response = await this.paymentsApiClient.get('/stripe/verify-session', { params: { session_id: sessionId } });
     return response.data;
   }
 

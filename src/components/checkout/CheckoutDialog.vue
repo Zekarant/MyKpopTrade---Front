@@ -86,20 +86,6 @@
       </div>
 
       <div class="actions actions--column">
-        <!-- Stripe temporairement désactivé
-        <button
-          class="btn-pay btn-pay--stripe"
-          :disabled="!canSubmit || submitting"
-          @click="submit('stripe')"
-        >
-          <span v-if="submitting && submittingMethod === 'stripe'">
-            <i class="bi bi-arrow-repeat spin"></i> Redirection…
-          </span>
-          <span v-else>
-            <i class="bi bi-credit-card"></i> Payer par carte (Stripe)
-          </span>
-        </button>
-        -->
         <button
           class="btn-pay btn-pay--paypal"
           :disabled="!canSubmit || submitting"
@@ -143,16 +129,7 @@ interface PaypalLikeResult {
   };
 }
 
-interface StripeCheckoutResult {
-  success: boolean;
-  payment?: {
-    id: string;
-    stripeSessionId: string;
-    checkoutUrl: string;
-  };
-}
-
-type PaymentProvider = 'paypal' | 'stripe';
+type PaymentProvider = 'paypal';
 
 export default defineComponent({
   name: 'CheckoutDialog',
@@ -276,17 +253,6 @@ export default defineComponent({
       submittingMethod.value = provider;
       errorMessage.value = '';
       try {
-        if (provider === 'stripe') {
-          const result = (await paymentService.initStripeCheckout(buildPayload())) as StripeCheckoutResult;
-          if (!result.success || !result.payment?.checkoutUrl) {
-            errorMessage.value = 'Le paiement Stripe n\'a pas pu être initialisé.';
-            return;
-          }
-          // Redirige direct vers Stripe Checkout (host page)
-          window.location.href = result.payment.checkoutUrl;
-          return;
-        }
-
         const result = (await paymentService.initPayPal(buildPayload())) as PaypalLikeResult;
         if (!result.success || !result.payment) {
           errorMessage.value = 'Le paiement n\'a pas pu être initialisé.';
@@ -570,10 +536,6 @@ h3 {
     transform: none;
   }
 
-  &--stripe {
-    background: #635bff;
-    color: white;
-  }
 
   &--paypal {
     background: #ffc439;

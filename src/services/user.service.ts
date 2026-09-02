@@ -114,7 +114,18 @@ class userService {
       throw error;
     }
   }
-  async updateConsents(payload: { marketing?: boolean; analytics?: boolean; cookies?: boolean }) {
+  /**
+   * Met à jour les consentements RGPD stockés sur le compte.
+   *
+   * Le contrat est celui de PUT /api/users/me/consents : toute autre clé est
+   * ignorée côté serveur. Le consentement aux cookies est distinct — il est
+   * lié au terminal, pas au compte (cf. services/consent.service.ts).
+   */
+  async updateConsents(payload: {
+    privacyPolicy?: boolean;
+    dataProcessing?: boolean;
+    marketing?: boolean;
+  }) {
     const response = await this.rgpdApiClient.put('/me/consents', payload);
     return response.data;
   }

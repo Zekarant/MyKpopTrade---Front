@@ -1,33 +1,27 @@
 <template>
   <RouterView />
-      <Vue3Lottie v-if="showLoader" :animationData="animationData"  />
+  <SiteFooter />
   <BetaBanner />
-
+  <CookieConsent />
 </template>
+
 <script setup lang="ts">
 import './css/main.scss'
 
 import { RouterView } from 'vue-router';
-import { onMounted, onUnmounted, ref } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
+import { onMounted } from 'vue';
 import BetaBanner from '@/components/BetaBanner.vue';
-import * as animationData from '@/assets/Animation/loadAnim.json';
-//import eventBus from '@/eventBus'
+import CookieConsent from '@/components/CookieConsent.vue';
+import SiteFooter from '@/components/SiteFooter.vue';
+import { applyStoredConsent } from '@/services/consent.service';
 
-const showLoader = ref(false)
-
-function show() { showLoader.value = true }
-function hide() { showLoader.value = false }
-
-/*onMounted(() => {
-  eventBus.on('show-loader', show)
-  eventBus.on('hide-loader', hide)
-})
-onUnmounted(() => {
-  eventBus.off('show-loader', show)
-  eventBus.off('hide-loader', hide)
-})*/
+onMounted(() => {
+  // Rejoue un consentement déjà donné lors d'une visite précédente. Sans choix
+  // enregistré, aucun traceur n'est chargé : le bandeau prend le relais.
+  applyStoredConsent();
+});
 </script>
+
 <style lang="scss">
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 

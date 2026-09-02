@@ -288,116 +288,6 @@
                 </div>
               </div>
 
-              <!-- Stripe Connect temporairement désactivé
-              <div class="paypal-card" style="margin-top: var(--space-md);">
-                <div class="paypal-card__head">
-                  <div class="paypal-card__brand">
-                    <i class="bi bi-credit-card-2-front"></i>
-                    <div>
-                      <div class="paypal-card__title">Stripe</div>
-                      <div class="paypal-card__subtitle">Recevez des paiements par carte bancaire (Visa, Mastercard, etc.)</div>
-                    </div>
-                  </div>
-                  <span v-if="stripeOnboarded && stripePayoutsEnabled && stripePastDue.length === 0" class="setting-badge setting-badge--success">
-                    <i class="bi bi-check-circle-fill"></i> Activé
-                  </span>
-                  <span v-else-if="stripePastDue.length > 0" class="setting-badge setting-badge--danger">
-                    <i class="bi bi-x-circle-fill"></i> Suspendu
-                  </span>
-                  <span v-else-if="stripeCurrentlyDue.length > 0" class="setting-badge setting-badge--warning">
-                    <i class="bi bi-exclamation-circle-fill"></i> Infos requises
-                  </span>
-                  <span v-else-if="stripePendingVerification.length > 0" class="setting-badge setting-badge--info">
-                    <i class="bi bi-hourglass-split"></i> Vérification
-                  </span>
-                  <span v-else-if="stripeEventuallyDue.includes('individual.verification.document')" class="setting-badge setting-badge--identity">
-                    <i class="bi bi-person-badge"></i> Identité à vérifier
-                  </span>
-                  <span v-else-if="stripeOnboarded" class="setting-badge setting-badge--warning">
-                    <i class="bi bi-clock"></i> En attente
-                  </span>
-                  <span v-else class="setting-badge setting-badge--warning">
-                    <i class="bi bi-exclamation-circle"></i> Non activé
-                  </span>
-                </div>
-
-                <div v-if="stripeDisabledReason" class="stripe-alert stripe-alert--danger">
-                  <i class="bi bi-slash-circle"></i>
-                  <span>Compte désactivé : <strong>{{ stripeDisabledReason }}</strong></span>
-                </div>
-
-                <template v-if="stripePastDue.length > 0">
-                  <div class="stripe-alert stripe-alert--danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>Virements suspendus</strong> — complétez votre dossier pour rétablir les paiements.
-                  </div>
-                  <div class="stripe-requirements">
-                    <div v-for="field in stripePastDue" :key="field" class="stripe-req-row stripe-req-row--danger">
-                      <div class="stripe-req-row__label">{{ stripeFieldLabel(field) }}</div>
-                      <span class="stripe-req-row__status">En retard</span>
-                    </div>
-                  </div>
-                </template>
-
-                <template v-else-if="stripeCurrentlyDue.length > 0">
-                  <div class="stripe-alert stripe-alert--warning">
-                    <i class="bi bi-exclamation-circle-fill"></i>
-                    <strong>{{ stripeCurrentlyDue.length }} information{{ stripeCurrentlyDue.length > 1 ? 's' : '' }} requise{{ stripeCurrentlyDue.length > 1 ? 's' : '' }}</strong>
-                  </div>
-                  <div class="stripe-requirements">
-                    <div v-for="field in stripeCurrentlyDue" :key="field" class="stripe-req-row stripe-req-row--warning">
-                      <div class="stripe-req-row__label">{{ stripeFieldLabel(field) }}</div>
-                      <span class="stripe-req-row__status">Manquant</span>
-                    </div>
-                  </div>
-                </template>
-
-                <template v-else-if="stripePendingVerification.length > 0 && !stripePayoutsEnabled">
-                  <div class="stripe-alert stripe-alert--info">
-                    <i class="bi bi-hourglass-split"></i>
-                    Stripe vérifie vos informations. Les virements seront activés dès la validation.
-                  </div>
-                  <div class="stripe-requirements">
-                    <div v-for="field in stripePendingVerification" :key="field" class="stripe-req-row stripe-req-row--info">
-                      <div class="stripe-req-row__label">{{ stripeFieldLabel(field) }}</div>
-                      <span class="stripe-req-row__status">En cours</span>
-                    </div>
-                  </div>
-                </template>
-
-                <template v-if="stripeEventuallyDue.length > 0 && stripePastDue.length === 0 && stripeCurrentlyDue.length === 0">
-                  <div class="stripe-alert stripe-alert--eventually">
-                    <i class="bi bi-clock-history"></i>
-                    Ces informations seront requises prochainement.
-                  </div>
-                  <div class="stripe-requirements">
-                    <div v-for="field in stripeEventuallyDue" :key="field" class="stripe-req-row stripe-req-row--eventually">
-                      <div class="stripe-req-row__label">{{ stripeFieldLabel(field) }}</div>
-                      <span class="stripe-req-row__status">À compléter</span>
-                    </div>
-                  </div>
-                </template>
-
-                <p v-else-if="!stripeOnboarded" class="paypal-card__hint">
-                  Activez Stripe pour recevoir les paiements par carte bancaire de vos acheteurs
-                  directement sur votre compte (KYC géré par Stripe).
-                </p>
-
-                <div v-if="showStripeEmbed" ref="stripeEmbedContainer" class="stripe-embed"></div>
-
-                <div v-if="!showStripeEmbed" class="paypal-card__actions">
-                  <button
-                    v-if="!stripeOnboarded || stripePastDue.length > 0 || stripeCurrentlyDue.length > 0"
-                    @click="startStripeOnboarding"
-                    :disabled="stripeOnboarding"
-                    :class="['btn-settings', stripePastDue.length > 0 ? 'btn-settings--danger' : 'btn-settings--primary']"
-                  >
-                    <i class="bi bi-credit-card-2-front"></i>
-                    {{ stripeOnboarding ? 'Chargement…' : (stripePastDue.length > 0 ? 'Régulariser mon dossier Stripe' : stripeOnboarded ? 'Compléter mes infos Stripe' : 'Activer mes paiements Stripe') }}
-                  </button>
-                </div>
-              </div>
-              -->
             </div>
           </section>
 
@@ -418,10 +308,28 @@
             </div>
           </section>
 
+          <!-- Double authentification -->
+          <TwoFactorCard />
+
           <!-- Data -->
           <section class="settings-card">
             <h3 class="settings-card__title"><i class="bi bi-database"></i> Mes données</h3>
             <div class="settings-card__body">
+              <!-- RGPD art. 7-3 : le retrait du consentement doit être aussi
+                   simple que son recueil à l'inscription. -->
+              <label class="consent-row">
+                <input
+                  type="checkbox"
+                  :checked="marketingConsent"
+                  :disabled="savingConsent"
+                  @change="toggleMarketingConsent"
+                />
+                <span class="consent-row__label">
+                  Recevoir les actualités et bons plans par email
+                  <small>Facultatif. Vous pouvez changer d'avis à tout moment.</small>
+                </span>
+              </label>
+
               <button class="btn-settings btn-settings--full" @click="exportUserData">
                 <i class="bi bi-download"></i> Exporter mes données
               </button>
@@ -516,18 +424,19 @@ import { defineComponent } from 'vue';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import Cookies from 'js-cookie';
 import axios from 'axios';
-import { loadConnectAndInitialize } from '@stripe/connect-js';
 import authentificationService from '@/services/authentification.service';
 import paymentService from '@/services/payment.service';
 import type { PayPalBlockReason } from '@/services/payment.service';
 import userService from '@/services/user.service';
+import TwoFactorCard from '@/components/adherents/TwoFactorCard.vue';
 
 export default defineComponent({
   name: 'SettingsPage',
-  components: { Nav_bar },
+  components: { Nav_bar, TwoFactorCard },
   data() {
     return {
       userProfile: {} as any,
+      savingConsent: false,
       showPasswordForm: false,
       currentPassword: '',
       newPassword: '',
@@ -555,11 +464,6 @@ export default defineComponent({
       paypalRefreshing: false,
       paypalInfoModal: { open: false },
       paypalInfoError: '',
-      stripeOnboarded: false,
-      stripePayoutsEnabled: false,
-      stripeChargesEnabled: false,
-      stripeOnboarding: false,
-      showStripeEmbed: false,
       showIdentityForm: false,
       identityVerification: null as { verification: { status: string; submittedAt: string; rejectionReason?: string }; userVerification: { isVerified: boolean } } | null,
       identityDocumentType: 'id_card',
@@ -567,15 +471,15 @@ export default defineComponent({
       identityDocumentPreview: '',
       identityConsentGiven: false,
       identitySubmitting: false,
-      stripeCurrentlyDue: [] as string[],
-      stripeEventuallyDue: [] as string[],
-      stripePastDue: [] as string[],
-      stripePendingVerification: [] as string[],
-      stripeDisabledReason: null as string | null,
       pendingDeletion: null as { scheduledFor: string } | null,
     };
   },
   computed: {
+    /** Consentement marketing courant, tel que renvoyé par le profil. */
+    marketingConsent(): boolean {
+      return this.userProfile?.marketingConsent === true;
+    },
+
     /** Traduit les scopes PayPal en libellés lisibles par le vendeur. */
     paypalScopeLabels(): string {
       const labels: Record<string, string> = {
@@ -623,10 +527,35 @@ export default defineComponent({
       );
     }
 
-    await Promise.all([this.loadStripeStatus(), this.loadStripeRequirements()]);
     this.loadDeletionStatus();
   },
   methods: {
+    /**
+     * Bascule le consentement marketing (RGPD art. 7-3).
+     * En cas d'échec, la case revient à son état serveur : on n'affiche jamais
+     * un consentement qui n'a pas été réellement enregistré.
+     */
+    async toggleMarketingConsent(event: Event) {
+      const desired = (event.target as HTMLInputElement).checked;
+      this.savingConsent = true;
+      try {
+        await userService.updateConsents({ marketing: desired });
+        this.userProfile = { ...this.userProfile, marketingConsent: desired };
+        this.$func.showToastSuccess(
+          desired
+            ? 'Vous recevrez désormais nos actualités par email.'
+            : 'Vous ne recevrez plus d\'emails d\'actualités.'
+        );
+      } catch {
+        (event.target as HTMLInputElement).checked = !desired;
+        this.$func.showToastError(
+          'Impossible d\'enregistrer votre choix. Veuillez réessayer.'
+        );
+      } finally {
+        this.savingConsent = false;
+      }
+    },
+
     async loadProfile() {
       const sessionToken = Cookies.get('sessionToken');
       try {
@@ -929,103 +858,38 @@ export default defineComponent({
         this.paypalInfoError = e.response?.data?.message || 'Impossible de générer le lien d\'inscription PayPal.';
       }
     },
-    async loadStripeStatus() {
-      try {
-        const res = await paymentService.getStripeAccountStatus();
-        this.stripeOnboarded = !!res.onboarded;
-        this.stripePayoutsEnabled = !!res.payoutsEnabled;
-        this.stripeChargesEnabled = !!res.chargesEnabled;
-      } catch {
-        this.stripeOnboarded = false;
-        this.stripePayoutsEnabled = false;
-        this.stripeChargesEnabled = false;
-      }
-    },
-    async loadStripeRequirements() {
-      try {
-        const res = await paymentService.getStripeAccountRequirements();
-        const r = res.requirements;
-        this.stripeCurrentlyDue = r.currently_due ?? [];
-        this.stripeEventuallyDue = r.eventually_due ?? [];
-        this.stripePastDue = r.past_due ?? [];
-        this.stripePendingVerification = r.pending_verification ?? [];
-        this.stripeDisabledReason = r.disabled_reason ?? null;
-      } catch {
-        this.stripeCurrentlyDue = [];
-        this.stripeEventuallyDue = [];
-        this.stripePastDue = [];
-        this.stripePendingVerification = [];
-        this.stripeDisabledReason = null;
-      }
-    },
-    async startStripeOnboarding() {
-      this.stripeOnboarding = true;
-      try {
-        const { clientSecret } = await paymentService.getStripeAccountSession();
-        this.showStripeEmbed = true;
-
-        await this.$nextTick();
-
-        const instance = await loadConnectAndInitialize({
-          publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string,
-          fetchClientSecret: () => Promise.resolve(clientSecret),
-        });
-
-        const component = instance.create('account-onboarding');
-        component.setCollectionOptions({
-          fields: 'currently_due',
-          futureRequirements: 'omit',
-        });
-        component.setOnExit(async () => {
-          this.showStripeEmbed = false;
-          await Promise.all([this.loadStripeStatus(), this.loadStripeRequirements()]);
-        });
-
-        (this.$refs.stripeEmbedContainer as HTMLElement).appendChild(component);
-      } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Impossible de charger le formulaire Stripe');
-        this.showStripeEmbed = false;
-      } finally {
-        this.stripeOnboarding = false;
-      }
-    },
+    /**
+     * Ouvre le formulaire de vérification d'identité et charge le statut courant.
+     *
+     * Cette fonction commençait par un POST /api/verification/identity/session
+     * pour choisir entre Stripe Identity et le dépôt manuel. Cette route n'a
+     * jamais existé côté API : l'appel partait en 404 et l'utilisateur ne voyait
+     * qu'une erreur, sans jamais atteindre le formulaire. Stripe étant retiré,
+     * le dépôt manuel est le seul parcours — c'est aussi celui qu'implémente
+     * déjà correctement le bandeau de profil.
+     */
     async openIdentityVerification() {
       const sessionToken = Cookies.get('sessionToken');
+      this.showIdentityForm = true;
+
       try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity/session`, {}, {
+        const statusRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
           headers: { Authorization: `Bearer ${sessionToken}` }
         });
-        const data = res.data;
-
-        if (data.method === 'stripe') {
-          const { loadStripe } = await import('@stripe/stripe-js');
-          const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
-          if (!stripe) throw new Error('Stripe non disponible');
-
-          const { error } = await stripe.verifyIdentity(data.clientSecret);
-          if (error) {
-            if (error.code !== 'session_cancelled') {
-              (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(error.message ?? 'Erreur lors de la vérification');
-            }
-          } else {
-            this.showIdentityForm = true;
-            this.identityVerification = { verification: { status: 'pending', submittedAt: new Date().toISOString() }, userVerification: { isVerified: false } };
-          }
-        } else {
-          // method === 'manual' → charger le statut existant puis afficher le formulaire
-          this.showIdentityForm = true;
-          try {
-            const statusRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
-              headers: { Authorization: `Bearer ${sessionToken}` }
-            });
-            this.identityVerification = statusRes.data;
-          } catch (statusErr: unknown) {
-            if ((statusErr as { response?: { status?: number } })?.response?.status === 404) this.identityVerification = null;
-          }
-        }
+        this.identityVerification = statusRes.data;
       } catch (e: any) {
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') authentificationService.verifSession();
-        else (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(e.response?.data?.message || 'Impossible de lancer la vérification');
+        // 404 = aucune demande en cours, c'est le cas normal d'un premier dépôt.
+        if (e.response?.status === 404) {
+          this.identityVerification = null;
+          return;
+        }
+        if (e.response?.data?.code === 'TOKEN_EXPIRED') {
+          authentificationService.verifSession();
+          return;
+        }
+        this.$func.showToastError(
+          e.response?.data?.message || 'Impossible de charger votre statut de vérification.'
+        );
       }
     },
     onIdentityFileChange(event: Event) {
@@ -1078,41 +942,6 @@ export default defineComponent({
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
-    },
-    stripeFieldLabel(field: string): string {
-      const labels: Record<string, string> = {
-        'individual.verification.document': 'Document de vérification',
-        'individual.verification.additional_document': 'Document supplémentaire',
-        'individual.id_number': "Numéro d'identité nationale",
-        'individual.first_name': 'Prénom',
-        'individual.last_name': 'Nom',
-        'individual.dob.day': 'Date de naissance (jour)',
-        'individual.dob.month': 'Date de naissance (mois)',
-        'individual.dob.year': 'Date de naissance (année)',
-        'individual.address.line1': 'Adresse',
-        'individual.address.city': 'Ville',
-        'individual.address.postal_code': 'Code postal',
-        'individual.address.state': 'Département / Région',
-        'individual.address.country': 'Pays',
-        'individual.phone': 'Numéro de téléphone',
-        'individual.email': 'Adresse e-mail',
-        'individual.ssn_last_4': '4 derniers chiffres SSN',
-        'individual.nationality': 'Nationalité',
-        'business_profile.url': 'URL du site web',
-        'business_profile.mcc': "Code d'activité (MCC)",
-        'business_profile.product_description': "Description de l'activité",
-        'external_account': 'Compte bancaire (IBAN)',
-        'tos_acceptance.date': "Acceptation des conditions d'utilisation",
-        'tos_acceptance.ip': "Acceptation des conditions d'utilisation",
-        'bank_account.account_number': 'Numéro de compte bancaire',
-        'bank_account.routing_number': 'Code de routage bancaire',
-        'company.name': "Nom de l'entreprise",
-        'company.tax_id': 'Numéro de TVA / SIRET',
-        'company.address.line1': "Adresse de l'entreprise",
-        'company.address.city': "Ville de l'entreprise",
-        'company.address.postal_code': "Code postal de l'entreprise",
-      };
-      return labels[field] ?? field.replace(/[_.]/g, ' ');
     },
     formatDate(iso: string) {
       const date = new Date(iso);
@@ -1294,182 +1123,7 @@ export default defineComponent({
   }
 }
 
-.stripe-alert {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
 
-  i { flex-shrink: 0; margin-top: 2px; }
-
-  &--danger {
-    background: rgba(220, 53, 69, 0.08);
-    color: #c82333;
-    border: 1px solid rgba(220, 53, 69, 0.2);
-  }
-  &--warning {
-    background: rgba(255, 193, 7, 0.08);
-    color: #856404;
-    border: 1px solid rgba(255, 193, 7, 0.2);
-  }
-  &--info {
-    background: rgba(13, 110, 253, 0.08);
-    color: #084298;
-    border: 1px solid rgba(13, 110, 253, 0.2);
-  }
-  &--eventually {
-    background: rgba(108, 117, 125, 0.08);
-    color: #495057;
-    border: 1px solid rgba(108, 117, 125, 0.2);
-  }
-}
-
-// Inputs
-.settings-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  transition: border-color var(--transition-fast);
-  margin-bottom: var(--space-sm);
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
-  }
-
-  // Neutralise le fond gris/jaune que Chrome applique aux champs auto-remplis.
-  &:-webkit-autofill,
-  &:-webkit-autofill:hover,
-  &:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
-    -webkit-text-fill-color: var(--text-primary);
-    caret-color: var(--text-primary);
-    transition: background-color 9999s ease-in-out 0s;
-  }
-
-  &--sm {
-    flex: 1;
-    margin-bottom: 0;
-  }
-}
-
-// Buttons
-.btn-settings {
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-
-  &--primary {
-    background: var(--accent-gradient);
-    color: white;
-    &:hover { box-shadow: 0 4px 12px rgba(255, 45, 120, 0.3); }
-  }
-
-  &--ghost {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--surface-border);
-    &:hover { background: var(--surface-hover); }
-  }
-
-  &--danger {
-    background: #dc3545;
-    color: white;
-    &:hover { background: #c82333; }
-  }
-
-  &--sm {
-    padding: 6px 12px;
-    font-size: var(--font-size-xs);
-    white-space: nowrap;
-  }
-
-  &--full {
-    width: 100%;
-    justify-content: center;
-    padding: 12px 16px;
-    margin: var(--space-xs) var(--space-lg);
-    width: calc(100% - var(--space-lg) * 2);
-  }
-}
-
-// Password form
-.password-form {
-  padding: var(--space-md) var(--space-lg);
-}
-
-.password-form__actions {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: flex-end;
-  margin-top: var(--space-sm);
-}
-
-// Delete confirm
-.delete-confirm {
-  padding: var(--space-md) var(--space-lg);
-}
-
-.delete-confirm__text {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-md);
-}
-
-// Toggle
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-
-  input { opacity: 0; width: 0; height: 0; }
-}
-
-.toggle__slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: var(--surface-border);
-  border-radius: 24px;
-  transition: var(--transition-fast);
-
-  &::before {
-    content: '';
-    position: absolute;
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background: white;
-    border-radius: 50%;
-    transition: var(--transition-fast);
-  }
-}
-
-.toggle input:checked + .toggle__slider {
-  background: var(--accent-pink);
-}
-
-.toggle input:checked + .toggle__slider::before {
-  transform: translateX(20px);
-}
-
-// PayPal card
 .paypal-card {
   margin: var(--space-md) var(--space-lg);
   padding: var(--space-md);
@@ -1551,79 +1205,6 @@ export default defineComponent({
   margin-top: var(--space-xs);
 }
 
-.stripe-requirements {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stripe-req-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-
-  &__label {
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  &__status {
-    font-weight: 600;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    white-space: nowrap;
-  }
-
-  &--danger {
-    background: rgba(220, 53, 69, 0.06);
-    border: 1px solid rgba(220, 53, 69, 0.15);
-
-    .stripe-req-row__status {
-      background: rgba(220, 53, 69, 0.12);
-      color: #c82333;
-    }
-  }
-
-  &--warning {
-    background: rgba(255, 193, 7, 0.06);
-    border: 1px solid rgba(255, 193, 7, 0.2);
-
-    .stripe-req-row__status {
-      background: rgba(255, 193, 7, 0.15);
-      color: #856404;
-    }
-  }
-
-  &--info {
-    background: rgba(13, 110, 253, 0.06);
-    border: 1px solid rgba(13, 110, 253, 0.15);
-
-    .stripe-req-row__status {
-      background: rgba(13, 110, 253, 0.12);
-      color: #084298;
-    }
-  }
-
-  &--eventually {
-    background: rgba(108, 117, 125, 0.06);
-    border: 1px solid rgba(108, 117, 125, 0.15);
-
-    .stripe-req-row__status {
-      background: rgba(108, 117, 125, 0.12);
-      color: #495057;
-    }
-  }
-}
-
-.stripe-embed {
-  width: 100%;
-  margin-top: var(--space-sm);
-}
-
 .identity-form {
   padding: var(--space-md) var(--space-lg);
   display: flex;
@@ -1686,6 +1267,43 @@ export default defineComponent({
   line-height: 1.4;
 
   input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
+}
+
+// Réglage du consentement marketing (carte « Mes données »)
+.consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &:has(input:disabled) {
+    opacity: 0.6;
+    cursor: progress;
+  }
+}
+
+.consent-row__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.4;
+
+  small {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
 }
 
 // PayPal info modal

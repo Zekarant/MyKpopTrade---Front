@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, AxiosError, type AxiosResponse } from "axios
 import Cookies from "js-cookie";
 import router from "@/router";
 import { API_URL } from '@/config/api';
+import { setSessionCookies, clearSessionCookies } from '@/services/session.cookies';
 
 interface ApiError {
   message: string;
@@ -13,6 +14,17 @@ interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
 }
+
+/**
+ * Résultat d'une tentative de connexion.
+ *
+ * Quand la double authentification est active, l'API ne délivre aucun jeton
+ * d'accès : elle rend un jeton de défi à courte durée de vie, à échanger sur
+ * /auth/2fa/verify contre une vraie session.
+ */
+export type LoginResult =
+  | { requiresTwoFactor: false }
+  | { requiresTwoFactor: true; twoFactorToken: string };
 
 type AuthToken = string | null;
 
@@ -68,23 +80,58 @@ class authentificationService {
     return localStorage.getItem("token");
   }
 
-  async login(identifier: string, password: string): Promise<void> {
+  async login(identifier: string, password: string): Promise<LoginResult> {
     try {
       const response: AxiosResponse = await this.authApiClient.post("/login", {
         identifier,
         password,
       });
-      if (response.status === 200) {
-        Cookies.set("sessionToken", response.data.accessToken, { expires: 15 / 1440 });
-        Cookies.set("refreshToken", response.data.refreshToken, { expires: 1 });
-        Cookies.set("id_user", response.data.user.id, { expires: 1 });
-        sessionStorage.removeItem("favorites");
-      } else {
+
+      if (response.status !== 200) {
         throw new Error(response.data.message);
       }
+
+      // Second facteur requis : pas de session ouverte à ce stade.
+      if (response.data.requiresTwoFactor) {
+        return { requiresTwoFactor: true, twoFactorToken: response.data.twoFactorToken };
+      }
+
+      setSessionCookies({
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+        userId: response.data.user.id
+      });
+      sessionStorage.removeItem("favorites");
+
+      return { requiresTwoFactor: false };
     } catch (error) {
       const axiosError = error as AxiosError<ApiError>;
       throw new Error(axiosError.response?.data.message || "Erreur lors de la connexion");
+    }
+  }
+
+  /**
+   * Deuxième étape de connexion : échange le jeton de défi et un code (TOTP ou
+   * code de secours) contre une session complète.
+   */
+  async verifyTwoFactor(twoFactorToken: string, code: string): Promise<void> {
+    try {
+      const response: AxiosResponse = await this.authApiClient.post("/2fa/verify", {
+        twoFactorToken,
+        code,
+      });
+
+      setSessionCookies({
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+        userId: response.data.user.id
+      });
+      sessionStorage.removeItem("favorites");
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      throw new Error(
+        axiosError.response?.data.message || "Impossible de vérifier le code."
+      );
     }
   }
 
@@ -122,8 +169,10 @@ class authentificationService {
       );
 
       if (response.status === 200) {
-        Cookies.set("sessionToken", response.data.accessToken, { expires: 1 });
-        Cookies.set("refreshToken", response.data.refreshToken, { expires: 1 });
+        setSessionCookies({
+          accessToken: response.data.accessToken,
+          refreshToken: response.data.refreshToken
+        });
       } else {
         await this.logout();
         throw new Error("Session refresh failed");
@@ -139,10 +188,7 @@ class authentificationService {
     }
   }
   clearCookies(): void {
-    Cookies.remove("sessionToken");
-    Cookies.remove("refreshToken");
-    Cookies.remove("id_user");
-    document.cookie = "sessionToken=; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    clearSessionCookies();
   }
 }
 

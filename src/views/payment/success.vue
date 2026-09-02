@@ -27,20 +27,16 @@
         {{ captureError }}
       </p>
       <p class="message" v-else>
-        Votre paiement{{ source === 'stripe' ? ' par carte' : ' via PayPal' }} a été traité avec succès.
+        Votre paiement via PayPal a été traité avec succès.
         Merci de votre confiance !
       </p>
 
       <div class="success-details" :class="{ 'error-details': captureError }">
         <div class="detail-item">
           <span class="label">Source</span>
-          <span class="value">{{ source || 'PayPal' }}</span>
+          <span class="value">PayPal</span>
         </div>
-        <div class="detail-item" v-if="sessionId">
-          <span class="label">Référence de session</span>
-          <span class="value token-value">{{ sessionId }}</span>
-        </div>
-        <div class="detail-item" v-else-if="token">
+        <div class="detail-item" v-if="token">
           <span class="label">Référence de transaction</span>
           <span class="value token-value">{{ token }}</span>
         </div>
@@ -125,8 +121,6 @@ export default defineComponent({
 
     const token = ref<string>('');
     const payerId = ref<string>('');
-    const source = ref<string>('');
-    const sessionId = ref<string>('');
     const capturing = ref<boolean>(false);
     const captureError = ref<string>('');
 
@@ -134,22 +128,6 @@ export default defineComponent({
       // Récupérer les paramètres de query
       token.value = (route.query.token as string) || '';
       payerId.value = (route.query.PayerID as string) || '';
-      source.value = (route.query.source as string) || '';
-      sessionId.value = (route.query.session_id as string) || '';
-
-      // Vérification session Stripe (fallback webhook)
-      if (sessionId.value) {
-        source.value = 'stripe';
-        capturing.value = true;
-        try {
-          await paymentService.verifyStripeSession(sessionId.value);
-        } catch (e: any) {
-          captureError.value = e.response?.data?.message || 'Erreur lors de la vérification du paiement Stripe';
-        } finally {
-          capturing.value = false;
-        }
-        return;
-      }
 
       // Capturer le paiement seulement si on a un token ET un PayerID (= acheteur a approuvé)
       if (token.value && payerId.value) {
@@ -268,8 +246,6 @@ export default defineComponent({
     return {
       token,
       payerId,
-      source,
-      sessionId,
       capturing,
       captureError,
       goToDashboard,

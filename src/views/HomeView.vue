@@ -71,6 +71,16 @@
               </span>
             </label>
 
+            <!-- Consentement marketing : RGPD art. 4(11) et 7(4) — spécifique,
+                 libre et décoché par défaut. Il était codé en dur à `true`. -->
+            <label class="landing__checkbox">
+              <input type="checkbox" v-model="acceptMarketing" />
+              <span>
+                J'accepte de recevoir les actualités et bons plans de MyKpopTrade par email.
+                <em>(facultatif, révocable à tout moment)</em>
+              </span>
+            </label>
+
             <Transition name="fade">
               <div v-if="registerError" class="landing__msg landing__msg--error">
                 <i class="bi bi-exclamation-circle"></i> {{ registerError }}
@@ -117,6 +127,8 @@ export default defineComponent({
     const password_confirm = ref('');
     const acceptPolicy = ref(false);
     const acceptBeta = ref(false);
+    // Décoché par défaut : un consentement pré-coché n'est pas un consentement.
+    const acceptMarketing = ref(false);
     const registerError = ref('');
     const successMessage = ref('');
 
@@ -162,7 +174,7 @@ export default defineComponent({
           confirmPassword: password_confirm.value,
           privacyPolicy: true,
           dataProcessing: true,
-          marketing: true
+          marketing: acceptMarketing.value
         }, { headers: { 'Content-Type': 'application/json' } });
 
         if (response.status === 201) {
@@ -178,7 +190,7 @@ export default defineComponent({
 
     return {
       username, tel, email, password, password_confirm,
-      acceptPolicy, acceptBeta, registerError, successMessage, register
+      acceptPolicy, acceptBeta, acceptMarketing, registerError, successMessage, register
     };
   },
 });

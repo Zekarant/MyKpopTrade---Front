@@ -91,6 +91,17 @@
               </span>
             </label>
 
+            <!-- Consentement marketing : RGPD art. 4(11) et 7(4) — il doit être
+                 spécifique et libre, donc séparé de l'acceptation des CGU et
+                 décoché par défaut. Refuser ne bloque pas l'inscription. -->
+            <label class="auth-checkbox">
+              <input type="checkbox" v-model="acceptMarketing" />
+              <span>
+                J'accepte de recevoir les actualités et bons plans de MyKpopTrade par email.
+                <em>(facultatif, révocable à tout moment)</em>
+              </span>
+            </label>
+
             <!-- Errors -->
             <Transition name="fade">
               <div v-if="emailError || passwordError || nameError || telError || errorBase || policyError || betaError"
@@ -162,29 +173,31 @@
     name: "Register",
     setup() {
       const router = useRouter();
-      var errorBase = ref('');
-      var successMessage = ref('');
+      const errorBase = ref('');
+      const successMessage = ref('');
 
-      var username = ref('');
-      var nameError = ref('');
+      const username = ref('');
+      const nameError = ref('');
 
       /*const firstname = ref('');
       const firstnameError = ref('');*/
 
-      var tel = ref('');
-      var telError = ref('');
+      const tel = ref('');
+      const telError = ref('');
 
-      var email = ref('');
-      var emailError = ref('');
+      const email = ref('');
+      const emailError = ref('');
 
 
-      var password = ref('');
-      var password_confirm = ref('');
-      var passwordError = ref('');
-      var acceptPolicy = ref(false);
-      var policyError = ref('');
-      var acceptBeta = ref(false);
-      var betaError = ref('');
+      const password = ref('');
+      const password_confirm = ref('');
+      const passwordError = ref('');
+      const acceptPolicy = ref(false);
+      const policyError = ref('');
+      // Décoché par défaut : un consentement pré-coché n'est pas un consentement.
+      const acceptMarketing = ref(false);
+      const acceptBeta = ref(false);
+      const betaError = ref('');
 
       const register = async () => {
         nameError.value = '';
@@ -196,7 +209,7 @@
         passwordError.value = '';
 
 
-        var verif_register = true;
+        let verif_register = true;
         if(username.value == '' || username.value.length < 5) {
           verif_register = false;
           nameError.value  = 'Le pseudo doit être plus long';
@@ -242,9 +255,9 @@
             numberPhone: tel.value,
             password: password.value,
             confirmPassword: password_confirm.value,
-            privacyPolicy:verif_register,
+            privacyPolicy: verif_register,
             dataProcessing: verif_register,
-            marketing: verif_register
+            marketing: acceptMarketing.value
 
           }, {
             headers: {
@@ -290,6 +303,7 @@
         password,
         password_confirm,
         acceptPolicy,
+        acceptMarketing,
         policyError,
         acceptBeta,
         betaError,

@@ -30,7 +30,7 @@
 
         <h2>Paiements</h2>
         <p>
-          Les paiements sont traités par nos prestataires (Stripe et/ou PayPal). MyKpopTrade ne
+          Les paiements sont traités par PayPal. MyKpopTrade ne
           détient jamais vos fonds : l'argent circule directement entre l'acheteur et le vendeur via
           ces prestataires.
         </p>

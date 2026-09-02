@@ -80,7 +80,7 @@
         pages: 1
       });
 
-      var loading = false;
+      let loading = false;
       const posts = ref<any[]>([]);
 
       // Fonction pour charger plus
@@ -178,12 +178,9 @@
       return {
         queryLocal:'',
         isMobile: window.innerWidth <= 769,
-        posts: [] as any[],
-        pagination: {
-          limit: 500,
-          page: 1,
-          pages: 1
-        },
+        // `posts` et `pagination` sont fournis par setup(), qui a la priorité sur
+        // data() : les redéclarer ici créait une collision de noms sans effet
+        // (les valeurs de data() n'étaient jamais lues). Source unique : setup().
         filters: {
           min: null,
           max: null,

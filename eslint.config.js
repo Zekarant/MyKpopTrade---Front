@@ -11,7 +11,9 @@ export default [
 
   {
     name: 'app/files-to-ignore',
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**'],
+    // `public/` est recopié tel quel par Vite : ce n'est pas du code applicatif.
+    // Le service worker y utilise volontairement les globales du worker (`self`).
+    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'public/**'],
   },
 
   ...pluginVue.configs['flat/essential'],

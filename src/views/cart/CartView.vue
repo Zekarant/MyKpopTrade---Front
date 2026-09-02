@@ -214,7 +214,7 @@ export default defineComponent({
         this.cart = await cartService.removeItem(productId);
         this.validationIssues = this.validationIssues.filter(i => !i.includes(productId));
       } catch (error: any) {
-        alert(error?.response?.data?.message || 'Erreur');
+        this.$func.showToastError(error?.response?.data?.message || 'Erreur lors du retrait de l\'article.');
       } finally {
         this.removing = '';
       }
@@ -236,7 +236,7 @@ export default defineComponent({
     async confirmCheckout() {
       if (this.shippingMethod !== 'localPickup') {
         if (!this.shippingAddress.recipientName || !this.shippingAddress.streetLine1 || !this.shippingAddress.postalCode || !this.shippingAddress.city) {
-          alert('Veuillez remplir les champs d\'adresse obligatoires.');
+          this.$func.showToastError('Veuillez remplir les champs d\'adresse obligatoires.');
           return;
         }
       }
@@ -261,8 +261,8 @@ export default defineComponent({
           window.location.href = payments[0].approvalUrl;
         }
       } catch (error: any) {
-        const msg = error?.response?.data?.message || 'Erreur lors du checkout';
-        alert(msg);
+        const msg = error?.response?.data?.message || 'Erreur lors de la validation du panier.';
+        this.$func.showToastError(msg);
       } finally {
         this.checkingOut = false;
       }

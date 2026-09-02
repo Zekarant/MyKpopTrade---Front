@@ -22,7 +22,6 @@ import ImageCarousel from './components/ImageCarousel.vue'
 import filter_review from './components/filter_review.vue'
 import response_review from './components/response_review.vue'
 import card from './components/card.vue'
-import Vue3Lottie from 'vue3-lottie'
 import PrimeVue from 'primevue/config'
 import Aura from '../node_modules/@primevue/themes/aura'
 import Slider from 'primevue/slider'
@@ -38,7 +37,6 @@ app.use(PrimeVue, {
     }
 })
 app.config.globalProperties.$func = func
-app.use(Vue3Lottie)
 app.component("post", post)
 app.component("Grid", Grid)
 app.component("card_illu", card_illu)
