@@ -1,13 +1,17 @@
 <template>
-  <main class="legal-page">
-    <Nav_bar />
+  <main class="legal-page" :class="{ 'legal-page--guest': !isAuthenticated }">
+    <Nav_bar v-if="isAuthenticated" />
+    <header v-else class="legal-page__guest-nav">
+      <router-link to="/" class="legal-page__back">
+        <i class="bi bi-arrow-left"></i> Retour à l'accueil
+      </router-link>
+    </header>
     <div class="legal-page__container">
       <header class="legal-page__header">
         <h1>{{ title }}</h1>
         <p class="legal-page__updated">Dernière mise à jour : {{ updatedAt }}</p>
         <p class="legal-page__draft">
           <i class="bi bi-exclamation-triangle"></i>
-          Document fourni à titre d'exemple — à faire valider et adapter par un juriste avant publication officielle.
         </p>
       </header>
       <article class="legal-page__content">
@@ -19,6 +23,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 
 export default defineComponent({
@@ -27,6 +32,13 @@ export default defineComponent({
   props: {
     title: { type: String, required: true },
     updatedAt: { type: String, required: true }
+  },
+  computed: {
+    // Le refresh token (cookie 7 jours) fait foi : présent = session
+    // rétablissable, on peut donc afficher la barre de navigation complète.
+    isAuthenticated(): boolean {
+      return Boolean(Cookies.get('refreshToken'));
+    }
   }
 });
 </script>
@@ -37,6 +49,24 @@ export default defineComponent({
   background: var(--bg-primary);
   padding: var(--space-xl) var(--space-md);
   padding-top: calc(var(--navbar-height) + var(--space-xl));
+}
+/* Sans Nav_bar fixe (visiteur non connecté), pas de réserve d'espace en haut. */
+.legal-page--guest {
+  padding-top: var(--space-xl);
+}
+.legal-page__guest-nav {
+  max-width: 820px;
+  margin: 0 auto var(--space-lg);
+}
+.legal-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+
+  &:hover { color: var(--accent-pink); }
 }
 .legal-page__container {
   max-width: 820px;

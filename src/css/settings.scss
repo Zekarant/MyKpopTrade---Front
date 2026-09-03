@@ -1,0 +1,536 @@
+// ============================================
+// MyKpopTrade - Page Réglages (adhérent)
+// Styles extraits de src/views/adherents/settings.vue
+// Importé en scoped via `@use '../../css/settings.scss' as *;`
+// ============================================
+
+.settings-page {
+  padding: var(--space-xl) var(--space-md);
+  padding-top: calc(var(--navbar-height) + var(--space-xl));
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.settings-page__container {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.settings-page__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.settings-page__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent-pink);
+    color: var(--accent-pink);
+  }
+}
+
+.settings-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.settings-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+// .settings-card / .settings-card__title / .settings-card__body
+// et .btn-settings sont dans src/css/_account-settings.scss
+// (chargé globalement, partagé avec TwoFactorCard.vue).
+
+// Rows
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover { background: var(--surface-hover); }
+
+  &--column {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+    &:hover { background: transparent; }
+  }
+}
+
+.setting-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.setting-row__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+
+  i { font-size: 1.1rem; color: var(--text-muted); }
+}
+
+.setting-row__label-group {
+  display: flex;
+  flex-direction: column;
+
+  small { font-size: var(--font-size-xs); }
+}
+
+.setting-row__inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+// Badges
+.setting-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &--success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  &--warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #e0a800;
+  }
+  &--link {
+    background: rgba(255, 45, 120, 0.1);
+    color: var(--accent-pink);
+    cursor: pointer;
+  }
+  &--danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+  &--info {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+  }
+  &--identity {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+  }
+}
+
+// Inputs
+.settings-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  transition: border-color var(--transition-fast);
+  margin-bottom: var(--space-sm);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-pink);
+    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+  }
+
+  // Neutralise le fond gris/jaune que Chrome applique aux champs auto-remplis.
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  &--sm {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}
+
+// Password form
+.password-form {
+  padding: var(--space-md) var(--space-lg);
+}
+
+.password-form__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
+
+// Delete confirm
+.delete-confirm {
+  padding: var(--space-md) var(--space-lg);
+}
+
+.delete-confirm__text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+// Toggle
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+
+  input { opacity: 0; width: 0; height: 0; }
+}
+
+.toggle__slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--surface-border);
+  border-radius: 24px;
+  transition: var(--transition-fast);
+
+  &::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+  }
+}
+
+.toggle input:checked + .toggle__slider {
+  background: var(--accent-pink);
+}
+
+.toggle input:checked + .toggle__slider::before {
+  transform: translateX(20px);
+}
+
+.paypal-card {
+  margin: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.paypal-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.paypal-card__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+
+  > i {
+    font-size: 1.5rem;
+    color: #003087;
+  }
+}
+.paypal-card__title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+.paypal-card__subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.paypal-card__meta,
+.paypal-card__hint {
+  font-size: var(--font-size-xs);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.paypal-card__meta { color: var(--text-muted); }
+.paypal-card__hint { color: #e0a800; }
+.paypal-card__email-form {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+.paypal-card__input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-secondary, #f5f5f5);
+  border: 1px solid var(--surface-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 200px;
+
+  i { color: var(--text-muted); }
+}
+.paypal-card__input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+.paypal-card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-xs);
+}
+
+.identity-form {
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border-top: 1px solid var(--surface-border);
+
+  &__info {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0;
+
+    &--danger { color: #c82333; }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+  }
+}
+
+.identity-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 120px;
+  border: 2px dashed var(--surface-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  transition: border-color var(--transition-fast);
+
+  &:hover { border-color: var(--accent-pink); }
+
+  i { font-size: 1.8rem; }
+
+  &__preview {
+    max-height: 120px;
+    max-width: 100%;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+  }
+}
+
+.identity-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1.4;
+
+  input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
+}
+
+// Réglage du consentement marketing (carte « Mes données »)
+.consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  // Aligné sur les boutons .btn-settings--full de la même carte.
+  margin: 0 var(--space-lg) var(--space-sm);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &:has(input:disabled) {
+    opacity: 0.6;
+    cursor: progress;
+  }
+}
+
+.consent-row__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.4;
+
+  small {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+}
+
+// PayPal info modal
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  z-index: 1000;
+}
+
+.modal-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  h2 {
+    font-size: var(--font-size-lg);
+    margin: 0 0 var(--space-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: var(--space-sm) 0 4px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-xs);
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    }
+
+    &:disabled {
+      color: var(--text-muted);
+      background: var(--bg-primary);
+      cursor: not-allowed;
+    }
+
+    // Neutralise le fond gris/jaune que Chrome applique aux champs auto-remplis.
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+      -webkit-text-fill-color: var(--text-primary);
+      caret-color: var(--text-primary);
+      transition: background-color 9999s ease-in-out 0s;
+    }
+  }
+}
+
+.modal-inline {
+  display: flex;
+  gap: var(--space-xs);
+
+  input { flex: 1; }
+}
+
+.modal-error {
+  color: #c82333;
+  font-size: var(--font-size-xs);
+  margin: var(--space-xs) 0 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-md);
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .settings-page {
+    padding: var(--space-md) var(--space-sm);
+    padding-top: calc(var(--navbar-height) + var(--space-md));
+  }
+
+  .settings-page__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .setting-row__inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

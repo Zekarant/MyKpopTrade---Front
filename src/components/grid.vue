@@ -3,7 +3,7 @@
         <card :data="data" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
     </div>
     <div v-if="dataList && dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more">
-        <button class="btn btn-outline" @click="loadMore()">
+        <button type="button" class="load-more-btn" @click="loadMore()">
           <i class="bi bi-arrow-down-circle"></i>
           Charger plus
         </button>
@@ -127,6 +127,39 @@
       display: flex;
       justify-content: center;
       padding: var(--space-xl) 0;
+    }
+
+    .load-more-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: 12px 28px;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1.5px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: all var(--transition-base);
+
+      i, .bi {
+        font-size: 1.1em;
+      }
+
+      &:hover {
+        border-color: var(--accent-pink);
+        color: var(--accent-pink);
+        background: rgba(255, 45, 120, 0.05);
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
     }
 
     @media (max-width: 640px) {

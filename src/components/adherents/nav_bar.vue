@@ -41,7 +41,7 @@
             <div v-if="notificationsOpen" class="navbar__notif-dropdown" @click.stop>
               <div class="navbar__notif-header">
                 <span class="navbar__notif-title">Notifications</span>
-                <button v-if="notifications.length > 0" class="navbar__notif-mark-all" @click="markAllRead">Tout lire</button>
+                <button v-if="notifications.length > 0" class="navbar__notif-mark-all" @click="markAllRead">Tout marquer comme lu</button>
               </div>
               <div class="navbar__notif-list">
                 <div v-if="notifications.length === 0" class="navbar__notif-empty">
@@ -171,9 +171,17 @@
           <i class="bi bi-person"></i>
           <span>Mon profil</span>
         </a>
+        <a @click="navPage('settings', null)" href="#" class="navbar__mobile-link">
+          <i class="bi bi-pencil-square"></i>
+          <span>Modifier mon profil</span>
+        </a>
         <a @click="navPage('collection', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-collection"></i>
           <span>Ma collection</span>
+        </a>
+        <a @click="navPage('messages', 'me')" href="#" class="navbar__mobile-link">
+          <i class="bi bi-envelope"></i>
+          <span>Mes messages</span>
         </a>
         <a @click="navPage('payments', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-receipt"></i>
@@ -182,6 +190,10 @@
         <a @click="navPage('disputes', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-shield-exclamation"></i>
           <span>Mes litiges</span>
+        </a>
+        <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__mobile-link">
+          <i class="bi bi-shield-check"></i>
+          <span>Administration</span>
         </a>
         <a @click="logout" href="#" class="navbar__mobile-link navbar__mobile-link--danger">
           <i class="bi bi-box-arrow-right"></i>
@@ -986,11 +998,25 @@ declare global {
 @media (max-width: 768px) {
   .navbar__links,
   .navbar__sell-btn .navbar__sell-text,
-  .navbar__icon-btn {
-    display: none;
+  .navbar__icon-btn,
+  .navbar__notif-wrapper,
+  .navbar__profile,
+  .navbar__dropdown,
+  .navbar__right {
+    display: none !important;
   }
 
+  .navbar__inner {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    gap: var(--space-sm);
+    padding: 0 var(--space-md);
+  }
+
+  // brand stays left; this pushes the "+ / burger" group to the right edge
   .navbar__sell-btn {
+    margin-left: auto;
     padding: 10px 14px;
   }
 

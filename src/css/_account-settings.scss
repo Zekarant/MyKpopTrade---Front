@@ -1,0 +1,106 @@
+// ============================================
+// MyKpopTrade - Primitives « carte de réglages »
+// Partagées entre la page Réglages (settings.vue) et les
+// composants qu'elle héberge (ex. TwoFactorCard.vue).
+// Chargé globalement via main.scss — ne pas scoper.
+// ============================================
+
+// Card
+.settings-card {
+  background: var(--bg-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+
+  &--danger {
+    border-color: rgba(220, 53, 69, 0.3);
+  }
+}
+
+.settings-card__title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+
+  i { color: var(--accent-pink); }
+
+  &--danger i { color: #dc3545; }
+}
+
+.settings-card__body {
+  padding: var(--space-sm) 0;
+}
+
+// Buttons
+.btn-settings {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--surface-border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+
+  &:hover { background: var(--surface-hover); }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: white;
+    &:hover {
+      background: var(--accent-gradient);
+      box-shadow: 0 4px 12px rgba(255, 45, 120, 0.3);
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--surface-border);
+    &:hover { background: var(--surface-hover); }
+  }
+
+  &--danger {
+    background: #dc3545;
+    border-color: transparent;
+    color: white;
+    &:hover { background: #c82333; }
+  }
+
+  &--sm {
+    padding: 6px 12px;
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+
+  &--full {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    margin: var(--space-xs) var(--space-lg);
+    width: calc(100% - var(--space-lg) * 2);
+  }
+}
+
+@media (max-width: 640px) {
+  .btn-settings--sm {
+    width: 100%;
+    justify-content: center;
+  }
+}

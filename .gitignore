@@ -36,3 +36,7 @@ claude.md
 .env
 .env.local
 .env.*.local
+PRODUCT.md
+DESIGN.md
+.impeccable/design.json
+.impeccable/config.json

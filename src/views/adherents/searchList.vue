@@ -217,9 +217,17 @@
         this.queryLocal = (this.query && !internalEvents.includes(this.query)) ? this.query : '';
         if(this.event && this.event !== ''){
           if(this.event === 'morePage') {
-            this.loadMore();
-          }else if(this.event === 'morePageFavorites') {
-            this.moreFavorites();
+            // On restaure les articles déjà chargés (transmis via sessionStorage
+            // par la grille). Sans ça la page restait vide : loadMore() sortait
+            // immédiatement car page (1) >= pages (1) et `posts` n'était jamais
+            // alimenté. Fallback : recherche complète si rien à restaurer.
+            if (!this.seedFromSession()) {
+              this.runSearch();
+            }
+          }else if(this.event === 'morePageFavorites' || this.event === 'moreFavorites') {
+            if (!this.seedFromSession()) {
+              this.runFavorites();
+            }
           }
           else if(this.event === 'search'){
             this.searchEvent(this.queryLocal)
@@ -227,6 +235,47 @@
         } else {
           // Par défaut, charger tous les articles
           this.runSearch();
+        }
+      },
+      /**
+       * Restaure la liste et la pagination sauvegardées par la grille avant la
+       * redirection vers cette page. Renvoie `true` si des articles ont été
+       * restaurés (le scroll infini prend ensuite le relais pour les pages
+       * suivantes). Le sessionStorage est vidé pour éviter de réutiliser des
+       * données périmées lors d'une navigation ultérieure.
+       */
+      seedFromSession(): boolean {
+        try {
+          const postsStr = sessionStorage.getItem('posts_str');
+          if (!postsStr) return false;
+          const savedPosts = JSON.parse(postsStr);
+          if (!Array.isArray(savedPosts) || savedPosts.length === 0) return false;
+          this.posts = savedPosts;
+          const paginationStr = sessionStorage.getItem('pagination_str');
+          if (paginationStr) {
+            const saved = JSON.parse(paginationStr);
+            this.pagination = {
+              limit: saved?.limit ?? 10,
+              page: saved?.page ?? 1,
+              pages: saved?.pages ?? 1,
+            };
+          }
+          return true;
+        } catch (error) {
+          console.error('Erreur lors de la restauration de la session:', error);
+          return false;
+        } finally {
+          sessionStorage.removeItem('posts_str');
+          sessionStorage.removeItem('pagination_str');
+        }
+      },
+      async runFavorites() {
+        try {
+          const res = await postService.getFavorites(this.pagination.limit, 1);
+          this.posts = res.products || [];
+          this.pagination = res.pagination || { limit: 10, page: 1, pages: 1 };
+        } catch (error) {
+          console.error('Erreur lors de la récupération des favoris:', error);
         }
       },
       showPopup() {

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Cookies from 'js-cookie'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
@@ -111,7 +112,7 @@ const routes = [
     } else if (parts.length === 1) {
       // Une seule partie => soit query soit event
       // Tu peux définir une liste des events connus pour distinguer
-      const knownEvents = ['morePage', 'search', 'morePageFavorites'];
+      const knownEvents = ['morePage', 'search', 'morePageFavorites', 'moreFavorites'];
       if (knownEvents.includes(parts[0])) {
         query = '';
         event = parts[0];
@@ -248,6 +249,24 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: routes
+})
+
+/**
+ * Pages réservées aux visiteurs non connectés. Le refresh token (cookie de
+ * 7 jours) fait foi : tant qu'il est présent, la session peut être rétablie,
+ * donc on renvoie l'utilisateur vers son tableau de bord plutôt que de lui
+ * réafficher l'accueil ou l'écran de connexion.
+ */
+const GUEST_ONLY_ROUTES = new Set(['home', 'login', 'register'])
+
+router.beforeEach((to) => {
+  const hasSession = Boolean(Cookies.get('refreshToken'))
+
+  if (hasSession && typeof to.name === 'string' && GUEST_ONLY_ROUTES.has(to.name)) {
+    return { name: 'dashboard' }
+  }
+
+  return true
 })
 
 

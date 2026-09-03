@@ -147,25 +147,30 @@ class authentificationService {
     }
   }
   async verifSession(): Promise<void> {
-    const sessionToken = Cookies.get("sessionToken");
+    const refreshToken = Cookies.get("refreshToken");
 
-    if (!sessionToken) {
+    // Sans refresh token (durée de vie 7 jours), aucune session ne peut être
+    // rétablie : c'est le seul cookie qui survit à la fermeture de l'onglet et
+    // à l'expiration du token d'accès.
+    if (!refreshToken) {
       await this.logout();
       throw new Error("No session token");
     }
 
-    try {
-      const refreshToken = Cookies.get("refreshToken");
+    // Le token d'accès (15 min) est encore là : la session est valide, inutile
+    // de solliciter l'API. Sans ce court-circuit, un simple retour sur le site
+    // après expiration du token d'accès déconnectait l'utilisateur alors que le
+    // refresh token restait valable.
+    const sessionToken = Cookies.get("sessionToken");
+    if (sessionToken) {
+      return;
+    }
 
+    try {
       const response: AxiosResponse<RefreshTokenResponse> = await this.authApiClient.post(
         '/refresh-token',
         { refreshToken },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionToken}`,
-          },
-        }
+        { headers: { "Content-Type": "application/json" } }
       );
 
       if (response.status === 200) {

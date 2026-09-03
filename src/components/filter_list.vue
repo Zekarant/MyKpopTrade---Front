@@ -263,6 +263,7 @@ export default {
 
 .filter-panel__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-sm);
   padding-top: var(--space-sm);
   border-top: 1px solid var(--surface-border);
@@ -338,11 +339,13 @@ export default {
 }
 
 .filter-panel__btn {
-  flex: 1;
-  padding: 10px 16px;
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   display: flex;
   align-items: center;
