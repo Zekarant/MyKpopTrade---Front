@@ -1,10 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-import './css/main.scss'
+// Bootstrap avant la feuille maison : nos styles doivent gagner à spécificité
+// égale.
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import './css/main.scss'
 import { func } from "./function"
 
 import App from './App.vue'
@@ -26,6 +28,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '../node_modules/@primevue/themes/aura'
 import Slider from 'primevue/slider'
 import pushService from './services/push.service'
+import { warnIfLegalIncomplete } from './config/legal'
 
 const app = createApp(App)
 
@@ -57,3 +60,5 @@ app.mount('#app')
 // la permission de notification ici : c'est fait à la demande, depuis un
 // geste utilisateur (cf. pushService.subscribe).
 pushService.registerServiceWorker().catch(() => { /* silently ignored */ })
+
+warnIfLegalIncomplete()

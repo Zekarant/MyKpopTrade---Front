@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="page">
   <nav_bar></nav_bar>
   <div class="messaging-container">
@@ -1691,7 +1691,7 @@ showConversationMenu.value = null
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: var(--primary-color, --primary-color-ligh);
+  background: var(--accent-gradient);
   color: white;
   border: none;
   border-radius: 25px;
@@ -1704,14 +1704,13 @@ showConversationMenu.value = null
 }
 
 .btn-new-conversation:hover {
-  background: var(--primary-color-ligh);
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(99, 106, 116, 0.3);
+  box-shadow: var(--shadow-md), var(--shadow-glow-pink);
 }
 
 .btn-new-conversation:active {
   transform: translateY(0);
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  box-shadow: none;
 }
 
 .btn-new-conversation i {
@@ -2013,7 +2012,7 @@ showConversationMenu.value = null
   color: #6c757d;
 }
 
-.empty-state i {
+.empty-state > i {
   font-size: 64px;
   margin-bottom: 16px;
   color: #dee2e6;
@@ -2026,32 +2025,6 @@ showConversationMenu.value = null
 
 .empty-state p {
   margin: 0 0 24px 0;
-}
-
-.btn-primary {
-  background: var(--blue);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #0b5ed7;
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  transform: none;
 }
 
 .active-chat {
@@ -3366,3 +3339,4 @@ showConversationMenu.value = null
 }
 
 </style>
+

@@ -1,7 +1,6 @@
-<template>
+﻿<template>
     <main class="page">
         <Nav_bar></Nav_bar>
-        <popup_add_item v-if="isPopupVisible" @close="isPopupVisible=false"></popup_add_item>
 
         <!-- Deletion scheduled banner -->
         <div v-if="deletionDate" class="deletion-banner">
@@ -98,7 +97,6 @@
     import { useRouter } from "vue-router";
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
-    import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
     import postService from '@/services/post.service';
@@ -111,7 +109,6 @@
     name: 'dashboard',
     components: {
       Nav_bar,
-      Popup_add_item,
       search_bar,
       row_products
     },
@@ -130,7 +127,6 @@
       return { router };
     },
     data(): {
-      isPopupVisible: boolean;
       dataCardList: any[],
       paginationTab: any,
       productRecommendations: any[],
@@ -138,7 +134,6 @@
       deletionDate: string | null,
     } {
       return {
-        isPopupVisible: false,
         productRecommendations: [],
         dataCardList: [],
         paginationTab: {},
@@ -147,9 +142,6 @@
       };
     },
     methods: {
-      showPopup() {
-        this.isPopupVisible = true;
-      },
       async getRecommendations(){
         const products = await postService.getRecommendations();
         this.productRecommendations = products;

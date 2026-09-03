@@ -1,8 +1,7 @@
-<template>
+﻿<template>
     <main class="page">
-        <Nav_bar @toggle-popup-add="showPopup"></Nav_bar>
-        <popup_add_item v-if="isPopupVisible" @close="isPopupVisible=false"></popup_add_item>
-        <div class="content" style="display: flex;">
+        <Nav_bar></Nav_bar>
+       <div class="content" style="display: flex;">
           <div style="width: 2%;"></div>
           <div v-if="!isMobile" class="filter_content">
             <filter_list @saveFilter="applyFilter"></filter_list>
@@ -45,7 +44,6 @@
     import searchService from '@/services/search.service';
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
-    import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import search_bar_2 from '@/components/search_bar_2.vue';
     import filter_list from '@/components/filter_list.vue';
 
@@ -64,7 +62,6 @@
     name: 'searchList',
     components: {
       Nav_bar,
-      Popup_add_item,
       search_bar_2,
       filter_list
     },
@@ -189,7 +186,6 @@
           group: null,
           member: null
         } as SearchFilters,
-        isPopupVisible: false
       };
 
     },
@@ -277,9 +273,6 @@
         } catch (error) {
           console.error('Erreur lors de la récupération des favoris:', error);
         }
-      },
-      showPopup() {
-        this.isPopupVisible = true; // Affiche la popup
       },
       handleResize() {
         this.isMobile = window.innerWidth <= 769;

@@ -66,7 +66,7 @@
                                 <button @click="openMessagePopup" v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
                             </div>
                             <div class="col-md-5">
-                                <button v-if="!isYouProfil" @click="toggleFollow" style="font-size: 12px;" type="button" :class="['btn', isFollowing ? 'btn-outline-secondary' : 'btn-primary']">{{ isFollowing ? 'Suivi' : 'Suivre' }}</button>
+                                <button v-if="!isYouProfil" @click="toggleFollow" style="font-size: 12px;" type="button" :class="['btn', isFollowing ? 'btn-outline' : 'btn-primary']">{{ isFollowing ? 'Suivi' : 'Suivre' }}</button>
                             </div>
                         </div>
                     </div>

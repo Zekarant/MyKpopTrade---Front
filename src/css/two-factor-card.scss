@@ -1,25 +1,10 @@
-// ============================================
+﻿// ============================================
 // MyKpopTrade - Carte « Double authentification »
 // Styles extraits de src/components/adherents/TwoFactorCard.vue
 // Importé en scoped via `@use '../../css/two-factor-card.scss' as *;`
 // Les primitives .settings-card* / .btn-settings* viennent de
 // src/css/_account-settings.scss (global).
 // ============================================
-
-// Cette carte gère son retrait horizontal au niveau du corps
-// (le .settings-card__body global n'a pas de padding latéral, et
-// settings.vue le fait ligne par ligne). On annule donc la marge
-// latérale que .btn-settings--full applique par défaut.
-.settings-card__body {
-  padding-left: var(--space-lg);
-  padding-right: var(--space-lg);
-}
-
-.btn-settings--full {
-  width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-}
 
 .twofa-state {
   display: flex;

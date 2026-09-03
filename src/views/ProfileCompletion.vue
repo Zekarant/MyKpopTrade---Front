@@ -18,13 +18,36 @@
 
           <form @submit.prevent="submit" class="auth-form">
             <div class="form-group">
-              <label class="form-label">Pseudo</label>
-              <div class="input-group--custom">
+              <label class="form-label">Pseudo <span class="required">*</span></label>
+              <div class="input-group--custom" :class="{ 'input-group--error': usernameError }">
                 <span class="input-icon"><i class="bi bi-person"></i></span>
-                <input v-model="form.username" type="text" :placeholder="defaultUsername" />
+                <input v-model.trim="form.username" type="text" maxlength="30" autocomplete="username" />
               </div>
-              <small class="hint">Tu peux garder le pseudo généré ou en choisir un.</small>
+              <small v-if="usernameError" class="hint hint--error">{{ usernameError }}</small>
+              <small v-else class="hint">
+                C'est le nom sous lequel les autres membres te verront. Modifiable à tout moment
+                depuis tes paramètres.
+              </small>
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Prénom</label>
+                <div class="input-group--custom">
+                  <span class="input-icon"><i class="bi bi-person-vcard"></i></span>
+                  <input v-model.trim="form.firstName" type="text" maxlength="100" autocomplete="given-name" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nom</label>
+                <div class="input-group--custom">
+                  <input v-model.trim="form.lastName" type="text" maxlength="100" autocomplete="family-name" />
+                </div>
+              </div>
+            </div>
+            <small class="hint">
+              <i class="bi bi-lock"></i> Restent privés : jamais affichés sur ton profil public.
+            </small>
 
             <div class="form-group">
               <label class="form-label">Téléphone <span class="required">*</span></label>
@@ -49,7 +72,13 @@
 
             <label class="auth-checkbox">
               <input v-model="form.privacyPolicyAccepted" type="checkbox" required />
-              <span>J'accepte la <a href="/politique-confidentialite" target="_blank">politique de confidentialité</a> <span class="required">*</span></span>
+              <span>
+                J'accepte les
+                <router-link to="/cgu" target="_blank">CGU</router-link>
+                et la
+                <router-link to="/privacy" target="_blank">politique de confidentialité</router-link>
+                <span class="required">*</span>
+              </span>
             </label>
 
             <label class="auth-checkbox">
@@ -80,7 +109,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive, ref } from 'vue';
+import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -98,11 +127,25 @@ export default defineComponent({
 
     const form = reactive({
       username: '',
+      firstName: '',
+      lastName: '',
       phoneNumber: '',
       bio: '',
       location: '',
       privacyPolicyAccepted: false,
       marketingConsent: false,
+    });
+
+    /** Validation locale du pseudo, alignée sur `validateUsername` côté API. */
+    const usernameError = computed(() => {
+      const username = form.username;
+      if (!username) return 'Le pseudo est obligatoire.';
+      if (username.length < 3) return 'Au moins 3 caractères.';
+      if (username.length > 30) return '30 caractères maximum.';
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        return 'Lettres, chiffres, tiret et underscore uniquement.';
+      }
+      return '';
     });
 
     onMounted(async () => {
@@ -115,11 +158,19 @@ export default defineComponent({
         const { data } = await axios.get(`${API_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        defaultUsername.value = data.user?.username || '';
         if (data.user?.profileCompleted) {
           // Déjà rempli — on n'est pas censé être ici.
           router.replace('/adherents/dashboard');
+          return;
         }
+        // Pré-remplissage depuis le fournisseur OAuth : le pseudo est déjà
+        // dérivé du nom du compte, l'utilisateur n'a qu'à le valider ou
+        // l'ajuster. Le champ est rempli, pas seulement suggéré en placeholder,
+        // pour que « Terminer » fonctionne sans saisie supplémentaire.
+        defaultUsername.value = data.user?.username || '';
+        form.username = defaultUsername.value;
+        form.firstName = data.user?.firstName || '';
+        form.lastName = data.user?.lastName || '';
       } catch {
         router.replace('/login');
       }
@@ -128,6 +179,10 @@ export default defineComponent({
     const submit = async () => {
       errorMessage.value = '';
       errors.phoneNumber = undefined;
+      if (usernameError.value) {
+        errorMessage.value = usernameError.value;
+        return;
+      }
       if (!form.phoneNumber || form.phoneNumber.replace(/\D/g, '').length < 6) {
         errors.phoneNumber = 'Numéro requis';
         errorMessage.value = 'Le téléphone est requis pour finaliser.';
@@ -143,7 +198,9 @@ export default defineComponent({
         await axios.post(
           `${API_URL}/api/auth/profile/complete`,
           {
-            ...(form.username ? { username: form.username } : {}),
+            username: form.username,
+            firstName: form.firstName,
+            lastName: form.lastName,
             phoneNumber: form.phoneNumber,
             bio: form.bio || undefined,
             location: form.location || undefined,
@@ -166,7 +223,7 @@ export default defineComponent({
       router.replace('/adherents/dashboard');
     };
 
-    return { form, errors, errorMessage, loading, defaultUsername, submit, skip };
+    return { form, errors, errorMessage, loading, defaultUsername, usernameError, submit, skip };
   },
 });
 </script>
@@ -207,8 +264,23 @@ export default defineComponent({
 
 .auth-form { display: flex; flex-direction: column; gap: var(--space-md); }
 .form-group { display: flex; flex-direction: column; gap: var(--space-xs); }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
 .required { color: var(--accent-pink); }
-.hint { color: var(--text-muted); font-size: var(--font-size-xs); }
+.hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+
+  &--error { color: var(--danger); font-weight: 500; }
+}
+
+@media (max-width: 480px) {
+  .form-row { grid-template-columns: 1fr; }
+}
 .input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; }
 
 textarea {

@@ -22,6 +22,9 @@ export interface IUserProfile {
 export interface IUser {
   _id: string;
   username: string;
+  /** Jamais affichés publiquement. */
+  firstName?: string;
+  lastName?: string;
   email?: string;
   profilePicture?: string;
   location?: string;

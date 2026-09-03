@@ -1,6 +1,6 @@
 <template>
     <main class="page">
-        <Nav_bar @toggle-popup-add="showPopup"></Nav_bar>
+        <Nav_bar></Nav_bar>
         <div class="profile-layout">
           <div class="profile-layout__content">
             <div class="profile-banner-wrap">
@@ -98,22 +98,28 @@
               </div>
             </div>
 
-            <!-- About -->
+            <!-- À propos : lecture seule, l'édition est dans les paramètres. -->
             <div class="about-section" v-if="partView === 'about'">
               <div class="about-card">
+                <div v-if="myProfile" class="about-card__edit-bar">
+                  <span class="about-card__edit-hint">
+                    <i class="bi bi-eye"></i> Voici ce que voient les autres membres.
+                  </span>
+                  <router-link
+                    to="/adherents/settings?section=profil"
+                    class="about-card__edit-btn"
+                  >
+                    <i class="bi bi-pencil"></i> Modifier mon profil
+                  </router-link>
+                </div>
+
                 <!-- Bio -->
                 <div class="about-card__block">
                   <h3 class="about-card__title"><i class="bi bi-person-lines-fill"></i> Description</h3>
-                  <p v-if="!myProfile && profilInfo.bio" class="about-card__bio">{{ profilInfo.bio }}</p>
-                  <p v-if="!myProfile && !profilInfo.bio" class="about-card__bio about-card__bio--empty">Aucune description renseignée.</p>
-                  <textarea
-                    v-if="myProfile"
-                    v-model="profilInfo.bio"
-                    @change="info_update()"
-                    class="about-card__textarea"
-                    placeholder="Décrivez-vous en quelques mots..."
-                    rows="3"
-                  ></textarea>
+                  <p v-if="profilInfo.bio" class="about-card__bio">{{ profilInfo.bio }}</p>
+                  <p v-else class="about-card__bio about-card__bio--empty">
+                    Aucune description renseignée.
+                  </p>
                 </div>
 
                 <!-- Infos -->
@@ -124,34 +130,33 @@
                       <span class="about-card__label">Nom d'utilisateur</span>
                       <span class="about-card__value">{{ profilInfo.username }}</span>
                     </div>
-                    <div class="about-card__row" v-if="profilInfo.location || myProfile">
+                    <div class="about-card__row" v-if="profilInfo.location">
                       <span class="about-card__label">Lieu de résidence</span>
-                      <span v-if="!myProfile" class="about-card__value">{{ profilInfo.location }}</span>
-                      <input v-if="myProfile" v-model="profilInfo.location" @change="info_update()" class="about-card__input" placeholder="Votre ville..." />
+                      <span class="about-card__value">{{ profilInfo.location }}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Réseaux sociaux -->
-                <div class="about-card__block">
+                <div class="about-card__block" v-if="hasSocialLinks || myProfile">
                   <h3 class="about-card__title"><i class="bi bi-share"></i> Réseaux sociaux</h3>
-                  <div class="about-card__grid">
-                    <div class="about-card__row">
+                  <div v-if="hasSocialLinks" class="about-card__grid">
+                    <div class="about-card__row" v-if="profilInfo.socialLinks?.instagram">
                       <span class="about-card__label"><i class="bi bi-instagram"></i> Instagram</span>
-                      <span v-if="!myProfile && profilInfo.socialLinks?.instagram" class="about-card__value">{{ profilInfo.socialLinks.instagram }}</span>
-                      <input v-if="myProfile" v-model="profilInfo.socialLinks.instagram" @change="info_update()" class="about-card__input" placeholder="@votre_compte" />
+                      <span class="about-card__value">{{ profilInfo.socialLinks.instagram }}</span>
                     </div>
-                    <div class="about-card__row">
-                      <span class="about-card__label"><i class="bi bi-twitter-x"></i> Twitter</span>
-                      <span v-if="!myProfile && profilInfo.socialLinks?.twitter" class="about-card__value">{{ profilInfo.socialLinks.twitter }}</span>
-                      <input v-if="myProfile" v-model="profilInfo.socialLinks.twitter" @change="info_update()" class="about-card__input" placeholder="@votre_compte" />
+                    <div class="about-card__row" v-if="profilInfo.socialLinks?.twitter">
+                      <span class="about-card__label"><i class="bi bi-twitter-x"></i> X (Twitter)</span>
+                      <span class="about-card__value">{{ profilInfo.socialLinks.twitter }}</span>
                     </div>
-                    <div class="about-card__row">
+                    <div class="about-card__row" v-if="profilInfo.socialLinks?.discord">
                       <span class="about-card__label"><i class="bi bi-discord"></i> Discord</span>
-                      <span v-if="!myProfile && profilInfo.socialLinks?.discord" class="about-card__value">{{ profilInfo.socialLinks.discord }}</span>
-                      <input v-if="myProfile" v-model="profilInfo.socialLinks.discord" @change="info_update()" class="about-card__input" placeholder="Pseudo#0000" />
+                      <span class="about-card__value">{{ profilInfo.socialLinks.discord }}</span>
                     </div>
                   </div>
+                  <p v-else class="about-card__bio about-card__bio--empty">
+                    Aucun réseau social renseigné.
+                  </p>
                 </div>
 
                 <!-- Date + Certif -->
@@ -164,10 +169,6 @@
                     <span>Compte certifié</span>
                   </div>
                 </div>
-
-                <button v-if="isBtnSaveVisible && myProfile" class="about-card__save" @click="saveProfile">
-                  <i class="bi bi-check-lg"></i> Enregistrer
-                </button>
               </div>
             </div>
 
@@ -281,7 +282,6 @@
           </div>
         </Transition>
 
-        <popup_add_item v-if="isPopupVisible" @close="closePopup"></popup_add_item>
 
     </main>
   </template>
@@ -295,7 +295,6 @@
     import Cookies from "js-cookie";
     import { useRoute } from "vue-router";
     import axios from 'axios';
-    import Popup_add_item from '@/components/adherents/popup_add_item.vue';
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
     import authentificationService from '@/services/authentification.service';
@@ -311,7 +310,6 @@
         banner_profil,
         segment_profil,
         Grid,
-        Popup_add_item,
         Filter_review,
         Review_card
     },
@@ -353,6 +351,10 @@
     computed: {
       activeProducts() {
         return (this.dataCardList as any[]).filter((p: any) => p.status === 'available' || !p.status);
+      },
+      hasSocialLinks(): boolean {
+        const links = this.profilInfo.socialLinks || {};
+        return Boolean(links.instagram || links.twitter || links.discord);
       },
       memberSinceFormatted() {
         if (!this.profilInfo.createdAt) return '';
@@ -428,8 +430,6 @@
     },
     data() {
       return {
-        isPopupVisible: false,
-        isBtnSaveVisible: false,
         reviews: {
           stats: {
             averageRating: 0,
@@ -545,12 +545,6 @@
           }
         });
       },
-      showPopup() {
-        this.isPopupVisible = true; // Affiche la popup
-      },
-      info_update(){
-        this.isBtnSaveVisible = true;
-      },
       async getReview(){
         try {
           const reviews = await reviewService.getProfileReviews(this.profilInfo.id || this.profilInfo._id);
@@ -562,34 +556,6 @@
       handleFilterChange({ rating, sort }: { rating: string; sort: string }) {
         this.filterRating = rating;
         this.filterSort = sort;
-      },
-      async saveProfile() {
-        const sessionToken = Cookies.get('sessionToken');
-        try {
-          await axios.put(
-            `${import.meta.env.VITE_API_URL}/api/profiles/me`,
-            {
-              bio: this.profilInfo.bio,
-              location: this.profilInfo.location,
-              socialLinks: this.profilInfo.socialLinks,
-            },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionToken}`
-              }
-            }
-          );
-          this.isBtnSaveVisible = false; // Cache le bouton après sauvegarde
-          // Optionnel : afficher un message de succès
-        } catch (error) {
-          // Optionnel : afficher un message d'erreur
-          console.error(error);
-        }
-      },
-      closePopup() {
-        this.isPopupVisible = false;
-        this.getInventory(); // Recharge l'inventaire après la fermeture de la popup
       },
       // === Feed Posts ===
       async loadFeedPosts() {
@@ -794,7 +760,8 @@
   color: var(--text-muted);
   text-align: center;
 
-  i {
+  // `> i` : sinon l'icône du bouton d'action hérite aussi de ces 3rem.
+  > i {
     font-size: 3rem;
     margin-bottom: var(--space-md);
     opacity: 0.4;
@@ -885,27 +852,44 @@
   }
 }
 
-.about-card__textarea {
-  width: 100%;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-sans);
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 
-  &::placeholder { color: var(--text-muted); }
-  &:focus {
-    outline: none;
-    border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
-  }
+
+.about-card__edit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--surface-border);
 }
 
+.about-card__edit-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.about-card__edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    color: var(--accent-pink);
+    border-color: var(--accent-pink);
+  }
+}
 .about-card__grid {
   display: flex;
   flex-direction: column;
@@ -938,23 +922,7 @@
   text-align: right;
 }
 
-.about-card__input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--surface-border);
-  padding: var(--space-xs) 0;
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  text-align: right;
-  min-width: 120px;
-  transition: border-color var(--transition-fast);
 
-  &::placeholder { color: var(--text-muted); }
-  &:focus {
-    outline: none;
-    border-color: var(--accent-pink);
-  }
-}
 
 .about-card__footer {
   display: flex;
@@ -983,24 +951,7 @@
   font-weight: 600;
 }
 
-.about-card__save {
-  width: 100%;
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--accent-gradient);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  transition: all var(--transition-fast);
 
-  &:hover { opacity: 0.9; transform: translateY(-1px); }
-}
 
 /* Review section */
 .review-section {
@@ -1614,3 +1565,4 @@
   &:hover { background: var(--surface-hover); }
 }
 </style>
+

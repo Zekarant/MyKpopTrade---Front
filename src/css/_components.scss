@@ -1,10 +1,20 @@
-// ============================================
+﻿// ============================================
 // MyKpopTrade - Component Styles
 // Buttons, Inputs, Cards, Badges, Modals
 // ============================================
 
 // === BUTTONS ===
-.btn {
+// Les variantes portent aussi la géométrie : elles sont très souvent employées
+// sans `.btn`.
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-primary-outline,
+.btn-danger-outline,
+.btn-ghost,
+.btn-danger,
+.btn-success {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -19,6 +29,8 @@
   cursor: pointer;
   transition: all var(--transition-base);
   text-decoration: none;
+  // Certains composants forcent `display: inline-block`.
+  text-align: center;
   white-space: nowrap;
   max-width: 100%;
 
@@ -69,6 +81,28 @@
     border-color: var(--accent-pink);
     color: var(--accent-pink);
     background: rgba(255, 45, 120, 0.05);
+  }
+}
+
+.btn-primary-outline {
+  background: transparent;
+  color: var(--accent-pink);
+  border: 1.5px solid var(--accent-pink);
+
+  &:hover {
+    background: rgba(255, 45, 120, 0.08);
+    color: var(--accent-pink);
+  }
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger);
   }
 }
 

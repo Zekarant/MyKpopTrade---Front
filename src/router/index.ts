@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationGeneric } from 'vue-router'
 import Cookies from 'js-cookie'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
@@ -6,9 +6,21 @@ import forgot_psw from '../views/forgot_psw.vue';
 
 
 const routes = [
+  // `/settings` est la cible des redirections OAuth côté API.
   {
     path: '/settings',
+    redirect: (to: RouteLocationGeneric) => ({
+      path: '/adherents/settings',
+      query: to.query
+    })
+  },
+  {
+    path: '/parametres',
     redirect: '/adherents/settings'
+  },
+  {
+    path: '/vendre',
+    redirect: '/adherents/new'
   },
   {
     path: '/',
@@ -165,13 +177,15 @@ const routes = [
     path: '/adherents/new',
     name: 'add_post',
     component: () => import('@p_v/add_post.vue'),
-    props: true
+    props: true,
+    meta: { requiresAuth: true, title: 'Vendre un article' }
   },
   {
     path: '/adherents/modify',
     name: 'modify_post',
     component: () => import('@p_v/add_post.vue'),
-    props: true
+    props: true,
+    meta: { requiresAuth: true, title: 'Modifier l\'annonce' }
   },
   {
     path: '/adherents/review/:id',
@@ -269,6 +283,12 @@ router.beforeEach((to) => {
   return true
 })
 
+router.afterEach((to) => {
+  const title = to.meta?.title
+  document.title = typeof title === 'string' ? `${title} · MyKpopTrade` : 'MyKpopTrade'
+})
+
 
 
 export default router
+

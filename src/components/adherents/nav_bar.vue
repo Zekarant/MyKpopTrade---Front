@@ -90,17 +90,17 @@
               </div>
               <div class="navbar__dropdown-info">
                 <span class="navbar__dropdown-name">{{ dataUser.username || 'Utilisateur' }}</span>
-                <span class="navbar__dropdown-sub">Mon compte</span>
+                <span class="navbar__dropdown-sub">{{ fullName || 'Mon compte' }}</span>
               </div>
             </div>
             <div class="navbar__dropdown-divider"></div>
+            <a @click="togglePopup" href="#" class="navbar__dropdown-item navbar__dropdown-item--accent">
+              <i class="bi bi-plus-circle"></i>
+              Vendre un article
+            </a>
             <a @click="navPage('profile', 'me')" href="#" class="navbar__dropdown-item">
               <i class="bi bi-person"></i>
-              Mon profil
-            </a>
-            <a @click="navPage('settings', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-pencil-square"></i>
-              Modifier mon profil
+              Mon profil public
             </a>
             <a @click="navPage('collection', null)" href="#" class="navbar__dropdown-item">
               <i class="bi bi-collection"></i>
@@ -117,6 +117,11 @@
             <a @click="navPage('disputes', null)" href="#" class="navbar__dropdown-item">
               <i class="bi bi-shield-exclamation"></i>
               Mes litiges
+            </a>
+            <div class="navbar__dropdown-divider"></div>
+            <a @click="navPage('settings', null)" href="#" class="navbar__dropdown-item">
+              <i class="bi bi-gear"></i>
+              Paramètres
             </a>
             <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__dropdown-item navbar__dropdown-item--admin">
               <i class="bi bi-shield-check"></i>
@@ -169,11 +174,7 @@
         <div class="navbar__dropdown-divider"></div>
         <a @click="navPage('profile', 'me')" href="#" class="navbar__mobile-link">
           <i class="bi bi-person"></i>
-          <span>Mon profil</span>
-        </a>
-        <a @click="navPage('settings', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-pencil-square"></i>
-          <span>Modifier mon profil</span>
+          <span>Mon profil public</span>
         </a>
         <a @click="navPage('collection', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-collection"></i>
@@ -190,6 +191,10 @@
         <a @click="navPage('disputes', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-shield-exclamation"></i>
           <span>Mes litiges</span>
+        </a>
+        <a @click="navPage('settings', null)" href="#" class="navbar__mobile-link">
+          <i class="bi bi-gear"></i>
+          <span>Paramètres</span>
         </a>
         <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-shield-check"></i>
@@ -301,6 +306,9 @@ declare global {
         computed: {
           profilePicture() {
             return this.htmlImgProfile;
+          },
+          fullName(): string {
+            return [this.dataUser.firstName, this.dataUser.lastName].filter(Boolean).join(' ');
           },
         },
         methods: {
@@ -861,6 +869,15 @@ declare global {
     &:hover {
       background: var(--danger-light);
       color: var(--danger);
+    }
+  }
+
+  &--accent {
+    color: var(--accent-pink);
+    font-weight: 600;
+    &:hover {
+      background: rgba(255, 45, 120, 0.08);
+      color: var(--accent-pink);
     }
   }
 

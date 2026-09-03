@@ -180,7 +180,9 @@
   text-align: center;
   padding: var(--space-3xl);
 
-  i {
+  // `> i` : sans le sélecteur d'enfant direct, l'icône du bouton « Créer une
+  // annonce » héritait aussi de ces 3rem et du `display: block`.
+  > i {
     font-size: 3rem;
     color: var(--text-muted);
     margin-bottom: var(--space-md);

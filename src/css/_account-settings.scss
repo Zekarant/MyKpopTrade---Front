@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // MyKpopTrade - Primitives « carte de réglages »
 // Partagées entre la page Réglages (settings.vue) et les
 // composants qu'elle héberge (ex. TwoFactorCard.vue).
@@ -33,8 +33,10 @@
   &--danger i { color: #dc3545; }
 }
 
+// Porte le retrait horizontal de la carte. Les rangées pleine largeur le
+// compensent par une marge négative (cf. .setting-row dans settings.scss).
 .settings-card__body {
-  padding: var(--space-sm) 0;
+  padding: var(--space-md) var(--space-lg);
 }
 
 // Buttons
@@ -93,9 +95,9 @@
     width: 100%;
     justify-content: center;
     padding: 12px 16px;
-    margin: var(--space-xs) var(--space-lg);
-    width: calc(100% - var(--space-lg) * 2);
   }
+
+  & + &--full { margin-top: var(--space-sm); }
 }
 
 @media (max-width: 640px) {
