@@ -2,11 +2,19 @@
   <footer class="site-footer">
     <div class="site-footer__inner">
       <!-- Marque -->
-      <router-link to="/" class="site-footer__brand" aria-label="Accueil MyKpopTrade">
-        <img src="@/assets/images/logo.png" alt="" class="site-footer__logo" />
-        <span class="site-footer__name">MyKpopTrade</span>
-        <span class="site-footer__tag">BÊTA</span>
-      </router-link>
+      <div class="site-footer__brand">
+        <router-link
+          to="/"
+          class="site-footer__brand-link"
+          aria-label="Accueil MyKpopTrade"
+        >
+          <img src="@/assets/images/logo.png" alt="" class="site-footer__logo" />
+          <span class="site-footer__name">MyKpopTrade</span>
+        </router-link>
+        <router-link to="/beta" class="site-footer__tag" aria-label="À propos de la bêta">
+          BÊTA
+        </router-link>
+      </div>
 
       <!-- Navigation -->
       <nav class="site-footer__nav" aria-label="Informations légales">
@@ -89,6 +97,12 @@ function reopenCookieSettings() {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.site-footer__brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
   color: var(--text-primary);
   text-decoration: none;
 
@@ -124,6 +138,18 @@ function reopenCookieSettings() {
   background: var(--warning-light);
   border-radius: var(--radius-full);
   padding: 2px 8px;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    color: var(--warning);
+    opacity: 0.8;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-pink);
+    outline-offset: 2px;
+  }
 }
 
 // === Navigation ===
