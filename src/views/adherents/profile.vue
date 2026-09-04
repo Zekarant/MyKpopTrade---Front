@@ -5,6 +5,15 @@
           <div class="profile-layout__content">
             <div class="profile-banner-wrap">
               <banner_profil :profilInfo="profilInfo" :admin="myProfile"></banner_profil>
+              <div v-if="!myProfile && profileUserId" class="profile-banner-wrap__actions">
+                <button
+                  class="profile-report-btn"
+                  title="Signaler ce profil"
+                  @click="reportTarget = { type: 'user', id: profileUserId }"
+                >
+                  <i class="bi bi-flag"></i> Signaler ce profil
+                </button>
+              </div>
             </div>
             <segment_profil @partDisplayed="changePart"></segment_profil>
 
@@ -38,6 +47,14 @@
                     </div>
                     <button v-if="myProfile" class="feed-post__delete" @click="removeFeedPost(post._id)">
                       <i class="bi bi-trash"></i>
+                    </button>
+                    <button
+                      v-else
+                      class="feed-post__delete"
+                      title="Signaler cette publication"
+                      @click="reportTarget = { type: 'post', id: post._id }"
+                    >
+                      <i class="bi bi-flag"></i>
                     </button>
                   </div>
                   <p class="feed-post__content">{{ post.content }}</p>
@@ -282,6 +299,12 @@
           </div>
         </Transition>
 
+        <report_card
+          v-if="reportTarget"
+          :type="reportTarget.type"
+          :id="reportTarget.id"
+          @closeReport="reportTarget = null"
+        ></report_card>
 
     </main>
   </template>
@@ -298,6 +321,7 @@
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
     import VerifiedBadge from '@/components/VerifiedBadge.vue';
+    import report_card from '@/components/report_card.vue';
     import authentificationService from '@/services/authentification.service';
     import reviewService from '@/services/review.service';
     import feedPostService from '@/services/feedPost.service';
@@ -313,9 +337,9 @@
         Grid,
         Filter_review,
         Review_card,
-        VerifiedBadge
+        VerifiedBadge,
+        report_card
     },
-
 
     mounted() {
       this.checkUserProfile();
@@ -353,6 +377,9 @@
     computed: {
       activeProducts() {
         return (this.dataCardList as any[]).filter((p: any) => p.status === 'available' || !p.status);
+      },
+      profileUserId(): string {
+        return this.profilInfo.id || this.profilInfo._id || '';
       },
       hasSocialLinks(): boolean {
         const links = this.profilInfo.socialLinks || {};
@@ -414,6 +441,7 @@
         const followersTotal = ref(0);
         const followersPage = ref(1);
         const followersTotalPages = ref(1);
+        const reportTarget = ref<{ type: 'user' | 'post'; id: string } | null>(null);
         return {
           dataCardList,
           profilInfo,
@@ -427,7 +455,8 @@
           followersList,
           followersTotal,
           followersPage,
-          followersTotalPages
+          followersTotalPages,
+          reportTarget
         };
     },
     data() {
@@ -499,7 +528,6 @@
              authentificationService.verifSession();
             }
           });
-
 
       },
       getInfoUser(user: string){
@@ -748,6 +776,32 @@
   margin-bottom: var(--space-md);
 }
 
+.profile-banner-wrap__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
+
+.profile-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}
+
 .profile-tab-content {
   padding: var(--space-md) 0;
 }
@@ -854,8 +908,6 @@
   }
 }
 
-
-
 .about-card__edit-bar {
   display: flex;
   align-items: center;
@@ -924,8 +976,6 @@
   text-align: right;
 }
 
-
-
 .about-card__footer {
   display: flex;
   align-items: center;
@@ -952,8 +1002,6 @@
   color: var(--success);
   font-weight: 600;
 }
-
-
 
 /* Review section */
 .review-section {

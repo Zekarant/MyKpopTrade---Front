@@ -5,9 +5,7 @@
                 <div class="report-modal__icon">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
-                <h3 class="report-modal__title">
-                    {{ type === 'product' ? 'Signaler cet article' : 'Signaler cet avis' }}
-                </h3>
+                <h3 class="report-modal__title">{{ title }}</h3>
                 <p class="report-modal__subtitle">
                     Aidez-nous à maintenir une communauté sûre
                 </p>
@@ -56,13 +54,25 @@
 
 <script lang="ts">
     import { func } from '@/function';
-    import reportService from '@/services/report.service';
+    import reportService, { type ReportTargetType } from '@/services/report.service';
+
+    const TITLES: Record<ReportTargetType, string> = {
+        product: 'Signaler cet article',
+        rating: 'Signaler cet avis',
+        user: 'Signaler ce profil',
+        post: 'Signaler cette publication'
+    };
 
     export default {
         name: "report_card",
         props: {
             type: { type: String, required: true },
             id: { type: String, required: true }
+        },
+        computed: {
+            title(): string {
+                return TITLES[this.type as ReportTargetType] || 'Signaler ce contenu';
+            }
         },
         data() {
             return {
@@ -87,10 +97,10 @@
                 if (!this.signalReason) return;
                 try {
                     await reportService.createReport({
-                        targetType: this.type as any,
+                        targetType: this.type as ReportTargetType,
                         targetId: this.id,
                         reason: this.signalReason,
-                        description: this.signalReasonTxt
+                        details: this.signalReasonTxt
                     });
                     func.showToastSuccess('Signalement envoyé avec succès');
                     this.close();

@@ -2,12 +2,14 @@ import { type AxiosInstance, type AxiosResponse } from 'axios';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 
+export type ReportTargetType = 'product' | 'rating' | 'user' | 'post';
+
 export interface Report {
   _id: string;
-  targetType: 'product' | 'user' | 'message' | 'rating';
+  targetType: ReportTargetType;
   targetId: string;
   reason: string;
-  description?: string;
+  details?: string;
   status: string;
   createdAt: string;
 }
@@ -28,10 +30,10 @@ class ReportService {
   }
 
   async createReport(data: {
-    targetType: 'product' | 'user' | 'message' | 'rating';
+    targetType: ReportTargetType;
     targetId: string;
     reason: string;
-    description?: string;
+    details?: string;
   }): Promise<Report> {
     const response: AxiosResponse<Report> = await this.apiClient.post('/', data);
     return response.data;
@@ -42,12 +44,12 @@ class ReportService {
     return response.data;
   }
 
-  async checkIfReported(targetType: string, targetId: string): Promise<boolean> {
+  async checkIfReported(targetType: ReportTargetType, targetId: string): Promise<boolean> {
     try {
-      const response: AxiosResponse<{ reported: boolean }> = await this.apiClient.get(
+      const response: AxiosResponse<{ hasReported: boolean }> = await this.apiClient.get(
         `/check/${targetType}/${targetId}`
       );
-      return response.data.reported;
+      return response.data.hasReported;
     } catch {
       return false;
     }

@@ -10,9 +10,38 @@ class AdminService {
     this.apiClient = createApiClient({ baseURL });
   }
 
+  private async downloadCsv(path: string, params: Record<string, unknown>, fileName: string) {
+    const response = await this.apiClient.get(path, {
+      params: { ...params, format: 'csv' },
+      responseType: 'blob'
+    });
+
+    const url = URL.createObjectURL(response.data as Blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   // === Stats ===
   async getStats() {
     const response = await this.apiClient.get('/users/admin/stats');
+    return response.data;
+  }
+
+  async getStatsTimeseries() {
+    const response = await this.apiClient.get('/users/admin/stats/timeseries');
+    return response.data;
+  }
+
+  async getQueue() {
+    const response = await this.apiClient.get('/users/admin/queue');
+    return response.data;
+  }
+
+  async globalSearch(query: string) {
+    const response = await this.apiClient.get('/users/admin/search', { params: { q: query } });
     return response.data;
   }
 
@@ -22,8 +51,34 @@ class AdminService {
     return response.data;
   }
 
-  async updateUserStatus(userId: string, accountStatus: 'active' | 'suspended') {
-    const response = await this.apiClient.put(`/users/admin/${userId}/status`, { accountStatus });
+  async updateUserStatus(
+    userId: string,
+    accountStatus: 'active' | 'suspended',
+    options: { reason?: string; durationDays?: number | null } = {}
+  ) {
+    const response = await this.apiClient.put(`/users/admin/${userId}/status`, {
+      accountStatus,
+      ...options
+    });
+    return response.data;
+  }
+
+  async exportUsersCsv(params: { search?: string; role?: string; status?: string } = {}) {
+    return this.downloadCsv('/users/admin/list', params, 'utilisateurs');
+  }
+
+  async getUserDetail(userId: string) {
+    const response = await this.apiClient.get(`/users/admin/${userId}/detail`);
+    return response.data;
+  }
+
+  async addUserNote(userId: string, content: string) {
+    const response = await this.apiClient.post(`/users/admin/${userId}/notes`, { content });
+    return response.data;
+  }
+
+  async deleteUserNote(userId: string, noteId: string) {
+    const response = await this.apiClient.delete(`/users/admin/${userId}/notes/${noteId}`);
     return response.data;
   }
 
@@ -38,9 +93,23 @@ class AdminService {
     return response.data;
   }
 
+  async getReportDetail(reportId: string) {
+    const response = await this.apiClient.get(`/reports/${reportId}`);
+    return response.data;
+  }
+
   async updateReportStatus(reportId: string, status: string, adminNotes?: string) {
     const response = await this.apiClient.put(`/reports/${reportId}`, { status, adminNotes });
     return response.data;
+  }
+
+  async bulkUpdateReports(reportIds: string[], status: string, adminNotes?: string) {
+    const response = await this.apiClient.put('/reports/bulk', { reportIds, status, adminNotes });
+    return response.data;
+  }
+
+  async exportReportsCsv(params: { status?: string; targetType?: string } = {}) {
+    return this.downloadCsv('/reports', params, 'signalements');
   }
 
   // === Verifications ===
@@ -70,9 +139,15 @@ class AdminService {
     return response.data;
   }
 
-  async deleteProduct(productId: string) {
-    const response = await this.apiClient.delete(`/products/admin/${productId}`);
+  async deleteProduct(productId: string, reason?: string) {
+    const response = await this.apiClient.delete(`/products/admin/${productId}`, {
+      data: { reason }
+    });
     return response.data;
+  }
+
+  async exportProductsCsv(params: { search?: string; status?: string; type?: string } = {}) {
+    return this.downloadCsv('/products/admin/list', params, 'produits');
   }
 
   // === RGPD ===
