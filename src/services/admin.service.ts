@@ -150,6 +150,11 @@ class AdminService {
     return this.downloadCsv('/products/admin/list', params, 'produits');
   }
 
+  async reviewFlaggedProduct(productId: string, approve: boolean) {
+    const response = await this.apiClient.post(`/products/admin/${productId}/moderation-review`, { approve });
+    return response.data;
+  }
+
   // === RGPD ===
   async getDeletionRequests() {
     const response = await this.apiClient.get('/users/admin/deletion-requests');

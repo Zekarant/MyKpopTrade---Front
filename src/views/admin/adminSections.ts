@@ -4,7 +4,7 @@ export interface AdminSection {
   icon: string;
   title: string;
   subtitle: string;
-  badgeKey?: 'total' | 'report' | 'dispute' | 'verification' | 'deletion';
+  badgeKey?: 'total' | 'report' | 'dispute' | 'verification' | 'deletion' | 'suspended';
 }
 
 export interface AdminNavGroup {
@@ -79,6 +79,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         subtitle: 'Annonces publiées sur la marketplace'
       },
       {
+        id: 'suspended',
+        label: 'Articles suspendus',
+        icon: 'bi bi-shield-x',
+        title: 'Articles suspendus',
+        subtitle: 'Annonces mises en pause par la modération IA, en attente de revue',
+        badgeKey: 'suspended'
+      },
+      {
         id: 'kpop',
         label: 'K-pop',
         icon: 'bi bi-music-note-beamed',
@@ -104,6 +112,18 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         title: 'RGPD & données personnelles',
         subtitle: 'Exports, anonymisations et demandes de suppression',
         badgeKey: 'deletion'
+      }
+    ]
+  },
+  {
+    title: 'Contenu',
+    items: [
+      {
+        id: 'faq',
+        label: 'FAQ',
+        icon: 'bi bi-question-circle',
+        title: 'FAQ',
+        subtitle: 'Questions fréquentes affichées sur la page publique'
       }
     ]
   },

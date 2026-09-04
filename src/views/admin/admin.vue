@@ -26,48 +26,67 @@
         </header>
 
         <div class="admin__kpis">
-          <div class="admin__kpi">
+          <button type="button" class="admin__kpi" @click="goTo('users')">
             <i class="bi bi-people"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ stats.totalUsers }}</span>
               <span class="admin__kpi-label">Utilisateurs</span>
             </span>
-          </div>
-          <div class="admin__kpi admin__kpi--info">
+          </button>
+          <button type="button" class="admin__kpi admin__kpi--info" @click="goTo('users')">
             <i class="bi bi-person-plus"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ stats.newUsers }}</span>
               <span class="admin__kpi-label">Nouveaux (30 j)</span>
             </span>
-          </div>
-          <div class="admin__kpi">
+          </button>
+          <button type="button" class="admin__kpi" @click="goTo('products')">
             <i class="bi bi-box-seam"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ productStats.total }}</span>
               <span class="admin__kpi-label">Annonces</span>
             </span>
-          </div>
-          <div class="admin__kpi admin__kpi--success">
+          </button>
+          <button
+            type="button"
+            class="admin__kpi admin__kpi--success"
+            @click="goTo('products', { status: 'sold' })"
+          >
             <i class="bi bi-cart-check"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ productStats.sold }}</span>
               <span class="admin__kpi-label">Vendues</span>
             </span>
-          </div>
-          <div class="admin__kpi admin__kpi--success">
+          </button>
+          <button
+            type="button"
+            class="admin__kpi admin__kpi--success"
+            @click="goTo('products', { status: 'sold' })"
+          >
             <i class="bi bi-currency-euro"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ formatPrice(productStats.totalRevenue) }}</span>
               <span class="admin__kpi-label">Volume total</span>
             </span>
-          </div>
-          <div class="admin__kpi admin__kpi--danger">
+          </button>
+          <button
+            type="button"
+            class="admin__kpi admin__kpi--danger"
+            @click="goTo('users', { status: 'suspended' })"
+          >
             <i class="bi bi-person-x"></i>
             <span class="admin__kpi-body">
               <span class="admin__kpi-value">{{ stats.suspendedUsers }}</span>
               <span class="admin__kpi-label">Suspendus</span>
             </span>
-          </div>
+          </button>
+          <button type="button" class="admin__kpi admin__kpi--danger" @click="goTo('suspended')">
+            <i class="bi bi-shield-x"></i>
+            <span class="admin__kpi-body">
+              <span class="admin__kpi-value">{{ productStats.suspended }}</span>
+              <span class="admin__kpi-label">Articles suspendus</span>
+            </span>
+          </button>
         </div>
 
         <component
@@ -98,6 +117,7 @@
   import AdminSidebar from './components/AdminSidebar.vue';
   import AuditPanel from './panels/AuditPanel.vue';
   import DisputesPanel from './panels/DisputesPanel.vue';
+  import FaqPanel from './panels/FaqPanel.vue';
   import KpopPanel from './panels/KpopPanel.vue';
   import ModerationPanel from './panels/ModerationPanel.vue';
   import OverviewPanel from './panels/OverviewPanel.vue';
@@ -105,6 +125,7 @@
   import QueuePanel from './panels/QueuePanel.vue';
   import ReportsPanel from './panels/ReportsPanel.vue';
   import RgpdPanel from './panels/RgpdPanel.vue';
+  import SuspendedProductsPanel from './panels/SuspendedProductsPanel.vue';
   import UsersPanel from './panels/UsersPanel.vue';
   import VerificationsPanel from './panels/VerificationsPanel.vue';
   import { ADMIN_SECTIONS, DEFAULT_ADMIN_TAB } from './adminSections';
@@ -118,9 +139,11 @@
     moderation: ModerationPanel,
     verifications: VerificationsPanel,
     products: ProductsPanel,
+    suspended: SuspendedProductsPanel,
     kpop: KpopPanel,
     users: UsersPanel,
     rgpd: RgpdPanel,
+    faq: FaqPanel,
     audit: AuditPanel
   };
 
@@ -138,6 +161,7 @@
         available: 0,
         sold: 0,
         reserved: 0,
+        suspended: 0,
         newProducts: 0,
         recentSales: 0,
         totalRevenue: 0,
@@ -165,6 +189,13 @@
         if (!PANELS[tabId] || tabId === currentTab.value) return;
         currentTab.value = tabId;
         router.replace({ query: { tab: tabId } });
+      };
+
+      const goTo = (tabId: string, query: Record<string, string> = {}) => {
+        if (!PANELS[tabId]) return;
+        currentTab.value = tabId;
+        router.replace({ query: { tab: tabId, ...query } });
+        remountToken.value += 1;
       };
 
       const applyTabFromRoute = () => {
@@ -237,6 +268,7 @@
         panelProps,
         shortcutHint,
         switchTab,
+        goTo,
         onPaletteNavigate,
         loadCounters,
         formatPrice

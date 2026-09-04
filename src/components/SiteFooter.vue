@@ -25,6 +25,7 @@
         <button type="button" class="site-footer__link-btn" @click="reopenCookieSettings">
           Gérer mes cookies
         </button>
+        <router-link to="/faq">FAQ</router-link>
         <router-link to="/beta">À propos de la bêta</router-link>
         <router-link to="/contact">Contact</router-link>
       </nav>

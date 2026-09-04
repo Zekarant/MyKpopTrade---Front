@@ -53,6 +53,19 @@ export const DISPUTE_REASON_LABELS: Record<string, string> = {
   other: 'Autre'
 };
 
+export const MODERATION_CATEGORY_LABELS: Record<string, string> = {
+  counterfeit: 'Contrefaçon',
+  off_platform_payment: 'Paiement hors plateforme',
+  prohibited_item: 'Objet interdit',
+  other: 'Autre'
+};
+
+export const MODERATION_CONFIDENCE_LABELS: Record<string, string> = {
+  low: 'Faible',
+  medium: 'Moyenne',
+  high: 'Élevée'
+};
+
 export const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   active: 'Actif',
   suspended: 'Suspendu',

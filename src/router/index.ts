@@ -253,6 +253,12 @@ const routes = [
     name: 'beta',
     component: () => import('@/views/legal/Beta.vue'),
     meta: { title: 'À propos de la bêta' }
+  },
+  {
+    path: '/faq',
+    name: 'faq',
+    component: () => import('@/views/legal/Faq.vue'),
+    meta: { title: 'FAQ' }
   }
 
 
