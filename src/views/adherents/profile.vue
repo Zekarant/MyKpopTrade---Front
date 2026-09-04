@@ -1200,6 +1200,12 @@
   .profile-layout {
     padding: var(--space-sm);
   }
+  /* La bannière déborde le padding du layout pour occuper toute la largeur de l'écran */
+  .profile-banner-wrap {
+    margin-left: calc(var(--space-sm) * -1);
+    margin-right: calc(var(--space-sm) * -1);
+    border-radius: 0;
+  }
   .review-section__header {
     flex-direction: column;
     align-items: flex-start;

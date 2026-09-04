@@ -26,53 +26,35 @@
             </div>
         </div>
         <div class="profil">
-            <div class="row row_profil">
+            <div v-if="admin" class="more_content" @click="toggleMenu($event)">
+                <i class="bi bi-three-dots-vertical"></i>
+                <div v-if="isMenuVisible" class="dropdown-menu">
+                    <ul>
+                        <li @click="router.push({ name: 'settings' })">
+                            <i class="bi bi-gear me-2"></i> Paramètres
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="profil_inner">
                 <div class="empty_box"></div>
-                <div class="row row_name">
-                    <div class="container_nickname col-md-4">
-                        <div class="nickname">
-                            <div class="nickname_block">
-                                <span class="nickname_text_field">{{ profilInfo.username }}</span>
-                                <i v-if="profilInfo.isIdentityVerified" class="bi bi-patch-check-fill verified-badge-icon"></i>
-                            </div>
-                            <div v-if="profilInfo.isSellerVerified" class="img_certif_container">
-                                <img src="@/assets/images/certif.svg">
-                            </div>
+                <div class="profil_main">
+                    <div class="identity">
+                        <div class="nickname_block">
+                            <span class="nickname_text_field">{{ profilInfo.username }}</span>
+                            <i v-if="profilInfo.isIdentityVerified" class="bi bi-patch-check-fill verified-badge-icon"></i>
                         </div>
                         <div class="identifier">@{{ profilInfo.username }}</div>
                     </div>
-                    <div class="container_infos col-md-7">
-                        <div class="row">
-                            <div class="col-md-5 subscription">
-                                <span class="bold">{{ followingCount }}</span> Abonnements
-                            </div>
-                            <div class="col-md-5 subscription">
-                                <span class="bold">{{ followersCount }}</span> Abonnés
-                            </div>
-                            <div v-if="admin" class="col-md-1 more_content" @click="toggleMenu($event)">
-                                <i class="bi bi-three-dots-vertical"></i>
-                                <div v-if="isMenuVisible" class="dropdown-menu">
-                                    <ul >
-                                        <li @click="router.push({ name: 'settings' })">
-                                            <i class="bi bi-gear me-2"></i> Paramètres
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="row">
-                            <div class="col-md-7">
-                                <button @click="openMessagePopup" v-if="!isYouProfil" style="font-size: 12px;" type="button" class="btn btn-outline">Envoyer un message</button>
-                            </div>
-                            <div class="col-md-5">
-                                <button v-if="!isYouProfil" @click="toggleFollow" style="font-size: 12px;" type="button" :class="['btn', isFollowing ? 'btn-outline' : 'btn-primary']">{{ isFollowing ? 'Suivi' : 'Suivre' }}</button>
-                            </div>
-                        </div>
+                    <div class="stats">
+                        <span class="subscription"><span class="bold">{{ followingCount }}</span> Abonnements</span>
+                        <span class="subscription"><span class="bold">{{ followersCount }}</span> Abonnés</span>
                     </div>
-                    <div class="container_infos col-md-1"></div>
+                    <div v-if="!isYouProfil" class="actions">
+                        <button @click="openMessagePopup" type="button" class="btn btn-outline">Envoyer un message</button>
+                        <button @click="toggleFollow" type="button" :class="['btn', isFollowing ? 'btn-outline' : 'btn-primary']">{{ isFollowing ? 'Suivi' : 'Suivre' }}</button>
+                    </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -1081,11 +1063,44 @@
 .profil{
     min-height: 140px;
     padding: 10px 0;
+    position: relative;
+}
+.profil_inner{
+    display: flex;
+    align-items: flex-start;
+}
+.profil_main{
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 5px;
+    padding-right: 30px;
+}
+.identity{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.stats{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+.actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.actions .btn{
+    width: auto;
+    font-size: 12px;
 }
 .background{
     background: var(--primary-color);
     width:100%;
-    max-width: 100vw;
+    max-width: 100%;
     height: 160px;
     position: relative;
 }
@@ -1123,18 +1138,10 @@
 }
 .empty_box{
    width: 170px;
+   flex-shrink: 0;
    min-height: 70px;
    margin:0px;
    padding:0px
-}
-.row_name{
-    width: calc(100% - 170px);
-    margin:0px;
-    padding:0px;
-    padding-top: 5px;
-}
-.container_infos{
-
 }
 .nickname_block{
     display: inline-flex;
@@ -1144,13 +1151,6 @@
 .verified-badge-icon {
     color: #ff2d78;
     font-size: 16px;
-}
-.img_certif_container{
-    display: inline-block;
-    width: 10px;
-}
-.img_certif_container img{
-    width: 100%;
 }
 .nickname_text_field{
     font-weight: 700;
@@ -1182,14 +1182,17 @@ button.btn.btn-outline:hover {
     font-family: "Sora", serif;
     color: var(--secondary-color-shade);
     font-size: small;
-    text-align: right;
+    text-align: left;
 }
 .subscription .bold{
     color: var(--primary-color);
 }
 .more_content {
-  position: relative;
+  position: absolute;
+  top: 10px;
+  right: 10px;
   cursor: pointer;
+  z-index: 3;
 }
 
 .dropdown-menu {
@@ -1716,7 +1719,7 @@ input:checked + .slider-modern:before {
 
 @media (max-width: 768px) {
     .picture{
-        top: 15%;
+        top: calc(15vh - 60px);
         left: calc(calc(100% - 130px) / 2) !important;
     }
     .empty_box{
@@ -1727,27 +1730,29 @@ input:checked + .slider-modern:before {
     }
     .profil{
         position: relative;
-        width: 100vw;
-        padding-top: calc(calc(130px + 5%) / 2);
-    }
-    .row_profil{
-        height: auto !important;
-        width: 100vw !important;
-    }
-    .row_name{
         width: 100%;
+        padding-top: 80px;
     }
-
     .row-banner{
         width: 100% !important;
     }
-    .subscription, .more_content, .nickname, .identifier{
+    .profil_main{
+        align-items: center;
         text-align: center;
+        padding-right: 0;
     }
-    .more_content{
-        width: auto !important;
-        margin-left: auto;
-        margin-right: auto;
+    .identity{
+        align-items: center;
+    }
+    .stats{
+        justify-content: center;
+    }
+    .actions{
+        justify-content: center;
+        width: 100%;
+    }
+    .subscription, .identifier{
+        text-align: center;
     }
 }
 

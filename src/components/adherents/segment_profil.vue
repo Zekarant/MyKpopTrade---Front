@@ -57,4 +57,36 @@
     border-bottom: 2px solid;
     border-color: var(--blue);
 }
+
+@media (max-width: 768px) {
+    .btn-group{
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-pink) var(--secondary-color-tint);
+    }
+    .btn-group::-webkit-scrollbar{
+        height: 4px;
+    }
+    .btn-group::-webkit-scrollbar-track{
+        background: var(--secondary-color-tint);
+        border-radius: 4px;
+    }
+    .btn-group::-webkit-scrollbar-thumb{
+        background: var(--accent-pink);
+        border-radius: 4px;
+    }
+    .btn-group .btn{
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    .btn.clicked{
+        border-bottom: none;
+        color: var(--accent-pink);
+        font-weight: 600;
+    }
+}
 </style>
