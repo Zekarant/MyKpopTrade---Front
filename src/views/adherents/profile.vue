@@ -32,7 +32,7 @@
                     <div class="feed-post__meta">
                       <span class="feed-post__author">
                         {{ post.author?.username }}
-                        <span v-if="post.author?.isIdentityVerified" class="verified-badge"><i class="bi bi-patch-check-fill"></i></span>
+                        <VerifiedBadge v-if="post.author?.isIdentityVerified" :size="12" />
                       </span>
                       <span class="feed-post__date">{{ formatPostDate(post.createdAt) }}</span>
                     </div>
@@ -61,7 +61,7 @@
                       <div class="feed-reply__body">
                         <span class="feed-reply__author">
                           {{ reply.author?.username }}
-                          <span v-if="reply.author?.isIdentityVerified" class="verified-badge"><i class="bi bi-patch-check-fill"></i></span>
+                          <VerifiedBadge v-if="reply.author?.isIdentityVerified" :size="12" />
                         </span>
                         <p class="feed-reply__content">{{ reply.content }}</p>
                       </div>
@@ -297,6 +297,7 @@
     import axios from 'axios';
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
+    import VerifiedBadge from '@/components/VerifiedBadge.vue';
     import authentificationService from '@/services/authentification.service';
     import reviewService from '@/services/review.service';
     import feedPostService from '@/services/feedPost.service';
@@ -311,7 +312,8 @@
         segment_profil,
         Grid,
         Filter_review,
-        Review_card
+        Review_card,
+        VerifiedBadge
     },
 
 
@@ -1472,13 +1474,6 @@
   cursor: pointer;
 
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-/* Verified badge */
-.verified-badge {
-  color: var(--accent-pink);
-  font-size: 12px;
-  line-height: 1;
 }
 
 /* Followers section */

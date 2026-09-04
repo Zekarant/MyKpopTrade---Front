@@ -1,18 +1,14 @@
-import axios, { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
+import { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 import router from "@/router";
 import { API_URL } from '@/config/api';
 import { setSessionCookies, clearSessionCookies } from '@/services/session.cookies';
+import { createApiClient, refreshAccessToken } from '@/services/http';
 
 interface ApiError {
   message: string;
   status?: number;
   code?: string;
-}
-
-interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
 }
 
 /**
@@ -26,58 +22,20 @@ export type LoginResult =
   | { requiresTwoFactor: false }
   | { requiresTwoFactor: true; twoFactorToken: string };
 
-type AuthToken = string | null;
-
 class authentificationService {
   private authApiClient: AxiosInstance;
   private API_BASE_URL: string = `${API_URL}/api`;
 
   constructor() {
-    this.authApiClient = axios.create({
+    // Les routes d'authentification (/login, /refresh-token, /logout, /2fa/)
+    // sont exclues du renouvellement automatique côté `http.ts` : un 401 y
+    // signifie « identifiants refusés », pas « session expirée ».
+    this.authApiClient = createApiClient({
       baseURL: `${this.API_BASE_URL}/auth`,
       headers: {
         "Content-Type": "application/json",
       }
     });
-
-    this.setupInterceptors(this.authApiClient);
-  }
-
-  private setupInterceptors(client: AxiosInstance): void {
-    client.interceptors.request.use(
-      (config) => {
-        const token = this.getAuthToken();
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error: AxiosError) => Promise.reject(error)
-    );
-
-    client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          this.handleUnauthorized();
-        }
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  private handleUnauthorized(): void {
-    localStorage.removeItem("token");
-    this.clearCookies();
-    router.push("/login");
-  }
-
-  private getAuthToken(): AuthToken {
-    const sessionToken = Cookies.get("sessionToken");
-    if (sessionToken) {
-      return sessionToken;
-    }
-    return localStorage.getItem("token");
   }
 
   async login(identifier: string, password: string): Promise<LoginResult> {
@@ -166,30 +124,13 @@ class authentificationService {
       return;
     }
 
-    try {
-      const response: AxiosResponse<RefreshTokenResponse> = await this.authApiClient.post(
-        '/refresh-token',
-        { refreshToken },
-        { headers: { "Content-Type": "application/json" } }
-      );
+    // Renouvellement mutualisé avec les intercepteurs : si une requête a déjà
+    // lancé un rafraîchissement, on attend le même appel réseau.
+    const accessToken = await refreshAccessToken();
 
-      if (response.status === 200) {
-        setSessionCookies({
-          accessToken: response.data.accessToken,
-          refreshToken: response.data.refreshToken
-        });
-      } else {
-        await this.logout();
-        throw new Error("Session refresh failed");
-      }
-    } catch (error) {
-      if ((error as Error).message === "No session token" || (error as Error).message === "Session refresh failed") {
-        throw error;
-      }
-      const axiosError = error as AxiosError<ApiError>;
-      console.error("Erreur lors de la vérification de session :", axiosError.response?.data);
+    if (!accessToken) {
       await this.logout();
-      throw new Error("Session verification failed");
+      throw new Error("Session refresh failed");
     }
   }
   clearCookies(): void {

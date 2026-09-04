@@ -4,6 +4,7 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { AxiosInstance } from 'axios';
 import authentificationService  from '@/services/authentification.service';
+import { createApiClient, getAccessToken } from '@/services/http';
 
 import type {
   ConversationListResponse,
@@ -44,64 +45,19 @@ class MessagingService {
   private userApiClient: AxiosInstance;
 
   constructor() {
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL: `${API_BASE_URL}/messaging`,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    this.userApiClient = axios.create({
+    this.userApiClient = createApiClient({
       baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
     });
-
-    // Configuration des intercepteurs pour les deux clients
-    this.setupInterceptors(this.apiClient);
-    this.setupInterceptors(this.userApiClient);
-  }
-
-  private setupInterceptors(client: AxiosInstance): void {
-    // Intercepteur pour ajouter le token JWT ou le cookie PHPSESSID
-    client.interceptors.request.use(
-      (config) => {
-        const token = this.getAuthToken();
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error: AxiosError) => Promise.reject(error)
-    );
-
-    // Intercepteur pour gérer les erreurs
-    client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          this.handleUnauthorized();
-        }
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  private getAuthToken(): AuthToken {
-    // Utilise js-cookie pour récupérer le sessionToken
-    const sessionToken = Cookies.get('sessionToken');
-    if (sessionToken) {
-      return sessionToken;
-    }
-
-    // Fallback : récupère le token du localStorage
-    return localStorage.getItem('token');
-  }
-
-  private handleUnauthorized(): void {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
   }
 
   // Récupérer les conversations de l'utilisateur
@@ -276,7 +232,7 @@ class MessagingService {
       throw new Error('ID de message et nom de la pièce jointe requis');
     }
 
-    const token = this.getAuthToken();
+    const token = getAccessToken();
     const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
 
     return `${API_BASE_URL}/messaging/messages/${messageId}/attachments/${attachmentName}${tokenParam}`;

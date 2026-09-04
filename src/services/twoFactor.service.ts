@@ -1,6 +1,6 @@
-import axios, { type AxiosInstance, AxiosError } from 'axios';
-import Cookies from 'js-cookie';
+import { type AxiosInstance, AxiosError } from 'axios';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 /**
  * Gestion de la double authentification (TOTP) depuis les paramètres du compte.
@@ -28,17 +28,9 @@ class TwoFactorService {
   private client: AxiosInstance;
 
   constructor() {
-    this.client = axios.create({
+    this.client = createApiClient({
       baseURL: `${API_URL}/api/auth/2fa`,
       headers: { 'Content-Type': 'application/json' }
-    });
-
-    this.client.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
     });
   }
 

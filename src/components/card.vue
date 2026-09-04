@@ -13,7 +13,7 @@
             <h3 class="product-card__title">{{ data.title }}</h3>
             <div v-if="data.seller" class="product-card__seller">
               <span class="product-card__seller-name">@{{ data.seller.username || data.seller }}</span>
-              <i v-if="data.seller.isIdentityVerified" class="bi bi-patch-check-fill product-card__verified"></i>
+              <VerifiedBadge v-if="data.seller.isIdentityVerified" :size="11" />
             </div>
             <span class="product-card__condition">{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>
             <span class="product-card__price">{{ data.price }} €</span>
@@ -23,11 +23,13 @@
 
 <script lang="ts">
     import ImageCarousel from '@/components/ImageCarousel.vue';
+    import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
     export default {
         name: "post-card",
         components: {
             ImageCarousel,
+            VerifiedBadge,
         },
         props: {
             data: {
@@ -138,11 +140,6 @@
     .product-card__seller-name {
       font-size: var(--font-size-xs);
       color: var(--text-secondary);
-    }
-
-    .product-card__verified {
-      color: var(--accent-pink);
-      font-size: 11px;
     }
 
     .product-card__condition {

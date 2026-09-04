@@ -229,7 +229,7 @@
                     <img v-if="user.profilePicture && !user.profilePicture.includes('avatar-default')" :src="apiUrl + user.profilePicture" class="admin__avatar" />
                     <span v-else class="admin__avatar-letter">{{ getInitial(user.username) }}</span>
                     {{ user.username }}
-                    <i v-if="user.isIdentityVerified" class="bi bi-patch-check-fill admin__verified"></i>
+                    <VerifiedBadge v-if="user.isIdentityVerified" :size="12" />
                   </div>
                 </td>
                 <td>{{ user.email }}</td>
@@ -455,7 +455,7 @@
                     <img v-if="post.author?.profilePicture && !post.author.profilePicture.includes('avatar-default')" :src="apiUrl + post.author.profilePicture" class="admin__avatar" />
                     <span v-else class="admin__avatar-letter">{{ getInitial(post.author?.username) }}</span>
                     {{ post.author?.username || 'Supprimé' }}
-                    <i v-if="post.author?.isIdentityVerified" class="bi bi-patch-check-fill admin__verified"></i>
+                    <VerifiedBadge v-if="post.author?.isIdentityVerified" :size="12" />
                   </div>
                 </td>
                 <td>
@@ -941,6 +941,7 @@
   import { defineComponent, ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import Nav_bar from '@/components/adherents/nav_bar.vue';
+  import VerifiedBadge from '@/components/VerifiedBadge.vue';
   import authentificationService from '@/services/authentification.service';
   import adminService from '@/services/admin.service';
   import albumService from '@/services/album.service';
@@ -951,7 +952,7 @@
 
   export default defineComponent({
     name: 'admin',
-    components: { Nav_bar },
+    components: { Nav_bar, VerifiedBadge },
     setup() {
       const router = useRouter();
       const apiUrl = API_URL;
@@ -1927,11 +1928,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.admin__verified {
-  color: var(--accent-pink);
-  font-size: 12px;
 }
 
 .admin__badge {

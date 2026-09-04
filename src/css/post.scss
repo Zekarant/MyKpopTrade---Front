@@ -180,22 +180,12 @@
 }
 
 .post-modal__username {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-weight: 600;
   font-size: var(--font-size-sm);
   color: var(--text-primary);
-}
-
-.post-modal__verified {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-xs);
-  color: var(--accent-blue);
-
-  img {
-    width: 12px;
-    height: 12px;
-  }
 }
 
 .post-modal__actions-menu {

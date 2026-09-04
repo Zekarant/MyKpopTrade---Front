@@ -34,7 +34,7 @@
                             <div class="msg-modal__result-info">
                                 <span class="msg-modal__result-name">
                                   {{ member.username }}
-                                  <i v-if="member.isIdentityVerified" class="bi bi-patch-check-fill" style="color: #ff2d78; font-size: 12px;"></i>
+                                  <VerifiedBadge v-if="member.isIdentityVerified" :size="12" />
                                 </span>
                                 <span v-if="member.bio" class="msg-modal__result-bio">{{ member.bio }}</span>
                             </div>
@@ -84,6 +84,7 @@ import mssagingService from '@/services/messaging.service';
 import { useRoute, useRouter } from "vue-router";
 import { ref, getCurrentInstance } from 'vue';
 import { API_URL } from '@/config/api';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
 export interface Member {
     _id?: string;
@@ -106,6 +107,8 @@ const API_BASE_URL = API_URL;
 
 export default {
     name: "send_message",
+
+    components: { VerifiedBadge },
 
     props: {
         pseudo_user: {

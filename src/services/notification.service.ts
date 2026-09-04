@@ -1,7 +1,6 @@
-import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
-import Cookies from 'js-cookie';
-import authentificationService from '@/services/authentification.service';
+import { type AxiosInstance, type AxiosResponse } from 'axios';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 export interface Notification {
   _id: string;
@@ -30,28 +29,10 @@ class NotificationService {
 
   constructor() {
     const baseURL = `${API_URL}/api/notifications`;
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL,
       headers: { 'Content-Type': 'application/json' },
     });
-
-    this.apiClient.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken') || localStorage.getItem('token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-
-    this.apiClient.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401) {
-          await authentificationService.verifSession().catch(() => {});
-        }
-        return Promise.reject(error);
-      }
-    );
   }
 
   async getNotifications(): Promise<NotificationsResponse> {

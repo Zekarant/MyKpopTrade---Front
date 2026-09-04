@@ -30,10 +30,9 @@
                 <div class="post-modal__seller" @click="viewUser()">
                     <div class="post-modal__avatar" v-html="profilePictureUrl"></div>
                     <div class="post-modal__seller-info">
-                        <span class="post-modal__username">@{{ dataSeller.username }}</span>
-                        <span v-if="dataSeller.isIdentityVerified" class="post-modal__verified">
-                            <img src="@/assets/images/certif.svg" alt="Vérifié">
-                            Vérifié
+                        <span class="post-modal__username">
+                            @{{ dataSeller.username }}
+                            <VerifiedBadge v-if="dataSeller.isIdentityVerified" :size="14" />
                         </span>
                     </div>
                     <div class="post-modal__actions-menu" @click.stop="toggleMenu($event)">
@@ -189,6 +188,7 @@
     import send_message from '../components/adherents/send_message.vue';
     import send_offer from '../components/send_offer.vue';
     import CheckoutDialog from '../components/checkout/CheckoutDialog.vue';
+    import VerifiedBadge from '../components/VerifiedBadge.vue';
 
     import postService from '@/services/post.service';
     import paymentService from '@/services/payment.service';
@@ -209,7 +209,8 @@
             report_card,
             send_message,
             send_offer,
-            CheckoutDialog
+            CheckoutDialog,
+            VerifiedBadge
         },
         props: {
             dataUser: {

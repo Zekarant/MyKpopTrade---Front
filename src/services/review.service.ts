@@ -1,10 +1,7 @@
-import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
-import Cookies from 'js-cookie';
 import type { ReviewData, Review, ApiResponse, ProfileReviewsResponse } from '@/types/review.types';
 import { API_URL } from '@/config/api';
-
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
+import { createApiClient } from '@/services/http';
 
 interface ApiError {
   message: string;
@@ -17,42 +14,20 @@ class ReviewService {
   private API_BASE_URL: string = `${API_URL}`;
 
   constructor() {
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL: this.API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    this.setupInterceptors(this.apiClient);
-  }
-
-  private setupInterceptors(client: AxiosInstance): void {
-    client.interceptors.request.use(
-      (config) => {
-        const token = this.getAuthToken();
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    client.interceptors.response.use(
+    // Posé après les intercepteurs d'authentification, pour que le 401 soit
+    // d'abord traité (renouvellement + rejeu) et que seule une vraie erreur
+    // arrive jusqu'à cette traduction en ApiError.
+    this.apiClient.interceptors.response.use(
       (response) => response,
       (error) => Promise.reject(this.handleError(error))
     );
-  }
-
-  private getAuthToken(): string | null {
-    try {
-      const token = getSessionToken();
-      return token ? token : null;
-    } catch (error) {
-      console.error('Erreur lors de la récupération du token:', error);
-      return null;
-    }
   }
 
   private handleError(error: AxiosError): ApiError {

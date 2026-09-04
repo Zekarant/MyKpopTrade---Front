@@ -1,8 +1,6 @@
-import axios from "axios";
-import type { AxiosError, AxiosInstance } from "axios";
-import Cookies from "js-cookie";
-import router from "@/router";
+import type { AxiosInstance } from "axios";
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 interface ApiError {
   message: string;
@@ -46,31 +44,10 @@ class CartService {
   private apiClient: AxiosInstance;
 
   constructor() {
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL: `${API_URL}/api/cart`,
       headers: { 'Content-Type': 'application/json' }
     });
-    this.setupInterceptors();
-  }
-
-  private setupInterceptors(): void {
-    this.apiClient.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken') || localStorage.getItem('token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-    this.apiClient.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/login');
-        }
-        return Promise.reject(error);
-      }
-    );
   }
 
   async getCart(): Promise<Cart> {

@@ -42,7 +42,7 @@
                     <div class="identity">
                         <div class="nickname_block">
                             <span class="nickname_text_field">{{ profilInfo.username }}</span>
-                            <i v-if="profilInfo.isIdentityVerified" class="bi bi-patch-check-fill verified-badge-icon"></i>
+                            <VerifiedBadge v-if="profilInfo.isIdentityVerified" :size="16" />
                         </div>
                         <div class="identifier">@{{ profilInfo.username }}</div>
                     </div>
@@ -342,6 +342,7 @@
     import authentificationService from '@/services/authentification.service';
     import followService from '@/services/follow.service';
     import send_message from './send_message.vue';
+    import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
     interface LocalProfilInfo {
         isPhoneVerified: boolean;
@@ -395,7 +396,7 @@
         },
         components: {
             send_message,
-
+            VerifiedBadge,
         },
         setup() {
             const route = useRoute();
@@ -1147,10 +1148,6 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-.verified-badge-icon {
-    color: #ff2d78;
-    font-size: 16px;
 }
 .nickname_text_field{
     font-weight: 700;

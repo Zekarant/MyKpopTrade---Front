@@ -1,7 +1,6 @@
-import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 export type DisputeStatus =
   | 'opened' | 'under_review' | 'resolved' | 'refunded' | 'rejected' | 'cancelled';
@@ -39,14 +38,9 @@ class DisputeService {
   private client: AxiosInstance;
 
   constructor() {
-    this.client = axios.create({
+    this.client = createApiClient({
       baseURL: `${API_URL}/api/disputes`,
       headers: { 'Content-Type': 'application/json' }
-    });
-    this.client.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken') || localStorage.getItem('token');
-      if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
-      return config;
     });
   }
 

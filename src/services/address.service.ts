@@ -1,6 +1,6 @@
-import axios, { type AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
+import { type AxiosInstance } from 'axios';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 export interface AddressResult {
   label: string;
@@ -27,14 +27,9 @@ class AddressService {
 
   constructor() {
     const baseUrl = `${API_URL}/api/addresses`;
-    this.client = axios.create({
+    this.client = createApiClient({
       baseURL: baseUrl,
       headers: { 'Content-Type': 'application/json' }
-    });
-    this.client.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken');
-      if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
-      return config;
     });
   }
 

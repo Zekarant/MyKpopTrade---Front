@@ -1,13 +1,7 @@
-import axios from 'axios';
-import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
-const PUSH_API = `${API_URL}/api/notifications/push`;
-
-function authHeaders(): Record<string, string> {
-  const token = Cookies.get('sessionToken') || localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+const client = createApiClient({ baseURL: `${API_URL}/api/notifications/push` });
 
 /**
  * Convertit la clé VAPID base64-url en Uint8Array — format requis par
@@ -58,7 +52,7 @@ export const pushService = {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return false;
 
-    const { data } = await axios.get<{ publicKey: string }>(`${PUSH_API}/vapid-public-key`);
+    const { data } = await client.get<{ publicKey: string }>('/vapid-public-key');
     if (!data?.publicKey) return false;
 
     const sub = await registration.pushManager.subscribe({
@@ -66,9 +60,7 @@ export const pushService = {
       applicationServerKey: urlBase64ToUint8Array(data.publicKey)
     });
 
-    await axios.post(`${PUSH_API}/subscribe`, { subscription: sub.toJSON() }, {
-      headers: authHeaders()
-    });
+    await client.post('/subscribe', { subscription: sub.toJSON() });
     return true;
   },
 
@@ -80,9 +72,8 @@ export const pushService = {
     const sub = await registration.pushManager.getSubscription();
     if (!sub) return;
 
-    await axios.post(`${PUSH_API}/unsubscribe`, { endpoint: sub.endpoint }, {
-      headers: authHeaders()
-    }).catch(() => { /* tolérant : on désabonne quand même côté navigateur */ });
+    await client.post('/unsubscribe', { endpoint: sub.endpoint })
+      .catch(() => { /* tolérant : on désabonne quand même côté navigateur */ });
     await sub.unsubscribe();
   }
 };

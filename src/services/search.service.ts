@@ -1,9 +1,6 @@
-import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
-
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
+import { createApiClient } from '@/services/http';
 
 export interface AdvancedSearchPayload {
   query?: string;
@@ -28,17 +25,9 @@ class SearchService {
   private API_BASE_URL: string = `${API_URL}/api`;
 
   constructor() {
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL: `${this.API_BASE_URL}/search`,
       headers: { 'Content-Type': 'application/json' },
-    });
-
-    this.apiClient.interceptors.request.use((config) => {
-      const token = getSessionToken();
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
     });
   }
 

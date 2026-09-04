@@ -14,7 +14,7 @@
             v-html="renderAvatar(otherParticipant)"
           ></div>
           <div>
-            <h3>{{ conversationTitle }} <i v-if="otherParticipant?.isIdentityVerified" class="bi bi-patch-check-fill" style="color: #ff2d78; font-size: 13px;"></i></h3>
+            <h3>{{ conversationTitle }} <VerifiedBadge v-if="otherParticipant?.isIdentityVerified" :size="13" /></h3>
             <span class="status">{{ getStatusText() }}</span>
           </div>
         </div>
@@ -331,7 +331,7 @@
           class="participant"
         >
           <div class="avatar-small" v-html="renderAvatar(participant)"></div>
-          <span>{{ participant.username }} <i v-if="participant.isIdentityVerified" class="bi bi-patch-check-fill" style="color: #ff2d78; font-size: 11px;"></i></span>
+          <span>{{ participant.username }} <VerifiedBadge v-if="participant.isIdentityVerified" :size="11" /></span>
         </div>
       </div>
     </div>
@@ -345,9 +345,11 @@ import messagingService from '@/services/messaging.service';
 import type { Conversation, Message, User } from '@/types/messaging.types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
 export default defineComponent({
   name: 'ConversationDetail',
+  components: { VerifiedBadge },
   setup() {
     const route = useRoute();
     const router = useRouter();

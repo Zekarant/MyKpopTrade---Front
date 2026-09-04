@@ -1,8 +1,8 @@
-import axios from 'axios';
-import type { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
+import type { AxiosInstance, AxiosResponse } from 'axios';
 import Cookies from "js-cookie";
 import authentificationService  from '@/services/authentification.service';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 import type {
   Post,
@@ -12,71 +12,26 @@ import type {
   ApiResponse,
   SearchParams
 } from '@/types/post.types';
-import router from '@/router';
-// Helper authentificationServicetions
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
-
-interface ApiError {
-  message: string;
-  status?: number;
-  code?: string;
-}
-
-type AuthToken = string | null;
 class PostService {
   private apiClient: AxiosInstance;
+  private uploadClient: AxiosInstance;
   private API_BASE_URL: string = `${API_URL}/api`;
 
   constructor() {
 
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL: `${this.API_BASE_URL}`,
       headers: {
         'Content-Type': 'application/json',
       },
     });
-    // Configuration des intercepteurs pour les deux clients
-    this.setupInterceptors(this.apiClient);
-  }
 
-  private setupInterceptors(client: AxiosInstance): void {
-    // Intercepteur pour ajouter le token JWT ou le cookie PHPSESSID
-    client.interceptors.request.use(
-      (config) => {
-        const token = this.getAuthToken();
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error: AxiosError) => Promise.reject(error)
-    );
-
-    // Intercepteur pour gérer les erreurs
-    client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          this.handleUnauthorized();
-        }
-        return Promise.reject(error);
-      }
-    );
-  }
-  private handleUnauthorized(): void {
-    localStorage.removeItem('token');
-    // Don't redirect here - let verifSession handle it to avoid duplicate redirects
-  }
-  private getAuthToken(): AuthToken {
-    // Utilise js-cookie pour récupérer le sessionToken
-    const sessionToken = Cookies.get('sessionToken');
-    if (sessionToken) {
-      return sessionToken;
-    }
-
-    // Fallback : récupère le token du localStorage
-    return localStorage.getItem('token');
+    // Sans Content-Type par défaut : axios doit pouvoir poser lui-même
+    // `multipart/form-data` et sa frontière pour les envois de fichiers.
+    this.uploadClient = createApiClient({
+      baseURL: `${this.API_BASE_URL}`,
+    });
   }
   // Récupérer tous les posts
   async getPosts(
@@ -115,12 +70,7 @@ class PostService {
     const postId = id.toString();
 
     try {
-      const response: AxiosResponse<PostResponse> = await this.apiClient.get(`/products/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-          "Content-Type": "application/json"
-        }
-      });
+      const response: AxiosResponse<PostResponse> = await this.apiClient.get(`/products/${postId}`);
       return response.data;
     } catch (error: any) {
       if (!_retried && (error.response?.data?.message === "Token invalide" ||
@@ -143,12 +93,7 @@ class PostService {
     const postId = id.toString();
 
     try {
-      const response: AxiosResponse = await axios.delete(`${this.API_BASE_URL}/products/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-          "Content-Type": "application/json"
-        }
-      });
+      const response: AxiosResponse = await this.apiClient.delete(`/products/${postId}`);
       return response.data;
     } catch (error: any) {
       if (!_retried && (error.response?.data?.message === "Token invalide" ||
@@ -184,11 +129,7 @@ class PostService {
     data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
 
     try {
-      const response: AxiosResponse = await axios.post(`${this.API_BASE_URL}/products`, data, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-        },
-      });
+      const response: AxiosResponse = await this.uploadClient.post('/products', data);
 
       if (response.status === 201 || response.status === 200) {
         return 'ok';
@@ -242,11 +183,7 @@ class PostService {
     }
 
     try {
-      const response: AxiosResponse = await axios.put(`${this.API_BASE_URL}/products/${postId}`, data, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-        },
-      });
+      const response: AxiosResponse = await this.uploadClient.put(`/products/${postId}`, data);
 
       if (response.status === 201 || response.status === 200) {
         return 'ok';
@@ -275,13 +212,8 @@ class PostService {
     const postId = id.toString();
 
     try {
-      const response: AxiosResponse = await axios.post(`${this.API_BASE_URL}/products/${postId}/sold/`, {
+      const response: AxiosResponse = await this.apiClient.post(`/products/${postId}/sold/`, {
         buyerId: idUser
-      }, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-          "Content-Type": "application/json"
-        }
       });
 
       return response.status === 200;
@@ -345,13 +277,8 @@ class PostService {
     const postId = id.toString();
 
     try {
-      const response: AxiosResponse = await axios.post(`${this.API_BASE_URL}/products/${postId}/favorite`, {
+      const response: AxiosResponse = await this.apiClient.post(`/products/${postId}/favorite`, {
         buyerId: getIdUser()
-      }, {
-        headers: {
-          Authorization: `Bearer ${getSessionToken()}`,
-          "Content-Type": "application/json"
-        }
       });
 
       return response.status === 200;
@@ -415,10 +342,9 @@ class PostService {
     const formData = new FormData();
     formData.append('productImage', image);
     try {
-      const response = await axios.post(
-        `${this.API_BASE_URL}/products/${productId}/images`,
-        formData,
-        { headers: { Authorization: `Bearer ${getSessionToken()}` } }
+      const response = await this.uploadClient.post(
+        `/products/${productId}/images`,
+        formData
       );
       return response.data;
     } catch (error: any) {

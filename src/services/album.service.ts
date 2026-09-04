@@ -1,6 +1,6 @@
-import axios, { type AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
+import { type AxiosInstance } from 'axios';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 export interface KpopAlbum {
   _id: string;
@@ -16,17 +16,9 @@ class AlbumService {
 
   constructor() {
     const baseURL = `${API_URL}/api/albums`;
-    this.apiClient = axios.create({
+    this.apiClient = createApiClient({
       baseURL,
       headers: { 'Content-Type': 'application/json' },
-    });
-
-    this.apiClient.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken') || localStorage.getItem('token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
     });
   }
 

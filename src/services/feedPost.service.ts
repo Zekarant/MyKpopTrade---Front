@@ -1,20 +1,13 @@
-import axios, { type AxiosInstance } from 'axios';
-import Cookies from 'js-cookie';
+import { type AxiosInstance } from 'axios';
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 class FeedPostService {
   private apiClient: AxiosInstance;
 
   constructor() {
     const baseURL = `${API_URL}/api/posts`;
-    this.apiClient = axios.create({ baseURL });
-    this.apiClient.interceptors.request.use((config) => {
-      const token = Cookies.get('sessionToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
+    this.apiClient = createApiClient({ baseURL });
   }
 
   async getFeed(page = 1, limit = 20) {

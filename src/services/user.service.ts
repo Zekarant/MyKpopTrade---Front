@@ -1,5 +1,4 @@
 // services/user.service.ts
-import axios from "axios";
 import type { AxiosInstance, AxiosResponse } from "axios";
 
 import Cookies from "js-cookie";
@@ -9,8 +8,8 @@ import type {
     UserResponse,
     ImgUserProfile
 } from "@/types/user.types";
-import router from "@/router";
 import { API_URL } from '@/config/api';
+import { createApiClient } from '@/services/http';
 
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
@@ -21,8 +20,6 @@ interface ApiError {
   code?: string;
 }
 
-type AuthToken = string | null;
-
 
 
 class userService {
@@ -32,59 +29,19 @@ class userService {
 
     constructor() {
 
-        this.userApiClient = axios.create({
+        this.userApiClient = createApiClient({
         baseURL: `${this.API_BASE_URL}/profiles`,
         headers: {
             'Content-Type': 'application/json',
         },
         });
 
-        this.rgpdApiClient = axios.create({
+        this.rgpdApiClient = createApiClient({
         baseURL: `${this.API_BASE_URL}/users`,
         headers: {
             'Content-Type': 'application/json',
         },
         });
-
-        this.setupInterceptors(this.userApiClient);
-        this.setupInterceptors(this.rgpdApiClient);
-    }
-    // Interceptor setup authentificationServicetion
-    private setupInterceptors(client: AxiosInstance) {
-        client.interceptors.request.use(
-            (config) => {
-            const token = this.getAuthToken();
-            if (token && config.headers) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-            },
-            (error: any) => Promise.reject(error)
-        );
-
-        client.interceptors.response.use(
-            (response) => response,
-            (error: any) => {
-            if (error.response?.status === 401) {
-                this.handleUnauthorized();
-            }
-            return Promise.reject(error);
-            }
-        );
-    }
-    private handleUnauthorized(): void {
-        localStorage.removeItem('token');
-        router.push('/login');
-    }
-    private getAuthToken(): AuthToken {
-        // Utilise js-cookie pour récupérer le sessionToken
-        const sessionToken = Cookies.get('sessionToken');
-        if (sessionToken) {
-        return sessionToken;
-        }
-
-        // Fallback : récupère le token du localStorage
-        return localStorage.getItem('token');
     }
 
   async getMyInformation(): Promise<UserResponse> {

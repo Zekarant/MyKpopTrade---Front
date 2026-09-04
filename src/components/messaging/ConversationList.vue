@@ -58,7 +58,7 @@
           <div class="conversation-header">
             <span class="username">
               {{ getParticipantUsername(conversation.otherParticipant) }}
-              <i v-if="conversation.otherParticipant?.isIdentityVerified" class="bi bi-patch-check-fill verified-icon"></i>
+              <VerifiedBadge v-if="conversation.otherParticipant?.isIdentityVerified" :size="12" class="verified-icon" />
             </span>
             <span class="country">{{ getParticipantLocation(conversation.otherParticipant) }}</span>
             <span v-if="(conversation.unreadCount ?? 0) > 0" class="unread-badge">
@@ -140,6 +140,7 @@ import { ref, computed, onMounted } from 'vue';
 import type { Conversation, ConversationListParams, ProductReference } from '@/types/messaging.types';
 import type { ImgUserProfile, IUserParticipant } from '@/types/user.types';
 import userService from '@/services/user.service';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
 
 // Types pour les onglets
@@ -853,8 +854,6 @@ $dark-gray: #343a40;
 }
 
 .verified-icon {
-  color: #ff2d78;
-  font-size: 12px;
   flex-shrink: 0;
 }
 
