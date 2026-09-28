@@ -13,7 +13,6 @@ import App from './App.vue'
 import router from './router'
 import Grid from './components/grid.vue'
 import post from './components/post.vue'
-import card_illu from './components/card_illu.vue'
 import nav_bar from './components/adherents/nav_bar.vue'
 import banner_profil from './components/adherents/banner.vue'
 import segment_profil from './components/adherents/segment_profil.vue'
@@ -22,7 +21,6 @@ import row_products from './components/row_products.vue'
 import review_card from './components/review_card.vue'
 import ImageCarousel from './components/ImageCarousel.vue'
 import filter_review from './components/filter_review.vue'
-import response_review from './components/response_review.vue'
 import card from './components/card.vue'
 import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
@@ -42,7 +40,6 @@ app.use(PrimeVue, {
 app.config.globalProperties.$func = func
 app.component("post", post)
 app.component("Grid", Grid)
-app.component("card_illu", card_illu)
 app.component("nav_bar", nav_bar)
 app.component("banner_profil", banner_profil)
 app.component("segment_profil", segment_profil)
@@ -52,7 +49,6 @@ app.component("review_card", review_card)
 app.component("ImageCarousel", ImageCarousel)
 app.component("filter_review", filter_review)
 app.component("post-card", card)
-app.component("response_review", response_review)
 app.component("Slider", Slider)
 app.mount('#app')
 

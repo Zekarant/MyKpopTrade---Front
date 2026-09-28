@@ -335,7 +335,7 @@ declare global {
                 }
             },
             verifBtn(btn:RouteRecordNameGeneric){
-                if(this.route.name == 'messages-list' && btn === 'messages') return true;
+                if(this.route.name == 'conversation' && btn === 'messages') return true;
                 if(this.route.name == btn){
                     if (btn === 'profile') {
                         return this.route.params?.id === 'me' || this.route.params?.parameter === 'me';

@@ -601,6 +601,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, getCurrentInstance } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMessagingStore } from '@/store/messaging.store'
 import userService from '@/services/user.service'
 import paymentService from '@/services/payment.service'
@@ -617,6 +618,7 @@ import { API_URL } from '@/config/api';
 
 // Store
 const messagingStore = useMessagingStore()
+const route = useRoute()
 
 // State
 const activeTab = ref('all')
@@ -1487,7 +1489,13 @@ onMounted(async () => {
     await messagingStore.fetchConversations()
 
     if (messagingStore.conversations.length > 0) {
-      await selectConversation(messagingStore.conversations[0])
+      // /adherents/messages/:id (ex. après une négociation) ouvre cette
+      // conversation ; sinon, la plus récente comme avant.
+      const requestedId = route.params.id
+      const requested = requestedId
+        ? messagingStore.conversations.find((c) => (c._id || c.id) === requestedId)
+        : null
+      await selectConversation(requested || messagingStore.conversations[0])
     }
     const messagesArea = document.querySelector('.messages-area');
     if (messagesArea) {

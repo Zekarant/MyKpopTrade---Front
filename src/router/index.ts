@@ -149,20 +149,19 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Messages'
-    },
-    children: [
-      {
-        path: '',
-        name: 'messages-list',
-        component: () => import('@/components/messaging/ConversationList.vue')
-      },
-      {
-        path: ':id',
-        name: 'conversation',
-        component: () => import('@/components/messaging/ConversationDetail.vue'),
-        props: true
-      }
-    ]
+    }
+  },
+  {
+    // Même vue, conversation pré-sélectionnée. Les anciennes routes enfants
+    // (ConversationList / ConversationDetail) ne s'affichaient jamais :
+    // MessagesView n'a pas de <router-view>.
+    path: '/adherents/messages/:id',
+    name: 'conversation',
+    component: () => import('@/views/messaging/MessagesView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Messages'
+    }
   },
   {
     path: '/negotiate/:productId',

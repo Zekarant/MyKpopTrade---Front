@@ -19,7 +19,6 @@
 <script lang="ts">
     import { defineComponent, ref, nextTick } from 'vue';
     import { useRouter } from "vue-router";
-    import card_illu from '@/components/card_illu.vue';
     import post from '@/components/post.vue';
     import card from '@/components/card.vue';
 
@@ -28,7 +27,6 @@
     export default defineComponent({
         name: "Grid",
         components: {
-            card_illu,
             post,
             card
         },
