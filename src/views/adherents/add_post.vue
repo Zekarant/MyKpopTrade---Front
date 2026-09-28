@@ -551,7 +551,11 @@
         }
         const getGroupKpopSelect = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/search?query=${searchGroupKpop.value}`);
+                // `params` encode la saisie : « & », « # » ou « + » (ex. « (G)I-DLE »)
+                // cassaient la requête quand elle était concaténée dans l'URL.
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/search`, {
+                    params: { query: searchGroupKpop.value }
+                });
                 return response.data.groups || [];
             } catch (error) {
                 console.error('Erreur lors du chargement des groupes K-pop:', error);

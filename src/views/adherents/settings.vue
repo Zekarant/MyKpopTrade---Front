@@ -743,10 +743,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
-import Cookies from 'js-cookie';
-import axios from 'axios';
-import authentificationService from '@/services/authentification.service';
 import paymentService from '@/services/payment.service';
+import { createApiClient, ensureAccessToken } from '@/services/http';
 import type { PayPalBlockReason } from '@/services/payment.service';
 import userService from '@/services/user.service';
 import TwoFactorCard from '@/components/adherents/TwoFactorCard.vue';
@@ -770,14 +768,25 @@ const DEFAULT_PROFILE_PICTURE = 'https://mykpoptrade.com/images/avatar-default.p
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 /** Forme utile d'une erreur axios, sans passer par `any`. */
-type ApiError = { response?: { data?: { message?: string; code?: string } } };
+type ApiError = { response?: { status?: number; data?: { message?: string; code?: string } } };
 
 function apiMessage(error: unknown, fallback: string): string {
   return (error as ApiError)?.response?.data?.message || fallback;
 }
 
-function isTokenExpired(error: unknown): boolean {
-  return (error as ApiError)?.response?.data?.code === 'TOKEN_EXPIRED';
+/**
+ * Client partagé : il renouvelle la session expirée (15 min) et rejoue la
+ * requête. Les appels `axios` nus de cette page envoyaient `Bearer undefined`
+ * passé ce délai, et l'action (upload, enregistrement) échouait sans rejeu.
+ */
+const api = createApiClient({ baseURL: API_URL });
+
+/**
+ * Un 401 qui remonte jusqu'ici signifie que le renouvellement a échoué : le
+ * client a déjà effacé la session et redirigé vers /login. Rien à afficher.
+ */
+function isSessionLost(error: unknown): boolean {
+  return (error as ApiError)?.response?.status === 401;
 }
 
 interface ProfileForm {
@@ -1022,28 +1031,22 @@ export default defineComponent({
       }
 
       this.savingProfile = true;
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const { data } = await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/auth/profile`,
-          {
-            username: this.form.username,
-            firstName: this.form.firstName,
-            lastName: this.form.lastName,
-            bio: this.form.bio,
-            location: this.form.location,
-            socialLinks: { ...this.form.socialLinks }
-          },
-          { headers: { Authorization: `Bearer ${sessionToken}` } }
-        );
+        const { data } = await api.put('/api/auth/profile', {
+          username: this.form.username,
+          firstName: this.form.firstName,
+          lastName: this.form.lastName,
+          bio: this.form.bio,
+          location: this.form.location,
+          socialLinks: { ...this.form.socialLinks }
+        });
 
         // La réponse reflète les troncatures appliquées côté API.
         this.userProfile = { ...this.userProfile, ...(data.user || {}) };
         this.resetProfileForm();
         this.$func.showToastSuccess(data.message || 'Profil mis à jour.');
       } catch (error) {
-        if (isTokenExpired(error)) authentificationService.verifSession();
-        else this.$func.showToastError(apiMessage(error, 'Erreur lors de l\'enregistrement.'));
+        if (!isSessionLost(error)) this.$func.showToastError(apiMessage(error, 'Erreur lors de l\'enregistrement.'));
       } finally {
         this.savingProfile = false;
       }
@@ -1062,20 +1065,14 @@ export default defineComponent({
       }
 
       this.avatarUploading = true;
-      const sessionToken = Cookies.get('sessionToken');
       const formData = new FormData();
       formData.append('profilePicture', file);
       try {
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/profiles/me/picture`,
-          formData,
-          { headers: { Authorization: `Bearer ${sessionToken}` } }
-        );
+        await api.post('/api/profiles/me/picture', formData);
         await this.loadProfile();
         this.$func.showToastSuccess('Photo de profil mise à jour.');
       } catch (error) {
-        if (isTokenExpired(error)) authentificationService.verifSession();
-        else this.$func.showToastError(apiMessage(error, 'Impossible d\'envoyer l\'image.'));
+        if (!isSessionLost(error)) this.$func.showToastError(apiMessage(error, 'Impossible d\'envoyer l\'image.'));
       } finally {
         this.avatarUploading = false;
       }
@@ -1083,11 +1080,8 @@ export default defineComponent({
 
     async removeAvatar() {
       this.avatarUploading = true;
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/api/profiles/me/picture`, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        await api.delete('/api/profiles/me/picture');
         await this.loadProfile();
         this.$func.showToastSuccess('Photo de profil retirée.');
       } catch (error) {
@@ -1124,11 +1118,8 @@ export default defineComponent({
     },
 
     async loadProfile() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        const res = await api.get('/api/auth/profile');
         this.userProfile = res.data.user || res.data;
         this.resetProfileForm();
         this.phoneNumber = this.userProfile.phoneNumber || '';
@@ -1138,57 +1129,54 @@ export default defineComponent({
         this.addressPostalCode = this.userProfile.address?.postalCode || '';
         this.addressCity = this.userProfile.address?.city || '';
         this.addressCountry = this.userProfile.address?.country || 'FR';
-      } catch (e: any) {
-        if (e.response?.status === 401) authentificationService.verifSession();
+      } catch {
+        // Session perdue : le client HTTP a déjà redirigé vers /login.
       }
     },
     async savePassword() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/update-password`, {
+        const res = await api.put('/api/auth/update-password', {
           currentPassword: this.currentPassword,
           newPassword: this.newPassword,
           confirmPassword: this.confirmPassword
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         (this as any).$func.showToastSuccess(res.data.message);
         this.showPasswordForm = false;
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
       } catch (e: any) {
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') authentificationService.verifSession();
-        else (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+        if (!isSessionLost(e)) (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
     },
-    linkGoogle() {
+    // La redirection OAuth ne peut pas porter d'en-tête : le jeton part dans
+    // l'URL. ensureAccessToken le renouvelle d'abord s'il a expiré, sinon la
+    // liaison échouait en « invalid_token » passé 15 minutes.
+    async linkGoogle() {
       if (!this.userProfile.socialAuth?.google?.id) {
-        const sessionToken = Cookies.get('sessionToken');
-        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google/link?token=${sessionToken}`;
+        const token = await ensureAccessToken();
+        window.location.href = `${API_URL}/api/auth/google/link?token=${encodeURIComponent(token ?? '')}`;
       }
     },
-    linkDiscord() {
+    async linkDiscord() {
       if (!this.userProfile.socialAuth?.discord?.id) {
-        const sessionToken = Cookies.get('sessionToken');
-        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/discord/link?token=${sessionToken}`;
+        const token = await ensureAccessToken();
+        window.location.href = `${API_URL}/api/auth/discord/link?token=${encodeURIComponent(token ?? '')}`;
       }
     },
     async verifEmail() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-verification-email`, {}, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        await api.post('/api/auth/send-verification-email', {});
         (this as any).$func.showToastSuccess('Email de vérification envoyé');
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
     },
     async saveTel() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        const response = await api.put('/api/auth/profile', {
           phoneNumber: this.phoneNumber
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         (this as any).$func.showToastSuccess('Numéro enregistré');
         // L'API normalise le numéro (« 06 12… » → « +336… ») et remet la
         // vérification à zéro : l'écran doit refléter les deux, sinon le badge
@@ -1205,11 +1193,8 @@ export default defineComponent({
       }
     },
     async verifTel() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/send-phone-verification`, {}, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        await api.post('/api/auth/send-phone-verification', {});
         this.telRequest = true;
         (this as any).$func.showToastSuccess('Code envoyé');
       } catch (e: any) {
@@ -1217,11 +1202,10 @@ export default defineComponent({
       }
     },
     async verifCodeTel() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-phone`, {
+        await api.post('/api/auth/verify-phone', {
           code: this.phoneCode
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         this.codeVerified = true;
         this.telRequest = false;
         (this as any).$func.showToastSuccess('Téléphone vérifié');
@@ -1230,11 +1214,10 @@ export default defineComponent({
       }
     },
     async saveLegalName() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        await api.put('/api/auth/profile', {
           legalName: this.legalName
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         (this as any).$func.showToastSuccess('Nom légal enregistré');
         this.userProfile.legalName = this.legalName;
       } catch (e: any) {
@@ -1255,11 +1238,10 @@ export default defineComponent({
         city: this.addressCity,
         country: this.addressCountry || 'FR'
       } : null;
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        await api.put('/api/auth/profile', {
           address
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         (this as any).$func.showToastSuccess('Adresse enregistrée');
         this.userProfile.address = address;
       } catch (e: any) {
@@ -1268,21 +1250,17 @@ export default defineComponent({
     },
     async changeAllowDirectMessages(event: Event) {
       const checked = (event.target as HTMLInputElement).checked;
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        await api.put('/api/auth/profile', {
           preferences: { allowDirectMessages: checked }
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
     },
     async exportUserData() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/data-export`, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        const res = await api.get('/api/users/me/data-export');
         // Trigger download as JSON file
         const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1291,17 +1269,16 @@ export default defineComponent({
         a.download = 'mykpoptrade-export.json';
         a.click();
         URL.revokeObjectURL(url);
-      } catch (e: any) {
+      } catch {
         (this as any).$func.showToastError("Erreur lors de l'export");
       }
     },
     async confirmAnonymize() {
       if (!confirm('Êtes-vous sûr de vouloir anonymiser vos données ? Cette action est irréversible.')) return;
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/me/anonymize`, {
+        const res = await api.post('/api/users/me/anonymize', {
           confirmation: true
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         (this as any).$func.showToastSuccess(res.data.message);
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
@@ -1321,8 +1298,7 @@ export default defineComponent({
           this.loadDeletionStatus();
         }
       } catch (e: any) {
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') authentificationService.verifSession();
-        else (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+        if (!isSessionLost(e)) (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
     },
     async cancelDeletion() {
@@ -1401,7 +1377,6 @@ export default defineComponent({
       this.paypalInfoError = '';
       this.paypalConnecting = true;
 
-      const sessionToken = Cookies.get('sessionToken');
       const address = {
         streetLine1: this.addressStreetLine1,
         streetLine2: this.addressStreetLine2 || undefined,
@@ -1410,10 +1385,10 @@ export default defineComponent({
         country: this.addressCountry || 'FR'
       };
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        await api.put('/api/auth/profile', {
           legalName: this.legalName,
           address
-        }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        });
         this.userProfile.legalName = this.legalName;
         this.userProfile.address = address;
       } catch (e: any) {
@@ -1446,13 +1421,10 @@ export default defineComponent({
      * déjà correctement le bandeau de profil.
      */
     async openIdentityVerification() {
-      const sessionToken = Cookies.get('sessionToken');
       this.showIdentityForm = true;
 
       try {
-        const statusRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/verification/identity/status/`, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        const statusRes = await api.get('/api/verification/identity/status/');
         this.identityVerification = statusRes.data;
       } catch (e: any) {
         // 404 = aucune demande en cours, c'est le cas normal d'un premier dépôt.
@@ -1460,10 +1432,7 @@ export default defineComponent({
           this.identityVerification = null;
           return;
         }
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') {
-          authentificationService.verifSession();
-          return;
-        }
+        if (isSessionLost(e)) return;
         this.$func.showToastError(
           e.response?.data?.message || 'Impossible de charger votre statut de vérification.'
         );
@@ -1477,37 +1446,29 @@ export default defineComponent({
     async submitIdentityVerification() {
       if (!this.identityDocumentFile || !this.identityConsentGiven) return;
       this.identitySubmitting = true;
-      const sessionToken = Cookies.get('sessionToken');
       const formData = new FormData();
       formData.append('documentType', this.identityDocumentType);
       formData.append('consentGiven', 'true');
       formData.append('document', this.identityDocumentFile);
       try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/verification/identity`, formData, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        await api.post('/api/verification/identity', formData);
         (this as any).$func.showToastSuccess('Demande de vérification envoyée');
         this.showIdentityForm = false;
         await this.loadProfile();
       } catch (e: any) {
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') authentificationService.verifSession();
-        else (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(e.response?.data?.message || 'Erreur lors de l\'envoi');
+        if (!isSessionLost(e)) (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(e.response?.data?.message || 'Erreur lors de l\'envoi');
       } finally {
         this.identitySubmitting = false;
       }
     },
     async cancelIdentityVerification() {
-      const sessionToken = Cookies.get('sessionToken');
       try {
-        const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/verification/identity/cancel`, {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
+        const res = await api.delete('/api/verification/identity/cancel');
         (this as unknown as { $func: { showToastSuccess(m: string): void } }).$func.showToastSuccess(res.data.message);
         this.showIdentityForm = false;
         this.identityVerification = null;
       } catch (e: any) {
-        if (e.response?.data?.code === 'TOKEN_EXPIRED') authentificationService.verifSession();
-        else (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(e.response?.data?.message || 'Erreur');
+        if (!isSessionLost(e)) (this as unknown as { $func: { showToastError(m: string): void } }).$func.showToastError(e.response?.data?.message || 'Erreur');
       }
     },
     async disconnectPaypal() {

@@ -101,9 +101,11 @@
     import row_products from '@/components/row_products.vue';
     import postService from '@/services/post.service';
     import authentification from '@/services/authentification.service';
-    import Cookies from "js-cookie";
-    import axios from "axios";
     import { API_URL } from '@/config/api';
+    import { createApiClient } from '@/services/http';
+
+    /** Client partagé : renouvelle la session expirée et rejoue la requête. */
+    const api = createApiClient({ baseURL: API_URL });
 
   export default defineComponent({
     name: 'dashboard',
@@ -172,10 +174,7 @@
       },
       async loadDeletionStatus() {
         try {
-          const sessionToken = Cookies.get('sessionToken');
-          const res = await axios.get(`${API_URL}/api/auth/profile`, {
-            headers: { Authorization: `Bearer ${sessionToken}` }
-          });
+          const res = await api.get('/api/auth/profile');
           const profile = res.data?.user || res.data;
           this.deletionDate = profile?.scheduledDeletionDate || null;
         } catch {

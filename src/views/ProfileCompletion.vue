@@ -111,10 +111,12 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
-import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
 import { func } from '@/function';
+import { createApiClient, getRefreshToken } from '@/services/http';
+
+/** Client partagé : renouvelle la session expirée et rejoue la requête. */
+const api = createApiClient({ baseURL: API_URL });
 
 export default defineComponent({
   name: 'ProfileCompletion',
@@ -149,15 +151,14 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      const token = Cookies.get('sessionToken');
-      if (!token) {
+      // Le refresh token fait foi : le jeton d'accès (15 min) peut avoir
+      // expiré sans que la session le soit ; le client le renouvelle.
+      if (!getRefreshToken()) {
         router.replace('/login');
         return;
       }
       try {
-        const { data } = await axios.get(`${API_URL}/api/auth/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const { data } = await api.get('/api/auth/profile');
         if (data.user?.profileCompleted) {
           // Déjà rempli — on n'est pas censé être ici.
           router.replace('/adherents/dashboard');
@@ -194,9 +195,8 @@ export default defineComponent({
       }
       loading.value = true;
       try {
-        const token = Cookies.get('sessionToken');
-        await axios.post(
-          `${API_URL}/api/auth/profile/complete`,
+        await api.post(
+          '/api/auth/profile/complete',
           {
             username: form.username,
             firstName: form.firstName,
@@ -207,8 +207,7 @@ export default defineComponent({
             privacyPolicyAccepted: form.privacyPolicyAccepted,
             dataProcessingConsent: form.privacyPolicyAccepted,
             marketingConsent: form.marketingConsent,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
+          }
         );
         func.showToastSuccess('Profil finalisé, bienvenue !');
         router.replace('/adherents/dashboard');

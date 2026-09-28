@@ -315,9 +315,7 @@
     import banner_profil from '@/components/adherents/banner.vue';
     import segment_profil from '@/components/adherents/segment_profil.vue';
     import Grid from '@/components/grid.vue';
-    import Cookies from "js-cookie";
     import { useRoute } from "vue-router";
-    import axios from 'axios';
     import Filter_review from '@/components/filter_review.vue';
     import Review_card from '@/components/review_card.vue';
     import VerifiedBadge from '@/components/VerifiedBadge.vue';
@@ -327,6 +325,10 @@
     import feedPostService from '@/services/feedPost.service';
     import followService from '@/services/follow.service';
     import { API_URL } from '@/config/api';
+    import { createApiClient } from '@/services/http';
+
+    /** Client partagé : renouvelle la session expirée et rejoue la requête. */
+    const api = createApiClient({ baseURL: API_URL });
 
   export default defineComponent({
     name: 'profile',
@@ -503,77 +505,44 @@
         }
       },
 
+      // Client partagé : session renouvelée et requête rejouée automatiquement ;
+      // un 401 restant signifie session perdue, déjà redirigée vers /login.
       async getInfoProfil(){
-        const sessionToken = Cookies.get('sessionToken');
-        await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
-
-            }
-          }).then(response => {
-
-          if (response.status === 200) {
-            this.profilInfo = response.data.user;
-            if(!this.profilInfo.socialLinks){
-              this.profilInfo.socialLinks = {
-                instagram: '',
-                twitter: '',
-                discord: ''
-              }
+        try {
+          const response = await api.get('/api/auth/profile');
+          this.profilInfo = response.data.user;
+          if(!this.profilInfo.socialLinks){
+            this.profilInfo.socialLinks = {
+              instagram: '',
+              twitter: '',
+              discord: ''
             }
           }
-          }).catch(error => {
-            if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-             authentificationService.verifSession();
-            }
-          });
-
+        } catch (error) {
+          console.error('Erreur lors du chargement du profil:', error);
+        }
       },
-      getInfoUser(user: string){
-        const sessionToken = Cookies.get('sessionToken');
-
-        axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/user/`+user, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionToken}`
-
-          }
-        }).then(response => {
-          if (response.status === 200) {
-            this.profilInfo = response.data.profile;
-            this.getInventory(this.profilInfo.id);
-            this.loadFeedPosts();
-          }
-        }).catch(error => {
-          if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-           authentificationService.verifSession();
-          }
-        });
+      async getInfoUser(user: string){
+        try {
+          const response = await api.get(`/api/profiles/user/${encodeURIComponent(user)}`);
+          this.profilInfo = response.data.profile;
+          this.getInventory(this.profilInfo.id);
+          this.loadFeedPosts();
+        } catch (error) {
+          console.error('Erreur lors du chargement du profil public:', error);
+        }
       },
       async getInventory(idUser=null){
         let url = '/api/products/inventory/me';
         if(idUser != null){
           url = '/api/products/inventory/user/'+idUser;
         }
-        const sessionToken = Cookies.get('sessionToken');
-
-        await axios.get(`${import.meta.env.VITE_API_URL}`+url, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionToken}` // Ajout du Bearer Token
-
-          }
-        }).then(response => {
-          if (response.status === 200) {
-            this.dataCardList = response.data.products;
-
-          }
-        }).catch(error => {
-          if(error.response.data.message == "Token invalide" || error.response.data.code == "TOKEN_EXPIRED"){
-           authentificationService.verifSession();
-          }
-        });
+        try {
+          const response = await api.get(url);
+          this.dataCardList = response.data.products;
+        } catch (error) {
+          console.error('Erreur lors du chargement de l\'inventaire:', error);
+        }
       },
       async getReview(){
         try {
@@ -724,16 +693,14 @@
         this.responsePopup.review = null;
       },
       async submitResponse() {
-        const sessionToken = Cookies.get('sessionToken');
         const review = this.responsePopup.review;
         if (!review || !this.responsePopup.text.trim()) return;
 
         try {
           const method = this.responsePopup.isEdit ? 'put' : 'post';
-          const response = await axios[method](
-            `${import.meta.env.VITE_API_URL}/api/profiles/ratings/${review._id}/response`,
-            { response: this.responsePopup.text },
-            { headers: { Authorization: `Bearer ${sessionToken}` } }
+          const response = await api[method](
+            `/api/profiles/ratings/${review._id}/response`,
+            { response: this.responsePopup.text }
           );
 
           if (response.status === 200 || response.status === 201) {
@@ -747,11 +714,8 @@
             }
             this.closeResponsePopup();
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error('Erreur lors de la réponse:', error);
-          if (error?.response?.data?.message === "Token invalide" || error?.response?.data?.code === "TOKEN_EXPIRED") {
-            authentificationService.verifSession();
-          }
         }
       }
     },
