@@ -191,9 +191,6 @@
       v-if="selectedConversation"
       :conversation="selectedConversation"
       @close="closeInformation"
-      @cancel-transaction="cancelTransaction"
-      @confirm-received="confirmReceived"
-      @mark-as-sent="markAsSent"
       @open-media="openImgList"
     />
 
@@ -901,41 +898,6 @@ const scrollToBottom = () => {
   const container = document.querySelector('.messages-area')
   if (container) {
     container.scrollTop = container.scrollHeight
-  }
-}
-
-const cancelTransaction = async () => {
-  if (!confirm('Êtes-vous sûr de vouloir annuler cette transaction ?')) return
-
-  try {
-    const context = selectedConversation.value?.productContext || selectedConversation.value?.context
-    if (context) {
-      context.status = 'cancelled'
-    }
-  } catch (error) {
-    console.error('Erreur lors de l\'annulation:', error)
-  }
-}
-
-const confirmReceived = async () => {
-  try {
-    const context = selectedConversation.value?.productContext || selectedConversation.value?.context
-    if (context) {
-      context.status = 'completed'
-    }
-  } catch (error) {
-    console.error('Erreur lors de la confirmation:', error)
-  }
-}
-
-const markAsSent = async () => {
-  try {
-    const context = selectedConversation.value?.productContext || selectedConversation.value?.context
-    if (context) {
-      context.status = 'in_progress'
-    }
-  } catch (error) {
-    console.error('Erreur lors du marquage:', error)
   }
 }
 

@@ -194,14 +194,3 @@ export function transactionStatusLabel(conversation: ConversationLike | null | u
   const status = (conversation?.context || conversation)?.negotiation?.status;
   return status ? TRANSACTION_STATUS_LABELS[status] ?? status : status;
 }
-
-export function transactionActions(conversation: ConversationLike | null | undefined) {
-  const context = transactionContext(conversation);
-  const status = context?.status;
-  return {
-    visible: Boolean(context) && (status === 'pending' || status === 'in_progress'),
-    canCancel: Boolean(context) && status === 'pending',
-    canConfirmReceived: Boolean(context) && status === 'in_progress' && !context?.isOwner,
-    canMarkAsSent: Boolean(context) && status === 'pending' && Boolean(context?.isOwner)
-  };
-}

@@ -79,33 +79,6 @@
             </div>
           </div>
         </div>
-
-        <div class="transaction-actions" v-if="actions.visible">
-          <button
-            class="btn-outline"
-            @click="emit('cancel-transaction')"
-            v-if="actions.canCancel"
-          >
-            <i class="bi bi-x-circle"></i>
-            Annuler la transaction
-          </button>
-          <button
-            class="btn-success"
-            @click="emit('confirm-received')"
-            v-if="actions.canConfirmReceived"
-          >
-            <i class="bi bi-check-circle"></i>
-            J'ai reçu mon article
-          </button>
-          <button
-            class="btn-primary"
-            @click="emit('mark-as-sent')"
-            v-if="actions.canMarkAsSent"
-          >
-            <i class="bi bi-truck"></i>
-            Marquer comme envoyé
-          </button>
-        </div>
       </div>
 
       <div class="media-section" v-if="conversation?.media?.length">
@@ -140,7 +113,6 @@ import { computed } from 'vue'
 import { API_URL } from '@/config/api'
 import {
   formatLongDate,
-  transactionActions,
   transactionStatus,
   transactionStatusLabel,
   transactionTitle
@@ -151,16 +123,16 @@ import { attachmentUrl, conversationMediaUrls } from '../attachments'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- conversation de l'API non typée côté front
 const props = defineProps<{ conversation: any }>()
 
+// Les boutons « Annuler la transaction / Marquer comme envoyé / J'ai reçu »
+// qui vivaient ici ne changeaient que l'affichage local, et ne s'affichaient
+// jamais : l'API n'envoie pas de `context` de transaction. Le suivi réel
+// (expédition, réception, remboursement) est dans la page Paiements.
 const emit = defineEmits<{
   close: []
-  'cancel-transaction': []
-  'confirm-received': []
-  'mark-as-sent': []
   'open-media': [urls: string[], index: number]
 }>()
 
 const product = computed(() => props.conversation?.productContext || props.conversation?.productId)
-const actions = computed(() => transactionActions(props.conversation))
 </script>
 
 <style lang="scss" scoped>

@@ -7,7 +7,6 @@ import {
   getOtherParticipant,
   isOwnMessage,
   messageStatusIcon,
-  transactionActions,
   transactionStatusLabel,
   type ConversationLike
 } from '../conversationHelpers'
@@ -124,18 +123,6 @@ describe('conversationHelpers', () => {
     it('libellé du statut de négociation', () => {
       expect(transactionStatusLabel(conv({ negotiation: { status: 'pending' } }))).toBe('En attente')
       expect(transactionStatusLabel(conv({ negotiation: { status: 'custom' } }))).toBe('custom')
-    })
-
-    it('actions disponibles selon le statut et le rôle', () => {
-      expect(transactionActions(conv({ context: { status: 'pending', isOwner: true } }))).toEqual({
-        visible: true, canCancel: true, canConfirmReceived: false, canMarkAsSent: true
-      })
-      expect(transactionActions(conv({ context: { status: 'in_progress', isOwner: false } }))).toEqual({
-        visible: true, canCancel: false, canConfirmReceived: true, canMarkAsSent: false
-      })
-      expect(transactionActions(conv())).toEqual({
-        visible: false, canCancel: false, canConfirmReceived: false, canMarkAsSent: false
-      })
     })
   })
 })
