@@ -8,6 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
+    "test:visual": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
@@ -30,6 +31,7 @@
     "vue3-emoji-picker": "^1.1.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/bootstrap": "^5.2.10",
     "@types/js-cookie": "^3.0.6",
