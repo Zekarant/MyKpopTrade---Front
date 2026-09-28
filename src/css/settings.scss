@@ -1,7 +1,8 @@
 ﻿// ============================================
 // MyKpopTrade - Page Réglages (adhérent)
-// Styles extraits de src/views/adherents/settings.vue
-// Importé en scoped via `@use '../../css/settings.scss' as *;`
+// Page src/views/adherents/settings.vue et ses sections (./settings/*.vue).
+// Chargée sous `.settings-root` via `meta.load-css` : non scopée, pour que
+// les sections en héritent sans en embarquer chacune une copie.
 // ============================================
 
 .settings-page {
