@@ -2,156 +2,24 @@
   <main class="page">
   <nav_bar></nav_bar>
   <div class="messaging-container">
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <div class="user-profile">
-          <div v-html="getAvatar(userInfo)" class="avatar">
-          </div>
-          <div class="user-info">
-            <span class="username">{{ userInfo?.username || '@nom_d_utilisateur' }}</span>
-            <span class="status"><!--{{ userInfo?.status || 'Hors ligne' }}--> En ligne</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="navigation-tabs">
-        <button
-          class="tab"
-          :class="{ active: activeTab === 'all' }"
-          @click="activeTab = 'all'"
-        >
-          <i class="bi bi-chat-dots"></i>
-          <span class="tab-label">Tous</span>
-          <span class="tab-count" v-if="getAllConversationsCount()">{{ getAllConversationsCount() }}</span>
-        </button>
-        <button
-          class="tab"
-          :class="{ active: activeTab === 'favorites' }"
-          @click="activeTab = 'favorites'"
-        >
-          <i class="bi bi-star"></i>
-          <span class="tab-label">Favoris</span>
-          <span class="tab-count" v-if="getFavoritesCount()">{{ getFavoritesCount() }}</span>
-        </button>
-        <button
-          class="tab"
-          :class="{ active: activeTab === 'unread' }"
-          @click="activeTab = 'unread'"
-        >
-          <i class="bi bi-envelope"></i>
-          <span class="tab-label">Non lus</span>
-          <span class="tab-count" v-if="getUnreadConversationsCount()">{{ getUnreadConversationsCount() }}</span>
-        </button>
-        <button
-          class="tab"
-          :class="{ active: activeTab === 'archived' }"
-          @click="activeTab = 'archived'"
-        >
-          <i class="bi bi-archive"></i>
-          <span class="tab-label">Archivées</span>
-          <span class="tab-count" v-if="getArchivedCount()">{{ getArchivedCount() }}</span>
-        </button>
-      </div>
-
-      <!-- Messages List -->
-      <div class="messages-list">
-        <div class="search-section">
-          <div class="search-input">
-            <i class="bi bi-search"></i>
-            <input type="text" placeholder="Rechercher..." v-model="searchQuery" />
-          </div>
-          <button class="btn-new-conversation" @click="openNewConversationModal" title="Créer une nouvelle conversation">
-            <i class="bi bi-plus-circle"></i>
-            <span class="btn-label">Nouveau</span>
-          </button>
-        </div>
-
-        <div class="conversations" v-if="!loading">
-          <div
-            v-for="conversation in filteredConversations"
-            :key="conversation._id || conversation.id"
-            class="conversation-item"
-            :class="{
-              active: (selectedConversation?._id && selectedConversation._id === conversation._id) ||
-            (selectedConversation?.id && selectedConversation.id === conversation.id),
-              unread: conversation.unreadCount > 0,
-              favorite: isFavoriteConversation(conversation)
-            }"
-            @click="selectConversation(conversation)">
-
-            <div>
-              <div class="conversation-avatar" v-html="getAvatar(getOtherParticipant(conversation))"></div>
-              <div class="online-indicator" v-if="getOtherParticipant(conversation)?.isOnline"></div>
-            </div>
-            <div class="conversation-content">
-              <div class="conversation-header">
-                <div class="conversation-title">
-                  <span class="username">{{ getOtherParticipant(conversation)?.username || conversation.username }}</span>
-                  <i class="bi bi-star-fill favorite-icon" v-if="isFavoriteConversation(conversation)"></i>
-                </div>
-                <span class="timestamp">{{ formatTimestamp(conversation.lastMessageAt || conversation.timestamp) }}</span>
-              </div>
-              <div class="conversation-preview">
-                <span class="message-preview">{{ conversation.lastMessage?.content || conversation.lastMessage }}</span>
-                <div class="message-badges" v-if="conversation.unreadCount">
-                  <span class="badge">{{ conversation.unreadCount }}</span>
-                </div>
-              </div>
-              <div class="conversation-status" v-if="conversation.type">
-                <span class="status-badge" :class="conversation.type">{{ getConversationTypeLabel(conversation.type) }}</span>
-              </div>
-            </div>
-            <div class="conversation-actions" @click.stop>
-              <button
-                class="action-dots-btn"
-                @click="toggleConversationMenu(conversation._id || conversation.id)"
-                :title="'Options'"
-              >
-                <i class="bi bi-three-dots"></i>
-              </button>
-              <!-- Dropdown Menu -->
-              <div
-                class="conversation-dropdown"
-                v-if="showConversationMenu === (conversation._id || conversation.id)"
-                @click.stop
-              >
-                <button @click="toggleFavorite(conversation)" class="dropdown-item" :class="{ favorite: isFavoriteConversation(conversation) }">
-                  <i class="bi" :class="isFavoriteConversation(conversation) ? 'bi-star-fill' : 'bi-star'"></i>
-                  {{ isFavoriteConversation(conversation) ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
-                </button>
-                <button
-                  @click="toggleReadStatus(conversation)"
-                  class="dropdown-item"
-                >
-                  <i class="bi" :class="conversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
-                  {{ conversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu' }}
-                </button>
-                <button
-                  @click="archiveConversation(conversation)"
-                  class="dropdown-item"
-                >
-                  <i class="bi bi-archive"></i>
-                  {{ isArchived(conversation) ? 'Désarchiver' : 'Archiver' }}
-                </button>
-                <button
-                  @click="deleteConversation(conversation)"
-                  class="dropdown-item danger"
-                >
-                  <i class="bi bi-trash"></i>
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="loading">
-          <i class="bi bi-arrow-clockwise"></i>
-          Chargement...
-        </div>
-      </div>
-    </div>
+    <ConversationSidebar
+      v-model:active-tab="activeTab"
+      v-model:search-query="searchQuery"
+      :user-info="userInfo"
+      :user-id="currentUserId()"
+      :conversations="filteredConversations"
+      :counts="tabCounts"
+      :loading="loading"
+      :selected-conversation="selectedConversation"
+      :open-menu-id="showConversationMenu"
+      @select="selectConversation"
+      @toggle-menu="toggleConversationMenu"
+      @toggle-favorite="toggleFavorite"
+      @toggle-read="toggleReadStatus"
+      @archive="archiveConversation"
+      @delete="deleteConversation"
+      @new-conversation="openNewConversationModal"
+    />
 
     <!-- Main Chat Area -->
     <div class="chat-area">
@@ -254,82 +122,17 @@
             <i class="bi bi-arrow-clockwise"></i>
             <span>Chargement...</span>
           </div>
-          <div
+          <MessageBubble
             v-for="message in currentMessages"
             :key="message._id || message.id"
-            class="message"
-            :class="{ 'own-message': isOwnMessage(message), 'other-message': !isOwnMessage(message) }"
-          >
-            <div v-if="!isOwnMessage(message)">
-              <div class="message-avatar" v-html="getAvatar(message.sender)"></div>
-            </div>
-            <div class="message-content">
-              <div class="message-bubble">
-                <div v-if="message.attachments.length > 0" class="grid-attachements">
-                  <div
-                    class="message-attachement"
-                    v-for="(attachement, index) in message.attachments.slice(0, 4)"
-                    :key="index"
-                    :class="{ 'has-more': index === 3 && message.attachments.length > 4 }"
-                    :data-count="index === 3 && message.attachments.length > 4 ? `+${message.attachments.length - 4}` : ''" @click="openImgList(messageAttachmentUrls(message), index)">
-                    <img :src="attachmentUrl(message._id || message.id, attachement)">
-                  </div>
-                </div>
-                <p>{{ message.content }}</p>
-                <div v-if="message.contentType === 'offer'" class="offer-actions">
-                  <!-- Si c'est l'utilisateur actuel qui a envoyé l'offre -->
-                  <div class="btn-offer" v-if="isOwnMessage(message)">
-                    <!-- Afficher le statut de l'offre -->
-                    <div v-if="getOfferStatus(message)" class="offer-status">
-                      <span v-if="getOfferStatus(message) === 'accepted'" class="status-accepted">
-                        <i class="bi bi-check-circle-fill"></i> Acceptée
-                      </span>
-                      <span v-else-if="getOfferStatus(message) === 'rejected'" class="status-rejected">
-                        <i class="bi bi-x-circle-fill"></i> Refusée
-                      </span>
-                      <span v-else-if="getOfferStatus(message) === 'expired'"  class="status-rejected">
-                        <i class="bi bi-x-lg"></i> Expirée
-                      </span>
-                      <span v-else class="status-pending">
-                        <i class="bi bi-clock"></i> En attente
-                      </span>
-                    </div>
-                    <div class="cancel-offer" @click="cancelOffer(message)" v-if="getOfferStatus(message) === 'pending'">
-                      Annuler
-                    </div>
-                  </div>
-                  <!-- Si c'est l'autre utilisateur qui a reçu l'offre -->
-                  <div class="btns-offers" v-else>
-                    <!-- Vérifier si l'offre est déjà acceptée ou refusée -->
-                    <div v-if="getOfferStatus(message)" class="offer-status">
-                      <span v-if="getOfferStatus(message) === 'accepted'" class="status-accepted">
-                        <i class="bi bi-check-circle-fill"></i> Vous avez accepté
-                      </span>
-                      <span v-else-if="getOfferStatus(message) === 'rejected'" class="status-rejected">
-                        <i class="bi bi-x-circle-fill"></i> Vous avez refusé
-                      </span>
-                      <div v-else-if="getOfferStatus(message) === 'pending'" style="display: flex;">
-                        <button class="btn-outline btn-offer" @click="declineOffer_popup = true">
-                          <i class="bi bi-x-circle"></i>
-                          Refuser
-                        </button>
-                        <button class="btn-success btn-offer" @click="acceptOffer(message)">
-                          <i class="bi bi-check-circle"></i>
-                          Accepter
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="message-meta">
-                  <span class="message-time">{{ formatTimestamp(message.createdAt || message.timestamp) }}</span>
-                  <div v-if="isOwnMessage(message)" class="message-status">
-                    <i class="bi" :class="getMessageStatusIcon(message)"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            :message="message"
+            :own="isOwnMessage(message)"
+            :offer-status="getOfferStatus(message)"
+            @open-attachments="openImgList"
+            @cancel-offer="cancelOffer"
+            @accept-offer="acceptOffer"
+            @decline-offer="declineOffer_popup = true"
+          />
         </div>
 
         <!-- Message Input -->
@@ -384,136 +187,15 @@
       </div>
     </div>
 
-    <!-- Right Sidebar (User/Transaction Info) -->
-    <div class="right-sidebar" v-if="selectedConversation">
-      <!-- User Information -->
-      <div class="user-section">
-        <div class="user-header">
-          <div class="user-avatar" v-html="getAvatar((selectedConversation.otherParticipant || selectedConversation.participants?.[0] || selectedConversation))"></div>
-          <div class="user-details">
-            <h3>{{ selectedConversation.otherParticipant?.username || selectedConversation.participants?.[0]?.username || selectedConversation.username }}</h3>
-            <p class="user-status" :class="{ online: selectedConversation.otherParticipant?.isOnline }">
-              <!--{{ selectedConversation.otherParticipant?.isOnline ? 'En ligne' : 'Hors ligne' }}-->
-            </p>
-            <div class="user-badges">
-              <span class="badge verified" v-if="selectedConversation.otherParticipant?.isVerified">
-                <i class="bi bi-patch-check"></i>
-                Vérifié
-              </span>
-              <span class="badge pro" v-if="selectedConversation.participants?.isPro">
-                <i class="bi bi-star"></i>
-                Pro
-              </span>
-            </div>
-          </div>
-          <button @click="closeInformation" @click.stop class="close-btn-information-mobile">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <div class="user-stats">
-          <div class="stat-item">
-            <span class="stat-label">Membre depuis</span>
-            <span class="stat-value">{{ formatDate(selectedConversation.otherParticipant?.createdAt) }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Transactions</span>
-            <span class="stat-value">{{ selectedConversation.otherParticipant?.transactionCount || 0 }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Note</span>
-            <span class="stat-value">
-              <i class="bi bi-star-fill"></i>
-              {{ selectedConversation.otherParticipant?.rating || 'N/A' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Product/Transaction Context -->
-      <div class="transaction-section" v-if="selectedConversation.productContext || selectedConversation.context || selectedConversation.productId">
-        <div class="section-header">
-          <h3>{{ getTransactionTitle() }}</h3>
-          <span class="transaction-status" :class="getTransactionStatus()">
-            {{ getTransactionStatusLabel() }}
-          </span>
-        </div>
-
-        <div class="product-card" v-if="getProductContext()">
-          <img :src="domain_api+getProductContext().images[0]" alt="Product" />
-          <div class="product-info">
-            <h4>{{ getProductContext().title }}</h4>
-            <p class="product-kpopMember">{{ getProductContext().kpopMember }}, {{ getProductContext().kpopGroup }} </p>
-            <p class="product-description">{{ getProductContext().description }}</p>
-            <div class="product-details">
-              <div class="detail-row">
-                <span>Prix</span>
-                <span class="price">{{ getProductContext().price }}</span>
-              </div>
-              <div class="detail-row" v-if="getProductContext().type">
-                <span>Type</span>
-                <span>{{ getProductContext().type }}</span>
-              </div>
-              <div class="detail-row" v-if="getProductContext().condition">
-                <span>État</span>
-                <span>{{ getProductContext().condition }}</span>
-              </div>
-              <div class="detail-row" v-if="getProductContext().categoryLabel">
-                <span class="category-label">{{ getProductContext().categoryLabel }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="transaction-actions" v-if="showTransactionActions()">
-          <button
-            class="btn-outline"
-            @click="cancelTransaction"
-            v-if="canCancelTransaction()"
-          >
-            <i class="bi bi-x-circle"></i>
-            Annuler la transaction
-          </button>
-          <button
-            class="btn-success"
-            @click="confirmReceived"
-            v-if="canConfirmReceived()"
-          >
-            <i class="bi bi-check-circle"></i>
-            J'ai reçu mon article
-          </button>
-          <button
-            class="btn-primary"
-            @click="markAsSent"
-            v-if="canMarkAsSent()"
-          >
-            <i class="bi bi-truck"></i>
-            Marquer comme envoyé
-          </button>
-        </div>
-      </div>
-
-      <div class="media-section" v-if="selectedConversation?.media?.length">
-        <h3 class="section-title">Médias partagés</h3>
-        <div class="media-grid">
-          <div
-            v-for="(media, index) in selectedConversation.media.slice(0, 4)"
-            :key="index"
-            class="media-item"
-            :class="`media-${index + 1}`"
-            :data-has-more="index === 3 && selectedConversation.media.length > 4"
-            :data-count="index === 3 && selectedConversation.media.length > 4 ? `+${selectedConversation.media.length - 4}` : ''"
-            @click="openImgList(conversationMediaUrls(selectedConversation), index)"
-
-          >
-            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Media">
-            <div v-if="index === 3 && selectedConversation.media.length > 4" class="media-overlay">
-              <span class="media-count">+{{ selectedConversation.media.length - 4 }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ConversationInfoPanel
+      v-if="selectedConversation"
+      :conversation="selectedConversation"
+      @close="closeInformation"
+      @cancel-transaction="cancelTransaction"
+      @confirm-received="confirmReceived"
+      @mark-as-sent="markAsSent"
+      @open-media="openImgList"
+    />
 
     <!-- Composant send_message pour nouvelle conversation -->
     <send_message
@@ -610,27 +292,22 @@ import ImageCarousel from '@/components/ImageCarousel.vue';
 import send_message from '@/components/adherents/send_message.vue';
 import send_offer from '@/components/send_offer.vue';
 import CheckoutDialog from '@/components/checkout/CheckoutDialog.vue';
+import ConversationSidebar from './components/ConversationSidebar.vue';
+import ConversationInfoPanel from './components/ConversationInfoPanel.vue';
+import MessageBubble from './components/MessageBubble.vue';
+import { avatarHtml } from './avatar';
 import EmojiPicker from 'vue3-emoji-picker'
 import Cookies from 'js-cookie';
 import 'vue3-emoji-picker/css'
 import messagingService from '@/services/messaging.service';
-import { API_URL } from '@/config/api';
 import {
-  conversationTypeLabel,
   countConversationsByTab,
   filterConversations,
   findOfferStatus,
-  formatLongDate,
-  formatMessageTimestamp,
   getOtherParticipant as getOtherParticipantFor,
   isArchivedConversation,
   isFavoriteConversation as isFavoriteConversationFor,
-  isOwnMessage as isOwnMessageFor,
-  messageStatusIcon,
-  transactionActions,
-  transactionStatus,
-  transactionStatusLabel,
-  transactionTitle
+  isOwnMessage as isOwnMessageFor
 } from './conversationHelpers';
 
 // Store
@@ -659,8 +336,10 @@ const showEmojiPicker = ref(false)
 const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
-const domain_api = API_URL;
 const declineOffer_popup = ref(false);
+// Message facultatif du refus d'offre : utilisé par le template mais jamais
+// déclaré, la saisie était perdue.
+const declineMessage = ref('');
 const counterOfferAmount = ref(null);
 const counterOfferMessage = ref('');
 const errorMessageCounterOffer = ref('');
@@ -692,27 +371,13 @@ const tabCounts = computed(() => countConversationsByTab(messagingStore.conversa
 const isFavoriteConversation = (conversation) => isFavoriteConversationFor(conversation, currentUserId())
 const isArchived = (conversation) => isArchivedConversation(conversation, currentUserId())
 
-// Tab counts
-const getAllConversationsCount = () => tabCounts.value.all
-const getFavoritesCount = () => tabCounts.value.favorites
-const getUnreadConversationsCount = () => tabCounts.value.unread
-const getArchivedCount = () => tabCounts.value.archived
 
 const getOtherParticipant = (conversation) => getOtherParticipantFor(conversation, currentUserId())
 
 // Methods
 const isOwnMessage = (message) => isOwnMessageFor(message, currentUserId())
 
-const getAvatar = (user) => {
-  if (!user) {
-    return '<img src="https://mykpoptrade.com/images/avatar-default.png" alt="avatar">';
-  }
-  const profileImgInfo = {
-    username: user.username,
-    profilePicture: user.profilePicture
-  };
-  return userService.renderUserAvatar(profileImgInfo);
-};
+const getAvatar = (user) => avatarHtml(user)
 
 const onSelectEmoji = (emoji) => {
   newMessage.value += emoji.i
@@ -949,7 +614,7 @@ const getOfferStatus = (message) => findOfferStatus(selectedConversation.value, 
 
 const cancelOffer = async (message) => {
   try {
-    const response = await messagingStore.cancelNegotiation(
+    await messagingStore.cancelNegotiation(
       selectedConversation.value.negotiation.initialPrice,
       selectedConversation.value.productId._id,
       selectedConversation.value._id,
@@ -1051,7 +716,7 @@ const archiveConversation = async (conversation) => {
   if(isArchived(conversation) == false){
     if (confirm('Êtes-vous sûr de vouloir archiver cette conversation ?')){
       try {
-        const response = await messagingStore.archiveConversation(conversation._id || conversation.id)
+        await messagingStore.archiveConversation(conversation._id || conversation.id)
 
         if (selectedConversation.value &&
             (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
@@ -1072,7 +737,7 @@ const archiveConversation = async (conversation) => {
   }else{
     if (confirm('Êtes-vous sûr de vouloir de désarchiver cette conversation ?')){
     try {
-      const response = await messagingStore.unarchiveConversation(conversation._id || conversation.id)
+      await messagingStore.unarchiveConversation(conversation._id || conversation.id)
 
       if (selectedConversation.value &&
           (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
@@ -1097,7 +762,7 @@ const archiveConversation = async (conversation) => {
 const deleteConversation = async (conversation) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')){
     try {
-      const response = await messagingStore.deleteConversation(conversation._id || conversation.id)
+      await messagingStore.deleteConversation(conversation._id || conversation.id)
       const index = messagingStore.conversations.findIndex(c =>
         (c._id || c.id) === (conversation._id || conversation.id)
       )
@@ -1212,29 +877,6 @@ const deleteAttachement = (index) => {
   attachmentView.value.splice(index, 1);
 }
 
-/**
- * URL d'une pièce jointe, via la route authentifiée qui vérifie l'appartenance
- * à la conversation.
- *
- * Ces images étaient auparavant chargées depuis /uploads/chat_attachments/,
- * servi en statique sans authentification : n'importe qui connaissant le nom du
- * fichier pouvait lire une pièce jointe de conversation privée.
- */
-const attachmentUrl = (messageId, attachmentName) => {
-  if (!messageId || !attachmentName) return '';
-  return messagingService.getAttachmentUrl(String(messageId), String(attachmentName));
-};
-
-/** URLs des pièces jointes d'un message, dans l'ordre d'affichage. */
-const messageAttachmentUrls = (message) => {
-  const messageId = message?._id || message?.id;
-  return (message?.attachments || []).map((name) => attachmentUrl(messageId, name));
-};
-
-/** URLs des médias d'une conversation ; chaque média porte son propre messageId. */
-const conversationMediaUrls = (conversation) =>
-  (conversation?.media || []).map((item) => attachmentUrl(item.messageId, item.filename));
-
 const openImgList = (urls, index) => {
   openAttachmentView.value = [...urls];
   openAttachmentIndex.value = index;
@@ -1261,24 +903,6 @@ const scrollToBottom = () => {
     container.scrollTop = container.scrollHeight
   }
 }
-
-// Utility methods — logique pure et testée dans conversationHelpers.ts
-const formatTimestamp = (timestamp) => formatMessageTimestamp(timestamp)
-const formatDate = (date) => formatLongDate(date)
-const getConversationTypeLabel = (type) => conversationTypeLabel(type)
-const getMessageStatusIcon = (message) => messageStatusIcon(message)
-
-const getProductContext = () => {
-  return selectedConversation.value?.productContext || selectedConversation.value?.productId
-}
-
-const getTransactionTitle = () => transactionTitle(selectedConversation.value)
-const getTransactionStatus = () => transactionStatus(selectedConversation.value)
-const getTransactionStatusLabel = () => transactionStatusLabel(selectedConversation.value)
-const showTransactionActions = () => transactionActions(selectedConversation.value).visible
-const canCancelTransaction = () => transactionActions(selectedConversation.value).canCancel
-const canConfirmReceived = () => transactionActions(selectedConversation.value).canConfirmReceived
-const canMarkAsSent = () => transactionActions(selectedConversation.value).canMarkAsSent
 
 const cancelTransaction = async () => {
   if (!confirm('Êtes-vous sûr de vouloir annuler cette transaction ?')) return

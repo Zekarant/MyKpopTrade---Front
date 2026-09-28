@@ -1,0 +1,388 @@
+/* Base styles - White theme only */
+
+/* Sidebar */
+
+/* Improved Navigation Tabs - Equal Width */
+
+/* Enhanced Conversation Items */
+
+/* Conversation Actions */
+
+/* Chat Area */
+
+.empty-state > i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  color: #dee2e6;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #495057;
+}
+
+.empty-state p {
+  margin: 0 0 24px 0;
+}
+
+/* Enhanced Chat Header */
+
+.loading-more-messages i {
+  animation: spin 1s linear infinite;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 16px;
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+.message.own-message {
+  justify-content: flex-end;
+}
+
+.message-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 10px;
+  flex-shrink: 0;
+  border: 2px solid white;
+}
+
+.message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.message-content {
+  max-width: 70%;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.grid-attachements {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+    width: 300px;
+
+    grid-template-columns: 1fr;
+
+    &:has(.message-attachement:nth-child(2)) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    &:has(.message-attachement:nth-child(3)) {
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: repeat(2, 1fr);
+        height: 300px;
+
+        .message-attachement:first-child {
+            grid-column: 1;
+            grid-row: 1 / span 2;
+            height: 100%;
+        }
+    }
+
+    &:has(.message-attachement:nth-child(4)) {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        width: 300px;
+        height: 300px;
+
+        .message-attachement:first-child {
+            grid-column: auto;
+            grid-row: auto;
+            height: 100%;
+        }
+
+        .message-attachement {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+.message-attachement {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    position: relative;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &.has-more::after {
+        content: attr(data-count);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        z-index: 2;
+    }
+}
+.btns-offers {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+.btn-offer{
+  width: 100%;
+  display: inline-block !important;
+}
+.cancel-offer{
+  color: var(--danger-color);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: small;
+  text-align: end;
+}
+.btn-offer.btn-success{
+  margin-left: 5px;
+}
+
+.popup-actions .btn-outline {
+  background: white;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: 50%;
+
+}
+.other-message .message-bubble {
+  background: white;
+  border: 1px solid #e9ecef;
+}
+
+.own-message .message-bubble {
+  background: linear-gradient(135deg, var(--blue), #0b5ed7);
+  color: white;
+  flex-direction: row-reverse;
+  justify-content: end;
+}
+
+.message-bubble p {
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.offer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-accepted {
+  color: #155724;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+
+}
+
+.status-rejected {
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.status-pending {
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.message-status {
+  margin-left: 8px;
+}
+
+.message-status i {
+  font-size: 12px;
+}
+
+/* ============================================ */
+/* EMOJI PICKER POPUP STYLES */
+/* ============================================ */
+
+/* Right Sidebar */
+
+.btn-outline {
+  background: white;
+  border: 1px solid #e9ecef;
+  color: #6c757d;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-outline:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-success:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.message-input textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  background: #f8f9fa;
+  transition: all 0.2s;
+}
+
+.message-input textarea:focus {
+  border-color: var(--blue);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+/* Loading and animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* POPUP CONTRE-OFFRE - STYLES ISOLÉS */
+
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .grid-attachements{
+    position: relative;
+    max-width: 100%;
+  }
+}
+
+/* Scrollbar styling */
+
+/* Focus states for accessibility */
+.tab:focus,
+.action-btn:focus,
+.send-btn:focus,
+.btn-primary:focus,
+.btn-secondary:focus,
+.btn-outline:focus,
+.btn-success:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Text utilities */
+.text-primary {
+  color: var(--blue) !important;
+}
+@media (max-width: 768px) {
+  .btns-offers {
+    flex-direction: column;
+  }
+  .btn-offer{
+    width: 100%;
+  }
+  .btn-offer.btn-success{
+    margin-left: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+}
+
