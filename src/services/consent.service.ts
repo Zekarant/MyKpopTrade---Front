@@ -102,7 +102,35 @@ export function setConsent(choice: { analytics: boolean }): CookieConsent {
  */
 export function resetConsent(): void {
   Cookies.remove(CONSENT_COOKIE);
+  removeAnalyticsCookies();
   listeners.forEach((listener) => listener(null));
+}
+
+/** Cookies déposés par Google Analytics (`_ga`, `_ga_<id>`, `_gid`, `_gat…`). */
+const ANALYTICS_COOKIE_PATTERN = /^_(ga|gid|gat)/;
+
+/**
+ * Supprime les cookies de mesure d'audience déjà déposés. Retirer son
+ * consentement doit être aussi efficace que le donner (RGPD art. 7.3).
+ * GA les pose sur le domaine parent (`.mykpoptrade.com`) : on tente chaque
+ * niveau de domaine, un cookie ne se supprime qu'avec son domaine exact.
+ */
+function removeAnalyticsCookies(): void {
+  const names = document.cookie
+    .split(';')
+    .map((entry) => entry.split('=')[0].trim())
+    .filter((name) => ANALYTICS_COOKIE_PATTERN.test(name));
+  if (names.length === 0) return;
+
+  const labels = window.location.hostname.split('.');
+  const domains = labels.map((_, index) => labels.slice(index).join('.')).filter((d) => d.includes('.'));
+
+  for (const name of names) {
+    Cookies.remove(name, { path: '/' });
+    for (const domain of domains) {
+      Cookies.remove(name, { path: '/', domain: `.${domain}` });
+    }
+  }
 }
 
 /** S'abonne aux changements de consentement. Rend la fonction de désabonnement. */
@@ -121,7 +149,11 @@ export function applyStoredConsent(): void {
 }
 
 function applyConsent(consent: CookieConsent): void {
-  if (consent.analytics) loadGoogleTagManager();
+  if (consent.analytics) {
+    loadGoogleTagManager();
+  } else {
+    removeAnalyticsCookies();
+  }
 }
 
 /**

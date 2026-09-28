@@ -157,7 +157,7 @@
       <!-- Right: Visual -->
       <div class="auth-visual">
         <div class="auth-visual__content">
-          <img src="@/assets/images/image.png" alt="K-pop Exchange" class="auth-visual__image" />
+          <img src="@/assets/images/image.webp" alt="K-pop Exchange" class="auth-visual__image" />
           <div class="auth-visual__overlay"></div>
         </div>
       </div>

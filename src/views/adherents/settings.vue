@@ -337,11 +337,20 @@
                       <button @click="verifTel" class="btn-settings btn-settings--sm" v-else-if="phoneNumber && !userProfile.isPhoneVerified && !telRequest">Vérifier</button>
                     </div>
                     <div v-if="telRequest && !codeVerified" class="setting-row__inline" style="margin-top: 8px;">
-                      <input type="text" v-model="phoneCode" class="settings-input settings-input--sm" placeholder="Code reçu" />
+                      <input
+                        type="text"
+                        v-model="phoneCode"
+                        class="settings-input settings-input--sm"
+                        placeholder="Code à 6 chiffres"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        maxlength="6"
+                      />
                       <button @click="verifCodeTel" class="btn-settings btn-settings--primary btn-settings--sm">Valider</button>
+                      <button @click="verifTel" class="btn-settings btn-settings--sm">Renvoyer</button>
                     </div>
                     <small class="field__hint">
-                      Requis pour vendre. Jamais affiché publiquement.
+                      Facultatif : renforce la confiance et la sécurité de votre compte. Jamais affiché publiquement.
                     </small>
                   </div>
                 </div>
@@ -411,7 +420,7 @@
                           <i class="bi bi-cloud-upload"></i>
                           <span>Cliquez pour importer votre document</span>
                         </template>
-                        <input ref="identityFileInput" type="file" accept="image/*" style="display:none" @change="onIdentityFileChange" />
+                        <input ref="identityFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onIdentityFileChange" />
                       </div>
                       <label class="identity-consent">
                         <input type="checkbox" v-model="identityConsentGiven" />
@@ -1177,11 +1186,20 @@ export default defineComponent({
     async saveTel() {
       const sessionToken = Cookies.get('sessionToken');
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
           phoneNumber: this.phoneNumber
         }, { headers: { Authorization: `Bearer ${sessionToken}` } });
         (this as any).$func.showToastSuccess('Numéro enregistré');
-        this.userProfile.phoneNumber = this.phoneNumber;
+        // L'API normalise le numéro (« 06 12… » → « +336… ») et remet la
+        // vérification à zéro : l'écran doit refléter les deux, sinon le badge
+        // « Vérifié » restait affiché pour le nouveau numéro.
+        const savedPhone = response.data?.user?.phoneNumber ?? this.phoneNumber;
+        this.userProfile.phoneNumber = savedPhone;
+        this.phoneNumber = savedPhone;
+        this.userProfile.isPhoneVerified = false;
+        this.codeVerified = false;
+        this.telRequest = false;
+        this.phoneCode = '';
       } catch (e: any) {
         (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
       }

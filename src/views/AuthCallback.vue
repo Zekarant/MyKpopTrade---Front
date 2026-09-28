@@ -22,6 +22,10 @@ export default defineComponent({
     const welcome = ref<string>('');
 
     onMounted(() => {
+      // Retirer tout de suite les jetons de l'URL (historique, capture d'écran,
+      // partage) ; on les a déjà lus dans `route.query`.
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+
       const accessToken = route.query.accessToken as string | undefined;
       const refreshToken = route.query.refreshToken as string | undefined;
       const userId = route.query.userId as string | undefined;

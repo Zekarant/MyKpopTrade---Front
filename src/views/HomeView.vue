@@ -105,7 +105,7 @@
       </div>
 
       <div class="landing__hero-visual">
-        <img src="@/assets/images/image.png" alt="K-Pop cards" class="landing__hero-img" />
+        <img src="@/assets/images/image.webp" alt="K-Pop cards" class="landing__hero-img" />
       </div>
     </section>
   </main>

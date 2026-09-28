@@ -107,6 +107,20 @@ describe('consent.service', () => {
       unsubscribe()
     })
 
+    it("supprime les cookies Google Analytics déjà déposés", () => {
+      setConsent({ analytics: true })
+      Cookies.set('_ga', 'GA1.1.123')
+      Cookies.set('_ga_ABC123', 'GS1.1.456')
+      Cookies.set('autre_cookie', 'garde')
+
+      resetConsent()
+
+      expect(Cookies.get('_ga')).toBeUndefined()
+      expect(Cookies.get('_ga_ABC123')).toBeUndefined()
+      expect(Cookies.get('autre_cookie')).toBe('garde')
+      Cookies.remove('autre_cookie')
+    })
+
     it('cesse de notifier après désabonnement', () => {
       const received: Array<unknown> = []
       const unsubscribe = onConsentChange((consent) => received.push(consent))

@@ -93,6 +93,7 @@
 import { defineComponent, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
 export default defineComponent({
   name: 'contact',
@@ -146,41 +147,17 @@ export default defineComponent({
     const submitForm = async () => {
       if (!validate()) return;
 
-      const webhookUrl = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
-      if (!webhookUrl) {
-        alert.type = 'error';
-        alert.message = 'Le service de support est momentanément indisponible. Veuillez réessayer plus tard.';
-        return;
-      }
-
       loading.value = true;
       alert.message = '';
 
       try {
-        const payload = {
-          embeds: [
-            {
-              title: `📩 Nouveau message de support — ${form.subject}`,
-              color: 0x17202A,
-              fields: [
-                { name: '👤 Nom', value: form.name, inline: true },
-                { name: '📧 Email', value: form.email, inline: true },
-                { name: '🏷️ Sujet', value: form.subject, inline: false },
-                { name: '💬 Message', value: form.message, inline: false }
-              ],
-              footer: { text: 'MyKpopTrade — Support' },
-              timestamp: new Date().toISOString()
-            }
-          ]
-        };
-
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        await sendContactMessage({
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+          source: 'contact'
         });
-
-        if (!response.ok) throw new Error('Discord webhook error');
 
         alert.type = 'success';
         alert.message = 'Votre message a bien été envoyé ! Notre équipe vous contactera à l\'adresse indiquée.';
@@ -189,9 +166,9 @@ export default defineComponent({
         form.subject = '';
         form.message = '';
         setTimeout(() => router.back(), 2000);
-      } catch {
+      } catch (error) {
         alert.type = 'error';
-        alert.message = 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.';
+        alert.message = contactErrorMessage(error, 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.');
       } finally {
         loading.value = false;
       }

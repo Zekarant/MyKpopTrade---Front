@@ -11,6 +11,11 @@ import type {
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+};
+const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+
 const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
 const getIdUser = (): string | undefined => Cookies.get('id_user');
 
@@ -107,8 +112,13 @@ class userService {
     return response.data;
   }
 
+  // Le HTML rendu ici part dans des v-html : toute donnée utilisateur doit être
+  // échappée, sinon un pseudo ou une URL d'avatar piégés injectent du script.
   renderUserAvatar(dataUser: ImgUserProfile): string {
     const { username, profilePicture } = dataUser;
+    // Initiale limitée à [A-Z0-9] : elle est aussi insérée dans le JS de onerror.
+    const initial = username?.charAt(0).toUpperCase() ?? '';
+    const firstLetter = /^[A-Z0-9]$/.test(initial) ? initial : '?';
 
     if (
       profilePicture &&
@@ -116,11 +126,12 @@ class userService {
       profilePicture.trim() !==
         "https://mykpoptrade.com/images/avatar-default.png"
     ) {
+      // Les avatars Google / Discord sont des URL absolues, pas des chemins de l'API.
+      const src = /^https?:\/\//.test(profilePicture) ? profilePicture : `${API_URL}${profilePicture}`;
       return `
-        <img src="${API_URL}${profilePicture}" alt="${username}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#ff2d78,#7c3aed);border-radius:3px;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;\\'>${username?.charAt(0).toUpperCase() || '?'}</div>'" />
+        <img src="${escapeHtml(src)}" alt="${escapeHtml(username ?? '')}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#ff2d78,#7c3aed);border-radius:3px;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;\\'>${firstLetter}</div>'" />
       `;
     } else {
-      const firstLetter = username?.charAt(0).toUpperCase() || "?";
       return `
         <div style="
           width: 100%;

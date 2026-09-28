@@ -161,7 +161,7 @@
       <!-- Right: Visual -->
       <div class="auth-visual">
         <div class="auth-visual__content">
-          <img src="@/assets/images/image.png" alt="K-pop Exchange" class="auth-visual__image" />
+          <img src="@/assets/images/image.webp" alt="K-pop Exchange" class="auth-visual__image" />
           <div class="auth-visual__overlay"></div>
         </div>
       </div>
@@ -178,8 +178,10 @@ import { API_URL } from '@/config/api';
 const OAUTH_ERROR_MESSAGES = {
   google_no_email: "Google n'a pas fourni d'adresse e-mail.",
   google_auth_failed: "La connexion Google a échoué. Réessaie.",
+  google_email_unverified: "Ton adresse e-mail Google n'est pas vérifiée.",
   discord_no_email: "Discord n'a pas fourni d'adresse e-mail.",
   discord_auth_failed: "La connexion Discord a échoué. Réessaie.",
+  discord_email_unverified: "Vérifie d'abord ton adresse e-mail sur Discord, puis réessaie.",
   server_error: "Erreur serveur pendant la connexion.",
 };
 
@@ -210,6 +212,15 @@ export default defineComponent({
       if (typeof errCode === "string" && errCode) {
         ErroruserName.value =
           OAUTH_ERROR_MESSAGES[errCode] || "Connexion indisponible.";
+        router.replace({ path: "/login", query: {} });
+      }
+
+      // Retour d'OAuth (Google/Discord) sur un compte protégé par la 2FA :
+      // le back n'ouvre pas la session et renvoie seulement le jeton de défi.
+      const oauthTwoFactorToken = route.query.twoFactorToken;
+      if (typeof oauthTwoFactorToken === "string" && oauthTwoFactorToken) {
+        twoFactorToken.value = oauthTwoFactorToken;
+        awaitingTwoFactor.value = true;
         router.replace({ path: "/login", query: {} });
       }
     });

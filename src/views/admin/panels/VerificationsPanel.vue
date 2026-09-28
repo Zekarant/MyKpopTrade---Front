@@ -43,6 +43,15 @@
               <div class="admin__actions">
                 <button
                   type="button"
+                  class="admin__icon-btn"
+                  title="Voir le document"
+                  :disabled="documentLoadingId === verification._id"
+                  @click="viewDocument(verification)"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button
+                  type="button"
                   class="admin__icon-btn admin__icon-btn--success"
                   title="Approuver"
                   @click="approve(verification)"
@@ -64,6 +73,21 @@
       </table>
     </div>
 
+    <div v-if="documentUrl" class="admin__modal-overlay" @click.self="closeDocument">
+      <div class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="verification-doc-title">
+        <div class="admin__modal-header">
+          <h3 id="verification-doc-title">Document de {{ documentOwner }}</h3>
+          <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="closeDocument">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <img :src="documentUrl" alt="Document d'identité soumis" class="verification-doc__image" />
+        <p class="admin__muted">
+          Consultation enregistrée dans le journal d'audit. Le document est supprimé dès la décision.
+        </p>
+      </div>
+    </div>
+
     <ReasonPromptModal
       v-if="verificationToReject"
       :title="`Rejeter la vérification de ${verificationToReject.user?.username || 'ce membre'}`"
@@ -80,7 +104,7 @@
 </template>
 
 <script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
+  import { defineComponent, onBeforeUnmount, onMounted, ref } from 'vue';
   import adminService from '@/services/admin.service';
   import { func } from '@/function';
   import ReasonPromptModal from '../components/ReasonPromptModal.vue';
@@ -101,6 +125,32 @@
       const verifications = ref<any[]>([]);
       const loading = ref(false);
       const verificationToReject = ref<any>(null);
+      // URL objet en mémoire uniquement : la pièce d'identité n'est jamais mise
+      // en cache ni écrite sur le disque du navigateur.
+      const documentUrl = ref<string | null>(null);
+      const documentOwner = ref('');
+      const documentLoadingId = ref<string | null>(null);
+
+      const closeDocument = () => {
+        if (documentUrl.value) URL.revokeObjectURL(documentUrl.value);
+        documentUrl.value = null;
+      };
+
+      const viewDocument = async (verification: { _id: string; user?: { username?: string } }) => {
+        documentLoadingId.value = verification._id;
+        try {
+          const blob = await adminService.getVerificationDocument(verification._id);
+          closeDocument();
+          documentUrl.value = URL.createObjectURL(blob);
+          documentOwner.value = verification.user?.username || 'Compte supprimé';
+        } catch (error) {
+          func.showToastError(apiErrorMessage(error, 'Impossible d\'afficher le document'));
+        } finally {
+          documentLoadingId.value = null;
+        }
+      };
+
+      onBeforeUnmount(closeDocument);
 
       const load = async () => {
         loading.value = true;
@@ -152,6 +202,11 @@
         verifications,
         loading,
         verificationToReject,
+        documentUrl,
+        documentOwner,
+        documentLoadingId,
+        viewDocument,
+        closeDocument,
         formatAge,
         formatDate,
         getInitial,
@@ -162,3 +217,13 @@
     }
   });
 </script>
+
+<style scoped>
+  .verification-doc__image {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+</style>

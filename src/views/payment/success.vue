@@ -112,6 +112,7 @@ import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import paymentService from '@/services/payment.service';
 import cartService from '@/services/cart.service';
+import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
 export default defineComponent({
   name: 'PaymentSuccess',
@@ -216,28 +217,18 @@ export default defineComponent({
       sending.value = true;
       contactError.value = '';
       contactSuccess.value = false;
-      const webhookUrl = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
-
-      const content = [
-        `**Nouveau message de contact (PayPal Success)**`,
-        `**Nom :** ${form.value.name}`,
-        `**Email :** ${form.value.email}`,
-        `**Message :** ${form.value.message}`,
-      ].join('\n');
 
       try {
-        const res = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+        await sendContactMessage({
+          ...form.value,
+          subject: 'Après paiement PayPal',
+          source: 'payment-success'
         });
-
-        if (!res.ok) throw new Error();
 
         contactSuccess.value = true;
         form.value = { name: '', email: '', message: '' };
-      } catch {
-        contactError.value = "Une erreur s'est produite. Veuillez réessayer.";
+      } catch (error) {
+        contactError.value = contactErrorMessage(error, "Une erreur s'est produite. Veuillez réessayer.");
       } finally {
         sending.value = false;
       }

@@ -118,6 +118,14 @@ class AdminService {
     return response.data;
   }
 
+  /** Pièce d'identité déchiffrée d'une demande en attente (consultation tracée côté API). */
+  async getVerificationDocument(id: string): Promise<Blob> {
+    const response = await this.apiClient.get(`/verification/admin/document/${id}`, {
+      responseType: 'blob'
+    });
+    return response.data as Blob;
+  }
+
   async approveVerification(id: string) {
     const response = await this.apiClient.post(`/verification/admin/approve/${id}`);
     return response.data;

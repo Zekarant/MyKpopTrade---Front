@@ -338,7 +338,6 @@
     import { useRoute, useRouter } from "vue-router";
     import axios from 'axios';
     import Cookies from "js-cookie";
-    import { PDFExportService } from '@/services/PDFExportService.service';
     import authentificationService from '@/services/authentification.service';
     import followService from '@/services/follow.service';
     import send_message from './send_message.vue';
@@ -879,6 +878,8 @@
                             'Authorization': `Bearer ${sessionToken}`
                         }
                     });
+                    // Chargé à la demande : jspdf pèse lourd et ne sert qu'ici.
+                    const { PDFExportService } = await import('@/services/PDFExportService.service');
                     const pdfExporter = new PDFExportService();
                     type SectionColor = [number, number, number];  // Définition explicite
 

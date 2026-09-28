@@ -41,7 +41,7 @@ let refreshInFlight: Promise<string | null> | null = null;
 
 /** Token d'accès courant, sans renouvellement. */
 export function getAccessToken(): string | null {
-  return Cookies.get('sessionToken') ?? localStorage.getItem('token');
+  return Cookies.get('sessionToken') ?? null;
 }
 
 /** Refresh token courant : sa présence fait foi pour dire « une session existe ». */
@@ -111,7 +111,6 @@ export async function ensureAccessToken(): Promise<string | null> {
  */
 function handleSessionLost(hadSession: boolean): void {
   clearSessionCookies();
-  localStorage.removeItem('token');
 
   if (!hadSession || window.location.pathname === '/login') {
     return;

@@ -600,7 +600,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, getCurrentInstance } from 'vue'
 import { useMessagingStore } from '@/store/messaging.store'
 import userService from '@/services/user.service'
 import paymentService from '@/services/payment.service'
@@ -1501,7 +1501,7 @@ onMounted(async () => {
 })
 
 // Close dropdowns when clicking outside
-document.addEventListener('click', () => {
+const closeDropdowns = () => {
 showConversationOptions.value =  false
 showSalesOptions.value =  false
 showBuyOption.value = false
@@ -1509,7 +1509,11 @@ showOfferOption.value = false
 
 showConversationMenu.value = null
   showEmojiPicker.value = false
-})
+}
+document.addEventListener('click', closeDropdowns)
+// Sans ce retrait, chaque visite de la messagerie ajoutait un écouteur global
+// qui gardait en mémoire l'ancienne instance du composant.
+onBeforeUnmount(() => document.removeEventListener('click', closeDropdowns))
 </script>
 
 
