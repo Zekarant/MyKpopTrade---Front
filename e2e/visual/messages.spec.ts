@@ -1,5 +1,6 @@
-import { test, expect, type Page, type Route } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { ME, NOW, conversations, conversationDetailFor, currentUser } from './fixtures/messaging'
+import { mockApi, setupSession } from './support'
 
 /**
  * Non-régression visuelle de la messagerie : références prises AVANT le
@@ -7,66 +8,22 @@ import { ME, NOW, conversations, conversationDetailFor, currentUser } from './fi
  * en page fait échouer le test.
  */
 
-const API = 'http://localhost:3999'
-
-// PNG 1x1 gris : remplace toutes les images (avatars, produits, pièces jointes)
-// pour des captures indépendantes du réseau.
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
-  'base64'
-)
-
-const json = (route: Route, body: unknown) =>
-  route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
-
-async function mockApi(page: Page) {
-  await page.route(/fonts\.(googleapis|gstatic)\.com|googletagmanager\.com/, (route) => route.abort())
-  await page.route(/mykpoptrade\.com\/images\//, (route) => route.fulfill({ contentType: 'image/png', body: PNG }))
-
-  await page.route(`${API}/**`, (route) => {
-    const url = new URL(route.request().url())
-    const path = url.pathname
-    const method = route.request().method()
-
-    if (path.startsWith('/uploads/') || path.includes('/attachments/')) {
-      return route.fulfill({ contentType: 'image/png', body: PNG })
-    }
-    if (path === '/api/users/me' || path === '/api/auth/profile') return json(route, currentUser)
+async function openMessaging(page: Page) {
+  await setupSession(page, { now: NOW, userId: ME })
+  await mockApi(page, (path, method, url) => {
+    if (path === '/api/users/me' || path === '/api/auth/profile') return currentUser
     if (path === '/api/messaging/' || path === '/api/messaging') {
-      return json(route, { conversations, pagination: { page: 1, pages: 1, total: conversations.length } })
+      return { conversations, pagination: { page: 1, pages: 1, total: conversations.length } }
     }
     const detail = path.match(/^\/api\/messaging\/(conv-[\w-]+)$/)
     if (detail && method === 'GET') {
       // Comme la vraie API : au-delà de la dernière page, plus aucun message.
       const page = Number(url.searchParams.get('page') ?? 1)
       const body = conversationDetailFor(detail[1])
-      return json(route, page > 1 ? { ...body, messages: [] } : body)
+      return page > 1 ? { ...body, messages: [] } : body
     }
-    if (path.startsWith('/api/notifications')) return json(route, { notifications: [], unreadCount: 0 })
-    if (path.startsWith('/api/cart')) return json(route, { cart: { items: [] }, items: [] })
-    return json(route, {})
+    return undefined
   })
-}
-
-async function openMessaging(page: Page) {
-  // L'horloge part de NOW puis avance normalement. Une horloge FIGÉE casse
-  // la garde anti double-traitement des événements de Vue (horodatage de
-  // l'événement ≤ horodatage d'attachement) : les `@click.stop` imbriqués
-  // étaient ignorés et les menus se refermaient aussitôt.
-  await page.clock.install({ time: NOW })
-  await page.clock.resume()
-  await page.context().addCookies([
-    { name: 'id_user', value: ME, domain: 'localhost', path: '/' },
-    { name: 'sessionToken', value: 'test-access', domain: 'localhost', path: '/' },
-    { name: 'refreshToken', value: 'test-refresh', domain: 'localhost', path: '/' },
-    {
-      name: 'cookie_consent',
-      value: encodeURIComponent(JSON.stringify({ analytics: false, version: 1, decidedAt: NOW.toISOString() })),
-      domain: 'localhost',
-      path: '/'
-    }
-  ])
-  await mockApi(page)
   await page.goto('/adherents/messages')
   await expect(page.locator('.messages-area .message')).toHaveCount(6)
   await page.waitForLoadState('networkidle')
