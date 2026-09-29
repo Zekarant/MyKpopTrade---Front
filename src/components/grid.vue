@@ -1,6 +1,6 @@
 <template>
     <div class="product-grid">
-        <card :data="data" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
+        <card :data="data" :admin="admin" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
     </div>
     <div v-if="dataList && dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more">
         <button type="button" class="load-more-btn" @click="loadMore()">

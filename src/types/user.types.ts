@@ -69,6 +69,15 @@ export interface IUserParticipant {
   location?: string;
   bio?: string;
   isIdentityVerified?: boolean;
+  /** Renvoyés par le détail d'une conversation, comme sur le profil public. */
+  isSellerVerified?: boolean;
+  createdAt?: string;
+  statistics?: {
+    totalSales?: number;
+    totalPurchases?: number;
+    averageRating?: number;
+    totalRatings?: number;
+  };
   preferences?: {
     kpopGroups?: string[];
     allowDirectMessages?: boolean;

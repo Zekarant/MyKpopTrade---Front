@@ -282,6 +282,31 @@
                         Les acheteurs pourront vous proposer un montant, que vous restez libre de
                         refuser.
                     </small>
+
+                    <label class="checkbox-inline">
+                        <input type="checkbox" v-model="pwyw.enabled" />
+                        <span>Prix libre</span>
+                    </label>
+                    <small class="form-hint">
+                        Les acheteurs proposent le montant de leur choix dans votre fourchette ;
+                        vous acceptez, refusez ou faites une contre-offre.
+                    </small>
+                    <div v-if="pwyw.enabled" class="form-row">
+                        <div class="form-col">
+                            <label for="pwywMin">Prix minimum <span class="req">*</span></label>
+                            <div class="input-with-addon">
+                                <input type="number" id="pwywMin" v-model.number="pwyw.min" step="0.01" min="0" placeholder="0.00" />
+                                <span class="input-addon">{{ currencySymbol }}</span>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label for="pwywMax">Prix maximum <span class="opt">(optionnel)</span></label>
+                            <div class="input-with-addon">
+                                <input type="number" id="pwywMax" v-model.number="pwyw.max" step="0.01" min="0" placeholder="Sans limite" />
+                                <span class="input-addon">{{ currencySymbol }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </fieldset>
 
                 <!-- Étape 5 : Récapitulatif -->
@@ -309,7 +334,8 @@
                                 <li><i class="bi bi-images"></i> {{ imagesPreview.length }} photo{{ imagesPreview.length > 1 ? 's' : '' }}</li>
                                 <li>
                                     <i class="bi bi-chat-dots"></i>
-                                    {{ formData.allowOffers ? 'Offres de prix acceptées' : 'Prix ferme' }}
+                                    <template v-if="pwyw.enabled">Prix libre : {{ pwywRecap }}</template>
+                                    <template v-else>{{ formData.allowOffers ? 'Offres de prix acceptées' : 'Prix ferme' }}</template>
                                 </li>
                             </ul>
                         </div>
@@ -388,14 +414,16 @@
   </template>
 
   <script lang="ts">
-    import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-    import postService, { type PostSaveResult } from '@/services/post.service';
+    import { defineComponent, ref, computed, watch } from 'vue';
+    import postService from '@/services/post.service';
+    import messagingService from '@/services/messaging.service';
     import  authentification from '@/services/authentification.service';
     import type { KpopGroup } from '@/services/group.service';
     import type { KpopAlbum } from '@/services/album.service';
-    import type { PostData, PostSaveErrorBody, ProductDetail } from '@/types/post.types';
+    import type { PostData, ProductDetail } from '@/types/post.types';
     import paymentService from '@/services/payment.service';
-    import { Navigation, A11y } from 'swiper/modules';
+    import { func } from '@/function';
+    import { optionalAmount, pwywRangeLabel, validatePwywSettings } from '@/components/offerRules';
 
     // Import Swiper Vue.js components
     import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -406,7 +434,6 @@
     import 'swiper/css/navigation';
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
-    import Cookies from "js-cookie";
     import axios from "axios";
 
     /** Découpage purement visuel : `formData` reste un objet unique. */
@@ -460,7 +487,7 @@
         authentification.verifSession().catch(() => undefined);
     },
 
-    setup(props) {
+    setup() {
         const imagesPreview = ref<string[]>([]);
         const router = useRouter();
         const searchGroupKpop = ref('');
@@ -543,14 +570,36 @@
         }
 
 
+        /** Prix libre, enregistré après l'annonce via POST /api/messaging/pwyw. */
+        const pwyw = ref<{ enabled: boolean; min: number | ''; max: number | '' }>({
+            enabled: false,
+            min: '',
+            max: '',
+        });
+        let pwywInitiallyEnabled = false;
+
         if (postDataObjet) {
-            formData.value = { ...formData.value, ...postDataObjet };
+            formData.value = { ...formData.value, ...postDataObjet, images: [...postDataObjet.images] };
             postDataObjet.images.forEach((image: string) => {
                 const API_URL = import.meta.env.VITE_API_URL;
                 const imgTmp = API_URL+image;
                 imagesPreview.value.push(imgTmp);
             });
+            pwywInitiallyEnabled = Boolean(postDataObjet.isPayWhatYouWant);
+            pwyw.value = {
+                enabled: pwywInitiallyEnabled,
+                min: postDataObjet.pwywMinPrice ?? '',
+                max: postDataObjet.pwywMaxPrice ?? '',
+            };
+            // Libellés résolus par l'API : sans eux, les champs groupe et album paraissent vides.
+            searchGroupKpop.value = postDataObjet.kpopGroupName ?? '';
+            searchAlbumName.value = postDataObjet.albumNameStr ?? '';
         }
+
+        const currencySymbol = computed(() => (formData.value.currency === 'USD' ? '$' : '€'));
+        const pwywRecap = computed(() =>
+            pwywRangeLabel(optionalAmount(pwyw.value.min), optionalAmount(pwyw.value.max), currencySymbol.value)
+        );
         const getGroupKpopSelect = async () => {
             try {
                 // `params` encode les « & », « # » ou « + » de la saisie (ex. « (G)I-DLE »).
@@ -700,6 +749,10 @@
                 if (!shipping.worldwide && !shipping.nationalOnly && !shipping.localPickup) {
                     issues.push({ step: 4, message: 'Choisissez au moins une option de livraison.' });
                 }
+                const pwywIssue = pwyw.value.enabled ? validatePwywSettings(pwyw.value.min, pwyw.value.max) : null;
+                if (pwywIssue) {
+                    issues.push({ step: 4, message: pwywIssue });
+                }
             }
 
             return issues;
@@ -754,29 +807,79 @@
             return modes.length ? modes.join(', ') : 'aucune option choisie';
         });
 
+        const errorText = (error: unknown, fallback: string): string =>
+            (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+            || (error as { message?: string })?.message
+            || fallback;
+
+        /** Active, met à jour ou retire le prix libre selon le formulaire. */
+        const savePayWhatYouWant = async (productId: string) => {
+            if (pwyw.value.enabled) {
+                await messagingService.initiatePayWhatYouWant({
+                    productId,
+                    minimumPrice: optionalAmount(pwyw.value.min) ?? 0,
+                    maximumPrice: optionalAmount(pwyw.value.max),
+                });
+            } else if (pwywInitiallyEnabled) {
+                await messagingService.disablePayWhatYouWant(productId);
+            }
+            pwywInitiallyEnabled = pwyw.value.enabled;
+        };
+
+        /** Une photo envoyée devient un chemin : relancer l'enregistrement ne la renverra pas. */
+        const markImageUploaded = (file: File, path: string) => {
+            const index = formData.value.images.indexOf(file);
+            if (index !== -1) {
+                formData.value.images.splice(index, 1, path);
+            }
+        };
+
+        const goToMyProfile = () => router.push({ name: 'profile' , params: { id: 'me' }});
+
         const save = async () => {
             errorMessage.value = '';
             saveLoading.value = true;
-            let response: PostSaveResult | null = null;
             try {
-                if(isModyfy.value){
-                    response = await postService.updatePost(postDataObjet!._id || postDataObjet!.id, formData.value);
-                }else{
-                    response = await postService.createPost(formData.value);
+                if (isModyfy.value) {
+                    const editedId = postDataObjet!._id || postDataObjet!.id;
+                    const result = await postService.updatePost(editedId, formData.value);
+                    if (!result.ok) {
+                        errorMessage.value = result.error?.message || result.error?.error?.message || 'Erreur lors de la modification de l\'annonce';
+                        return;
+                    }
+                    // Ici, un échec laisse l'utilisateur sur le formulaire : chaque étape peut être relancée sans doublon.
+                    try {
+                        await postService.syncProductImages(result.productId, formData.value.images, markImageUploaded);
+                    } catch (e) {
+                        errorMessage.value = `Annonce enregistrée, mais les photos n'ont pas pu être mises à jour : ${errorText(e, 'réessayez.')}`;
+                        return;
+                    }
+                    try {
+                        await savePayWhatYouWant(result.productId);
+                    } catch (e) {
+                        errorMessage.value = `Annonce enregistrée, mais le prix libre n'a pas pu être mis à jour : ${errorText(e, 'réessayez.')}`;
+                        return;
+                    }
+                    goToMyProfile();
+                    return;
                 }
-            } catch(e) {
-                const err = e as { response?: { data?: { message?: string } }; message?: string };
-                errorMessage.value = err?.response?.data?.message || err?.message || 'Erreur lors de la création du produit';
-                saveLoading.value = false;
-                return;
-            }
-            saveLoading.value = false;
 
-            if (response == 'ok') {
-                router.push({ name: 'profile' , params: { id: 'me' }});
-            } else {
-                const failure = response as PostSaveErrorBody | null | undefined;
-                errorMessage.value = failure?.message || failure?.error?.message || 'Erreur lors de la création du produit';
+                const result = await postService.createPost(formData.value);
+                if (!result.ok) {
+                    errorMessage.value = result.error?.message || result.error?.error?.message || 'Erreur lors de la création du produit';
+                    return;
+                }
+                // L'annonce existe déjà : on ne reste pas sur le formulaire, qui la recréerait.
+                try {
+                    await savePayWhatYouWant(result.productId);
+                } catch (e) {
+                    func.showToastError(`Annonce publiée, mais le prix libre n'a pas pu être activé : ${errorText(e, 'modifiez l\'annonce pour réessayer.')}`);
+                }
+                goToMyProfile();
+            } catch (e) {
+                errorMessage.value = errorText(e, 'Erreur lors de l\'enregistrement de l\'annonce');
+            } finally {
+                saveLoading.value = false;
             }
         };
 
@@ -871,6 +974,10 @@
             typeLabel,
             conditionLabel,
             shippingLabel,
+            // Prix libre
+            pwyw,
+            pwywRecap,
+            currencySymbol,
         };
 
     },

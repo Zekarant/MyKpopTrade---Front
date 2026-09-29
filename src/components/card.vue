@@ -1,7 +1,8 @@
 <template>
     <div class="product-card">
         <div class="product-card__image">
-            <div v-if="admin && !data.isAvailable" class="product-card__badge product-card__badge--draft">
+            <!-- Brouillon : annonce du vendeur connecté, retirée de la vente sans avoir été vendue. -->
+            <div v-if="admin && !data.isAvailable && !data.isSold" class="product-card__badge product-card__badge--draft">
                 Brouillon
             </div>
             <div v-else-if="data.isReserved" class="product-card__badge product-card__badge--reserved">

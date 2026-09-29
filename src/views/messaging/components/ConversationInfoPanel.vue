@@ -4,20 +4,17 @@
       <!-- User Information -->
       <div class="user-section">
         <div class="user-header">
-          <div class="user-avatar" v-html="avatarHtml((conversation.otherParticipant || conversation.participants?.[0] || conversation))"></div>
+          <div class="user-avatar" v-html="avatarHtml(other || conversation)"></div>
           <div class="user-details">
-            <h3>{{ conversation.otherParticipant?.username || conversation.participants?.[0]?.username || conversation.username }}</h3>
-            <p class="user-status" :class="{ online: conversation.otherParticipant?.isOnline }">
-              <!--{{ conversation.otherParticipant?.isOnline ? 'En ligne' : 'Hors ligne' }}-->
-            </p>
-            <div class="user-badges">
-              <span class="badge verified" v-if="conversation.otherParticipant?.isVerified">
+            <h3>{{ other?.username || conversation.username }}</h3>
+            <div class="user-badges" v-if="other?.isIdentityVerified || other?.isSellerVerified">
+              <span class="badge verified" v-if="other?.isIdentityVerified">
                 <i class="bi bi-patch-check"></i>
                 Vérifié
               </span>
-              <span class="badge pro" v-if="conversation.participants?.isPro">
-                <i class="bi bi-star"></i>
-                Pro
+              <span class="badge pro" v-if="other?.isSellerVerified">
+                <i class="bi bi-award"></i>
+                Certifié
               </span>
             </div>
           </div>
@@ -26,20 +23,21 @@
           </button>
         </div>
 
-        <div class="user-stats">
-          <div class="stat-item">
+        <div class="user-stats" v-if="stats.memberSince || stats.transactions !== null || stats.rating">
+          <div class="stat-item" v-if="stats.memberSince">
             <span class="stat-label">Membre depuis</span>
-            <span class="stat-value">{{ formatLongDate(conversation.otherParticipant?.createdAt) }}</span>
+            <span class="stat-value">{{ formatLongDate(stats.memberSince) }}</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item" v-if="stats.transactions !== null">
             <span class="stat-label">Transactions</span>
-            <span class="stat-value">{{ conversation.otherParticipant?.transactionCount || 0 }}</span>
+            <span class="stat-value">{{ stats.transactions }}</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item" v-if="stats.rating">
             <span class="stat-label">Note</span>
             <span class="stat-value">
-              <i class="bi bi-star-fill"></i>
-              {{ conversation.otherParticipant?.rating || 'N/A' }}
+              <i v-if="stats.ratingCount > 0" class="bi bi-star-fill"></i>
+              {{ stats.rating }}
+              <template v-if="stats.ratingCount > 0">({{ stats.ratingCount }})</template>
             </span>
           </div>
         </div>
@@ -110,6 +108,8 @@ import { computed } from 'vue'
 import { API_URL } from '@/config/api'
 import {
   formatLongDate,
+  getOtherParticipant,
+  participantStats,
   transactionStatus,
   transactionStatusLabel,
   transactionTitle
@@ -118,27 +118,21 @@ import { avatarHtml } from '../avatar'
 import { attachmentUrl, conversationMediaUrls } from '../attachments'
 import type { ProductReference } from '@/types/messaging.types'
 import type { TransactionContext } from '../conversationHelpers'
-import type { ViewConversation, ViewParticipant } from '../types'
-
-/** Champs d'interlocuteur lus par le panneau, absents des réponses actuelles de l'API. */
-type InfoParticipant = ViewParticipant & {
-  isVerified?: boolean
-  createdAt?: string
-  transactionCount?: number
-  rating?: number
-}
+import type { ViewConversation } from '../types'
 
 type InfoProduct = ProductReference & { type?: string; categoryLabel?: string }
 
-type InfoConversation = Omit<ViewConversation, 'otherParticipant' | 'participants' | 'productId'> & {
-  otherParticipant?: InfoParticipant
-  participants: ViewParticipant[] & { isPro?: boolean }
+type InfoConversation = Omit<ViewConversation, 'productId'> & {
   productId?: InfoProduct | null
   productContext?: InfoProduct & TransactionContext
   context?: TransactionContext
 }
 
-const props = defineProps<{ conversation: InfoConversation }>()
+const props = defineProps<{ conversation: InfoConversation; userId?: string | null }>()
+
+/** Interlocuteur : fourni par le détail de la conversation, sinon déduit des participants. */
+const other = computed(() => getOtherParticipant(props.conversation, props.userId))
+const stats = computed(() => participantStats(other.value))
 
 // Pas d'actions de transaction ici : le suivi (expédition, réception, remboursement) est dans la page Paiements.
 const emit = defineEmits<{

@@ -9,9 +9,8 @@ const alice = {
   username: 'AliceKpop',
   profilePicture: '/uploads/profiles/alice.png',
   createdAt: '2025-03-12T10:00:00.000Z',
-  isVerified: true,
-  transactionCount: 12,
-  rating: 4.8
+  isIdentityVerified: true,
+  statistics: { totalSales: 8, totalPurchases: 4, averageRating: 4.8, totalRatings: 5 }
 }
 const bob = { _id: 'user-bob', username: 'BobCollect', profilePicture: '/uploads/profiles/bob.png' }
 const carol = { _id: 'user-carol', username: 'CarolArchive', profilePicture: '/uploads/profiles/carol.png' }

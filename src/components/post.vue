@@ -11,10 +11,10 @@
                     <i class="bi bi-lock-fill"></i> Réservé
                 </div>
                 <ImageCarousel :images="dataPost?.images || []" />
-                <button v-if="!myProfile && dataSeller._id != myId && !isFav" @click="addFav(dataPost._id)" class="post-modal__fav-btn">
+                <button v-if="!myProfile && sellerId != myId && !isFav" @click="addFav(dataPost._id)" class="post-modal__fav-btn">
                     <i class="bi bi-heart"></i>
                 </button>
-                <button v-if="!myProfile && dataSeller._id != myId && isFav" @click="rmFav(dataPost._id)" class="post-modal__fav-btn post-modal__fav-btn--active">
+                <button v-if="!myProfile && sellerId != myId && isFav" @click="rmFav(dataPost._id)" class="post-modal__fav-btn post-modal__fav-btn--active">
                     <i class="bi bi-heart-fill"></i>
                 </button>
             </div>
@@ -58,6 +58,11 @@
                 <div class="post-modal__header">
                     <h2 class="post-modal__title">{{ dataPost.title }}</h2>
                     <div class="post-modal__price">{{ dataPost.price }} {{ currencySymbol }}</div>
+                </div>
+                <div v-if="dataPost.isPayWhatYouWant" class="post-modal__pwyw">
+                    <span class="post-modal__tag">
+                        <i class="bi bi-cash-coin"></i> Prix libre : {{ pwywLabel }}
+                    </span>
                 </div>
 
                 <!-- Description -->
@@ -114,7 +119,7 @@
 
                 <!-- Action buttons -->
                 <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post-modal__footer">
-                    <button v-if="dataPost.allowOffers" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
+                    <button v-if="canMakeOffer" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
                         <i class="bi bi-tag"></i> Faire une offre
                     </button>
                     <button class="post-modal__btn post-modal__btn--primary" @click="buyOption">
@@ -137,7 +142,7 @@
     </div>
 
     <!-- Send message -->
-    <send_message :id_user="dataSeller.id" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
+    <send_message :id_user="sellerId" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
 
     <!-- Sold confirmation -->
     <div v-if="showSoldPopup" class="post-modal__confirm-overlay" @click.self="hidePopup">
@@ -146,7 +151,7 @@
             <p>Marquer cet article comme vendu ?</p>
             <div class="post-modal__confirm-actions">
                 <button class="post-modal__btn post-modal__btn--outline" @click="hidePopup">Annuler</button>
-                <button class="post-modal__btn post-modal__btn--danger" @click="sold(dataPost._id, dataSeller.id)">Confirmer</button>
+                <button class="post-modal__btn post-modal__btn--danger" @click="sold(dataPost._id, sellerId)">Confirmer</button>
             </div>
         </div>
     </div>
@@ -203,6 +208,8 @@
     import type { ProductDetail, ProductSeller } from '@/types/post.types';
     import messagingService from '@/services/messaging.service';
     import { apiErrorMessage } from '@/services/apiError';
+    import { acceptsOffers, pwywRangeLabel } from './offerRules';
+    import { sellerIdOf } from './sellerId';
 
     /** Vendeur affiché : celui de l'annonce, ou le profil transmis par le parent. */
     export type PostSeller = Partial<ProductSeller> & { id?: string };
@@ -258,7 +265,7 @@
                 addedToCart: false,
             };
         },
-        setup(props){
+        setup(){
             const myId = Cookies.get('id_user');
             const route = useRoute();
             const router = useRouter();
@@ -322,7 +329,15 @@
                 };
                 return symbols[this.dataPost.currency as keyof typeof symbols] || '';
             },
-
+            sellerId(): string | undefined {
+                return sellerIdOf(this.dataSeller);
+            },
+            canMakeOffer(): boolean {
+                return acceptsOffers(this.dataPost);
+            },
+            pwywLabel(): string {
+                return pwywRangeLabel(this.dataPost.pwywMinPrice, this.dataPost.pwywMaxPrice, this.currencySymbol || '€');
+            },
         },
         methods: {
 
@@ -351,7 +366,8 @@
                     this.isRoot = false;
                 }
 
-                if (this.dataSeller._id && this.dataSeller._id === this.myId) {
+                const sellerId = sellerIdOf(this.dataSeller);
+                if (sellerId && sellerId === this.myId) {
                     this.isRoot = true;
                 }
             },
@@ -440,9 +456,10 @@
                     offerData
                 ).then(() => {
                     this.$func.showToastSuccess('Offre envoyée avec succès !');
-                }).catch(error => {
+                }).catch((error: { message?: string }) => {
                     console.error('Erreur lors de l\'envoi de l\'offre:', error);
-                    this.$func.showToastError('Erreur lors de l\'envoi de l\'offre.');
+                    // Le message de l'API explique le refus (fourchette du prix libre, seuil minimal…).
+                    this.$func.showToastError(error?.message || 'Erreur lors de l\'envoi de l\'offre.');
                 })
             },
             async addToCart() {
@@ -469,4 +486,8 @@
 
 <style lang="scss" scoped>
 @use '../css/post.scss';
+
+.post-modal__pwyw {
+    margin-top: var(--space-xs);
+}
 </style>

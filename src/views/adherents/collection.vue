@@ -34,7 +34,7 @@
           <div class="skeleton" style="width: 200px; height: 200px;"></div>
         </div>
 
-        <Grid v-else-if="products.length > 0" :admin="true" :dataList="products" :pagination="pagination" :moreBtn="pagination.page < pagination.pages"></Grid>
+        <Grid v-else-if="products.length > 0" :admin="activeTab !== 'favorites'" :dataList="products" :pagination="pagination" :moreBtn="pagination.page < pagination.pages"></Grid>
 
         <div v-else class="collection__empty">
           <i class="bi" :class="activeTab === 'favorites' ? 'bi-heart' : 'bi-box-seam'"></i>

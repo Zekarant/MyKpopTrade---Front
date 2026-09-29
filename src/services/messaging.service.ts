@@ -28,7 +28,6 @@ import type {
   ConversationDetailParams
 } from '@/types/messaging.types';
 import type { IUser, UserResponse } from '@/types/user.types';
-import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
 
 const API_BASE_URL = `${API_URL}/api`;
@@ -38,8 +37,6 @@ interface ApiError {
   status?: number;
   code?: string;
 }
-
-type AuthToken = string | null;
 
 
 class MessagingService {
@@ -310,30 +307,54 @@ class MessagingService {
     }
   }
 
-  // Initier Pay What You Want
+  // Activer ou mettre à jour le prix libre d'une annonce (vendeur uniquement)
   async initiatePayWhatYouWant(data: PayWhatYouWantRequest): Promise<PayWhatYouWantResponse> {
     if (!data.productId?.trim()) {
       throw new Error('ID du produit requis');
     }
 
-    if (typeof data.minimumPrice !== 'number' || data.minimumPrice < 0) {
+    if (typeof data.minimumPrice !== 'number' || !Number.isFinite(data.minimumPrice) || data.minimumPrice < 0) {
       throw new Error('Prix minimum invalide');
     }
 
-    if (data.maximumPrice && (typeof data.maximumPrice !== 'number' || data.maximumPrice <= data.minimumPrice)) {
+    const hasMaximum = data.maximumPrice !== undefined && data.maximumPrice !== null;
+    if (hasMaximum && (!Number.isFinite(data.maximumPrice) || (data.maximumPrice as number) <= data.minimumPrice)) {
       throw new Error('Prix maximum invalide');
     }
 
+    const payload: PayWhatYouWantRequest = { productId: data.productId, minimumPrice: data.minimumPrice };
+    if (hasMaximum) {
+      payload.maximumPrice = data.maximumPrice;
+    }
+
     try {
-      const response: AxiosResponse<PayWhatYouWantResponse> = await this.apiClient.post('/pwyw', data);
+      const response: AxiosResponse<PayWhatYouWantResponse> = await this.apiClient.post('/pwyw', payload);
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de l\'initiation du Pay What You Want:', error);
+      console.error('Erreur lors de l\'activation du prix libre:', error);
       throw this.handleError(error);
     }
   }
 
-  // Faire une proposition PWYW
+  // Retirer le prix libre d'une annonce (vendeur uniquement)
+  async disablePayWhatYouWant(productId: string): Promise<PayWhatYouWantResponse> {
+    if (!productId?.trim()) {
+      throw new Error('ID du produit requis');
+    }
+
+    try {
+      const response: AxiosResponse<PayWhatYouWantResponse> = await this.apiClient.post('/pwyw', {
+        productId,
+        enabled: false,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de la désactivation du prix libre:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  // Nouvelle proposition de prix libre depuis une conversation existante (même circuit qu'une offre)
   async makePayWhatYouWantOffer(
     conversationId: string,
     data: PayWhatYouWantOfferRequest

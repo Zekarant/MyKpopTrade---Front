@@ -12,13 +12,38 @@ import type {
   PostSaveErrorBody,
   ProductImagesResponse,
   ProductStatsResponse,
-  ApiResponse,
   SearchParams
 } from '@/types/post.types';
 
-/** `'ok'` en cas de succès, sinon la réponse inattendue ou le corps d'erreur de l'API. */
-export type PostSaveResult = 'ok' | AxiosResponse | PostSaveErrorBody | undefined;
+/** Succès avec l'identifiant de l'annonce, sinon le corps d'erreur de l'API (absent si le réseau a coupé). */
+export type PostSaveResult =
+  | { ok: true; productId: string }
+  | { ok: false; error?: PostSaveErrorBody };
+
 const getIdUser = (): string | undefined => Cookies.get('id_user');
+
+function saveFailure(error: unknown): PostSaveResult {
+  return { ok: false, error: (error as { response?: { data?: PostSaveErrorBody } }).response?.data };
+}
+
+/**
+ * Frais de port sans les champs vides : l'API valide des nombres, et un coût
+ * laissé vide (null) ferait refuser la création de l'annonce.
+ */
+export function cleanShippingOptions(options: PostData['shippingOptions']): PostData['shippingOptions'] {
+  const cleaned: PostData['shippingOptions'] = {
+    worldwide: options.worldwide,
+    nationalOnly: options.nationalOnly,
+    localPickup: options.localPickup,
+  };
+  for (const key of ['nationalCost', 'worldwideCost', 'shippingCost'] as const) {
+    const value = options[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
 
 /** Réponse « session invalide » de l'API. */
 function isUnauthorized(error: unknown): boolean {
@@ -131,27 +156,31 @@ class PostService {
     data.append('albumName', postData.albumName);
     data.append('allowOffers', postData.allowOffers.toString());
 
+    // À la création, toutes les photos sont des fichiers.
     postData.images.forEach((file: File | string) => {
-      data.append('productImages', file);
+      if (file instanceof File) {
+        data.append('productImages', file);
+      }
     });
 
-    data.append('shippingOptions', JSON.stringify(postData.shippingOptions));
+    data.append('shippingOptions', JSON.stringify(cleanShippingOptions(postData.shippingOptions)));
 
     try {
-      const response: AxiosResponse = await this.uploadClient.post('/products', data);
-
-      if (response.status === 201 || response.status === 200) {
-        return 'ok';
-      } else {
-        return response;
-      }
+      const response: AxiosResponse<{ product?: { _id?: string } }> = await this.uploadClient.post('/products', data);
+      const productId = response.data?.product?._id;
+      return productId
+        ? { ok: true, productId }
+        : { ok: false, error: { message: 'Réponse inattendue du serveur' } };
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      return (error as { response?: { data?: PostSaveErrorBody } }).response?.data;
+      return saveFailure(error);
     }
   }
 
-  // Mettre à jour un post
+  /**
+   * Met à jour les champs d'une annonce (PUT JSON). Les photos passent par les
+   * routes dédiées : voir `syncProductImages`.
+   */
   async updatePost(id: string | number | undefined, postData: PostData): Promise<PostSaveResult> {
     if (!id) {
       throw new Error('ID du post requis');
@@ -170,35 +199,78 @@ class PostService {
       kpopGroup: postData.kpopGroup,
       kpopMember: postData.kpopMember,
       albumName: postData.albumName,
-      shippingOptions: postData.shippingOptions,
-      productImages: [] as (File | string)[]
+      allowOffers: postData.allowOffers,
+      shippingOptions: cleanShippingOptions(postData.shippingOptions),
     };
 
-    if (postData.productImages && postData.productImages.length > 0) {
-      postData.productImages.forEach((file: File) => {
-        data.productImages.push(file);
-      });
-    } else {
-      postData.images.forEach((file: File | string) => {
-        data.productImages.push(file);
-      });
-    }
-
     try {
-      const response: AxiosResponse = await this.uploadClient.put(`/products/${postId}`, data);
-
-      if (response.status === 201 || response.status === 200) {
-        return 'ok';
-      } else {
-        return response;
-      }
+      await this.apiClient.put(`/products/${postId}`, data);
+      return { ok: true, productId: postId };
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      return (error as { response?: { data?: PostSaveErrorBody } }).response?.data;
+      return saveFailure(error);
     }
   }
 
-  // Marquer comme vendu
+  /**
+   * Aligne les photos d'une annonce sur `desired` (ordre final ; chemins existants
+   * conservés, fichiers à ajouter) via les routes d'images, seules à pouvoir les modifier.
+   * Part de l'état serveur : relancer après un échec partiel reste sûr.
+   * `onUploaded` permet à l'appelant de remplacer un fichier envoyé par son chemin.
+   *
+   * @returns les chemins des images de l'annonce, dans leur ordre final.
+   */
+  async syncProductImages(
+    productId: string,
+    desired: (File | string)[],
+    onUploaded?: (file: File, path: string) => void
+  ): Promise<string[]> {
+    const { product } = await this.getPost(productId);
+    let current = [...product.images];
+
+    const kept = new Set(desired.filter((item): item is string => typeof item === 'string'));
+    const removed = current.filter((path) => !kept.has(path));
+
+    // Suppressions d'abord (place libérée sous la limite de 10 photos), mais
+    // l'API refuse de retirer la dernière image : celle-ci attend les ajouts.
+    const deferred: string[] = [];
+    for (const path of removed) {
+      if (current.length <= 1) {
+        deferred.push(path);
+        continue;
+      }
+      current = (await this.deleteProductImage(productId, current.indexOf(path))).images;
+    }
+
+    const uploaded = new Map<File, string>();
+    for (const file of desired.filter((item): item is File => item instanceof File)) {
+      const response = await this.addProductImage(productId, file);
+      current = response.images;
+      if (response.image) {
+        uploaded.set(file, response.image);
+        onUploaded?.(file, response.image);
+      }
+    }
+
+    for (const path of deferred) {
+      const index = current.indexOf(path);
+      if (index !== -1) {
+        current = (await this.deleteProductImage(productId, index)).images;
+      }
+    }
+
+    const target = desired
+      .map((item) => (typeof item === 'string' ? item : uploaded.get(item)))
+      .filter((path): path is string => typeof path === 'string' && current.includes(path));
+    const needsReorder = target.length === current.length && target.some((path, index) => path !== current[index]);
+    if (needsReorder) {
+      current = (await this.reorderProductImages(productId, target.map((path) => current.indexOf(path)))).images;
+    }
+
+    return current;
+  }
+
+  // Marquer comme vendu. `idUser` part comme `buyerId` ; l'API ignore l'identifiant du vendeur lui-même.
   async sold(idUser: string | undefined, id: string | number | undefined): Promise<boolean> {
     if (!id || !idUser) {
       throw new Error('ID du post et ID utilisateur requis');
@@ -323,10 +395,11 @@ class PostService {
     }
   }
 
-  async deleteProductImage(productId: string, imageUrl: string): Promise<ProductImagesResponse> {
+  /** L'API désigne l'image par sa position dans `images`, jamais par son chemin. */
+  async deleteProductImage(productId: string, imageIndex: number): Promise<ProductImagesResponse> {
     try {
       const response = await this.apiClient.delete<ProductImagesResponse>(`/products/${productId}/images`, {
-        data: { imageUrl },
+        data: { imageIndex },
       });
       return response.data;
     } catch (error) {
@@ -335,9 +408,10 @@ class PostService {
     }
   }
 
-  async reorderProductImages(productId: string, images: string[]): Promise<ProductImagesResponse> {
+  /** `imageOrder[i]` : position actuelle de l'image qui doit passer en position i. */
+  async reorderProductImages(productId: string, imageOrder: number[]): Promise<ProductImagesResponse> {
     try {
-      const response = await this.apiClient.put<ProductImagesResponse>(`/products/${productId}/images/reorder`, { images });
+      const response = await this.apiClient.put<ProductImagesResponse>(`/products/${productId}/images/reorder`, { imageOrder });
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la réorganisation des images :', error);

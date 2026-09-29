@@ -7,6 +7,7 @@ import {
   getOtherParticipant,
   isOwnMessage,
   messageStatusIcon,
+  participantStats,
   transactionStatusLabel,
   type ConversationLike
 } from '../conversationHelpers'
@@ -123,6 +124,25 @@ describe('conversationHelpers', () => {
     it('libellé du statut de négociation', () => {
       expect(transactionStatusLabel(conv({ negotiation: { status: 'pending' } }))).toBe('En attente')
       expect(transactionStatusLabel(conv({ negotiation: { status: 'custom' } }))).toBe('custom')
+    })
+  })
+
+  describe('participantStats', () => {
+    it('lit ancienneté, transactions (ventes + achats) et note sur les champs publics', () => {
+      const stats = participantStats({
+        createdAt: '2025-03-01T00:00:00.000Z',
+        statistics: { totalSales: 4, totalPurchases: 2, averageRating: 4.46, totalRatings: 3 }
+      })
+      expect(stats).toEqual({ memberSince: '2025-03-01T00:00:00.000Z', transactions: 6, rating: '4,5', ratingCount: 3 })
+    })
+
+    it('indique l\'absence d\'avis plutôt qu\'une note fictive', () => {
+      expect(participantStats({ statistics: { totalSales: 0, totalRatings: 0 } }).rating).toBe('Aucun avis')
+    })
+
+    it('ne renvoie rien d\'inventé quand l\'API ne fournit pas les données', () => {
+      expect(participantStats({})).toEqual({ memberSince: null, transactions: null, rating: null, ratingCount: 0 })
+      expect(participantStats(null)).toEqual({ memberSince: null, transactions: null, rating: null, ratingCount: 0 })
     })
   })
 })

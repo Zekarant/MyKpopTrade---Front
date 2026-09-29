@@ -20,21 +20,26 @@
       </div>
     </div>
 
-    <form @submit.prevent="submitOffer" class="offer-form">
+    <form @submit.prevent="submitOffer" class="offer-form" novalidate>
       <div class="form-group">
         <label for="offerAmount">Votre offre (€)</label>
         <input
           type="number"
           id="offerAmount"
-          v-model="offerAmount"
-          :min="1"
-          :max="price - 1"
+          v-model.number="offerAmount"
+          :min="inputMin"
+          :max="inputMax"
           step="0.01"
           placeholder="Montant de votre offre"
           required
         >
+        <div class="offer-rule">
+          <i class="bi" :class="bounds.mode === 'pwyw' ? 'bi-cash-coin' : 'bi-info-circle'"></i>
+          {{ ruleLabel }}
+        </div>
+        <div v-if="offerError" class="offer-error" role="alert">{{ offerError }}</div>
         <div class="price-info">
-          <span class="savings" v-if="offerAmount && offerAmount < price">
+          <span class="savings" v-if="!offerError && typeof offerAmount === 'number' && offerAmount > 0 && offerAmount < price">
             Économie: {{ (price - offerAmount).toFixed(2) }}€
           </span>
         </div>
@@ -67,7 +72,7 @@
         <button
           type="submit"
           class="btn-primary"
-          :disabled="!offerAmount || !offerTermsAccepted || sendingOffer"
+          :disabled="!offerAmount || !!offerError || !offerTermsAccepted || sendingOffer"
         >
           <i class="bi" :class="sendingOffer ? 'bi-arrow-clockwise' : 'bi-wallet'"></i>
           {{ sendingOffer ? 'Envoi...' : 'Envoyer l\'offre' }}
@@ -79,77 +84,111 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { computed, defineComponent, ref, type PropType } from 'vue';
 import { API_URL } from '@/config/api';
+import {
+  formatAmount,
+  offerBounds,
+  pwywRangeLabel,
+  validateOfferAmount,
+  type OfferPricing
+} from './offerRules';
+
+/** Annonce visée par l'offre : fiche produit, ou produit peuplé d'une conversation. */
+export type OfferProduct = Partial<Omit<OfferPricing, 'price'>> & {
+  _id: string;
+  title: string;
+  price?: number;
+  images?: string[];
+};
+
+export interface OfferConversation {
+  _id?: string;
+  id?: string;
+  productId?: OfferProduct | null;
+}
+
+export interface OfferSentPayload {
+  amount: number;
+  message: string;
+  offerData: {
+    productId: string;
+    amount: number;
+    message: string;
+    conversationId: string | null;
+  };
+}
 
 export default defineComponent({
     name: 'send_offer',
     props: {
         conversation: {
-          type: Object,
+          type: Object as PropType<OfferConversation>,
           required: false,
         },
         product: {
-          type: Object,
+          type: Object as PropType<OfferProduct>,
           required: false,
         },
-
     },
-    emits: ['close', 'offerSent'],
+    emits: {
+        close: () => true,
+        offerSent: (payload: OfferSentPayload) => Boolean(payload),
+    },
     setup(props, { emit }) {
-        const offerAmount = ref()
+        const offerAmount = ref<number | ''>('')
         const offerMessage = ref('')
         const offerTermsAccepted = ref(false)
         const sendingOffer = ref(false)
         const domain_api = API_URL;
-        const price = ref(0);
-        const title = ref('');
-        const images = ref<string[]>([]);
-        if(props.product) {
-          price.value = props.product.price;
-          title.value = props.product.title;
-          images.value = props.product.images;
-        }else if(props.conversation) {
-          price.value = props.conversation.productId.price;
-          title.value = props.conversation.productId.title;
-          images.value = props.conversation.productId.images[0]
-        }
-        // Méthode pour soumettre l'offre
-        let offerData = {};
+
+        const target = computed<OfferProduct | null>(() => props.product ?? props.conversation?.productId ?? null)
+        const price = computed(() => target.value?.price ?? 0)
+        const title = computed(() => target.value?.title ?? '')
+        const images = computed(() => target.value?.images ?? [])
+
+        const pricing = computed<OfferPricing>(() => ({ ...target.value, price: price.value }))
+        const bounds = computed(() => offerBounds(pricing.value))
+
+        /** Règle affichée sous le montant : fourchette du prix libre, ou seuil minimal. */
+        const ruleLabel = computed(() => {
+          const current = bounds.value
+          if (current.mode === 'pwyw') {
+            return `Prix libre : ${pwywRangeLabel(current.min, current.max)}`
+          }
+          return `Offre minimum : ${formatAmount(current.min)} (${current.minPercentage} % du prix)`
+        })
+
+        const inputMin = computed(() => Math.max(bounds.value.min, 0.01))
+        const inputMax = computed(() => bounds.value.mode === 'pwyw' ? bounds.value.max ?? undefined : undefined)
+
+        // Rien à signaler tant que le champ est vide : le bouton reste simplement désactivé.
+        const offerError = computed(() =>
+          offerAmount.value === '' ? null : validateOfferAmount(offerAmount.value, pricing.value)
+        )
+
         const submitOffer = async () => {
-            if (!offerAmount.value || !offerTermsAccepted.value) return
+            const amount = offerAmount.value
+            const productId = target.value?._id
+            if (amount === '' || offerError.value || !offerTermsAccepted.value || !productId) return
             try {
                 sendingOffer.value = true
 
-                // Appel API pour envoyer l'offre
-                if(!props.conversation) {
-                  if(props.product) {
-                    offerData = {
-                      productId: props.product._id,
-                      amount: parseFloat(offerAmount.value),
-                      message: offerMessage.value,
-                      conversationId: null
-                    }
-                  }
-                }else{
-                  offerData = {
-                    productId: props.conversation.productId._id,
-                    amount: parseFloat(offerAmount.value),
-                    message: offerMessage.value,
-                    conversationId: props.conversation._id || props.conversation.id
-                  }
+                const conversationId = props.conversation
+                  ? props.conversation._id || props.conversation.id || null
+                  : null
 
-                }
-
-
-                // Émettre l'événement avec les données de l'offre
                 emit('offerSent', {
-                    amount: offerAmount.value,
+                    amount,
                     message: offerMessage.value,
-                    offerData
+                    offerData: {
+                      productId,
+                      amount,
+                      message: offerMessage.value,
+                      conversationId
+                    }
                 })
 
-                // Réinitialiser le formulaire
                 offerAmount.value = ''
                 offerMessage.value = ''
                 offerTermsAccepted.value = false
@@ -170,7 +209,12 @@ export default defineComponent({
             submitOffer,
             price,
             title,
-            images
+            images,
+            bounds,
+            ruleLabel,
+            inputMin,
+            inputMax,
+            offerError
         }
     }
 })
@@ -333,6 +377,21 @@ export default defineComponent({
   border-color: #0d6efd;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
   outline: none;
+}
+
+.offer-rule {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.offer-error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--danger-color, #dc3545);
 }
 
 .price-info {

@@ -19,9 +19,11 @@ export interface PostData {
   kpopGroup: string;
   kpopMember: string;
   albumName: string;
-  /** Fichiers ajoutés, et chemins des images existantes quand on modifie une annonce. */
+  /**
+   * Ordre final des photos : fichiers ajoutés, et chemins des images existantes
+   * quand on modifie une annonce.
+   */
   images: (File | string)[];
-  productImages?: File[];
   allowOffers: boolean;
   shippingOptions: {
     worldwide: boolean;
@@ -53,8 +55,13 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   isAvailable?: boolean;
+  isSold?: boolean;
   state?: string;
   isReserved?: boolean;
+  allowOffers?: boolean;
+  isPayWhatYouWant?: boolean;
+  pwywMinPrice?: number | null;
+  pwywMaxPrice?: number | null;
 }
 
 /** Modes et frais de livraison d'une annonce, tels que stockés par l'API. */
@@ -100,6 +107,10 @@ export interface ProductDetail {
   isSold?: boolean;
   allowOffers: boolean;
   minOfferPercentage?: number;
+  /** Prix libre : les offres sont bornées par [pwywMinPrice, pwywMaxPrice]. */
+  isPayWhatYouWant?: boolean;
+  pwywMinPrice?: number | null;
+  pwywMaxPrice?: number | null;
   shippingOptions: ProductShippingOptions;
   shippingPrice?: number | null;
   views?: number;

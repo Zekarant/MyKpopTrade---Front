@@ -21,7 +21,7 @@
         <div class="product-section">
           <div class="product-images">
             <img
-              :src="product.images[0] || '/placeholder.png'"
+              :src="product.images[0] ? API_URL + product.images[0] : '/placeholder.png'"
               :alt="product.title"
               class="main-image"
             />
@@ -37,15 +37,19 @@
                 <span class="price">{{ product.price }} €</span>
               </div>
 
-              <div v-if="product.minOfferPercentage" class="min-offer">
+              <div v-if="bounds.mode === 'pwyw'" class="min-offer">
+                <span class="label">Prix libre</span>
+                <span class="price">{{ pwywLabel }}</span>
+              </div>
+              <div v-else class="min-offer">
                 <span class="label">Offre minimum acceptée</span>
-                <span class="price">{{ minOfferAmount }} € ({{ product.minOfferPercentage }}%)</span>
+                <span class="price">{{ bounds.min }} € ({{ bounds.minPercentage }}%)</span>
               </div>
             </div>
 
             <div class="seller-info">
               <i class="bi bi-person"></i>
-              <span>Vendu par {{ product.seller.username }}</span>
+              <span>Vendu par {{ product.seller?.username }}</span>
             </div>
           </div>
         </div>
@@ -60,8 +64,8 @@
               <input
                 v-model.number="offerAmount"
                 type="number"
-                :min="minOfferAmount"
-                :max="product.price"
+                :min="bounds.min"
+                :max="bounds.mode === 'pwyw' ? bounds.max ?? undefined : product.price"
                 step="0.01"
                 placeholder="0.00"
                 class="form-control price-input"
@@ -70,7 +74,8 @@
               <span class="currency">€</span>
             </div>
 
-            <div class="price-helpers">
+            <!-- Les pourcentages du prix n'ont pas de sens pour un prix libre, borné par sa fourchette. -->
+            <div v-if="bounds.mode === 'negotiation'" class="price-helpers">
               <button
                 v-for="percentage in offerPercentages"
                 :key="percentage"
@@ -103,7 +108,7 @@
               <span>Votre offre :</span>
               <strong>{{ offerAmount || 0 }} €</strong>
             </div>
-            <div class="summary-row">
+            <div v-if="savings > 0" class="summary-row">
               <span>Économie :</span>
               <strong class="savings">{{ savings }} € ({{ savingsPercentage }}%)</strong>
             </div>
@@ -141,7 +146,10 @@
 import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessagingStore } from '@/store/messaging.store';
-import postService from '@/services/post.service'; // product service
+import postService from '@/services/post.service';
+import { API_URL } from '@/config/api';
+import type { ProductDetail } from '@/types/post.types';
+import { offerBounds, pwywRangeLabel, validateOfferAmount, type OfferBounds } from '@/components/offerRules';
 
 export default defineComponent({
   name: 'NegotiateView',
@@ -151,7 +159,7 @@ export default defineComponent({
     const messagingStore = useMessagingStore();
 
     // State
-    const product = ref<any>(null);
+    const product = ref<ProductDetail | null>(null);
     const loading = ref(true);
     const offerAmount = ref<number>(0);
     const message = ref('');
@@ -164,11 +172,15 @@ export default defineComponent({
     // Computed
     const productId = computed(() => route.params.productId as string);
 
-    const minOfferAmount = computed(() => {
-      if (!product.value) return 0;
-      const percentage = product.value.minOfferPercentage || 50;
-      return Math.round(product.value.price * percentage / 100 * 100) / 100;
-    });
+    const bounds = computed<OfferBounds>(() =>
+      product.value
+        ? offerBounds(product.value)
+        : { mode: 'negotiation', min: 0, minPercentage: 0, price: 0 }
+    );
+
+    const pwywLabel = computed(() =>
+      product.value ? pwywRangeLabel(product.value.pwywMinPrice, product.value.pwywMaxPrice) : ''
+    );
 
     const savings = computed(() => {
       if (!product.value || !offerAmount.value) return 0;
@@ -180,23 +192,23 @@ export default defineComponent({
       return Math.round((savings.value / product.value.price) * 100);
     });
 
-    const canSubmit = computed(() => {
-      return offerAmount.value >= minOfferAmount.value &&
-             offerAmount.value < product.value?.price &&
-             !offerError.value &&
-             !submitting.value;
-    });
+    const canSubmit = computed(() =>
+      Boolean(product.value) &&
+      validateOfferAmount(offerAmount.value, product.value as ProductDetail) === null &&
+      !offerError.value &&
+      !submitting.value
+    );
 
     // Methods
     const loadProduct = async () => {
       loading.value = true;
       try {
-        // Remplacer par votre service de produits
+        // GET /api/products/:id renvoie { product, isFavorite }.
         const response = await postService.getPost(productId.value);
-        product.value = response;
+        product.value = response.product;
 
-        // Définir une offre initiale
-        offerAmount.value = minOfferAmount.value;
+        // Offre proposée par défaut : le plancher accepté (au moins un centime).
+        offerAmount.value = Math.max(bounds.value.min, 0.01);
       } catch (error) {
         console.error('Erreur lors du chargement du produit:', error);
         product.value = null;
@@ -206,22 +218,20 @@ export default defineComponent({
     };
 
     const validateOffer = () => {
-      offerError.value = '';
-
-      if (offerAmount.value < minOfferAmount.value) {
-        offerError.value = `L'offre minimum est de ${minOfferAmount.value} €`;
-      } else if (offerAmount.value >= product.value.price) {
-        offerError.value = 'L\'offre doit être inférieure au prix demandé';
-      }
+      offerError.value = product.value
+        ? validateOfferAmount(offerAmount.value, product.value) ?? ''
+        : '';
     };
 
     const setOfferPercentage = (percentage: number) => {
+      if (!product.value) return;
       offerAmount.value = Math.round(product.value.price * percentage / 100 * 100) / 100;
       validateOffer();
     };
 
     const isPercentageActive = (percentage: number) => {
-      const currentPercentage = Math.round((offerAmount.value / product.value?.price) * 100);
+      if (!product.value?.price) return false;
+      const currentPercentage = Math.round((offerAmount.value / product.value.price) * 100);
       return currentPercentage === percentage;
     };
 
@@ -243,7 +253,7 @@ export default defineComponent({
         });
       } catch (error) {
         console.error('Erreur lors de l\'envoi de l\'offre:', error);
-        offerError.value = 'Une erreur est survenue. Veuillez réessayer.';
+        offerError.value = (error as { message?: string })?.message || 'Une erreur est survenue. Veuillez réessayer.';
       } finally {
         submitting.value = false;
       }
@@ -258,13 +268,15 @@ export default defineComponent({
     });
 
     return {
+      API_URL,
       product,
       loading,
       offerAmount,
       message,
       offerError,
       offerPercentages,
-      minOfferAmount,
+      bounds,
+      pwywLabel,
       savings,
       savingsPercentage,
       canSubmit,

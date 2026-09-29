@@ -146,6 +146,36 @@ export function formatMessageTimestamp(timestamp: string | Date | null | undefin
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
+export interface ParticipantProfile {
+  createdAt?: string;
+  statistics?: {
+    totalSales?: number;
+    totalPurchases?: number;
+    averageRating?: number;
+    totalRatings?: number;
+  };
+}
+
+/**
+ * Statistiques de l'interlocuteur, lues sur les champs publics renvoyés par le
+ * détail d'une conversation. `null` : donnée absente, la ligne n'est pas affichée.
+ */
+export function participantStats(participant: ParticipantProfile | null | undefined) {
+  const stats = participant?.statistics;
+  const ratingCount = stats?.totalRatings ?? 0;
+  return {
+    memberSince: participant?.createdAt ?? null,
+    transactions: stats ? (stats.totalSales ?? 0) + (stats.totalPurchases ?? 0) : null,
+    /** « 4,5 », « Aucun avis » sans note reçue. */
+    rating: stats
+      ? ratingCount > 0
+        ? (stats.averageRating ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        : 'Aucun avis'
+      : null,
+    ratingCount
+  };
+}
+
 export function formatLongDate(date: string | Date | null | undefined): string {
   if (!date) return 'N/A';
   return new Date(date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });

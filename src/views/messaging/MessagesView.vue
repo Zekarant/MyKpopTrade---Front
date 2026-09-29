@@ -190,6 +190,7 @@
     <ConversationInfoPanel
       v-if="selectedConversation"
       :conversation="selectedConversation"
+      :user-id="currentUserId()"
       @close="closeInformation"
       @open-media="openImgList"
     />
@@ -222,7 +223,7 @@
 
     <!--Faire offre Modal -->
     <div v-if="showOfferOption && selectedConversation?.productId">
-      <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="offerConversation"></send_offer>
+      <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="selectedConversation"></send_offer>
     </div>
 
     <div v-if="showCounterOfferOption" class="counter-popup-overlay" @click.self="closeCounterOfferPopup">
@@ -387,10 +388,6 @@ const filteredConversations = computed(() =>
   }) as ViewConversation[]
 )
 
-/** send_offer attend un objet non typé. */
-const offerConversation = computed(() =>
-  (selectedConversation.value ?? undefined) as Record<string, unknown> | undefined
-)
 const tabCounts = computed(() =>
   countConversationsByTab((messagingStore.conversations || []) as ConversationLike[], currentUserId())
 )
@@ -438,7 +435,8 @@ const selectConversation = async (conversation: ViewConversation) => {
     // Fetch conversation details and messages
     const response = await messagingStore.fetchConversation(conversationId(conversation))
     const detail: ViewConversation = response.conversation
-    detail.otherParticipant = conversation.otherParticipant
+    // Le détail fournit l'interlocuteur complet (badges, statistiques) : la liste ne sert que de repli.
+    detail.otherParticipant = detail.otherParticipant ?? conversation.otherParticipant
     detail.media = response.media || []
     selectedConversation.value = detail
 

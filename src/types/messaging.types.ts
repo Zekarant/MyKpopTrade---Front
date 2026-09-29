@@ -56,6 +56,12 @@ export interface ProductReference {
   category?: string;
   kpopGroup?: string;
   kpopMember?: string;
+  allowOffers?: boolean;
+  minOfferPercentage?: number;
+  /** Prix libre : la fourchette remplace allowOffers / minOfferPercentage. */
+  isPayWhatYouWant?: boolean;
+  pwywMinPrice?: number | null;
+  pwywMaxPrice?: number | null;
 }
 
 export interface NegotiationStatus {
@@ -181,18 +187,27 @@ export interface NegotiationActionResponse {
   conversation: Conversation;
 }
 
+/**
+ * POST /api/messaging/pwyw : réglage du prix libre d'une annonce par son vendeur.
+ * Sans maximum, seul le plancher s'applique.
+ */
 export interface PayWhatYouWantRequest {
   productId: string;
   minimumPrice: number;
-  maximumPrice?: number;
-  message?: string;
+  maximumPrice?: number | null;
+}
+
+/** Réglage du prix libre tel que renvoyé par l'API (activation ou désactivation). */
+export interface PayWhatYouWantSettings {
+  productId: string;
+  enabled: boolean;
+  minimumPrice: number | null;
+  maximumPrice: number | null;
 }
 
 export interface PayWhatYouWantResponse {
-  success: boolean;
   message: string;
-  conversation: Conversation;
-  payWhatYouWant: PayWhatYouWantStatus;
+  payWhatYouWant: PayWhatYouWantSettings;
 }
 
 export interface PayWhatYouWantOfferRequest {
@@ -200,10 +215,15 @@ export interface PayWhatYouWantOfferRequest {
   message?: string;
 }
 
+/** Une proposition de prix libre suit le circuit d'une offre de négociation. */
 export interface PayWhatYouWantOfferResponse {
-  success: boolean;
   message: string;
-  payWhatYouWant: PayWhatYouWantStatus;
+  result: {
+    conversation: Conversation;
+    initialOffer: number;
+    isUpdate: boolean;
+    previousOffer: number | null;
+  };
 }
 
 export interface StartConversationRequest {
