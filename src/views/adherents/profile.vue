@@ -17,8 +17,7 @@
             </div>
             <segment_profil @partDisplayed="(part: string) => (partView = part)"></segment_profil>
 
-            <!-- KeepAlive : un brouillon de publication ou un filtre d'avis
-                 survit au changement d'onglet, comme quand tout vivait ici. -->
+            <!-- KeepAlive : un brouillon de publication ou un filtre d'avis survit au changement d'onglet. -->
             <KeepAlive>
               <ProfilePostsTab
                 v-if="partView === 'post'"
@@ -88,11 +87,7 @@
     import ProfileFollowersTab from './profile/ProfileFollowersTab.vue';
     import { profileIdOf, type ProfileInfo, type ReportTarget } from './profile/types';
 
-    /**
-     * Page profil : bandeau, navigation et chargement du profil (le mien sur
-     * /adherents/profile/me, celui d'un membre sinon). Chaque onglet charge et
-     * gère ses propres données (voir ./profile/).
-     */
+    /** Page profil : bandeau, navigation et chargement du profil ; chaque onglet gère ses propres données. */
 
     defineOptions({ name: 'ProfilePage' });
 
@@ -111,8 +106,7 @@
     const isOwnProfile = computed(() => routeProfileId.value === 'me');
     const profileUserId = computed(() => profileIdOf(profile.value));
 
-    // Client partagé : session renouvelée et requête rejouée automatiquement ;
-    // un 401 restant signifie session perdue, déjà redirigée vers /login.
+    // Un 401 restant signifie session perdue, déjà redirigée vers /login.
     async function loadProfile(id: string | undefined) {
       if (!id) return;
       try {
@@ -147,9 +141,8 @@
 <style lang="scss">
 @use 'sass:meta';
 
-// Feuille rattachée à la page par sa classe racine plutôt qu'au scope du
-// composant : les onglets (composants enfants) en héritent sans en embarquer
-// chacun une copie. `.profile-root .x` a la même spécificité que `.x[data-v]`.
+// Rattachée à la classe racine plutôt qu'au scope : les onglets en héritent sans
+// en embarquer chacun une copie (même spécificité que `.x[data-v]`).
 .profile-root {
   @include meta.load-css('../../css/profile.scss');
 }

@@ -23,9 +23,8 @@ export default defineComponent({
     const welcome = ref<string>('');
 
     /**
-     * Ouvre la session. L'API remet un code à usage unique ; les jetons en
-     * clair dans l'URL ne servent plus qu'à une API pas encore mise à jour
-     * (déploiement du front avant celui de l'API).
+     * Ouvre la session à partir du code à usage unique ; les jetons en clair
+     * dans l'URL ne servent qu'à une API pas encore mise à jour.
      */
     async function openSession(): Promise<boolean> {
       const code = route.query.code as string | undefined;
@@ -52,8 +51,7 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      // Retirer tout de suite le code (ou les jetons) de l'URL : historique,
-      // capture d'écran, partage. On les a déjà lus dans `route.query`.
+      // Retirer tout de suite le code (ou les jetons) de l'URL : historique, captures, partage.
       window.history.replaceState(window.history.state, '', window.location.pathname);
 
       const errParam = route.query.error as string | undefined;

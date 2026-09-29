@@ -385,8 +385,7 @@
                     }
                 });
             },
-            // addFavorite bascule le favori et rend `false` en cas d'échec : le
-            // message de succès s'affichait même quand rien n'avait changé.
+            // addFavorite bascule le favori (ajout comme retrait) et rend `false` en cas d'échec.
             async addFav(id: string){
                 if (await postService.addFavorite(id)) {
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');

@@ -28,9 +28,8 @@ const disconnected = (): PaypalAccountState => ({
 });
 
 /**
- * Statut PayPal du vendeur. Il est chargé par la page, pas par la section
- * Paiements : le retour d'onboarding PayPal arrive sur la page sans section et
- * doit afficher son message quelle que soit la section ouverte.
+ * Statut PayPal du vendeur, chargé par la page et non par la section Paiements :
+ * le retour d'onboarding doit s'afficher quelle que soit la section ouverte.
  */
 export function usePaypalAccount(): PaypalAccount {
   const account = reactive({

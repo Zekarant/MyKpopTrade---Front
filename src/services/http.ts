@@ -76,9 +76,7 @@ export function refreshAccessToken(): Promise<string | null> {
       if (!data?.accessToken) {
         return null;
       }
-      // Le refresh token est à usage unique : l'API en rend un nouveau, qu'il
-      // faut impérativement garder. Repli sur l'ancien si la réponse n'en
-      // porte pas, pour ne pas perdre le cookie de 7 jours.
+      // Refresh token à usage unique : garder celui que rend l'API, sinon l'ancien.
       setSessionCookies({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken || refreshToken,

@@ -52,8 +52,7 @@
             </button>
           </nav>
 
-          <!-- Content. KeepAlive : une saisie non enregistrée survit au
-               changement de section, comme lorsque tout l'état vivait ici. -->
+          <!-- Content. KeepAlive : une saisie non enregistrée survit au changement de section. -->
           <div class="settings-page__content">
             <KeepAlive>
               <ProfileSection
@@ -134,10 +133,7 @@ const SOCIAL_LINK_ERRORS: Record<string, string> = {
   oauth_state_invalid: 'La liaison a expiré ou a été lancée depuis un autre navigateur. Réessayez.'
 };
 
-/**
- * Page Paramètres : en-tête, navigation et chargement du profil. Chaque
- * section porte son propre état et ses appels (voir ./settings/).
- */
+/** Page Paramètres : en-tête, navigation et chargement du profil ; chaque section porte son propre état. */
 export default defineComponent({
   name: 'SettingsPage',
   components: {
@@ -220,10 +216,7 @@ export default defineComponent({
       this.goToSection('securite');
     },
 
-    /**
-     * Remplace l'objet profil : les sections qui le surveillent resynchronisent
-     * leurs champs (voir le contrat dans ./settings/shared.ts).
-     */
+    /** Remplace l'objet profil : les sections qui le surveillent resynchronisent leurs champs. */
     async loadProfile() {
       try {
         const res = await api.get('/api/auth/profile');
@@ -244,9 +237,8 @@ export default defineComponent({
 <style lang="scss">
 @use 'sass:meta';
 
-// Feuille rattachée à la page par sa classe racine plutôt qu'au scope du
-// composant : les sections (composants enfants) en héritent sans en embarquer
-// chacune une copie. `.settings-root .x` a la même spécificité que `.x[data-v]`.
+// Rattachée à la classe racine plutôt qu'au scope : les sections en héritent sans
+// en embarquer chacune une copie (même spécificité que `.x[data-v]`).
 .settings-root {
   @include meta.load-css('../../css/settings.scss');
 }

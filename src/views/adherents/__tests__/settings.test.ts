@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 
-/**
- * Comportements de la page Paramètres que les captures d'écran ne voient pas :
- * conservation des saisies entre sections et resynchronisation des champs
- * après un rechargement du profil.
- */
+/** Comportements de la page Paramètres que les captures d'écran ne voient pas. */
 
 const http = vi.hoisted(() => ({
   get: vi.fn(),
@@ -112,7 +108,6 @@ describe('page Paramètres', () => {
     await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Enregistrer')!.trigger('click')
     await flushPromises()
 
-    // Numéro normalisé par l'API, vérification remise à zéro.
     expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe('+33611223344')
     expect(phoneBadge().exists()).toBe(false)
 

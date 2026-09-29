@@ -84,11 +84,7 @@
 
     const DEFAULT_PROFILE_PICTURE = 'https://mykpoptrade.com/images/avatar-default.png';
 
-    /**
-     * Client partagé : renouvelle la session expirée (15 min) et rejoue la
-     * requête. Les appels `axios` nus envoyaient `Bearer undefined` passé ce
-     * délai, et l'upload échouait sans rejeu.
-     */
+    /** Client partagé : renouvelle la session expirée et rejoue la requête. */
     const api = createApiClient({ baseURL: API_URL });
 
     /** Chemin d'upload de l'API, ou URL absolue (avatars Google / Discord). */
@@ -105,9 +101,6 @@
         [key: string]: unknown;
     }
 
-    // La modale « Paramètres » qui vivait ici (mot de passe, téléphone, PayPal,
-    // identité, export, suppression) était inatteignable : openSettings() n'était
-    // appelé nulle part. Ces réglages vivent dans views/adherents/settings.vue.
     export default {
         name: "banner_profil",
         data() {
@@ -218,9 +211,7 @@
                 const fileInput = this.$refs.fileInputbanner as HTMLInputElement;
                 fileInput.click();
             },
-            // Pas d'en-tête Content-Type manuel : l'ancien « multipart/form-data. »
-            // (point final, sans boundary) était invalide ; axios le pose correctement
-            // pour un FormData.
+            // Pas d'en-tête Content-Type manuel : axios pose celui d'un FormData, avec son boundary.
             async updatePictureBanner(event: Event) {
                 const file = (event.target as HTMLInputElement).files?.[0];
                 if (!file) return;

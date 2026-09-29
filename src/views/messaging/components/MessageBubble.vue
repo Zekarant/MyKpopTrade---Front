@@ -76,10 +76,7 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Un message du fil : texte, pièces jointes et, pour une offre, son statut et
- * ses actions (annuler / accepter / refuser). Composant d'affichage.
- */
+/** Un message du fil : texte, pièces jointes et, pour une offre, son statut et ses actions. */
 import { computed } from 'vue'
 import { formatMessageTimestamp, messageStatusIcon } from '../conversationHelpers'
 import { avatarHtml } from '../avatar'
@@ -99,8 +96,7 @@ const emit = defineEmits<{
   'decline-offer': [message: unknown]
 }>()
 
-// Un message sans tableau `attachments` (message système) faisait planter
-// tout le fil sur `message.attachments.length`.
+// Un message système n'a pas de tableau `attachments`.
 const attachments = computed<string[]>(() => props.message?.attachments ?? [])
 </script>
 

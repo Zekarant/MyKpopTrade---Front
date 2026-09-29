@@ -1,11 +1,3 @@
-/* Base styles - White theme only */
-
-/* Sidebar */
-
-/* Improved Navigation Tabs - Equal Width */
-
-/* Enhanced Conversation Items */
-
 .badge {
   background: var(--danger-color);
   color: white;
@@ -16,10 +8,6 @@
   text-align: center;
   font-weight: 600;
 }
-
-/* Conversation Actions */
-
-/* Chat Area */
 
 .empty-state > i {
   font-size: 64px;
@@ -36,8 +24,6 @@
   margin: 0 0 24px 0;
 }
 
-/* Enhanced Chat Header */
-
 .action-btn i.bi-star-fill {
   color: #ffc107;
 }
@@ -49,10 +35,6 @@
 .loading-more-messages i {
   animation: spin 1s linear infinite;
 }
-
-/* ============================================ */
-/* EMOJI PICKER POPUP STYLES */
-/* ============================================ */
 
 /* Right Sidebar */
 .right-sidebar {
@@ -297,8 +279,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* POPUP CONTRE-OFFRE - STYLES ISOLÉS */
-
 /* Responsive Design */
 @media (max-width: 1200px) {
   .right-sidebar {
@@ -358,10 +338,6 @@
 .right-sidebar::-webkit-scrollbar-thumb:hover {
   background: #adb5bd;
 }
-
-/* Focus states for accessibility */
-
-/* Text utilities */
 
 .media-section {
   padding: 24px;

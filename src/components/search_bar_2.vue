@@ -156,8 +156,6 @@ export default {
         return;
       }
       try {
-        // L'API rend `{ searchHistory }` : lire `res` directement appelait
-        // `.slice` sur un objet, l'erreur était avalée et l'historique restait vide.
         const res = await searchService.getHistory();
         this.history = (Array.isArray(res?.searchHistory) ? res.searchHistory : []).slice(0, 5);
       } catch {

@@ -3,17 +3,10 @@ import { API_URL } from '@/config/api'
 import { createApiClient, getAccessToken } from '@/services/http'
 
 /**
- * Jeton de lecture des pièces jointes, placé dans leurs URL (`<img src>` ne
- * peut pas porter d'en-tête). Il ne permet que de lire les pièces jointes des
- * conversations de l'utilisateur : contrairement au jeton d'accès qu'on y
- * mettait avant, un « copier l'adresse de l'image » partagé n'ouvre pas le
- * compte.
- *
- * Réactif : les URL des pièces jointes se mettent à jour d'elles-mêmes quand
- * le jeton arrive ou se renouvelle.
+ * Jeton de lecture des pièces jointes, placé dans leurs URL (`<img src>` ne porte pas d'en-tête).
+ * Distinct du jeton d'accès : une adresse d'image partagée n'ouvre pas le compte.
  */
 
-/** Renouvellement cinq minutes avant l'expiration. */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000
 
 const api = createApiClient({ baseURL: API_URL })
@@ -51,10 +44,7 @@ export function ensureAttachmentToken(): Promise<void> {
   return inFlight
 }
 
-/**
- * Paramètre `?token=` à ajouter à l'URL d'une pièce jointe, vide tant que le
- * jeton n'est pas arrivé (sa demande est alors lancée).
- */
+/** Paramètre `?token=` d'une URL de pièce jointe ; vide (et demande lancée) tant que le jeton manque. */
 export function attachmentTokenParam(): string {
   if (legacyApi) {
     const accessToken = getAccessToken()

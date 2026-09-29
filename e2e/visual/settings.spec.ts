@@ -2,12 +2,6 @@ import { test, expect, type Page } from '@playwright/test'
 import { ME, NOW, paypalStatus, profile, twoFactorStatus } from './fixtures/settings'
 import { mockApi, setupSession } from './support'
 
-/**
- * Non-régression visuelle de la page Paramètres : références prises AVANT son
- * découpage en sous-composants. Toute différence de mise en page fait échouer
- * le test.
- */
-
 async function openSettings(page: Page, section: string) {
   await setupSession(page, { now: NOW, userId: ME })
   await mockApi(page, (path, method) => {

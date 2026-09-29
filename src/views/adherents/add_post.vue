@@ -550,8 +550,7 @@
         }
         const getGroupKpopSelect = async () => {
             try {
-                // `params` encode la saisie : « & », « # » ou « + » (ex. « (G)I-DLE »)
-                // cassaient la requête quand elle était concaténée dans l'URL.
+                // `params` encode les « & », « # » ou « + » de la saisie (ex. « (G)I-DLE »).
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/search`, {
                     params: { query: searchGroupKpop.value }
                 });

@@ -38,24 +38,15 @@ export interface SettingsProfile {
 }
 
 /**
- * Contrat entre la page et ses sections :
- * - une section signale une mise à jour partielle par l'évènement `patch`,
- *   que la page applique en place ;
- * - `reloadProfile` remplace l'objet entier.
- * Une section qui surveille `profile` (la référence, pas son contenu) ne
- * resynchronise donc ses champs qu'au rechargement complet, sans écraser une
- * saisie en cours ailleurs après une mise à jour partielle.
+ * Contrat : `patch` met à jour le profil en place, `reloadProfile` remplace l'objet ; une section
+ * qui surveille la référence `profile` ne resynchronise donc ses champs qu'au rechargement complet.
  */
 export interface SectionProps {
   profile: SettingsProfile;
   reloadProfile: () => Promise<void>;
 }
 
-/**
- * Client partagé : il renouvelle la session expirée (15 min) et rejoue la
- * requête. Les appels `axios` nus de cette page envoyaient `Bearer undefined`
- * passé ce délai, et l'action (upload, enregistrement) échouait sans rejeu.
- */
+/** Client partagé : renouvelle la session expirée et rejoue la requête. */
 export const api = createApiClient({ baseURL: API_URL });
 
 /** Forme utile d'une erreur axios, sans passer par `any`. */

@@ -105,10 +105,7 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Barre latérale droite de la messagerie : interlocuteur, encadré transaction
- * (produit, statut, actions) et médias partagés. Composant d'affichage.
- */
+/** Barre latérale droite de la messagerie : interlocuteur, encadré transaction et médias partagés. */
 import { computed } from 'vue'
 import { API_URL } from '@/config/api'
 import {
@@ -123,10 +120,7 @@ import { attachmentUrl, conversationMediaUrls } from '../attachments'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- conversation de l'API non typée côté front
 const props = defineProps<{ conversation: any }>()
 
-// Les boutons « Annuler la transaction / Marquer comme envoyé / J'ai reçu »
-// qui vivaient ici ne changeaient que l'affichage local, et ne s'affichaient
-// jamais : l'API n'envoie pas de `context` de transaction. Le suivi réel
-// (expédition, réception, remboursement) est dans la page Paiements.
+// Pas d'actions de transaction ici : le suivi (expédition, réception, remboursement) est dans la page Paiements.
 const emit = defineEmits<{
   close: []
   'open-media': [urls: string[], index: number]

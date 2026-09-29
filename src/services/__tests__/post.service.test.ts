@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-/**
- * Session perdue pendant un appel : verifSession déconnecte et renvoie vers
- * /login, mais ne remplace pas l'erreur d'origine et ne sort jamais en
- * promesse rejetée non gérée.
- */
+/** Session perdue : verifSession ne masque pas l'erreur d'origine et ne rejette jamais la promesse. */
 
 const client = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() }))
 const auth = vi.hoisted(() => ({ verifSession: vi.fn() }))

@@ -1,9 +1,4 @@
-/**
- * Données simulées de la messagerie pour les captures de référence.
- * Elles couvrent chaque branche d'affichage : favori, non lu, archivé,
- * produit et négociation, offres envoyées et reçues (en attente, acceptée),
- * pièces jointes, médias partagés.
- */
+/** Données simulées de la messagerie : elles couvrent chaque branche d'affichage. */
 export const ME = 'user-me'
 export const NOW = new Date('2026-09-28T14:00:00+02:00')
 

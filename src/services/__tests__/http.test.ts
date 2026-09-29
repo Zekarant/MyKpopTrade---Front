@@ -7,11 +7,7 @@ vi.mock('@/router', () => ({ default: { push: routerPush } }))
 
 import { createApiClient } from '../http'
 
-/**
- * Ces tests verrouillent le renouvellement de session partagé par tous les
- * services : jeton attaché, renouvellement anticipé, rejeu unique après 401,
- * un seul appel de renouvellement pour des requêtes concurrentes.
- */
+/** Renouvellement de session : rejeu unique après 401, un seul appel pour des requêtes concurrentes. */
 
 type Handler = (config: InternalAxiosRequestConfig) => { status: number; data?: unknown }
 

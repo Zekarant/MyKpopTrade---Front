@@ -2,9 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h, reactive } from 'vue'
 
-/**
- * Comportements de la page profil que les captures d'écran ne voient pas.
- */
+/** Comportements de la page profil que les captures d'écran ne voient pas. */
 
 const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn() }))
 const feed = vi.hoisted(() => ({ getUserPosts: vi.fn(), getPost: vi.fn(), createPost: vi.fn(), deletePost: vi.fn(), toggleLike: vi.fn(), replyToPost: vi.fn() }))

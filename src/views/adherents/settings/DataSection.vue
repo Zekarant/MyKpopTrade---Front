@@ -81,8 +81,6 @@ import type { SectionProps, SettingsProfile } from './shared';
 const props = defineProps<SectionProps>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();
 
-// --- Consentement marketing ---
-
 const savingConsent = ref(false);
 
 /**
@@ -110,12 +108,9 @@ async function toggleMarketingConsent(event: Event) {
   }
 }
 
-// --- Export et anonymisation ---
-
 async function exportUserData() {
   try {
     const res = await api.get('/api/users/me/data-export');
-    // Téléchargement sous forme de fichier JSON.
     const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -137,8 +132,6 @@ async function confirmAnonymize() {
     func.showToastError(apiMessage(error, 'Erreur'));
   }
 }
-
-// --- Suppression du compte ---
 
 const showDeleteConfirm = ref(false);
 const deleteConfirmText = ref('');

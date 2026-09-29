@@ -69,9 +69,8 @@ class authentificationService {
   }
 
   /**
-   * Fin de connexion Google/Discord : échange le code à usage unique reçu dans
-   * l'URL de retour contre la session. Les jetons ne transitent donc jamais
-   * par une URL (historique du navigateur, journaux du serveur).
+   * Fin de connexion Google/Discord : échange le code à usage unique contre la
+   * session, pour que les jetons ne transitent jamais par une URL.
    */
   async exchangeOAuthCode(code: string): Promise<void> {
     try {

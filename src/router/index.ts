@@ -152,9 +152,7 @@ const routes = [
     }
   },
   {
-    // Même vue, conversation pré-sélectionnée. Les anciennes routes enfants
-    // (ConversationList / ConversationDetail) ne s'affichaient jamais :
-    // MessagesView n'a pas de <router-view>.
+    // Même vue, conversation pré-sélectionnée.
     path: '/adherents/messages/:id',
     name: 'conversation',
     component: () => import('@/views/messaging/MessagesView.vue'),

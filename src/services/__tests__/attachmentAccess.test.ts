@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 
-/**
- * Les URL des pièces jointes portent un jeton de lecture dédié, jamais le
- * jeton d'accès (sauf face à une API qui ne connaît pas encore ce jeton).
- */
+/** Les URL des pièces jointes portent un jeton de lecture dédié, pas le jeton d'accès. */
 
 const http = vi.hoisted(() => ({ post: vi.fn(), getAccessToken: vi.fn(() => 'jeton-acces') }))
 

@@ -12,7 +12,6 @@ export interface ProfileInfo {
   [key: string]: unknown
 }
 
-/** Ce qu'on peut signaler depuis la page. */
 export interface ReportTarget {
   type: 'user' | 'post'
   id: string

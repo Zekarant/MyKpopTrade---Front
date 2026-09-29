@@ -2,12 +2,6 @@ import { test, expect, type Page } from '@playwright/test'
 import { ME, NOW, OTHER, followers, inventory, myProfile, otherProfile, postDetail, postsOf, reviews } from './fixtures/profile'
 import { mockApi, setupSession } from './support'
 
-/**
- * Non-régression visuelle de la page profil : références prises AVANT son
- * découpage en sous-composants. Toute différence de mise en page fait échouer
- * le test.
- */
-
 async function openProfile(page: Page, who: 'me' | typeof OTHER) {
   await setupSession(page, { now: NOW, userId: ME })
   await mockApi(page, (path) => {
@@ -35,10 +29,7 @@ async function openTab(page: Page, label: string) {
   await page.waitForLoadState('networkidle')
 }
 
-/**
- * Capture depuis le haut de la page : un clic peut la faire défiler, et un
- * élément fixe (fenêtre modale) apparaîtrait alors à une hauteur variable.
- */
+/** Capture depuis le haut : un clic peut faire défiler la page et décaler les éléments fixes. */
 async function snap(page: Page, name: string) {
   await page.evaluate(() => window.scrollTo(0, 0))
   await expect(page).toHaveScreenshot(name, { fullPage: true })

@@ -104,7 +104,6 @@ async function loadReviews() {
   }
 }
 
-// Rechargés à chaque ouverture de l'onglet et à chaque changement de profil.
 onActivated(loadReviews)
 watch(() => props.profileUserId, loadReviews)
 
@@ -135,12 +134,7 @@ const filteredReviews = computed(() => {
   })
 })
 
-// --- Réponse du vendeur ---
-//
-// Le popup mémorisait la POSITION de l'avis dans la liste filtrée et triée,
-// puis mettait à jour l'avis à cette position dans la liste brute : une fois
-// triée autrement, la réponse s'affichait sous un autre avis. On garde
-// maintenant l'avis lui-même.
+// Le popup garde l'avis lui-même, pas sa position dans la liste filtrée et triée.
 
 const responding = ref<Rating | null>(null)
 const responseText = ref('')

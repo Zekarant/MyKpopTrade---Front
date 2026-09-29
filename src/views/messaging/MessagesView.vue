@@ -334,8 +334,6 @@ const userInfo = ref(null)
 const loading = ref(false)
 const sending = ref(false)
 const declineOffer_popup = ref(false);
-// Message facultatif du refus d'offre : utilisé par le template mais jamais
-// déclaré, la saisie était perdue.
 const declineMessage = ref('');
 const counterOfferAmount = ref(null);
 const counterOfferMessage = ref('');
@@ -351,11 +349,8 @@ const loadingMoreMessages = ref(false);
 
 const { proxy } = getCurrentInstance()
 
-// Utilisateur courant : un seul endroit. Le code lisait auparavant trois sources
-// différentes, dont la clé inexistante « iduser ».
 const currentUserId = () => Cookies.get('id_user') || userInfo.value?.id || userInfo.value?._id || null
 
-// Computed — logique pure et testée dans conversationHelpers.ts
 const filteredConversations = computed(() =>
   filterConversations(messagingStore.sortedConversations || [], {
     tab: activeTab.value,
@@ -448,9 +443,8 @@ const loadMoreMessages = async () => {
     );
 
     if (response.messages && response.messages.length > 0) {
-      // Mesures AVANT l'insertion : prises après, la hauteur « précédente »
-      // incluait déjà les nouveaux messages, la lecture revenait tout en haut
-      // et relançait aussitôt un chargement, en cascade sur tout l'historique.
+      // Mesures AVANT l'insertion, sinon la hauteur « précédente » inclut déjà les
+      // nouveaux messages et la lecture remonte en haut (chargements en cascade).
       const container = document.querySelector('.messages-area');
       const previousScrollHeight = container?.scrollHeight ?? 0;
       const previousScrollTop = container?.scrollTop ?? 0;
@@ -917,8 +911,7 @@ onMounted(async () => {
     await messagingStore.fetchConversations()
 
     if (messagingStore.conversations.length > 0) {
-      // /adherents/messages/:id (ex. après une négociation) ouvre cette
-      // conversation ; sinon, la plus récente comme avant.
+      // /adherents/messages/:id ouvre cette conversation ; sinon, la plus récente.
       const requestedId = route.params.id
       const requested = requestedId
         ? messagingStore.conversations.find((c) => (c._id || c.id) === requestedId)
@@ -947,8 +940,6 @@ showConversationMenu.value = null
   showEmojiPicker.value = false
 }
 document.addEventListener('click', closeDropdowns)
-// Sans ce retrait, chaque visite de la messagerie ajoutait un écouteur global
-// qui gardait en mémoire l'ancienne instance du composant.
 onBeforeUnmount(() => document.removeEventListener('click', closeDropdowns))
 </script>
 

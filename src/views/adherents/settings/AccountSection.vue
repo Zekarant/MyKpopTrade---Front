@@ -157,8 +157,6 @@ interface IdentityVerificationStatus {
   userVerification: { isVerified: boolean };
 }
 
-// --- Email ---
-
 async function verifEmail() {
   try {
     await api.post('/api/auth/send-verification-email', {});
@@ -167,8 +165,6 @@ async function verifEmail() {
     func.showToastError(apiMessage(error, 'Erreur'));
   }
 }
-
-// --- Téléphone ---
 
 const phoneNumber = ref(props.profile.phoneNumber || '');
 const phoneCode = ref('');
@@ -184,9 +180,7 @@ async function saveTel() {
   try {
     const response = await api.put('/api/auth/profile', { phoneNumber: phoneNumber.value });
     func.showToastSuccess('Numéro enregistré');
-    // L'API normalise le numéro (« 06 12… » → « +336… ») et remet la
-    // vérification à zéro : l'écran doit refléter les deux, sinon le badge
-    // « Vérifié » restait affiché pour le nouveau numéro.
+    // L'API normalise le numéro (« 06 12… » → « +336… ») et remet la vérification à zéro.
     const savedPhone: string = response.data?.user?.phoneNumber ?? phoneNumber.value;
     emit('patch', { phoneNumber: savedPhone, isPhoneVerified: false });
     phoneNumber.value = savedPhone;
@@ -219,8 +213,6 @@ async function verifCodeTel() {
   }
 }
 
-// --- Identité ---
-
 const showIdentityForm = ref(false);
 const identityVerification = ref<IdentityVerificationStatus | null>(null);
 const identityDocumentType = ref('id_card');
@@ -230,16 +222,7 @@ const identityConsentGiven = ref(false);
 const identitySubmitting = ref(false);
 const identityFileInput = ref<HTMLInputElement | null>(null);
 
-/**
- * Ouvre le formulaire de vérification d'identité et charge le statut courant.
- *
- * Cette fonction commençait par un POST /api/verification/identity/session
- * pour choisir entre Stripe Identity et le dépôt manuel. Cette route n'a
- * jamais existé côté API : l'appel partait en 404 et l'utilisateur ne voyait
- * qu'une erreur, sans jamais atteindre le formulaire. Stripe étant retiré,
- * le dépôt manuel est le seul parcours — c'est aussi celui qu'implémente
- * déjà correctement le bandeau de profil.
- */
+/** Ouvre le formulaire de vérification d'identité et charge le statut courant. */
 async function openIdentityVerification() {
   showIdentityForm.value = true;
 

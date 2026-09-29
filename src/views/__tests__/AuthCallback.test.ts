@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-/**
- * Retour de connexion Google/Discord : l'URL ne porte plus qu'un code à usage
- * unique, échangé contre la session.
- */
+/** Retour de connexion Google/Discord : le code à usage unique est échangé contre la session. */
 
 const route = vi.hoisted(() => ({ query: {} as Record<string, string> }))
 const router = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }))

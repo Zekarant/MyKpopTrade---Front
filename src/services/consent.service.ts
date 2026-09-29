@@ -110,10 +110,8 @@ export function resetConsent(): void {
 const ANALYTICS_COOKIE_PATTERN = /^_(ga|gid|gat)/;
 
 /**
- * Supprime les cookies de mesure d'audience déjà déposés. Retirer son
- * consentement doit être aussi efficace que le donner (RGPD art. 7.3).
- * GA les pose sur le domaine parent (`.mykpoptrade.com`) : on tente chaque
- * niveau de domaine, un cookie ne se supprime qu'avec son domaine exact.
+ * Supprime les cookies de mesure déjà déposés (RGPD art. 7.3). GA les pose sur le domaine
+ * parent : on tente chaque niveau, un cookie ne se supprime qu'avec son domaine exact.
  */
 function removeAnalyticsCookies(): void {
   const names = document.cookie

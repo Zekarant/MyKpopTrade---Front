@@ -61,8 +61,6 @@ async function loadFollowers(pageToLoad = 1) {
   }
 }
 
-// Première page rechargée à chaque ouverture de l'onglet et à chaque
-// changement de profil.
 onActivated(() => loadFollowers())
 watch(() => props.profileUserId, () => loadFollowers())
 

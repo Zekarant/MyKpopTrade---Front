@@ -23,12 +23,8 @@ function isUnauthorized(error: unknown): boolean {
 }
 
 /**
- * Le client HTTP a déjà tenté de renouveler la session et rejoué la requête :
- * un 401 qui arrive ici signifie qu'elle est perdue. verifSession déconnecte
- * et renvoie vers /login (y compris un visiteur anonyme qui a tenté une action
- * réservée). Son propre échec est attendu : il remplaçait l'erreur d'origine
- * et sortait en promesse rejetée non gérée, et la nouvelle tentative qui
- * suivait ne pouvait pas réussir.
+ * Un 401 ici signifie session perdue : le client HTTP a déjà tenté le renouvellement.
+ * L'échec attendu de verifSession est avalé pour ne pas masquer l'erreur d'origine.
  */
 async function endSessionIfUnauthorized(error: unknown): Promise<void> {
   if (isUnauthorized(error)) {
@@ -145,7 +141,6 @@ class PostService {
       }
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      // Sans réponse (réseau coupé), `res.data` levait une TypeError.
       return (error as { response?: { data?: unknown } }).response?.data;
     }
   }
@@ -193,7 +188,6 @@ class PostService {
       }
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      // Sans réponse (réseau coupé), `res.data` levait une TypeError.
       return (error as { response?: { data?: unknown } }).response?.data;
     }
   }

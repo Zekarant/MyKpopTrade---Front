@@ -157,10 +157,7 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Colonne de gauche de la messagerie : profil, onglets, recherche et liste
- * des conversations. Composant d'affichage : toute action remonte au parent.
- */
+/** Colonne de gauche de la messagerie ; composant d'affichage, toute action remonte au parent. */
 import {
   conversationTypeLabel,
   formatMessageTimestamp,

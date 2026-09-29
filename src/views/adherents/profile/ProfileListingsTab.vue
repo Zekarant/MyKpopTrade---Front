@@ -38,11 +38,7 @@ const activeProducts = computed(() =>
   products.value.filter((product) => product.status === 'available' || !product.status)
 )
 
-/**
- * Mes annonces n'attendent pas le chargement du profil ; celles d'un membre
- * demandent son identifiant. L'appel précédent retombait sur MES annonces
- * quand cet identifiant manquait.
- */
+/** Mes annonces n'attendent pas le chargement du profil ; celles d'un membre demandent son identifiant. */
 async function loadProducts() {
   const url = props.isOwnProfile
     ? '/api/products/inventory/me'

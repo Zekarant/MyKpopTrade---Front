@@ -1,10 +1,6 @@
 import type { Page, Route } from '@playwright/test'
 
-/**
- * Outillage commun des tests visuels : API entièrement simulée, horloge et
- * session fixes, images remplacées. Les captures ne dépendent ni d'un
- * back-end, ni d'une base de données, ni du réseau.
- */
+/** Outillage des tests visuels : API simulée, horloge et session fixes, images remplacées. */
 
 export const API = 'http://localhost:3999'
 
@@ -21,10 +17,8 @@ export const json = (route: Route, body: unknown, status = 200) =>
 export type ApiHandler = (path: string, method: string, url: URL) => unknown | Promise<unknown>
 
 /**
- * Horloge partant de `now` puis avançant normalement, session ouverte et
- * cookies acceptés (bandeau masqué). Une horloge FIGÉE casse la garde anti
- * double-traitement des événements de Vue : les `@click.stop` imbriqués
- * étaient ignorés et les menus se refermaient aussitôt.
+ * Horloge qui avance depuis `now` : figée, elle casse la garde anti double-traitement
+ * de Vue et les `@click.stop` imbriqués. Session ouverte, cookies acceptés.
  */
 export async function setupSession(page: Page, { now, userId }: { now: Date; userId: string }) {
   await page.clock.install({ time: now })

@@ -86,10 +86,8 @@ async function savePassword() {
   }
 }
 
-// Une redirection ne peut pas porter d'en-tête Authorization. Plutôt que le
-// jeton d'accès, l'URL porte un ticket à usage unique valable une minute,
-// obtenu par une requête authentifiée (le client renouvelle la session si
-// besoin).
+// Une redirection ne peut pas porter d'en-tête Authorization : l'URL porte un
+// ticket à usage unique valable une minute, jamais le jeton d'accès.
 async function linkProvider(provider: 'google' | 'discord') {
   if (props.profile.socialAuth?.[provider]?.id) return;
   try {

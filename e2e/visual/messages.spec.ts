@@ -2,12 +2,6 @@ import { test, expect, type Page } from '@playwright/test'
 import { ME, NOW, conversations, conversationDetailFor, currentUser } from './fixtures/messaging'
 import { mockApi, setupSession } from './support'
 
-/**
- * Non-régression visuelle de la messagerie : références prises AVANT le
- * découpage de MessagesView.vue en sous-composants. Toute différence de mise
- * en page fait échouer le test.
- */
-
 async function openMessaging(page: Page) {
   await setupSession(page, { now: NOW, userId: ME })
   await mockApi(page, (path, method, url) => {
@@ -30,10 +24,7 @@ async function openMessaging(page: Page) {
   await page.waitForLoadState('networkidle')
 }
 
-/**
- * Sur mobile, la discussion ouverte recouvre la liste (comportement voulu) :
- * on revient à la liste avec le bouton retour, comme un utilisateur.
- */
+/** Sur mobile, la discussion ouverte recouvre la liste : on revient par le bouton retour. */
 async function showConversationList(page: Page) {
   const back = page.locator('.chat-header .back-btn')
   if (await back.isVisible()) {
@@ -106,8 +97,13 @@ test.describe('messagerie — rendu de référence', () => {
     await openMessaging(page)
     await page.locator('.emoji-btn').click()
     await expect(page.locator('.emoji-picker-popup')).toBeVisible()
-    // Le clic fait défiler la page : la barre de navigation fixe apparaîtrait
-    // à une hauteur variable dans une capture pleine page.
+    // Le clic fait défiler la page, ce qui décalerait la barre de navigation fixe.
+    // On attend la fin de ce défilement (asynchrone) avant de remettre la page en haut.
+    await page.waitForFunction(() => new Promise<boolean>((resolve) => {
+      const positions = () => [...document.querySelectorAll('*')].map((el) => el.scrollTop).join()
+      const before = positions()
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve(positions() === before)))
+    }))
     await page.evaluate(() => window.scrollTo(0, 0))
     await expect(page).toHaveScreenshot('emoji-picker.png', { fullPage: true })
   })

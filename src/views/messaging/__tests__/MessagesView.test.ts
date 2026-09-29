@@ -3,11 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 import Cookies from 'js-cookie'
 
-/**
- * Test de montage de MessagesView : filet de sécurité avant de découper ce
- * composant de ~3 000 lignes. Vérifie le comportement visible (liste,
- * onglets, recherche, conversation ouverte), pas l'implémentation.
- */
+/** Test de montage de MessagesView : vérifie le comportement visible, pas l'implémentation. */
 
 const ME = 'me-id'
 
@@ -167,8 +163,7 @@ describe('MessagesView', () => {
 
     expect(store.fetchConversation).toHaveBeenCalledWith('c-alice', expect.objectContaining({ page: 2 }))
     expect(area.querySelectorAll('.message')).toHaveLength(5)
-    // Deux messages ajoutés au-dessus : la lecture descend d'autant, elle ne
-    // revient pas en haut (ce qui relançait un chargement en cascade).
+    // Deux messages ajoutés au-dessus : la lecture descend d'autant (10 + 2 × 100).
     expect(area.scrollTop).toBe(210)
     wrapper.unmount()
     store.fetchConversation.mockImplementation(defaultFetchConversation)

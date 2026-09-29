@@ -261,8 +261,6 @@ async function saveAddress() {
   }
 }
 
-// --- PayPal ---
-
 const paypalConnecting = ref(false);
 const paypalRefreshing = ref(false);
 const paypalInfoModalOpen = ref(false);

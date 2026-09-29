@@ -1,6 +1,5 @@
 /**
- * Logique pure de la messagerie, extraite de MessagesView.vue pour être testée.
- * Aucune dépendance au DOM, aux cookies ou au store : l'identifiant de
+ * Logique pure de la messagerie, sans DOM, cookies ni store : l'identifiant de
  * l'utilisateur courant est toujours passé explicitement.
  */
 
@@ -75,8 +74,6 @@ export function filterConversations(
       result = conversations.filter((conv) => isFavoriteConversation(conv, userId));
       break;
     case 'unread':
-      // L'ancienne version passait `conv.archivedBy` au lieu de la conversation :
-      // les conversations archivées restaient dans l'onglet « non lus ».
       result = conversations.filter((conv) => (conv.unreadCount ?? 0) > 0 && !isArchivedConversation(conv, userId));
       break;
     case 'archived':
@@ -115,7 +112,7 @@ export interface MessageLike {
   delivered?: boolean;
 }
 
-/** Tolère un `sender` absent (message système), qui faisait planter l'ancienne version. */
+/** Tolère un `sender` absent (message système). */
 export function isOwnMessage(message: MessageLike, userId: Id | null | undefined): boolean {
   if (message.isOwn === true) return true;
   return Boolean(userId) && refId(message.sender) === userId;
@@ -165,8 +162,6 @@ export function messageStatusIcon(message: MessageLike): string {
   if (message.delivered) return 'bi-check2-all';
   return 'bi-check2';
 }
-
-// --- Encadré « transaction » de la barre latérale ---------------------------
 
 const transactionContext = (conversation: ConversationLike | null | undefined) =>
   conversation?.productContext || conversation?.context || null;

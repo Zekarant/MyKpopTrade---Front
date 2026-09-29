@@ -135,8 +135,6 @@ async function loadPosts() {
   }
 }
 
-// Rechargées à chaque ouverture de l'onglet, comme avant le découpage, et
-// quand on passe d'un profil à un autre.
 onActivated(loadPosts)
 watch(() => props.profileUserId, loadPosts)
 
