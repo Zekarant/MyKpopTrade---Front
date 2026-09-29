@@ -95,16 +95,11 @@ test.describe('messagerie — rendu de référence', () => {
 
   test('sélecteur d\'emojis', async ({ page }) => {
     await openMessaging(page)
-    await page.locator('.emoji-btn').click()
+    // Un vrai clic fait d'abord défiler le bouton dans la vue, en course avec le
+    // défilement animé de la page : la discussion finissait décalée d'une exécution
+    // à l'autre. L'événement seul ouvre le sélecteur sans rien faire défiler.
+    await page.locator('.emoji-btn').dispatchEvent('click')
     await expect(page.locator('.emoji-picker-popup')).toBeVisible()
-    // Le clic fait défiler la page, ce qui décalerait la barre de navigation fixe.
-    // On attend la fin de ce défilement (asynchrone) avant de remettre la page en haut.
-    await page.waitForFunction(() => new Promise<boolean>((resolve) => {
-      const positions = () => [...document.querySelectorAll('*')].map((el) => el.scrollTop).join()
-      const before = positions()
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve(positions() === before)))
-    }))
-    await page.evaluate(() => window.scrollTo(0, 0))
     await expect(page).toHaveScreenshot('emoji-picker.png', { fullPage: true })
   })
 
