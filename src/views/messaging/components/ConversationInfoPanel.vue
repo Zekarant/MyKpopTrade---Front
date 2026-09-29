@@ -81,22 +81,22 @@
         </div>
       </div>
 
-      <div class="media-section" v-if="conversation?.media?.length">
+      <div class="media-section" v-if="sharedMedia.length">
         <h3 class="section-title">Médias partagés</h3>
         <div class="media-grid">
           <div
-            v-for="(media, index) in conversation.media.slice(0, 4)"
+            v-for="(media, index) in sharedMedia.slice(0, 4)"
             :key="index"
             class="media-item"
             :class="`media-${index + 1}`"
-            :data-has-more="index === 3 && conversation.media.length > 4"
-            :data-count="index === 3 && conversation.media.length > 4 ? `+${conversation.media.length - 4}` : ''"
+            :data-has-more="index === 3 && sharedMedia.length > 4"
+            :data-count="index === 3 && sharedMedia.length > 4 ? `+${sharedMedia.length - 4}` : ''"
             @click="emit('open-media', conversationMediaUrls(conversation), index)"
 
           >
             <img :src="attachmentUrl(media.messageId, media.filename)" alt="Media">
-            <div v-if="index === 3 && conversation.media.length > 4" class="media-overlay">
-              <span class="media-count">+{{ conversation.media.length - 4 }}</span>
+            <div v-if="index === 3 && sharedMedia.length > 4" class="media-overlay">
+              <span class="media-count">+{{ sharedMedia.length - 4 }}</span>
             </div>
           </div>
         </div>
@@ -127,6 +127,7 @@ const emit = defineEmits<{
 }>()
 
 const product = computed(() => props.conversation?.productContext || props.conversation?.productId)
+const sharedMedia = computed<{ messageId: string; filename: string }[]>(() => props.conversation?.media ?? [])
 </script>
 
 <style lang="scss" scoped>

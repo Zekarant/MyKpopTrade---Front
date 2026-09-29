@@ -3,4 +3,7 @@ declare module '*.vue' {
     const component: DefineComponent<{}, {}, any>;
     export default component;
   }
+
+// Feuille de style exportée sans extension `.css` : les déclarations de vite/client ne la couvrent pas.
+declare module 'vue3-emoji-picker/css'
   

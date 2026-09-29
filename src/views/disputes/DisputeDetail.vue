@@ -62,7 +62,7 @@
 import { defineComponent } from 'vue';
 import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
-import disputeService, { type Dispute, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
+import disputeService, { type Dispute, type DisputeMessage, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
 
 export default defineComponent({
   name: 'DisputeDetail',
@@ -78,7 +78,7 @@ export default defineComponent({
     };
   },
   computed: {
-    sortedMessages(): any[] {
+    sortedMessages(): DisputeMessage[] {
       if (!this.dispute) return [];
       return [...this.dispute.messages].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
