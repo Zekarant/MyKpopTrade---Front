@@ -110,7 +110,7 @@ import AddressAutocomplete from './AddressAutocomplete.vue';
 import paymentService, { type ShippingMethod, type ShippingAddressPayload, type InitPayPalPayload } from '@/services/payment.service';
 import type { AddressResult } from '@/services/address.service';
 
-interface ShippingOptionsLike {
+export interface ShippingOptionsLike {
   worldwide?: boolean;
   nationalOnly?: boolean;
   localPickup?: boolean;

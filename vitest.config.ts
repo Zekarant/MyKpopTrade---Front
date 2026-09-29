@@ -1,12 +1,11 @@
 import { fileURLToPath } from 'node:url'
 import { mergeConfig, defineConfig, configDefaults } from 'vitest/config'
-import viteConfig from './vite.config'
-import { resolve } from 'path'
+import viteConfig from './vite.config.ts'
 
 export default mergeConfig(
   viteConfig,
   defineConfig({
-    root: resolve(__dirname, 'src'),
+    root: fileURLToPath(new URL('./src', import.meta.url)),
     build: {
       outDir: '../dist'
     },
@@ -20,4 +19,3 @@ export default mergeConfig(
     }
   })
 )
-{ }

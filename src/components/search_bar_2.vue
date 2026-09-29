@@ -66,7 +66,7 @@
 import searchService from '@/services/search.service';
 import Cookies from 'js-cookie';
 
-interface HistoryEntry {
+export interface HistoryEntry {
   _id: string;
   query: string;
   lastSearched?: string;

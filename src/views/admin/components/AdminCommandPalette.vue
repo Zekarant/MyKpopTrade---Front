@@ -63,7 +63,7 @@
     post: 'Publication'
   };
 
-  interface PaletteEntry {
+  export interface PaletteEntry {
     group: string;
     id: string;
     icon: string;
