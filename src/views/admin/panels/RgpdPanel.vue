@@ -116,12 +116,13 @@
   import adminService from '@/services/admin.service';
   import { func } from '@/function';
   import { apiErrorMessage, formatDate } from '../adminFormat';
+  import type { DeletionRequest } from '../types';
 
   export default defineComponent({
     name: 'RgpdPanel',
     emits: ['changed'],
     setup(_props, { emit }) {
-      const deletionRequests = ref<any[]>([]);
+      const deletionRequests = ref<DeletionRequest[]>([]);
       const stats = ref({ privacyAccepted: 0, dataProcessing: 0, marketing: 0 });
       const exportSearch = ref('');
       const anonymizeSearch = ref('');
@@ -190,7 +191,7 @@
         }
       };
 
-      const confirmDeletion = async (request: any) => {
+      const confirmDeletion = async (request: DeletionRequest) => {
         if (!confirm(`Supprimer définitivement le compte de ${request.username} ? Cette action est irréversible.`)) {
           return;
         }
@@ -204,7 +205,7 @@
         }
       };
 
-      const cancelDeletion = async (request: any) => {
+      const cancelDeletion = async (request: DeletionRequest) => {
         try {
           await adminService.cancelDeletion(request._id);
           func.showToastSuccess('Demande annulée');

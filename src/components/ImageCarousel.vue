@@ -18,6 +18,7 @@
 
 <script lang="ts">
 import { Navigation, Pagination, A11y } from 'swiper/modules';
+import type { Swiper as SwiperClass } from 'swiper';
 
 // Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -74,8 +75,9 @@ export default {
   watch: {
     // Optionnel: si predefinedIndex change après le montage
     predefinedIndex(newIndex: number) {
-      if (this.$refs.swiperRef && (this.$refs.swiperRef as any).swiper) {
-        (this.$refs.swiperRef as any).swiper.slideTo(newIndex, 0); // 0 = pas d'animation
+      const swiperRef = this.$refs.swiperRef as { swiper?: SwiperClass } | undefined;
+      if (swiperRef && swiperRef.swiper) {
+        swiperRef.swiper.slideTo(newIndex, 0); // 0 = pas d'animation
       }
     }
   },

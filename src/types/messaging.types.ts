@@ -51,7 +51,8 @@ export interface ProductReference {
   price?: number;
   currency?: 'EUR' | 'USD' | 'KRW' | 'JPY' | 'GBP';
   condition?: 'new' | 'likeNew' | 'good' | 'fair' | 'poor';
-  images?: string[];
+  /** Toujours sélectionné par le back : une annonce a au moins une image. */
+  images: string[];
   category?: string;
   kpopGroup?: string;
   kpopMember?: string;

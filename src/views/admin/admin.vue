@@ -108,7 +108,7 @@
 </template>
 
 <script lang="ts">
-  import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import Nav_bar from '@/components/adherents/nav_bar.vue';
   import authentificationService from '@/services/authentification.service';
@@ -130,8 +130,9 @@
   import VerificationsPanel from './panels/VerificationsPanel.vue';
   import { ADMIN_SECTIONS, DEFAULT_ADMIN_TAB } from './adminSections';
   import { formatPrice } from './adminFormat';
+  import type { AdminProductStats, AdminQueue, AdminUserStats } from './types';
 
-  const PANELS: Record<string, any> = {
+  const PANELS: Record<string, Component> = {
     queue: QueuePanel,
     overview: OverviewPanel,
     reports: ReportsPanel,
@@ -155,8 +156,8 @@
       const router = useRouter();
 
       const currentTab = ref(DEFAULT_ADMIN_TAB);
-      const stats = ref({ totalUsers: 0, newUsers: 0, suspendedUsers: 0, activeUsers: 0 });
-      const productStats = ref({
+      const stats = ref<AdminUserStats>({ totalUsers: 0, newUsers: 0, suspendedUsers: 0, activeUsers: 0 });
+      const productStats = ref<AdminProductStats>({
         total: 0,
         available: 0,
         sold: 0,
@@ -165,7 +166,7 @@
         newProducts: 0,
         recentSales: 0,
         totalRevenue: 0,
-        typeDistribution: {} as Record<string, number>
+        typeDistribution: {}
       });
       const queueCounts = ref<Record<string, number>>({ total: 0 });
       const paletteOpen = ref(false);
@@ -214,7 +215,9 @@
       };
 
       const loadCounters = async () => {
-        const [queue, userStats, catalogStats] = await Promise.allSettled([
+        const [queue, userStats, catalogStats] = await Promise.allSettled<
+          [Promise<AdminQueue>, Promise<AdminUserStats>, Promise<AdminProductStats>]
+        >([
           adminService.getQueue(),
           adminService.getStats(),
           adminService.getProductStats()

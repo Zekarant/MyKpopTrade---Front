@@ -103,6 +103,9 @@
     import authentification from '@/services/authentification.service';
     import { API_URL } from '@/config/api';
     import { createApiClient } from '@/services/http';
+    import type { Post, PostsResponse } from '@/types/post.types';
+
+    type ListPagination = PostsResponse['pagination'];
 
     /** Client partagé : renouvelle la session expirée et rejoue la requête. */
     const api = createApiClient({ baseURL: API_URL });
@@ -129,10 +132,10 @@
       return { router };
     },
     data(): {
-      dataCardList: any[],
-      paginationTab: any,
-      productRecommendations: any[],
-      productFavorites: { pagination: any; products: any[]; },
+      dataCardList: Post[],
+      paginationTab: Partial<ListPagination>,
+      productRecommendations: Post[],
+      productFavorites: { pagination: Partial<ListPagination>; products: Post[]; },
       deletionDate: string | null,
     } {
       return {
@@ -163,7 +166,7 @@
           console.error('Erreur lors de la récupération des posts:', error);
         });
       },
-      loadMore({ products, pagination, type }: { products: any[]; pagination: any[], type: string }) {
+      loadMore({ products, pagination, type }: { products: Post[]; pagination: Partial<ListPagination>, type: string }) {
         sessionStorage.setItem('posts_str', JSON.stringify(products));
         sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
         const combined = this.$func.buildCombinedSlug('', 'more'+type);

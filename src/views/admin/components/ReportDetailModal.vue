@@ -196,6 +196,7 @@
     formatPrice,
     getInitial
   } from '../adminFormat';
+  import type { AdminReportDetail } from '../types';
 
   const NOISY_REPORTER_RATIO = 0.5;
   const NOISY_REPORTER_MIN_REPORTS = 3;
@@ -207,7 +208,7 @@
     },
     emits: ['close', 'resolved', 'suspend'],
     setup(props, { emit }) {
-      const detail = ref<any>(null);
+      const detail = ref<AdminReportDetail | null>(null);
       const loading = ref(true);
       const acting = ref(false);
       const adminNotes = ref('');
@@ -283,7 +284,7 @@
         if (!target || acting.value) return;
         if (!confirm(`Supprimer définitivement « ${target.label} » ?`)) return;
 
-        const motive = adminNotes.value.trim() || detail.value.reasonLabel;
+        const motive = adminNotes.value.trim() || detail.value?.reasonLabel;
 
         acting.value = true;
         try {

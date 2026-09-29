@@ -89,7 +89,7 @@
 <script lang="ts">
  import { ref } from "vue";
   import slider_price from "../components/slider_price.vue";
-  import groupService from '@/services/group.service';
+  import groupService, { type KpopGroup } from '@/services/group.service';
 
 export default {
 
@@ -107,8 +107,8 @@ export default {
     });
     const filterMobileOpen = ref(false);
     const groupSearchInput = ref('');
-    const groupSuggestions = ref<any[]>([]);
-    let groupTimer: any = null;
+    const groupSuggestions = ref<KpopGroup[]>([]);
+    let groupTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
     function onChangeMinPrice(val: number) {
       tabFilter.value.min = val;
@@ -133,7 +133,7 @@ export default {
         }
       }, 250);
     }
-    function selectGroup(group: any) {
+    function selectGroup(group: KpopGroup) {
       tabFilter.value.group = group.name;
       groupSearchInput.value = group.name;
       groupSuggestions.value = [];

@@ -27,6 +27,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import paymentService from '@/services/payment.service';
+import type { PendingPaypalPayment } from './types';
 
 export default defineComponent({
   name: 'PaymentCancel',
@@ -55,7 +56,7 @@ export default defineComponent({
       const pendingRaw = localStorage.getItem('pendingPaypalPayments');
       if (pendingRaw) {
         try {
-          const pending: any[] = JSON.parse(pendingRaw);
+          const pending: PendingPaypalPayment[] = JSON.parse(pendingRaw);
           for (const item of pending) {
             const orderId = typeof item === 'string' ? null : item.orderId;
             if (orderId) {

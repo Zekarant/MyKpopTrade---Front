@@ -72,6 +72,7 @@
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { apiErrorMessage } from '@/services/apiError';
 
 export default defineComponent({
   name: 'ForgotPassword',
@@ -103,8 +104,8 @@ export default defineComponent({
         } else {
           errorBase.value = response.data.message;
         }
-      } catch (error: any) {
-        errorBase.value = error.response?.data?.message || 'Une erreur est survenue.';
+      } catch (error) {
+        errorBase.value = apiErrorMessage(error, 'Une erreur est survenue.');
       }
     };
 

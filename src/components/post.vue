@@ -182,7 +182,7 @@
 
 
 <script lang="ts">
-    import { defineComponent, ref } from 'vue';
+    import { defineComponent, ref, type PropType } from 'vue';
     import report_card from '../components/report_card.vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
     import send_message from '../components/adherents/send_message.vue';
@@ -200,7 +200,17 @@
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
     import type { ImgUserProfile } from '@/types/user.types';
+    import type { ProductDetail, ProductSeller } from '@/types/post.types';
     import messagingService from '@/services/messaging.service';
+    import { apiErrorMessage } from '@/services/apiError';
+
+    /** Vendeur affiché : celui de l'annonce, ou le profil transmis par le parent. */
+    export type PostSeller = Partial<ProductSeller> & { id?: string };
+
+    export interface CheckoutResult {
+        success?: boolean;
+        payment?: { approvalUrl?: string; paypalOrderId?: string };
+    }
 
 
     export default defineComponent({
@@ -215,7 +225,7 @@
         },
         props: {
             dataUser: {
-                type: Object,
+                type: Object as PropType<PostSeller>,
                 required: false,
             },
             idPost:{
@@ -232,8 +242,8 @@
         emits: ['closePost', 'sold'],
         data() {
             return {
-                dataPost: {} as Record<string, any>,
-                dataSeller: {} as Record<string, any>,
+                dataPost: {} as ProductDetail,
+                dataSeller: {} as PostSeller,
                 isMenuVisible: false,
                 isRoot: false,
                 showSoldPopup: false,
@@ -259,7 +269,7 @@
                 showBuyOption.value = !showBuyOption.value;
             };
 
-            const onCheckoutConfirmed = (result: any) => {
+            const onCheckoutConfirmed = (result: CheckoutResult | null | undefined) => {
                 showBuyOption.value = false;
 
                 // L'URL d'approbation vient de PayPal via l'API : elle pointe donc
@@ -363,7 +373,7 @@
             closeDeletePopup(){
                 this.showDeletePopup = false;
             },
-            async sold(id: string,userId: string){
+            async sold(id: string,userId: string | undefined){
                 const response = await postService.sold(userId,id);
                 if (response) {
                     this.showSoldPopup = false;
@@ -443,8 +453,8 @@
                     this.addedToCart = true;
                     this.$func.showToastSuccess('Article ajouté au panier !');
                     eventBus.emit('cart:updated');
-                } catch (error: any) {
-                    const msg = error?.response?.data?.message || 'Erreur lors de l\'ajout au panier';
+                } catch (error) {
+                    const msg = apiErrorMessage(error, 'Erreur lors de l\'ajout au panier');
                     this.$func.showToastError(msg);
                 } finally {
                     this.addingToCart = false;

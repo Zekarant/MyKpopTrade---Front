@@ -55,6 +55,7 @@
     import authentification from '@/services/authentification.service';
     import postService from '@/services/post.service';
     import Nav_bar from '@/components/adherents/nav_bar.vue';
+    import type { Post } from '@/types/post.types';
 
   export default defineComponent({
     name: 'collection',
@@ -62,7 +63,7 @@
       Nav_bar,
     },
     setup() {
-      const products = ref<any[]>([]);
+      const products = ref<Post[]>([]);
       const loading = ref(true);
       const activeTab = ref('available');
       const pagination = ref({ page: 1, pages: 1, limit: 20 });

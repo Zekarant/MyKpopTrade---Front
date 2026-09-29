@@ -41,7 +41,8 @@
     import { useInfiniteScroll } from '@vueuse/core'
     import { useRoute, useRouter } from 'vue-router';
     import postService from '@/services/post.service';
-    import searchService from '@/services/search.service';
+    import searchService, { type AdvancedSearchPayload } from '@/services/search.service';
+    import type { Post } from '@/types/post.types';
 
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar_2 from '@/components/search_bar_2.vue';
@@ -78,7 +79,7 @@
       });
 
       let loading = false;
-      const posts = ref<any[]>([]);
+      const posts = ref<Post[]>([]);
 
       // Fonction pour charger plus
 
@@ -94,7 +95,7 @@
 
         try {
           const postsServiceItems = await postService.getPosts(pagination.value.limit, pagination.value.page);
-          postsServiceItems.products.forEach((post: any) => {
+          postsServiceItems.products.forEach((post: Post) => {
             posts.value.push(post);
           });
           pagination.value.pages = postsServiceItems.pagination.pages;
@@ -117,7 +118,7 @@
 
         try {
           const postsServiceItems = await postService.getFavorites(pagination.value.limit, pagination.value.page);
-          postsServiceItems.products.forEach((post: any) => {
+          postsServiceItems.products.forEach((post: Post) => {
             posts.value.push(post);
           });
           pagination.value.pages = postsServiceItems.pagination.pages;
@@ -278,7 +279,7 @@
         this.isMobile = window.innerWidth <= 769;
       },
       buildAdvancedPayload() {
-        const payload: any = {
+        const payload: AdvancedSearchPayload = {
           page: 1,
           limit: this.pagination.limit || 500,
           sortBy: 'relevance',

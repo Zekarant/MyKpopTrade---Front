@@ -55,6 +55,7 @@
 <script lang="ts">
     import { func } from '@/function';
     import reportService, { type ReportTargetType } from '@/services/report.service';
+    import { apiErrorMessage } from '@/services/apiError';
 
     const TITLES: Record<ReportTargetType, string> = {
         product: 'Signaler cet article',
@@ -104,8 +105,8 @@
                     });
                     func.showToastSuccess('Signalement envoyé avec succès');
                     this.close();
-                } catch (error: any) {
-                    func.showToastError(error?.response?.data?.message || 'Erreur lors du signalement');
+                } catch (error) {
+                    func.showToastError(apiErrorMessage(error, 'Erreur lors du signalement'));
                 }
             }
         },

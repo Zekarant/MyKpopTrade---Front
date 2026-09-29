@@ -84,8 +84,8 @@ import { attachmentUrl, messageAttachmentUrls } from '../attachments'
 import type { ViewMessage } from '../types'
 
 const props = defineProps<{
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- message de l'API non typé côté front
-  message: any
+  /** `timestamp` : ancien champ de date, lu en repli de `createdAt`. */
+  message: ViewMessage & { timestamp?: string }
   own: boolean
   offerStatus: string | null
 }>()

@@ -121,6 +121,7 @@ export default {
             default: null
         },
         id_post: {
+            type: String,
             required: false,
             default: null
         }

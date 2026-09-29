@@ -141,6 +141,7 @@
     formatAge,
     formatDate
   } from '../adminFormat';
+  import type { AdminFlaggedProduct } from '../types';
 
   const PAGE_SIZE = 20;
 
@@ -149,11 +150,11 @@
     components: { ReasonPromptModal },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const products = ref<any[]>([]);
+      const products = ref<AdminFlaggedProduct[]>([]);
       const pagination = ref({ totalPages: 1, totalItems: 0 });
       const loading = ref(false);
       const page = ref(1);
-      const productToDelete = ref<any>(null);
+      const productToDelete = ref<AdminFlaggedProduct | null>(null);
 
       const load = async () => {
         loading.value = true;
@@ -183,7 +184,7 @@
         emit('changed');
       };
 
-      const approve = async (product: any) => {
+      const approve = async (product: AdminFlaggedProduct) => {
         try {
           await adminService.reviewFlaggedProduct(product._id, true);
           func.showToastSuccess('Annonce republiée');
@@ -193,7 +194,7 @@
         }
       };
 
-      const reject = async (product: any) => {
+      const reject = async (product: AdminFlaggedProduct) => {
         try {
           await adminService.reviewFlaggedProduct(product._id, false);
           func.showToastSuccess('Signalement confirmé, annonce toujours en pause');

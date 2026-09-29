@@ -1,7 +1,7 @@
 // stores/messaging.store.ts
 import { defineStore } from 'pinia';
 import messagingService from '@/services/messaging.service';
-import type { Conversation, Message } from '@/types/messaging.types';
+import type { Conversation, Message, NegotiationRequest } from '@/types/messaging.types';
 import Cookies from 'js-cookie';
 
 interface MessagingState {
@@ -261,11 +261,8 @@ export const useMessagingStore = defineStore('messaging', {
 
     async initiateNegotiation(productId: string, initialOffer: number, message?: string) {
       try {
-        // Build payload as `any` to avoid excess property checks on the object literal
-        const payload: any = { productId };
-        if (initialOffer !== undefined && initialOffer !== null) {
-          payload.initialOffer = initialOffer;
-        }
+        // Une offre absente est rejetée par le service avant tout envoi.
+        const payload: NegotiationRequest = { productId, initialOffer };
         if (message !== undefined) {
           payload.message = message;
         }

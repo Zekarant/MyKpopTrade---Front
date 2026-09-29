@@ -115,6 +115,7 @@
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { apiErrorMessage } from '@/services/apiError';
 
 export default defineComponent({
   name: 'HomeView',
@@ -183,8 +184,8 @@ export default defineComponent({
         } else {
           registerError.value = response.data.message || 'Une erreur est survenue.';
         }
-      } catch (error: any) {
-        registerError.value = error.response?.data?.message || 'Une erreur est survenue.';
+      } catch (error) {
+        registerError.value = apiErrorMessage(error, 'Une erreur est survenue.');
       }
     };
 

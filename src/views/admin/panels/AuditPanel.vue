@@ -91,6 +91,7 @@
   import { func } from '@/function';
   import { useAdminQueryState } from '../useAdminQueryState';
   import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
+  import type { AdminAuditLog } from '../types';
 
   const TARGET_TYPE_LABELS: Record<string, string> = {
     user: 'Utilisateur',
@@ -106,7 +107,7 @@
   export default defineComponent({
     name: 'AuditPanel',
     setup() {
-      const logs = ref<any[]>([]);
+      const logs = ref<AdminAuditLog[]>([]);
       const stats = ref({ todayActions: 0, weekActions: 0 });
       const pagination = ref({ totalPages: 1 });
       const loading = ref(false);

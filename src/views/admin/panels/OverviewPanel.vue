@@ -142,16 +142,17 @@
   import { func } from '@/function';
   import AdminSparkline from '../components/AdminSparkline.vue';
   import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatPrice } from '../adminFormat';
+  import type { AdminProductStats, AdminTimeseriesPoint, AdminUserStats } from '../types';
 
   export default defineComponent({
     name: 'OverviewPanel',
     components: { AdminSparkline },
     props: {
-      stats: { type: Object as PropType<Record<string, number>>, required: true },
-      productStats: { type: Object as PropType<Record<string, any>>, required: true }
+      stats: { type: Object as PropType<AdminUserStats>, required: true },
+      productStats: { type: Object as PropType<AdminProductStats>, required: true }
     },
     setup(props) {
-      const series = ref<any[]>([]);
+      const series = ref<AdminTimeseriesPoint[]>([]);
       const days = ref(30);
       const loading = ref(true);
 

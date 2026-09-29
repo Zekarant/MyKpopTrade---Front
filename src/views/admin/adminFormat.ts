@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -110,5 +111,9 @@ export const formatPrice = (amount?: number, currency = 'EUR'): string => {
   return `${amount.toFixed(2)} ${currency === 'EUR' ? '€' : currency}`;
 };
 
-export const apiErrorMessage = (error: any, fallback: string): string =>
-  error?.response?.data?.message || error?.response?.data?.error?.message || fallback;
+type ApiErrorBody = { message?: string; error?: { message?: string } };
+
+export const apiErrorMessage = (error: unknown, fallback: string): string => {
+  const data = isAxiosError<ApiErrorBody>(error) ? error.response?.data : undefined;
+  return data?.message || data?.error?.message || fallback;
+};

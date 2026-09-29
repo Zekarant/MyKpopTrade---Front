@@ -16,11 +16,26 @@ export interface DisputeMessage {
   createdAt: string;
 }
 
+export interface DisputeParty {
+  _id: string;
+  username: string;
+  profilePicture?: string;
+  email?: string;
+}
+
+export interface DisputePaymentSummary {
+  _id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  product?: string;
+}
+
 export interface Dispute {
   _id: string;
-  payment: any;
-  buyer: any;
-  seller: any;
+  payment: string | DisputePaymentSummary | null;
+  buyer: string | DisputeParty | null;
+  seller: string | DisputeParty | null;
   openedBy: string;
   openedByRole: 'buyer' | 'seller';
   reason: DisputeReason;
@@ -32,6 +47,31 @@ export interface Dispute {
   closedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PopulatedDispute extends Dispute {
+  payment: DisputePaymentSummary | null;
+  buyer: DisputeParty | null;
+  seller: DisputeParty | null;
+}
+
+export interface DisputePagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface DisputeListResponse {
+  success: boolean;
+  disputes: PopulatedDispute[];
+  pagination: DisputePagination;
+}
+
+export interface DisputeResolutionPayload {
+  outcome: 'resolved' | 'refunded' | 'rejected';
+  notes?: string;
+  refundAmount?: number;
 }
 
 class DisputeService {
@@ -56,7 +96,7 @@ class DisputeService {
 
   async listMine(params: { page?: number; limit?: number } = {}) {
     const { data } = await this.client.get('/me', { params });
-    return data as { success: boolean; disputes: Dispute[]; pagination: any };
+    return data as DisputeListResponse;
   }
 
   async getOne(id: string) {
@@ -77,17 +117,13 @@ class DisputeService {
   // Admin
   async adminList(params: { status?: DisputeStatus; page?: number; limit?: number } = {}) {
     const { data } = await this.client.get('/', { params });
-    return data as { success: boolean; disputes: Dispute[]; pagination: any };
+    return data as DisputeListResponse;
   }
   async adminTake(id: string) {
     const { data } = await this.client.post(`/${id}/take`);
     return data as { success: boolean; dispute: Dispute };
   }
-  async adminResolve(id: string, payload: {
-    outcome: 'resolved' | 'refunded' | 'rejected';
-    notes?: string;
-    refundAmount?: number;
-  }) {
+  async adminResolve(id: string, payload: DisputeResolutionPayload) {
     const { data } = await this.client.post(`/${id}/resolve`, payload);
     return data as { success: boolean; dispute: Dispute };
   }

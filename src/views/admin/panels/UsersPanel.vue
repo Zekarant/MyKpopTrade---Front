@@ -170,6 +170,7 @@
     formatDate,
     getInitial
   } from '../adminFormat';
+  import type { AdminRole, AdminUser } from '../types';
 
   const PAGE_SIZE = 20;
   const SEARCH_DEBOUNCE_MS = 300;
@@ -179,11 +180,11 @@
     components: { SuspendUserModal, UserDetailModal, VerifiedBadge },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const users = ref<any[]>([]);
+      const users = ref<AdminUser[]>([]);
       const pagination = ref({ totalPages: 1, totalItems: 0 });
       const loading = ref(false);
       const exporting = ref(false);
-      const userToSuspend = ref<any>(null);
+      const userToSuspend = ref<AdminUser | null>(null);
       const detailUserId = ref<string | null>(null);
       const brokenAvatars = ref<Set<string>>(new Set());
 
@@ -199,7 +200,7 @@
           deleted: 'admin__badge--danger'
         })[status] || 'admin__badge';
 
-      const avatarUrl = (user: any): string | null => {
+      const avatarUrl = (user: AdminUser): string | null => {
         if (
           !user.profilePicture ||
           user.profilePicture.includes('avatar-default') ||
@@ -212,7 +213,7 @@
           : `${API_URL}${user.profilePicture}`;
       };
 
-      const onAvatarError = (user: any) => {
+      const onAvatarError = (user: AdminUser) => {
         brokenAvatars.value = new Set(brokenAvatars.value).add(user._id);
       };
 
@@ -242,7 +243,7 @@
         searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
       };
 
-      const changeRole = async (user: any, role: string) => {
+      const changeRole = async (user: AdminUser, role: string) => {
         if (role === user.role) return;
         if (!confirm(`Donner le rôle « ${ROLE_LABELS[role] || role} » à ${user.username} ?`)) {
           await load();
@@ -250,7 +251,7 @@
         }
 
         try {
-          await adminService.updateUserRole(user._id, role as any);
+          await adminService.updateUserRole(user._id, role as AdminRole);
           func.showToastSuccess('Rôle modifié');
           await load();
         } catch (error) {
@@ -259,7 +260,7 @@
         }
       };
 
-      const reactivate = async (user: any) => {
+      const reactivate = async (user: AdminUser) => {
         try {
           await adminService.updateUserStatus(user._id, 'active');
           func.showToastSuccess(`${user.username} a été réactivé`);
@@ -276,12 +277,12 @@
         emit('changed');
       };
 
-      const onSuspendFromDetail = (user: any) => {
+      const onSuspendFromDetail = (user: AdminUser) => {
         detailUserId.value = null;
         userToSuspend.value = user;
       };
 
-      const onReactivateFromDetail = async (user: any) => {
+      const onReactivateFromDetail = async (user: AdminUser) => {
         detailUserId.value = null;
         await reactivate(user);
       };

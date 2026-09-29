@@ -107,6 +107,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, type PropType } from 'vue';
 import AddressAutocomplete from './AddressAutocomplete.vue';
+import { apiErrorMessage } from '@/services/apiError';
 import paymentService, { type ShippingMethod, type ShippingAddressPayload, type InitPayPalPayload } from '@/services/payment.service';
 import type { AddressResult } from '@/services/address.service';
 
@@ -259,10 +260,11 @@ export default defineComponent({
           return;
         }
         emit('confirm', result);
-      } catch (err: any) {
-        errorMessage.value =
-          err?.response?.data?.message ||
-          'Une erreur est survenue lors de l\'initialisation du paiement.';
+      } catch (err) {
+        errorMessage.value = apiErrorMessage(
+          err,
+          'Une erreur est survenue lors de l\'initialisation du paiement.'
+        );
       } finally {
         submitting.value = false;
         submittingMethod.value = '';

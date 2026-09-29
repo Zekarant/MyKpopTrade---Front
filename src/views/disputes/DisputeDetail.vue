@@ -62,6 +62,7 @@
 import { defineComponent } from 'vue';
 import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { apiErrorMessage } from '@/services/apiError';
 import disputeService, { type Dispute, type DisputeMessage, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
 
 export default defineComponent({
@@ -103,8 +104,8 @@ export default defineComponent({
       try {
         const res = await disputeService.getOne(this.id);
         this.dispute = res.dispute;
-      } catch (e: any) {
-        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
       } finally { this.loading = false; }
     },
     async send() {
@@ -114,9 +115,9 @@ export default defineComponent({
         const res = await disputeService.addMessage(this.dispute._id, { content: this.reply });
         this.dispute = res.dispute;
         this.reply = '';
-        (this as any).$func?.showToastSuccess?.('Message envoyé');
-      } catch (e: any) {
-        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+        this.$func?.showToastSuccess?.('Message envoyé');
+      } catch (e) {
+        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
       } finally { this.sending = false; }
     },
     async cancelDispute() {
@@ -125,9 +126,9 @@ export default defineComponent({
       try {
         const res = await disputeService.cancel(this.dispute._id);
         this.dispute = res.dispute;
-        (this as any).$func?.showToastSuccess?.('Litige retiré');
-      } catch (e: any) {
-        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+        this.$func?.showToastSuccess?.('Litige retiré');
+      } catch (e) {
+        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
       }
     },
     formatDate(iso: string) {

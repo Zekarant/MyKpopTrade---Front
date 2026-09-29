@@ -75,6 +75,7 @@
   import adminService from '@/services/admin.service';
   import { func } from '@/function';
   import { apiErrorMessage, formatAge } from '../adminFormat';
+  import type { AdminQueue } from '../types';
 
   const STALE_QUEUE_DAYS = 3;
 
@@ -94,7 +95,7 @@
     name: 'QueuePanel',
     emits: ['navigate', 'changed'],
     setup() {
-      const queue = ref<any>({ items: [], counts: {}, total: 0, oldestWaitingSince: null });
+      const queue = ref<AdminQueue>({ items: [], counts: {}, total: 0, oldestWaitingSince: null });
       const loading = ref(false);
 
       const oldestBadgeClass = computed(() => {

@@ -342,7 +342,7 @@ const showSalesOptions = ref(false)
 const showBuyOption = ref(false)
 const showOfferOption = ref(false)
 const showCounterOfferOption = ref(false)
-const showConversationMenu = ref<string | null>(null)
+const showConversationMenu = ref<string | null | undefined>(null)
 const showEmojiPicker = ref(false)
 const userInfo = ref<(IUser & { id?: string }) | null>(null)
 const loading = ref(false)
@@ -530,7 +530,7 @@ const closeConversation = () => {
   document.getElementsByClassName('chat-area')[0].classList.remove('active');
 
 }
-const toggleConversationMenu = (menuConversationId: string) => {
+const toggleConversationMenu = (menuConversationId: string | undefined) => {
   showConversationMenu.value = showConversationMenu.value === menuConversationId ? null : menuConversationId
 }
 
@@ -944,7 +944,7 @@ onMounted(async () => {
     loading.value = true
 
     const userResponse = await userService.getMyInformation()
-    userInfo.value = userResponse.user || (userResponse as unknown as { profile?: IUser }).profile || null
+    userInfo.value = userResponse.user || userResponse.profile || null
 
 
     await messagingStore.fetchConversations()

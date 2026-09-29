@@ -110,6 +110,7 @@
   import ReasonPromptModal from '../components/ReasonPromptModal.vue';
   import { VERIFICATION_REJECTION_REASONS } from '../adminPresets';
   import { apiErrorMessage, formatAge, formatDate, getInitial } from '../adminFormat';
+  import type { AdminVerification } from '../types';
 
   const DOCUMENT_TYPE_LABELS: Record<string, string> = {
     id_card: 'Carte d\'identité',
@@ -122,9 +123,9 @@
     components: { ReasonPromptModal },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const verifications = ref<any[]>([]);
+      const verifications = ref<AdminVerification[]>([]);
       const loading = ref(false);
-      const verificationToReject = ref<any>(null);
+      const verificationToReject = ref<AdminVerification | null>(null);
       // URL objet en mémoire uniquement : la pièce d'identité n'est jamais mise
       // en cache ni écrite sur le disque du navigateur.
       const documentUrl = ref<string | null>(null);
@@ -136,7 +137,7 @@
         documentUrl.value = null;
       };
 
-      const viewDocument = async (verification: { _id: string; user?: { username?: string } }) => {
+      const viewDocument = async (verification: AdminVerification) => {
         documentLoadingId.value = verification._id;
         try {
           const blob = await adminService.getVerificationDocument(verification._id);
@@ -170,7 +171,7 @@
         emit('changed');
       };
 
-      const approve = async (verification: any) => {
+      const approve = async (verification: AdminVerification) => {
         try {
           await adminService.approveVerification(verification._id);
           func.showToastSuccess('Vérification approuvée');

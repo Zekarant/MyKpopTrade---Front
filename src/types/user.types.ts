@@ -82,7 +82,8 @@ export interface IUserParticipant {
 
 // Type pour les réponses API
 export interface UserResponse {
-  profile: never[];
+  /** GET /api/profiles/me renvoie le profil sous cette clé, sans `user`. */
+  profile?: IUser;
   success: boolean;
   message?: string;
   user: IUser;
@@ -100,6 +101,6 @@ export interface UsersListResponse {
   };
 }
 export interface ImgUserProfile {
-  username: string;
+  username?: string;
   profilePicture?: string;
 }

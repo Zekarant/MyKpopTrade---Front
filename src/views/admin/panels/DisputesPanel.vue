@@ -154,7 +154,11 @@
 
 <script lang="ts">
   import { defineComponent, onMounted, ref } from 'vue';
-  import disputeService from '@/services/dispute.service';
+  import disputeService, {
+    type DisputeResolutionPayload,
+    type DisputeStatus,
+    type PopulatedDispute
+  } from '@/services/dispute.service';
   import { func } from '@/function';
   import { useAdminQueryState } from '../useAdminQueryState';
   import {
@@ -172,11 +176,11 @@
     name: 'DisputesPanel',
     emits: ['changed'],
     setup(_props, { emit }) {
-      const disputes = ref<any[]>([]);
+      const disputes = ref<PopulatedDispute[]>([]);
       const pagination = ref({ totalPages: 1 });
       const loading = ref(false);
       const submitting = ref(false);
-      const activeDispute = ref<any>(null);
+      const activeDispute = ref<PopulatedDispute | null>(null);
       const resolution = ref<{
         outcome: 'resolved' | 'refunded' | 'rejected';
         notes: string;
@@ -185,7 +189,7 @@
 
       const { state, commit } = useAdminQueryState({ status: 'opened', page: 1 }, () => load());
 
-      const isPending = (dispute: any) => PENDING_STATUSES.includes(dispute.status);
+      const isPending = (dispute: PopulatedDispute) => PENDING_STATUSES.includes(dispute.status);
 
       const statusBadgeClass = (status: string) =>
         ({
@@ -199,12 +203,13 @@
         loading.value = true;
         try {
           const data = await disputeService.adminList({
-            status: (state.status || undefined) as any,
+            status: (state.status || undefined) as DisputeStatus | undefined,
             page: state.page,
             limit: PAGE_SIZE
           });
           disputes.value = data.disputes || [];
-          pagination.value = data.pagination || { totalPages: 1 };
+          // L'API renvoie `pages` et non `totalPages` : la pagination reste masquée, comme avant le typage.
+          pagination.value = { totalPages: 1, ...data.pagination };
         } catch (error) {
           func.showToastError(apiErrorMessage(error, 'Impossible de charger les litiges'));
           disputes.value = [];
@@ -213,7 +218,7 @@
         }
       };
 
-      const take = async (dispute: any) => {
+      const take = async (dispute: PopulatedDispute) => {
         try {
           await disputeService.adminTake(dispute._id);
           func.showToastSuccess('Litige pris en arbitrage');
@@ -224,7 +229,7 @@
         }
       };
 
-      const openResolution = (dispute: any) => {
+      const openResolution = (dispute: PopulatedDispute) => {
         activeDispute.value = dispute;
         resolution.value = { outcome: 'resolved', notes: '', refundAmount: undefined };
       };
@@ -232,7 +237,7 @@
       const submitResolution = async () => {
         if (!activeDispute.value || submitting.value) return;
 
-        const payload: Record<string, unknown> = {
+        const payload: DisputeResolutionPayload = {
           outcome: resolution.value.outcome,
           notes: resolution.value.notes.trim() || undefined
         };
@@ -242,7 +247,7 @@
 
         submitting.value = true;
         try {
-          await disputeService.adminResolve(activeDispute.value._id, payload as any);
+          await disputeService.adminResolve(activeDispute.value._id, payload);
           func.showToastSuccess('Litige clôturé');
           activeDispute.value = null;
           await load();

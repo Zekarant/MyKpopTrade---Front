@@ -63,7 +63,7 @@
 </template>
 
 <script lang="ts">
-import searchService from '@/services/search.service';
+import searchService, { type SearchSuggestions } from '@/services/search.service';
 import Cookies from 'js-cookie';
 
 export interface HistoryEntry {
@@ -72,6 +72,9 @@ export interface HistoryEntry {
   lastSearched?: string;
   searchCount?: number;
 }
+
+/** Suggestion affichée : élément aplati, ou chaîne si l'API renvoie déjà une liste. */
+type SuggestionItem = string | { kind?: string; label?: string | { name?: string }; name?: string };
 
 export default {
   name: 'search_bar_2',
@@ -85,7 +88,7 @@ export default {
   data() {
     return {
       searchQuery: '',
-      suggestions: [] as any[],
+      suggestions: [] as SuggestionItem[],
       history: [] as HistoryEntry[],
       dropdownOpen: false,
       cursor: -1,
@@ -139,16 +142,16 @@ export default {
         this.suggestions = [];
       }
     },
-    flattenSuggestions(s: any): any[] {
+    flattenSuggestions(s: SearchSuggestions | SuggestionItem[]): SuggestionItem[] {
       if (Array.isArray(s)) return s;
-      const items: any[] = [];
+      const items: SuggestionItem[] = [];
       if (Array.isArray(s.groups)) for (const g of s.groups) items.push({ kind: 'group', label: g.name || g });
       if (Array.isArray(s.albums)) for (const a of s.albums) items.push({ kind: 'album', label: a.name || a });
       if (Array.isArray(s.members)) for (const m of s.members) items.push({ kind: 'member', label: m.name || m });
       return items;
     },
-    getSuggestionLabel(s: any): string {
-      return typeof s === 'string' ? s : (s.label || s.name || '');
+    getSuggestionLabel(s: SuggestionItem): string {
+      return typeof s === 'string' ? s : (s.label || s.name || '') as string;
     },
     async fetchHistory() {
       if (!this.isAuthenticated()) {
@@ -162,7 +165,7 @@ export default {
         this.history = [];
       }
     },
-    pickSuggestion(s: any) {
+    pickSuggestion(s: SuggestionItem) {
       this.searchQuery = this.getSuggestionLabel(s);
       this.search();
     },

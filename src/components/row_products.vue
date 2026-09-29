@@ -46,10 +46,12 @@
 
 
 <script lang="ts">
-    import { defineComponent, ref, nextTick } from 'vue';
+    import { defineComponent, ref, nextTick, type PropType } from 'vue';
     import post from '../components/post.vue';
     import card from '../components/card.vue';
     import { Navigation, A11y } from 'swiper/modules';
+    import type { Swiper as SwiperClass } from 'swiper';
+    import type { Post } from '@/types/post.types';
 
     // Import Swiper Vue.js components
     import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -69,7 +71,7 @@
 
         props: {
             dataList: {
-                type: Array as () => Array<Record<string, any>>,
+                type: Array as PropType<Post[]>,
                 required: true, // au lieu de true
                 default: () => []
             },
@@ -96,9 +98,9 @@
           };
         },
         setup() {
-            const dataCardPost = ref<any>(null);
+            const dataCardPost = ref<Post | null>(null);
             const stateCardPost = ref(false);
-            const onSwiper = (swiper: any) => {
+            const onSwiper = (swiper: SwiperClass) => {
             };
             const onSlideChange = () => {
             };

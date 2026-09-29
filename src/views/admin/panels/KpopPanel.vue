@@ -118,7 +118,7 @@
                   {{ album.name }}
                 </div>
               </td>
-              <td class="admin__muted">{{ (album as any).artistName || '—' }}</td>
+              <td class="admin__muted">{{ album.artistName || '—' }}</td>
               <td>
                 <span class="admin__badge admin__badge--accent">
                   {{ ALBUM_TYPE_LABELS[albumType(album)] || albumType(album) || '—' }}
@@ -262,6 +262,7 @@
   import groupService, { type KpopGroup } from '@/services/group.service';
   import { func } from '@/function';
   import { apiErrorMessage, formatDate, getInitial } from '../adminFormat';
+  import type { AdminAlbum, CatalogEntity, UsernameRef } from '../types';
 
   const CATALOG_LIMIT = 2000;
   const SEARCH_DEBOUNCE_MS = 300;
@@ -280,7 +281,7 @@
     setup() {
       const subTab = ref<'groups' | 'albums'>('groups');
       const groups = ref<KpopGroup[]>([]);
-      const albums = ref<KpopAlbum[]>([]);
+      const albums = ref<AdminAlbum[]>([]);
       const groupSearch = ref('');
       const albumSearch = ref('');
       const loading = ref(false);
@@ -288,14 +289,14 @@
 
       const showGroupForm = ref(false);
       const showAlbumForm = ref(false);
-      const editing = ref<any>(null);
+      const editing = ref<CatalogEntity | null>(null);
       const groupForm = ref({ name: '', image: '', membersRaw: '' });
       const albumForm = ref({ name: '', group: '', type: '', releaseDate: '', coverImage: '' });
 
       const followersGroup = ref<KpopGroup | null>(null);
-      const followers = ref<any[]>([]);
+      const followers = ref<UsernameRef[]>([]);
 
-      const albumType = (album: KpopAlbum): string => (album as any).albumType || album.type || '';
+      const albumType = (album: AdminAlbum): string => album.albumType || album.type || '';
 
       const load = async () => {
         loading.value = true;
@@ -335,7 +336,7 @@
           : await albumService.getAlbums({ limit: CATALOG_LIMIT });
       });
 
-      const openForm = (entity?: any) => {
+      const openForm = (entity?: CatalogEntity) => {
         editing.value = entity ?? null;
 
         if (subTab.value === 'groups') {
@@ -353,7 +354,7 @@
         albumForm.value = entity
           ? {
               name: entity.name,
-              group: entity.group?._id || entity.group || '',
+              group: (typeof entity.group === 'object' ? entity.group?._id : entity.group) || '',
               type: albumType(entity),
               releaseDate: entity.releaseDate ? String(entity.releaseDate).substring(0, 10) : '',
               coverImage: entity.coverImage || ''
@@ -365,7 +366,7 @@
       const submitGroup = async () => {
         if (submitting.value) return;
 
-        const payload: any = { name: groupForm.value.name.trim() };
+        const payload: Partial<KpopGroup> & { name: string } = { name: groupForm.value.name.trim() };
         if (groupForm.value.image) payload.image = groupForm.value.image;
         if (groupForm.value.membersRaw.trim()) {
           payload.members = groupForm.value.membersRaw
@@ -395,7 +396,7 @@
       const submitAlbum = async () => {
         if (submitting.value) return;
 
-        const payload: any = { name: albumForm.value.name.trim() };
+        const payload: Partial<KpopAlbum> & { name: string } = { name: albumForm.value.name.trim() };
         if (albumForm.value.group) payload.group = albumForm.value.group;
         if (albumForm.value.type) payload.type = albumForm.value.type;
         if (albumForm.value.releaseDate) payload.releaseDate = albumForm.value.releaseDate;
@@ -407,7 +408,8 @@
             await albumService.updateAlbum(editing.value._id, payload);
             func.showToastSuccess('Album modifié');
           } else {
-            await albumService.createAlbum(payload);
+            // createAlbum exige `group` alors que le formulaire le laisse facultatif : payload envoyé tel quel.
+            await albumService.createAlbum(payload as Partial<KpopAlbum> & { name: string; group: string });
             func.showToastSuccess('Album créé');
           }
           showAlbumForm.value = false;
@@ -447,7 +449,7 @@
         followersGroup.value = group;
         try {
           const data = await groupService.getFollowers(group._id, 1, FOLLOWERS_PAGE_SIZE);
-          followers.value = (data as any).followers || data || [];
+          followers.value = data.followers || data || [];
         } catch {
           followers.value = [];
         }

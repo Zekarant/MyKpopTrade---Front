@@ -49,7 +49,10 @@ export function isArchivedConversation(conversation: ConversationLike, userId: I
  * Interlocuteur : `otherParticipant` s'il est fourni par l'API, sinon le premier
  * participant qui n'est pas l'utilisateur courant, sinon le premier participant.
  */
-export function getOtherParticipant(conversation: ConversationLike, userId: Id | null | undefined) {
+export function getOtherParticipant<P extends Ref>(
+  conversation: { otherParticipant?: P | null; participants?: P[] },
+  userId: Id | null | undefined
+): P | null {
   if (conversation.otherParticipant) return conversation.otherParticipant;
 
   const participants = conversation.participants ?? [];

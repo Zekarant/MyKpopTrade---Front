@@ -110,9 +110,13 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { isAxiosError } from 'axios';
 import paymentService from '@/services/payment.service';
 import cartService from '@/services/cart.service';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
+import type { PendingPaypalPayment } from './types';
+
+type CaptureErrorBody = { message?: string; error?: string; approvalUrl?: string };
 
 export default defineComponent({
   name: 'PaymentSuccess',
@@ -135,15 +139,16 @@ export default defineComponent({
         capturing.value = true;
         try {
           await paymentService.capturePayPal({ paypalOrderId: token.value });
-        } catch (e: any) {
-          const msg = e.response?.data?.message || '';
-          const errorDetail = e.response?.data?.error || '';
+        } catch (e) {
+          const data = isAxiosError<CaptureErrorBody>(e) ? e.response?.data : undefined;
+          const msg = data?.message || '';
+          const errorDetail = data?.error || '';
           // Ignorer si déjà capturé
           if (msg.includes('déjà traité')) {
             // OK, déjà traité
           } else if (errorDetail.includes('non approuvé') || errorDetail.includes('CREATED')) {
             // L'ordre n'est pas encore approuvé — re-rediriger vers PayPal
-            const approvalUrl = e.response?.data?.approvalUrl;
+            const approvalUrl = data?.approvalUrl;
             if (approvalUrl) {
               window.location.href = approvalUrl;
               return;
@@ -164,7 +169,7 @@ export default defineComponent({
           const pendingRaw = localStorage.getItem('pendingPaypalPayments');
           if (pendingRaw) {
             try {
-              const pending: any[] = JSON.parse(pendingRaw);
+              const pending: PendingPaypalPayment[] = JSON.parse(pendingRaw);
               if (pending.length > 0) {
                 const next = pending.shift()!;
                 const nextUrl = typeof next === 'string' ? next : next.approvalUrl;

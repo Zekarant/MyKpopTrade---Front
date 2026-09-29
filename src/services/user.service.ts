@@ -10,6 +10,7 @@ import type {
 } from "@/types/user.types";
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
+import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -51,24 +52,25 @@ class userService {
 
   async getMyInformation(): Promise<UserResponse> {
     try {
-      const response: AxiosResponse<UserResponse> = await this.userApiClient.get(
+      const response: AxiosResponse<UserResponse & ApiErrorBody> = await this.userApiClient.get(
         `/me`
       );
 
       if (
         response.data.message === "Token invalide" ||
-        (response as any).data.code === "TOKEN_EXPIRED" ||
+        response.data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
         await authentificationService.verifSession().catch(() => {});
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const errorResponse = apiErrorResponse(error);
       if (
-        error?.response?.data?.message === "Token invalide" ||
-        error?.response?.data?.code === "TOKEN_EXPIRED" ||
-        error?.response?.status === 401
+        errorResponse?.data?.message === "Token invalide" ||
+        errorResponse?.data?.code === "TOKEN_EXPIRED" ||
+        errorResponse?.status === 401
       ) {
         await authentificationService.verifSession().catch(() => {});
       }

@@ -182,6 +182,7 @@
     formatDate,
     formatDateTime
   } from '../adminFormat';
+  import type { AdminNote, AdminUserDetail } from '../types';
 
   const NOTE_MAX_LENGTH = 2000;
 
@@ -192,8 +193,8 @@
     },
     emits: ['close', 'suspend', 'reactivate', 'changed'],
     setup(props, { emit }) {
-      const detail = ref<any>(null);
-      const notes = ref<any[]>([]);
+      const detail = ref<AdminUserDetail | null>(null);
+      const notes = ref<AdminNote[]>([]);
       const newNote = ref('');
       const loading = ref(true);
       const savingNote = ref(false);
@@ -243,7 +244,7 @@
         }
       };
 
-      const removeNote = async (note: any) => {
+      const removeNote = async (note: AdminNote) => {
         if (!confirm('Supprimer cette note ?')) return;
 
         try {

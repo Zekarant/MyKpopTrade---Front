@@ -232,6 +232,7 @@
 import { defineComponent } from 'vue';
 import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { apiErrorMessage } from '@/services/apiError';
 import paymentService from '@/services/payment.service';
 import disputeService, { type DisputeReason } from '@/services/dispute.service';
 import { API_URL } from '@/config/api';
@@ -242,7 +243,7 @@ interface Payment {
   currency: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded' | 'partially_refunded' | 'cancelled';
   createdAt: string;
-  product: any;
+  product: { _id: string; title?: string; images?: string[]; price?: number; currency?: string } | null;
   buyer: string | { _id: string };
   seller: string | { _id: string };
   productAmount?: number;
@@ -303,7 +304,7 @@ export default defineComponent({
         open: false,
         paymentId: '',
         reason: '',
-        amount: undefined as number | undefined,
+        amount: undefined as number | '' | undefined,
         password: '',
         currency: 'EUR',
         maxAmount: 0,
@@ -333,7 +334,7 @@ export default defineComponent({
   computed: {
     refundAmountError(): string {
       const a = this.refundModal.amount;
-      if (a === undefined || a === null || a === ('' as any)) return '';
+      if (a === undefined || a === null || a === '') return '';
       if (typeof a !== 'number' || !isFinite(a) || a <= 0) return 'Montant invalide';
       if (a > this.refundModal.maxAmount + 0.001) {
         return `Le montant dépasse le restant remboursable (${this.refundModal.maxAmount})`;
@@ -355,8 +356,8 @@ export default defineComponent({
         const res = await paymentService.getMyPayments({ role: this.role, page: this.page, limit: this.limit });
         this.payments = res.data || [];
         this.pagination = res.pagination || null;
-      } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur de chargement');
+      } catch (e) {
+        this.$func.showToastError(apiErrorMessage(e, 'Erreur de chargement'));
       } finally {
         this.loading = false;
       }
@@ -499,26 +500,27 @@ export default defineComponent({
     },
     async submitShipment() {
       try {
-        await paymentService.createShipment(this.shipmentModal.paymentId, {
+        const payload: { carrier: string; trackingNumber: string; trackingUrl?: string } = {
           carrier: this.shipmentModal.carrier,
           trackingNumber: this.shipmentModal.trackingNumber,
-          ...(this.shipmentModal.trackingUrl ? { trackingUrl: this.shipmentModal.trackingUrl } as any : {}),
-        });
-        (this as any).$func.showToastSuccess('Expédition enregistrée');
+          ...(this.shipmentModal.trackingUrl ? { trackingUrl: this.shipmentModal.trackingUrl } : {}),
+        };
+        await paymentService.createShipment(this.shipmentModal.paymentId, payload);
+        this.$func.showToastSuccess('Expédition enregistrée');
         this.closeShipmentModal();
         await this.fetchPayments();
-      } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func.showToastError(apiErrorMessage(e, 'Erreur'));
       }
     },
     async markDelivered(p: Payment) {
       if (!confirm('Confirmer la livraison de ce colis ?')) return;
       try {
         await paymentService.markShipmentDelivered(p._id);
-        (this as any).$func.showToastSuccess('Marqué comme livré');
+        this.$func.showToastSuccess('Marqué comme livré');
         await this.fetchPayments();
-      } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func.showToastError(apiErrorMessage(e, 'Erreur'));
       }
     },
     openRefundModal(p: Payment) {
@@ -530,7 +532,7 @@ export default defineComponent({
         password: '',
         currency: p.currency,
         maxAmount: this.refundableAmount(p),
-      } as any;
+      };
     },
     closeRefundModal() {
       this.refundModal.open = false;
@@ -548,11 +550,11 @@ export default defineComponent({
           reason: this.disputeModal.reason,
           description: this.disputeModal.description
         });
-        (this as any).$func?.showToastSuccess?.('Litige ouvert');
+        this.$func?.showToastSuccess?.('Litige ouvert');
         this.closeDisputeModal();
         this.$router.push(`/disputes/${res.dispute._id}`);
-      } catch (e: any) {
-        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
       }
     },
     async submitRefund() {
@@ -563,11 +565,11 @@ export default defineComponent({
         };
         if (this.refundModal.amount && this.refundModal.amount > 0) payload.amount = this.refundModal.amount;
         await paymentService.refundPayment(this.refundModal.paymentId, payload);
-        (this as any).$func.showToastSuccess('Demande de remboursement envoyée');
+        this.$func.showToastSuccess('Demande de remboursement envoyée');
         this.closeRefundModal();
         await this.fetchPayments();
-      } catch (e: any) {
-        (this as any).$func.showToastError(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func.showToastError(apiErrorMessage(e, 'Erreur'));
       }
     },
   },

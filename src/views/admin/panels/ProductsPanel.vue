@@ -128,6 +128,7 @@
   import { PRODUCT_DELETION_REASONS } from '../adminPresets';
   import { useAdminQueryState } from '../useAdminQueryState';
   import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatDate, formatPrice } from '../adminFormat';
+  import type { AdminProduct } from '../types';
 
   const PAGE_SIZE = 20;
   const SEARCH_DEBOUNCE_MS = 300;
@@ -137,11 +138,11 @@
     components: { ReasonPromptModal },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const products = ref<any[]>([]);
+      const products = ref<AdminProduct[]>([]);
       const pagination = ref({ totalPages: 1, totalItems: 0 });
       const loading = ref(false);
       const exporting = ref(false);
-      const productToDelete = ref<any>(null);
+      const productToDelete = ref<AdminProduct | null>(null);
       const brokenThumbs = ref<Set<string>>(new Set());
 
       const { state, commit } = useAdminQueryState(
@@ -149,17 +150,17 @@
         () => load()
       );
 
-      const thumbUrl = (product: any): string | null => {
+      const thumbUrl = (product: AdminProduct): string | null => {
         const image = product.images?.[0];
         if (!image || brokenThumbs.value.has(product._id)) return null;
         return image.startsWith('http') ? image : `${API_URL}${image}`;
       };
 
-      const onThumbError = (product: any) => {
+      const onThumbError = (product: AdminProduct) => {
         brokenThumbs.value = new Set(brokenThumbs.value).add(product._id);
       };
 
-      const statusBadge = (product: any) => {
+      const statusBadge = (product: AdminProduct) => {
         if (product.isSold) return { label: 'Vendu', class: 'admin__badge--success' };
         if (product.isReserved) return { label: 'Réservé', class: 'admin__badge--info' };
         if (product.isAvailable) return { label: 'Disponible', class: 'admin__badge--accent' };

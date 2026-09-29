@@ -47,6 +47,7 @@
   import { computed, defineComponent, onMounted, ref, watch } from 'vue';
   import adminService from '@/services/admin.service';
   import { ADMIN_NAV } from '../adminSections';
+  import type { AdminSearchResult } from '../types';
 
   const SEARCH_DEBOUNCE_MS = 250;
   const MIN_QUERY_LENGTH = 2;
@@ -135,8 +136,8 @@
         searching.value = true;
         debounceTimer = setTimeout(async () => {
           try {
-            const data = await adminService.globalSearch(value.trim());
-            results.value = (data.results || []).map((result: any) => ({
+            const data: { results?: AdminSearchResult[] } = await adminService.globalSearch(value.trim());
+            results.value = (data.results || []).map((result) => ({
               group: KIND_GROUPS[result.kind] || result.kind,
               id: result.id,
               icon: KIND_ICONS[result.kind] || 'bi bi-dot',

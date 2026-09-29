@@ -109,8 +109,8 @@ const routes = [
   path: '/search-:combined?',
   name: 'searchList',
   component: () => import('../views/adherents/searchList.vue'),
-  props: (route: { params: { combined: any; }; }) => {
-    const combined = route.params.combined || '';
+  props: (route: RouteLocationGeneric) => {
+    const combined = (route.params.combined as string | undefined) || '';
     const parts = combined.split('-');
 
 

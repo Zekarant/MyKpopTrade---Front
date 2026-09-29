@@ -17,10 +17,11 @@
 
 
 <script lang="ts">
-    import { defineComponent, ref, nextTick } from 'vue';
+    import { defineComponent, ref, nextTick, type PropType } from 'vue';
     import { useRouter } from "vue-router";
     import post from '@/components/post.vue';
     import card from '@/components/card.vue';
+    import type { Post } from '@/types/post.types';
 
 
 
@@ -32,10 +33,7 @@
         },
         props: {
             dataList: {
-                type: Array as () => Array<{
-                    condition: any;
-                    isAvailable: any; id: number; title: string; state: string; price: number; isReserved: boolean; images: string[]
-}>,
+                type: Array as PropType<Post[]>,
                 required: true,
             },
             dataUser: {
@@ -69,7 +67,7 @@
         },
         setup() {
             const router = useRouter();
-            const dataCardPost = ref<any>(null);
+            const dataCardPost = ref<Post | null>(null);
             const stateCardPost = ref(false);
             return {
                 dataCardPost,

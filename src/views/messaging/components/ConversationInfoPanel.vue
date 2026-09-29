@@ -116,9 +116,29 @@ import {
 } from '../conversationHelpers'
 import { avatarHtml } from '../avatar'
 import { attachmentUrl, conversationMediaUrls } from '../attachments'
+import type { ProductReference } from '@/types/messaging.types'
+import type { TransactionContext } from '../conversationHelpers'
+import type { ViewConversation, ViewParticipant } from '../types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- conversation de l'API non typée côté front
-const props = defineProps<{ conversation: any }>()
+/** Champs d'interlocuteur lus par le panneau, absents des réponses actuelles de l'API. */
+type InfoParticipant = ViewParticipant & {
+  isVerified?: boolean
+  createdAt?: string
+  transactionCount?: number
+  rating?: number
+}
+
+type InfoProduct = ProductReference & { type?: string; categoryLabel?: string }
+
+type InfoConversation = Omit<ViewConversation, 'otherParticipant' | 'participants' | 'productId'> & {
+  otherParticipant?: InfoParticipant
+  participants: ViewParticipant[] & { isPro?: boolean }
+  productId?: InfoProduct | null
+  productContext?: InfoProduct & TransactionContext
+  context?: TransactionContext
+}
+
+const props = defineProps<{ conversation: InfoConversation }>()
 
 // Pas d'actions de transaction ici : le suivi (expédition, réception, remboursement) est dans la page Paiements.
 const emit = defineEmits<{

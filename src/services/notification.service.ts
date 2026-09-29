@@ -9,7 +9,7 @@ export interface Notification {
   content: string;
   isRead: boolean;
   link?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   createdAt: string;
 }
 

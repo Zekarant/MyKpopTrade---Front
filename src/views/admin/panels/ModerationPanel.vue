@@ -134,6 +134,7 @@
   import { POST_DELETION_REASONS } from '../adminPresets';
   import { useAdminQueryState } from '../useAdminQueryState';
   import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
+  import type { AdminPost } from '../types';
 
   const SEARCH_DEBOUNCE_MS = 300;
 
@@ -142,11 +143,11 @@
     components: { ReasonPromptModal, VerifiedBadge },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const posts = ref<any[]>([]);
+      const posts = ref<AdminPost[]>([]);
       const stats = ref({ totalPosts: 0, totalReplies: 0, todayPosts: 0 });
       const pagination = ref({ totalPages: 1 });
       const loading = ref(false);
-      const postToDelete = ref<any>(null);
+      const postToDelete = ref<AdminPost | null>(null);
 
       const { state, commit } = useAdminQueryState({ search: '', type: '', page: 1 }, () => load());
 

@@ -197,6 +197,7 @@
     formatDate,
     getInitial
   } from '../adminFormat';
+  import type { AdminReport, ReportTargetOwner } from '../types';
 
   const PAGE_SIZE = 50;
 
@@ -205,7 +206,7 @@
     components: { ReasonPromptModal, ReportDetailModal, SuspendUserModal },
     emits: ['changed'],
     setup(_props, { emit }) {
-      const reports = ref<any[]>([]);
+      const reports = ref<AdminReport[]>([]);
       const pagination = ref({ totalPages: 1, totalItems: 0 });
       const loading = ref(false);
       const exporting = ref(false);
@@ -284,7 +285,7 @@
         await refresh();
       };
 
-      const onSuspendRequest = (owner: any) => {
+      const onSuspendRequest = (owner: ReportTargetOwner) => {
         userToSuspend.value = { _id: owner._id, username: owner.username };
       };
 

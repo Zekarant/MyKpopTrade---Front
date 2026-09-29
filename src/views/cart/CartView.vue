@@ -135,8 +135,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import nav_bar from '@/components/adherents/nav_bar.vue';
+import { apiErrorMessage } from '@/services/apiError';
 import cartService from '@/services/cart.service';
-import type { Cart, CartItem } from '@/services/cart.service';
+import type { Cart, CartCheckoutPayment, CartItem } from '@/services/cart.service';
 import { API_URL } from '@/config/api';
 
 export default defineComponent({
@@ -213,8 +214,8 @@ export default defineComponent({
       try {
         this.cart = await cartService.removeItem(productId);
         this.validationIssues = this.validationIssues.filter(i => !i.includes(productId));
-      } catch (error: any) {
-        this.$func.showToastError(error?.response?.data?.message || 'Erreur lors du retrait de l\'article.');
+      } catch (error) {
+        this.$func.showToastError(apiErrorMessage(error, 'Erreur lors du retrait de l\'article.'));
       } finally {
         this.removing = '';
       }
@@ -256,12 +257,15 @@ export default defineComponent({
         } else {
           // Multiple payments: store remaining with orderIds for cancellation
           localStorage.setItem('pendingPaypalPayments', JSON.stringify(
-            payments.slice(1).map((p: any) => ({ approvalUrl: p.approvalUrl, orderId: p.paypalOrderId }))
+            payments.slice(1).map((p: CartCheckoutPayment & { paypalOrderId?: string }) => ({
+              approvalUrl: p.approvalUrl,
+              orderId: p.paypalOrderId
+            }))
           ));
           window.location.href = payments[0].approvalUrl;
         }
-      } catch (error: any) {
-        const msg = error?.response?.data?.message || 'Erreur lors de la validation du panier.';
+      } catch (error) {
+        const msg = apiErrorMessage(error, 'Erreur lors de la validation du panier.');
         this.$func.showToastError(msg);
       } finally {
         this.checkingOut = false;

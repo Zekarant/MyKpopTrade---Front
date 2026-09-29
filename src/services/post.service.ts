@@ -9,9 +9,15 @@ import type {
   PostData,
   PostResponse,
   PostsResponse,
+  PostSaveErrorBody,
+  ProductImagesResponse,
+  ProductStatsResponse,
   ApiResponse,
   SearchParams
 } from '@/types/post.types';
+
+/** `'ok'` en cas de succès, sinon la réponse inattendue ou le corps d'erreur de l'API. */
+export type PostSaveResult = 'ok' | AxiosResponse | PostSaveErrorBody | undefined;
 const getIdUser = (): string | undefined => Cookies.get('id_user');
 
 /** Réponse « session invalide » de l'API. */
@@ -93,7 +99,7 @@ class PostService {
   }
 
   // Supprimer un post
-  async deletePost(id: string | number | undefined): Promise<any> {
+  async deletePost(id: string | number | undefined): Promise<{ message: string }> {
     if (!id) {
       throw new Error('ID du post requis');
     }
@@ -101,7 +107,7 @@ class PostService {
     const postId = id.toString();
 
     try {
-      const response: AxiosResponse = await this.apiClient.delete(`/products/${postId}`);
+      const response: AxiosResponse<{ message: string }> = await this.apiClient.delete(`/products/${postId}`);
       return response.data;
     } catch (error) {
       await endSessionIfUnauthorized(error);
@@ -111,7 +117,7 @@ class PostService {
   }
 
   // Créer un post
-  async createPost(postData: PostData): Promise<string | any> {
+  async createPost(postData: PostData): Promise<PostSaveResult> {
     const data = new FormData();
     data.append('title', postData.title);
     data.append('description', postData.description);
@@ -125,7 +131,7 @@ class PostService {
     data.append('albumName', postData.albumName);
     data.append('allowOffers', postData.allowOffers.toString());
 
-    postData.images.forEach((file: File) => {
+    postData.images.forEach((file: File | string) => {
       data.append('productImages', file);
     });
 
@@ -141,12 +147,12 @@ class PostService {
       }
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      return (error as { response?: { data?: unknown } }).response?.data;
+      return (error as { response?: { data?: PostSaveErrorBody } }).response?.data;
     }
   }
 
   // Mettre à jour un post
-  async updatePost(id: string | number | undefined, postData: PostData): Promise<string | any> {
+  async updatePost(id: string | number | undefined, postData: PostData): Promise<PostSaveResult> {
     if (!id) {
       throw new Error('ID du post requis');
     }
@@ -165,7 +171,7 @@ class PostService {
       kpopMember: postData.kpopMember,
       albumName: postData.albumName,
       shippingOptions: postData.shippingOptions,
-      productImages: [] as File[]
+      productImages: [] as (File | string)[]
     };
 
     if (postData.productImages && postData.productImages.length > 0) {
@@ -173,7 +179,7 @@ class PostService {
         data.productImages.push(file);
       });
     } else {
-      postData.images.forEach((file: File) => {
+      postData.images.forEach((file: File | string) => {
         data.productImages.push(file);
       });
     }
@@ -188,7 +194,7 @@ class PostService {
       }
     } catch (error) {
       await endSessionIfUnauthorized(error);
-      return (error as { response?: { data?: unknown } }).response?.data;
+      return (error as { response?: { data?: PostSaveErrorBody } }).response?.data;
     }
   }
 
@@ -302,11 +308,11 @@ class PostService {
     return tabRecommendations;
   }
 
-  async addProductImage(productId: string, image: File): Promise<any> {
+  async addProductImage(productId: string, image: File): Promise<ProductImagesResponse> {
     const formData = new FormData();
     formData.append('productImage', image);
     try {
-      const response = await this.uploadClient.post(
+      const response = await this.uploadClient.post<ProductImagesResponse>(
         `/products/${productId}/images`,
         formData
       );
@@ -317,9 +323,9 @@ class PostService {
     }
   }
 
-  async deleteProductImage(productId: string, imageUrl: string): Promise<any> {
+  async deleteProductImage(productId: string, imageUrl: string): Promise<ProductImagesResponse> {
     try {
-      const response = await this.apiClient.delete(`/products/${productId}/images`, {
+      const response = await this.apiClient.delete<ProductImagesResponse>(`/products/${productId}/images`, {
         data: { imageUrl },
       });
       return response.data;
@@ -329,9 +335,9 @@ class PostService {
     }
   }
 
-  async reorderProductImages(productId: string, images: string[]): Promise<any> {
+  async reorderProductImages(productId: string, images: string[]): Promise<ProductImagesResponse> {
     try {
-      const response = await this.apiClient.put(`/products/${productId}/images/reorder`, { images });
+      const response = await this.apiClient.put<ProductImagesResponse>(`/products/${productId}/images/reorder`, { images });
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la réorganisation des images :', error);
@@ -341,7 +347,7 @@ class PostService {
 
   async getQuickRecommendations(limit = 4): Promise<Post[]> {
     try {
-      const response = await this.apiClient.get('/products/quick-recommendations', { params: { limit } });
+      const response = await this.apiClient.get<{ products?: Post[] }>('/products/quick-recommendations', { params: { limit } });
       return response.data?.products || [];
     } catch (error) {
       console.error('Erreur quick-recommendations :', error);
@@ -349,9 +355,9 @@ class PostService {
     }
   }
 
-  async getProductStats(): Promise<any> {
+  async getProductStats(): Promise<ProductStatsResponse> {
     try {
-      const response = await this.apiClient.get('/products/stats');
+      const response: AxiosResponse<ProductStatsResponse> = await this.apiClient.get('/products/stats');
       return response.data;
     } catch (error) {
       console.error('Erreur stats produits :', error);

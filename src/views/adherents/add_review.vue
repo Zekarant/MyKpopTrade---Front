@@ -148,7 +148,7 @@ import nav_bar from '@/components/adherents/nav_bar.vue';
 import reviewService from '@/services/review.service';
 import postService from '@/services/post.service';
 import type { ReviewData } from '@/types/review.types';
-import type { Post } from '@/types/post.types';
+import type { ProductDetail } from '@/types/post.types';
 import { API_URL } from '@/config/api';
 
 const route = useRoute();
@@ -160,7 +160,7 @@ const loading = ref(true);
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
-const product = ref<Post | null>(null);
+const product = ref<ProductDetail | null>(null);
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement>();
 const imageError = ref('');

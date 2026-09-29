@@ -42,6 +42,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { apiErrorMessage } from '@/services/apiError';
 import disputeService, { type Dispute, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
 
 export default defineComponent({
@@ -57,8 +58,8 @@ export default defineComponent({
       try {
         const res = await disputeService.listMine({ page: 1, limit: 50 });
         this.disputes = res.disputes;
-      } catch (e: any) {
-        (this as any).$func?.showToastError?.(e.response?.data?.message || 'Erreur');
+      } catch (e) {
+        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
       } finally { this.loading = false; }
     },
     open(id: string) { this.$router.push(`/disputes/${id}`); },

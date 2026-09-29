@@ -5,6 +5,7 @@ import type { AxiosResponse } from 'axios';
 import type { AxiosInstance } from 'axios';
 import authentificationService  from '@/services/authentification.service';
 import { createApiClient } from '@/services/http';
+import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
 import { attachmentTokenParam } from '@/services/attachmentAccess';
 
 import type {
@@ -376,24 +377,25 @@ class MessagingService {
   }
   async getUserByName(name: string): Promise<UserResponse> {
     try {
-      const response: AxiosResponse<UserResponse> = await this.userApiClient.get(
+      const response: AxiosResponse<UserResponse & ApiErrorBody> = await this.userApiClient.get(
         `/users/search?query=${name}`
       );
 
       if (
         response.data.message === "Token invalide" ||
-        (response as any).data.code === "TOKEN_EXPIRED" ||
+        response.data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
         await authentificationService.verifSession().catch(() => {});
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const errorResponse = apiErrorResponse(error);
       if (
-        error?.response?.data?.message === "Token invalide" ||
-        error?.response?.data?.code === "TOKEN_EXPIRED" ||
-        error?.response?.status === 401
+        errorResponse?.data?.message === "Token invalide" ||
+        errorResponse?.data?.code === "TOKEN_EXPIRED" ||
+        errorResponse?.status === 401
       ) {
         await authentificationService.verifSession().catch(() => {});
       }

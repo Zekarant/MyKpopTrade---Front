@@ -213,7 +213,7 @@
 import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
 import userService from '@/services/user.service';
 import authentificationService from '@/services/authentification.service';
-import notificationService from '@/services/notification.service';
+import notificationService, { type Notification } from '@/services/notification.service';
 import cartService from '@/services/cart.service';
 import eventBus from '@/eventBus';
 import type { ImgUserProfile, IUser } from '@/types/user.types';
@@ -236,7 +236,7 @@ declare global {
                 currentRoute: '',
                 htmlImgProfile: '',
                 unreadNotifications: 0,
-                notifications: [] as any[],
+                notifications: [] as Notification[],
                 cartCount: 0,
                 itemMenu: [
                     {
@@ -278,7 +278,7 @@ declare global {
           if(this.htmlImgProfile != ''){
             return this.htmlImgProfile;
           }else{
-            userService.getMyInformation().then((data: any) => {
+            userService.getMyInformation().then((data) => {
               this.dataUser = data.profile as IUser;
               if(this.dataUser){
                 const profileImgInfo : ImgUserProfile = {
@@ -348,7 +348,7 @@ declare global {
                 this.menuOpen = false;
                 this.dropdownOpen = false;
                 setTimeout(() => {
-                    const route: any = { name: page };
+                    const route: { name: RouteRecordNameGeneric; params?: { id: string } } = { name: page };
                     if (parameter) route.params = { id: parameter };
                     this.router.push(route);
                 }, 0);
@@ -367,11 +367,11 @@ declare global {
             async markAllRead() {
               try {
                 await notificationService.markAllAsRead();
-                this.notifications.forEach((n: any) => n.isRead = true);
+                this.notifications.forEach((n: Notification) => n.isRead = true);
                 this.unreadNotifications = 0;
               } catch { /* ignore */ }
             },
-            onNotifClick(notif: any) {
+            onNotifClick(notif: Notification) {
               if (!notif.isRead) {
                 notificationService.markAsRead(notif._id).catch(() => {});
                 notif.isRead = true;

@@ -77,7 +77,7 @@
             :class="{
               active: (selectedConversation?._id && selectedConversation._id === conversation._id) ||
             (selectedConversation?.id && selectedConversation.id === conversation.id),
-              unread: conversation.unreadCount > 0,
+              unread: (conversation.unreadCount ?? 0) > 0,
               favorite: isFavorite(conversation)
             }"
             @click="emit('select', conversation)">
@@ -126,8 +126,8 @@
                   @click="emit('toggle-read', conversation)"
                   class="dropdown-item"
                 >
-                  <i class="bi" :class="conversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
-                  {{ conversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu' }}
+                  <i class="bi" :class="(conversation.unreadCount ?? 0) > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
+                  {{ (conversation.unreadCount ?? 0) > 0 ? 'Marquer comme lu' : 'Marquer comme non lu' }}
                 </button>
                 <button
                   @click="emit('archive', conversation)"
@@ -166,27 +166,29 @@ import {
   isFavoriteConversation
 } from '../conversationHelpers'
 import { avatarHtml } from '../avatar'
+import type { IUser } from '@/types/user.types'
 import type { ViewConversation } from '../types'
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- conversations de l'API non typées côté front */
+/** `timestamp` : ancien champ de date, lu en repli de `lastMessageAt`. */
+type SidebarConversation = ViewConversation & { timestamp?: string }
+
 const props = defineProps<{
-  userInfo: any
+  userInfo: (IUser & { id?: string }) | null
   userId: string | null
-  conversations: any[]
+  conversations: SidebarConversation[]
   counts: { all: number; favorites: number; unread: number; archived: number }
   activeTab: string
   searchQuery: string
   loading: boolean
-  selectedConversation: any
-  openMenuId: string | null
+  selectedConversation: ViewConversation | null
+  openMenuId: string | null | undefined
 }>()
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const emit = defineEmits<{
   'update:activeTab': [tab: string]
   'update:searchQuery': [query: string]
   select: [conversation: ViewConversation]
-  'toggle-menu': [conversationId: string]
+  'toggle-menu': [conversationId: string | undefined]
   'toggle-favorite': [conversation: ViewConversation]
   'toggle-read': [conversation: ViewConversation]
   archive: [conversation: ViewConversation]
@@ -194,12 +196,9 @@ const emit = defineEmits<{
   'new-conversation': []
 }>()
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const otherParticipant = (conversation: any): any => getOtherParticipant(conversation, props.userId)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isFavorite = (conversation: any) => isFavoriteConversation(conversation, props.userId)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isArchived = (conversation: any) => isArchivedConversation(conversation, props.userId)
+const otherParticipant = (conversation: SidebarConversation) => getOtherParticipant(conversation, props.userId)
+const isFavorite = (conversation: SidebarConversation) => isFavoriteConversation(conversation, props.userId)
+const isArchived = (conversation: SidebarConversation) => isArchivedConversation(conversation, props.userId)
 </script>
 
 <style lang="scss" scoped>

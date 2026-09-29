@@ -389,8 +389,11 @@
 
   <script lang="ts">
     import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-    import postService from '@/services/post.service';
+    import postService, { type PostSaveResult } from '@/services/post.service';
     import  authentification from '@/services/authentification.service';
+    import type { KpopGroup } from '@/services/group.service';
+    import type { KpopAlbum } from '@/services/album.service';
+    import type { PostData, PostSaveErrorBody, ProductDetail } from '@/types/post.types';
     import paymentService from '@/services/payment.service';
     import { Navigation, A11y } from 'swiper/modules';
 
@@ -462,10 +465,10 @@
         const router = useRouter();
         const searchGroupKpop = ref('');
         const isGroupDropdownOpen = ref(false);
-        const groupsKpopList = ref<any[]>([]);
+        const groupsKpopList = ref<KpopGroup[]>([]);
         const searchAlbumName = ref('');
         const isAlbumDropdownOpen = ref(false);
-        const albumsList = ref<any[]>([]);
+        const albumsList = ref<KpopAlbum[]>([]);
 
         // Un vendeur ne peut publier que s'il peut réellement encaisser.
         // PayPal est le seul canal depuis le retrait de Stripe.
@@ -503,7 +506,7 @@
 
         checkPaymentConfiguration();
 
-        const formData = ref({
+        const formData = ref<PostData>({
             title: '',
             description: '',
             price: 0,
@@ -515,7 +518,7 @@
             kpopMember: '',
             albumName: '',
             allowOffers: true,
-            images: [] as File[],
+            images: [],
             shippingOptions: {
                 worldwide: false,
                 nationalOnly: false,
@@ -525,7 +528,7 @@
         });
 
         const route = useRoute();
-        let postDataObjet: any = null;
+        let postDataObjet: (ProductDetail & { id?: string }) | null = null;
         const isModyfy = ref(false);
 
         // Get data from query params instead of props
@@ -571,7 +574,7 @@
                 return [];
             }
         };
-        const selectAlbum = (album: any) => {
+        const selectAlbum = (album: KpopAlbum) => {
             formData.value.albumName = album._id;
             searchAlbumName.value = album.name;
             isAlbumDropdownOpen.value = false;
@@ -605,7 +608,7 @@
                 return albumsList.value;
             }
             const search = searchAlbumName.value.toLowerCase();
-            return albumsList.value.filter((album: any) =>
+            return albumsList.value.filter((album: KpopAlbum) =>
                 album.name.toLowerCase().includes(search)
             );
         });
@@ -754,10 +757,10 @@
         const save = async () => {
             errorMessage.value = '';
             saveLoading.value = true;
-            let response = null;
+            let response: PostSaveResult | null = null;
             try {
                 if(isModyfy.value){
-                    response = await postService.updatePost(postDataObjet._id || postDataObjet.id, formData.value);
+                    response = await postService.updatePost(postDataObjet!._id || postDataObjet!.id, formData.value);
                 }else{
                     response = await postService.createPost(formData.value);
                 }
@@ -772,7 +775,8 @@
             if (response == 'ok') {
                 router.push({ name: 'profile' , params: { id: 'me' }});
             } else {
-                errorMessage.value = response?.message || response?.error?.message || 'Erreur lors de la création du produit';
+                const failure = response as PostSaveErrorBody | null | undefined;
+                errorMessage.value = failure?.message || failure?.error?.message || 'Erreur lors de la création du produit';
             }
         };
 
@@ -792,7 +796,7 @@
             stepError.value = '';
             return save();
         };
-        const selectGroupKpop = (group: any) => {
+        const selectGroupKpop = (group: KpopGroup) => {
             formData.value.kpopGroup = group._id;
             searchGroupKpop.value = group.name;
             isGroupDropdownOpen.value = false;

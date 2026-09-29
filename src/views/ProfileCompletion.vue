@@ -114,6 +114,7 @@ import { useRouter } from 'vue-router';
 import { API_URL } from '@/config/api';
 import { func } from '@/function';
 import { createApiClient, getRefreshToken } from '@/services/http';
+import { apiErrorMessage } from '@/services/apiError';
 
 /** Client partagé : renouvelle la session expirée et rejoue la requête. */
 const api = createApiClient({ baseURL: API_URL });
@@ -211,8 +212,8 @@ export default defineComponent({
         );
         func.showToastSuccess('Profil finalisé, bienvenue !');
         router.replace('/adherents/dashboard');
-      } catch (e: any) {
-        errorMessage.value = e?.response?.data?.message || 'Erreur lors de l\'enregistrement.';
+      } catch (e) {
+        errorMessage.value = apiErrorMessage(e, 'Erreur lors de l\'enregistrement.');
       } finally {
         loading.value = false;
       }
