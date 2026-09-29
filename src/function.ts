@@ -2,13 +2,15 @@
 const TOAST_DURATION_MS = 4000
 
 /** Palette par type de toast (fond, texte, bordure, icône Bootstrap). */
-const TOAST_STYLES = {
+type ToastKind = 'success' | 'error' | 'info'
+
+const TOAST_STYLES: Record<ToastKind, { bg: string; color: string; border: string; icon: string }> = {
   success: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7', icon: 'bi-check-circle-fill' },
   error: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5', icon: 'bi-exclamation-triangle-fill' },
   info: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd', icon: 'bi-info-circle-fill' }
 }
 
-function ensureToastContainer() {
+function ensureToastContainer(): HTMLElement {
   let container = document.getElementById('app-toast-container')
   if (!container) {
     container = document.createElement('div')
@@ -33,11 +35,11 @@ function ensureToastContainer() {
   return container
 }
 
-function pushToast(message, kind) {
+function pushToast(message: unknown, kind: ToastKind): void {
   const text = String(message ?? '').trim()
   if (!text) return
 
-  const style = TOAST_STYLES[kind] ?? TOAST_STYLES.info
+  const style = TOAST_STYLES[kind]
   const container = ensureToastContainer()
 
   const toast = document.createElement('div')
@@ -92,16 +94,16 @@ function pushToast(message, kind) {
 }
 
 export const func = {
-  showToastSuccess(message) {
+  showToastSuccess(message: unknown) {
     pushToast(message, 'success')
   },
-  showToastError(message) {
+  showToastError(message: unknown) {
     pushToast(message, 'error')
   },
-  showToastInfo(message) {
+  showToastInfo(message: unknown) {
     pushToast(message, 'info')
   },
-  buildCombinedSlug(query, event) {
+  buildCombinedSlug(query: string, event: string) {
     return [query, event].filter(Boolean).join('-')
   }
 }

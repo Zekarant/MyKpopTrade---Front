@@ -23,10 +23,11 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
+// Plus Jakarta Sans est chargée par index.html (une seule requête, non bloquante pour le CSS).
 @font-face {
   font-family: "Sora";
-  src: url('@/assets/fonts/Sora/Sora-VariableFont_wght.ttf');
+  src: url('@/assets/fonts/Sora/Sora-VariableFont_wght.woff2') format('woff2');
+  font-weight: 100 800;
+  font-display: swap;
 }
 </style>

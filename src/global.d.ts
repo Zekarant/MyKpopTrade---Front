@@ -1,4 +1,4 @@
-import { func } from "./function"; // Assure-toi que le chemin est correct
+import type { func } from "./function";
 import type { Router, RouteLocationNormalizedLoaded } from "vue-router";
 
 declare module "@vue/runtime-core" {

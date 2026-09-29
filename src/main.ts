@@ -4,22 +4,12 @@ import { createPinia } from 'pinia'
 // Bootstrap avant la feuille maison : nos styles doivent gagner à spécificité
 // égale.
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './css/main.scss'
 import { func } from "./function"
 
 import App from './App.vue'
 import router from './router'
-import nav_bar from './components/adherents/nav_bar.vue'
-import banner_profil from './components/adherents/banner.vue'
-import segment_profil from './components/adherents/segment_profil.vue'
-import search_bar from './components/search_bar.vue'
-import row_products from './components/row_products.vue'
-import review_card from './components/review_card.vue'
-import ImageCarousel from './components/ImageCarousel.vue'
-import filter_review from './components/filter_review.vue'
-import card from './components/card.vue'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import pushService from './services/push.service'
@@ -34,16 +24,9 @@ app.use(PrimeVue, {
         preset: Aura
     }
 })
+// Pas de composants globaux : chaque vue importe ceux qu'elle utilise, ce qui
+// les garde hors du bundle initial.
 app.config.globalProperties.$func = func
-app.component("nav_bar", nav_bar)
-app.component("banner_profil", banner_profil)
-app.component("segment_profil", segment_profil)
-app.component("search_bar", search_bar)
-app.component("row_products", row_products)
-app.component("review_card", review_card)
-app.component("ImageCarousel", ImageCarousel)
-app.component("filter_review", filter_review)
-app.component("post-card", card)
 app.mount('#app')
 
 // Enregistre le service worker au démarrage (PWA + push). On NE demande PAS
