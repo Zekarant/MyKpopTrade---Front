@@ -308,7 +308,7 @@ export default defineComponent({
       }
     },
     getSellerName(item: CartItem): string {
-      return item.product.seller || 'Vendeur';
+      return item.product.sellerUsername ? `@${item.product.sellerUsername}` : 'Vendeur inconnu';
     },
     getCurrencySymbol(currency: string): string {
       const symbols: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };

@@ -13,6 +13,8 @@ export interface CartItem {
     isAvailable: boolean;
     isSold: boolean;
     seller: string;
+    /** Absent si le compte du vendeur a été supprimé. */
+    sellerUsername?: string;
   };
   addedAt: string;
   priceSnapshot: number;
