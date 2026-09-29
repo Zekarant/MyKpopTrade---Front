@@ -12,6 +12,7 @@
 import { defineComponent, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { setSessionCookies } from '@/services/session.cookies';
+import authentificationService from '@/services/authentification.service';
 
 export default defineComponent({
   name: 'AuthCallback',
@@ -21,14 +22,40 @@ export default defineComponent({
     const error = ref<string>('');
     const welcome = ref<string>('');
 
-    onMounted(() => {
-      // Retirer tout de suite les jetons de l'URL (historique, capture d'écran,
-      // partage) ; on les a déjà lus dans `route.query`.
-      window.history.replaceState(window.history.state, '', window.location.pathname);
+    /**
+     * Ouvre la session. L'API remet un code à usage unique ; les jetons en
+     * clair dans l'URL ne servent plus qu'à une API pas encore mise à jour
+     * (déploiement du front avant celui de l'API).
+     */
+    async function openSession(): Promise<boolean> {
+      const code = route.query.code as string | undefined;
+      if (code) {
+        try {
+          await authentificationService.exchangeOAuthCode(code);
+          return true;
+        } catch (e) {
+          error.value = (e as Error).message;
+          return false;
+        }
+      }
 
       const accessToken = route.query.accessToken as string | undefined;
       const refreshToken = route.query.refreshToken as string | undefined;
       const userId = route.query.userId as string | undefined;
+      if (!accessToken || !refreshToken || !userId) {
+        error.value = 'Tokens manquants dans la réponse.';
+        return false;
+      }
+      setSessionCookies({ accessToken, refreshToken, userId });
+      sessionStorage.removeItem('favorites');
+      return true;
+    }
+
+    onMounted(async () => {
+      // Retirer tout de suite le code (ou les jetons) de l'URL : historique,
+      // capture d'écran, partage. On les a déjà lus dans `route.query`.
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+
       const errParam = route.query.error as string | undefined;
       const isNewAccount = route.query.newAccount === '1';
       const requiresProfileCompletion = route.query.completeProfile === '1';
@@ -42,14 +69,10 @@ export default defineComponent({
         return;
       }
 
-      if (!accessToken || !refreshToken || !userId) {
-        error.value = 'Tokens manquants dans la réponse.';
+      if (!(await openSession())) {
         setTimeout(() => router.push('/login'), 2000);
         return;
       }
-
-      setSessionCookies({ accessToken, refreshToken, userId });
-      sessionStorage.removeItem('favorites');
 
       if (requiresProfileCompletion) {
         welcome.value = providerLabel

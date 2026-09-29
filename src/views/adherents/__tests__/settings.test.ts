@@ -140,6 +140,17 @@ describe('page Paramètres', () => {
     expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe('+33612345678')
   })
 
+  it('lie un compte avec un ticket à usage unique, jamais avec le jeton d\'accès', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Sécurité')
+    http.post.mockResolvedValueOnce({ data: { ticket: 'ticket-unique' } })
+
+    await wrapper.findAll('.setting-row').find((row) => row.text().includes('Google'))!.trigger('click')
+    await flushPromises()
+
+    expect(http.post).toHaveBeenCalledWith('/api/auth/link/google')
+  })
+
   it('l\'interrupteur des messages directs revient en arrière si l\'API échoue', async () => {
     const wrapper = await mountPage()
     await openSection(wrapper, 'Préférences')

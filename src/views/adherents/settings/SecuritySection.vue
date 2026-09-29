@@ -59,7 +59,6 @@ import { ref } from 'vue';
 import TwoFactorCard from '@/components/adherents/TwoFactorCard.vue';
 import { func } from '@/function';
 import { API_URL } from '@/config/api';
-import { ensureAccessToken } from '@/services/http';
 import { api, apiMessage, isSessionLost } from './shared';
 import type { SectionProps } from './shared';
 
@@ -87,12 +86,17 @@ async function savePassword() {
   }
 }
 
-// La redirection OAuth ne peut pas porter d'en-tête : le jeton part dans
-// l'URL. ensureAccessToken le renouvelle d'abord s'il a expiré, sinon la
-// liaison échouait en « invalid_token » passé 15 minutes.
+// Une redirection ne peut pas porter d'en-tête Authorization. Plutôt que le
+// jeton d'accès, l'URL porte un ticket à usage unique valable une minute,
+// obtenu par une requête authentifiée (le client renouvelle la session si
+// besoin).
 async function linkProvider(provider: 'google' | 'discord') {
   if (props.profile.socialAuth?.[provider]?.id) return;
-  const token = await ensureAccessToken();
-  window.location.href = `${API_URL}/api/auth/${provider}/link?token=${encodeURIComponent(token ?? '')}`;
+  try {
+    const { data } = await api.post<{ ticket: string }>(`/api/auth/link/${provider}`);
+    window.location.href = `${API_URL}/api/auth/${provider}/link?ticket=${encodeURIComponent(data.ticket)}`;
+  } catch (error) {
+    if (!isSessionLost(error)) func.showToastError(apiMessage(error, 'La liaison du compte a échoué.'));
+  }
 }
 </script>

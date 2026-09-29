@@ -69,6 +69,27 @@ class authentificationService {
   }
 
   /**
+   * Fin de connexion Google/Discord : échange le code à usage unique reçu dans
+   * l'URL de retour contre la session. Les jetons ne transitent donc jamais
+   * par une URL (historique du navigateur, journaux du serveur).
+   */
+  async exchangeOAuthCode(code: string): Promise<void> {
+    try {
+      const response: AxiosResponse = await this.authApiClient.post("/oauth/exchange", { code });
+
+      setSessionCookies({
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+        userId: response.data.user.id
+      });
+      sessionStorage.removeItem("favorites");
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      throw new Error(axiosError.response?.data?.message || "Connexion impossible.");
+    }
+  }
+
+  /**
    * Deuxième étape de connexion : échange le jeton de défi et un code (TOTP ou
    * code de secours) contre une session complète.
    */

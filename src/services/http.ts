@@ -35,7 +35,7 @@ const REFRESH_ENDPOINT = `${API_URL}/api/auth/refresh-token`;
  * Un 401 sur /login est une mauvaise saisie de mot de passe, pas une session
  * expirée, et rejouer /refresh-token bouclerait indéfiniment.
  */
-const AUTH_PATHS = ['/login', '/register', '/refresh-token', '/logout', '/2fa/'];
+const AUTH_PATHS = ['/login', '/register', '/refresh-token', '/logout', '/2fa/', '/oauth/'];
 
 let refreshInFlight: Promise<string | null> | null = null;
 
@@ -76,8 +76,9 @@ export function refreshAccessToken(): Promise<string | null> {
       if (!data?.accessToken) {
         return null;
       }
-      // L'API rend aujourd'hui le même refresh token ; on retombe dessus s'il
-      // est absent de la réponse pour ne pas perdre le cookie de 7 jours.
+      // Le refresh token est à usage unique : l'API en rend un nouveau, qu'il
+      // faut impérativement garder. Repli sur l'ancien si la réponse n'en
+      // porte pas, pour ne pas perdre le cookie de 7 jours.
       setSessionCookies({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken || refreshToken,
