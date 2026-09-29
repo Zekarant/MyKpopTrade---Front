@@ -114,7 +114,7 @@ import { isAxiosError } from 'axios';
 import paymentService from '@/services/payment.service';
 import cartService from '@/services/cart.service';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
-import type { PendingPaypalPayment } from './types';
+import { pendingApprovalUrl, takeNextPendingPayment } from './pendingPayments';
 
 type CaptureErrorBody = { message?: string; error?: string; approvalUrl?: string };
 
@@ -163,27 +163,15 @@ export default defineComponent({
 
         // Handle pending multi-payment: redirect to next PayPal approval
         if (!captureError.value) {
-          // Vider le panier après paiement confirmé
+          // Retire du panier les articles payés (le back garde ceux qui restent à payer)
           try { await cartService.finalizeCheckout(); } catch { /* ignore */ }
 
-          const pendingRaw = localStorage.getItem('pendingPaypalPayments');
-          if (pendingRaw) {
-            try {
-              const pending: PendingPaypalPayment[] = JSON.parse(pendingRaw);
-              if (pending.length > 0) {
-                const next = pending.shift()!;
-                const nextUrl = typeof next === 'string' ? next : next.approvalUrl;
-                if (pending.length > 0) {
-                  localStorage.setItem('pendingPaypalPayments', JSON.stringify(pending));
-                } else {
-                  localStorage.removeItem('pendingPaypalPayments');
-                }
-                // Small delay so user sees success briefly
-                setTimeout(() => { window.location.href = nextUrl; }, 1500);
-                return;
-              }
-            } catch { /* ignore parse errors */ }
-            localStorage.removeItem('pendingPaypalPayments');
+          const next = takeNextPendingPayment();
+          if (next) {
+            const nextUrl = pendingApprovalUrl(next);
+            // Small delay so user sees success briefly
+            setTimeout(() => { window.location.href = nextUrl; }, 1500);
+            return;
           }
         }
       } else if (token.value && !payerId.value) {

@@ -52,7 +52,13 @@
             </div>
             <div class="cart-page__item-info">
               <h3 class="cart-page__item-title">{{ item.product.title }}</h3>
-              <div class="cart-page__item-price">{{ item.priceSnapshot }} {{ getCurrencySymbol(item.currencySnapshot) }}</div>
+              <div class="cart-page__item-price">
+                {{ itemPrice(item) }} {{ getCurrencySymbol(item.currencySnapshot) }}
+                <span v-if="isNegotiated(item)" class="cart-page__item-catalogue-price">{{ item.product.price }} {{ getCurrencySymbol(item.currencySnapshot) }}</span>
+              </div>
+              <div v-if="isNegotiated(item)" class="cart-page__item-negotiated">
+                <i class="bi bi-tag"></i> Prix négocié
+              </div>
               <div v-if="item.product.price !== item.priceSnapshot" class="cart-page__item-warning">
                 <i class="bi bi-exclamation-circle"></i> Prix modifié depuis l'ajout
               </div>
@@ -137,8 +143,10 @@ import { defineComponent } from 'vue';
 import nav_bar from '@/components/adherents/nav_bar.vue';
 import { apiErrorMessage } from '@/services/apiError';
 import cartService from '@/services/cart.service';
-import type { Cart, CartCheckoutPayment, CartItem } from '@/services/cart.service';
+import type { Cart, CartItem } from '@/services/cart.service';
 import { API_URL } from '@/config/api';
+import { savePendingPayments } from '@/views/payment/pendingPayments';
+import { cartItemPrice, isNegotiatedPrice, sumCartItems } from './cartPricing';
 
 export default defineComponent({
   name: 'CartView',
@@ -177,10 +185,7 @@ export default defineComponent({
     },
     totalFormatted(): string {
       if (!this.cart) return '0 €';
-      let total = 0;
-      for (const item of this.cart.items) {
-        total += item.priceSnapshot;
-      }
+      const total = sumCartItems(this.cart.items);
       // Use the currency of the first item as reference
       const currency = this.cart.items[0]?.currencySnapshot || 'EUR';
       return `${total.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
@@ -251,19 +256,10 @@ export default defineComponent({
 
         this.showShippingModal = false;
 
-        if (payments.length === 1) {
-          // Single payment: redirect directly to PayPal
-          window.location.href = payments[0].approvalUrl;
-        } else {
-          // Multiple payments: store remaining with orderIds for cancellation
-          localStorage.setItem('pendingPaypalPayments', JSON.stringify(
-            payments.slice(1).map((p: CartCheckoutPayment & { paypalOrderId?: string }) => ({
-              approvalUrl: p.approvalUrl,
-              orderId: p.paypalOrderId
-            }))
-          ));
-          window.location.href = payments[0].approvalUrl;
-        }
+        // Un ordre PayPal par produit : les suivants sont approuvés depuis
+        // success.vue, ou annulés par cancel.vue grâce à leur paypalOrderId.
+        savePendingPayments(payments.slice(1));
+        window.location.href = payments[0].approvalUrl;
       } catch (error) {
         const msg = apiErrorMessage(error, 'Erreur lors de la validation du panier.');
         this.$func.showToastError(msg);
@@ -293,8 +289,14 @@ export default defineComponent({
       const symbols: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };
       return symbols[currency] || currency;
     },
+    itemPrice(item: CartItem): number {
+      return cartItemPrice(item);
+    },
+    isNegotiated(item: CartItem): boolean {
+      return isNegotiatedPrice(item);
+    },
     formatGroupTotal(group: CartItem[]): string {
-      const total = group.reduce((sum, item) => sum + item.priceSnapshot, 0);
+      const total = sumCartItems(group);
       const currency = group[0]?.currencySnapshot || 'EUR';
       return `${total.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
     }
@@ -441,6 +443,13 @@ export default defineComponent({
   }
 
   &__item-price { font-weight: 700; color: var(--primary, #7c3aed); }
+
+  &__item-catalogue-price {
+    margin-left: 0.4rem; font-weight: 400; font-size: 0.85rem;
+    color: var(--text-secondary, #666); text-decoration: line-through;
+  }
+
+  &__item-negotiated { font-size: 0.75rem; color: #059669; margin-top: 0.25rem; }
 
   &__item-warning { font-size: 0.75rem; color: #d97706; margin-top: 0.25rem; }
   &__item-unavailable { font-size: 0.75rem; color: #dc2626; margin-top: 0.25rem; }

@@ -27,7 +27,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import paymentService from '@/services/payment.service';
-import type { PendingPaypalPayment } from './types';
+import { takePendingOrderIds } from './pendingPayments';
 
 export default defineComponent({
   name: 'PaymentCancel',
@@ -52,21 +52,11 @@ export default defineComponent({
         }
       }
 
-      // Annuler et nettoyer les paiements multi en attente
-      const pendingRaw = localStorage.getItem('pendingPaypalPayments');
-      if (pendingRaw) {
+      // Annuler les paiements suivants d'un checkout panier, qui réservent encore leurs produits
+      for (const orderId of takePendingOrderIds()) {
         try {
-          const pending: PendingPaypalPayment[] = JSON.parse(pendingRaw);
-          for (const item of pending) {
-            const orderId = typeof item === 'string' ? null : item.orderId;
-            if (orderId) {
-              try {
-                await paymentService.cancelPayPal(orderId);
-              } catch { /* ignore */ }
-            }
-          }
-        } catch { /* ignore parse errors */ }
-        localStorage.removeItem('pendingPaypalPayments');
+          await paymentService.cancelPayPal(orderId);
+        } catch { /* ignore */ }
       }
     });
 

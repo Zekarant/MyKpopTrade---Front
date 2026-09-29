@@ -2,11 +2,6 @@ import type { AxiosInstance } from "axios";
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 
-interface ApiError {
-  message: string;
-  status?: number;
-}
-
 export interface CartItem {
   product: {
     _id: string;
@@ -21,6 +16,8 @@ export interface CartItem {
   addedAt: string;
   priceSnapshot: number;
   currencySnapshot: string;
+  /** Prix produit que PayPal facturera : négociation acceptée comprise, hors livraison. */
+  buyerPrice?: number;
 }
 
 export interface Cart {
@@ -34,6 +31,8 @@ export interface CartCheckoutPayment {
   sellerId: string;
   sellerUsername: string;
   paymentId: string;
+  /** Identifiant attendu par /payments/paypal/capture et /cancel (le `token` du retour PayPal). */
+  paypalOrderId: string;
   approvalUrl: string;
   amount: number;
   currency: string;
