@@ -191,6 +191,7 @@
     import VerifiedBadge from '../components/VerifiedBadge.vue';
 
     import postService from '@/services/post.service';
+    import { getRefreshToken } from '@/services/http';
     import paymentService from '@/services/payment.service';
     import cartService from '@/services/cart.service';
     import eventBus from '@/eventBus';
@@ -384,17 +385,29 @@
                     }
                 });
             },
+            // addFavorite bascule le favori et rend `false` en cas d'échec : le
+            // message de succès s'affichait même quand rien n'avait changé.
             async addFav(id: string){
-                await postService.addFavorite(id).then(() => {
+                if (await postService.addFavorite(id)) {
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
                     this.isFav = true;
-                });;
+                } else {
+                    this.reportFavoriteFailure();
+                }
             },
             async rmFav(id: string){
-                await postService.addFavorite(id).then(() => {
+                if (await postService.addFavorite(id)) {
                     this.$func.showToastSuccess('Supprimé de mes favoris');
                     this.isFav = false;
-                });;
+                } else {
+                    this.reportFavoriteFailure();
+                }
+            },
+            /** Sans session, l'utilisateur est déjà renvoyé vers /login : rien à afficher. */
+            reportFavoriteFailure() {
+                if (getRefreshToken()) {
+                    this.$func.showToastError('Impossible de mettre à jour vos favoris. Réessayez.');
+                }
             },
 
             closePost() {

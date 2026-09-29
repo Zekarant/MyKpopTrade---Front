@@ -453,9 +453,8 @@
       };
     },
     mounted() {
-        authentification.verifSession().then(() => {
-
-        });
+        // Sans session, verifSession déconnecte et renvoie vers /login.
+        authentification.verifSession().catch(() => undefined);
     },
 
     setup(props) {

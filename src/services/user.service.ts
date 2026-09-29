@@ -60,7 +60,7 @@ class userService {
         (response as any).data.code === "TOKEN_EXPIRED" ||
         response.status === 401
       ) {
-        await authentificationService.verifSession();
+        await authentificationService.verifSession().catch(() => {});
       }
 
       return response.data;
