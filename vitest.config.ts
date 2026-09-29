@@ -14,6 +14,8 @@ export default mergeConfig(
     },
     test: {
       environment: 'jsdom',
+      // Un seul jsdom par worker, isolation par fichier conservée : ~5 s au lieu de ~30 s.
+      pool: 'vmThreads',
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url))
     }

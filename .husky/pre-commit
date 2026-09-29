@@ -1,0 +1,4 @@
+# Mêmes vérifications que la CI locale : types, lint (sans --fix), tests unitaires.
+npm run type-check
+npx eslint .
+npx vitest run

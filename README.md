@@ -43,3 +43,18 @@ npm run test:unit
 ```sh
 npm run lint
 ```
+
+### Visual regression tests with [Playwright](https://playwright.dev/)
+
+```sh
+npx playwright install chromium   # once
+npm run test:visual
+```
+
+Reference screenshots are taken on Windows (`-win32` suffix). On macOS or Linux,
+generate your own once with `npx playwright test --update-snapshots`.
+
+### Git hooks
+
+`npm install` sets up [husky](https://typicode.github.io/husky/). Each commit runs
+the type-check, ESLint (without `--fix`) and the unit tests.
