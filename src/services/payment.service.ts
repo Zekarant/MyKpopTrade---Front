@@ -1,16 +1,8 @@
 // services/user.service.ts
 import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 
-import Cookies from "js-cookie";
-import type {
-    IUser,
-    UserResponse
-} from "@/types/user.types";
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
-
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
-const getIdUser = (): string | undefined => Cookies.get('id_user');
 
 interface ApiError {
   message: string;

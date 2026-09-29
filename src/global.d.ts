@@ -1,4 +1,3 @@
-import { ComponentCustomProperties } from "vue";
 import { func } from "./function"; // Assure-toi que le chemin est correct
 import type { Router, RouteLocationNormalizedLoaded } from "vue-router";
 

@@ -96,7 +96,7 @@ import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
 export default defineComponent({
-  name: 'contact',
+  name: 'ContactView',
   components: { Nav_bar },
   setup() {
     const router = useRouter();

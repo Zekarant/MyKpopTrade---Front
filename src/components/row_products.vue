@@ -50,7 +50,6 @@
     import post from '../components/post.vue';
     import card from '../components/card.vue';
     import { Navigation, A11y } from 'swiper/modules';
-    import type { Swiper as SwiperClass } from 'swiper';
     import type { Post } from '@/types/post.types';
 
     // Import Swiper Vue.js components
@@ -100,15 +99,9 @@
         setup() {
             const dataCardPost = ref<Post | null>(null);
             const stateCardPost = ref(false);
-            const onSwiper = (swiper: SwiperClass) => {
-            };
-            const onSlideChange = () => {
-            };
             return {
                 dataCardPost,
                 stateCardPost,
-                onSwiper,
-                onSlideChange,
                 modules: [Navigation, A11y],
 
             };

@@ -391,9 +391,6 @@ export const useMessagingStore = defineStore('messaging', {
           message.readBy.push(data.userId);
         }
       });
-    },
-
-    updateConversation(conversationId: string, data:{ isFavorite: boolean , isArchived:boolean} ) {
     }
   }
 });

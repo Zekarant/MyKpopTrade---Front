@@ -47,6 +47,7 @@
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar_2 from '@/components/search_bar_2.vue';
     import filter_list from '@/components/filter_list.vue';
+    import Grid from '@/components/grid.vue';
 
     /** Filtres émis par `filter_list` via `saveFilter`. */
     interface SearchFilters {
@@ -64,7 +65,8 @@
     components: {
       Nav_bar,
       search_bar_2,
-      filter_list
+      filter_list,
+      Grid
     },
     setup(props) {
       const route = useRoute();

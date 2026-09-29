@@ -99,6 +99,7 @@
     import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
+    import Grid from '@/components/grid.vue';
     import postService from '@/services/post.service';
     import authentification from '@/services/authentification.service';
     import { API_URL } from '@/config/api';
@@ -111,11 +112,12 @@
     const api = createApiClient({ baseURL: API_URL });
 
   export default defineComponent({
-    name: 'dashboard',
+    name: 'DashboardView',
     components: {
       Nav_bar,
       search_bar,
-      row_products
+      row_products,
+      Grid
     },
     mounted() {
       authentification.verifSession().then(() => {

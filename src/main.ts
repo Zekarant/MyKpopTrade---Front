@@ -11,8 +11,6 @@ import { func } from "./function"
 
 import App from './App.vue'
 import router from './router'
-import Grid from './components/grid.vue'
-import post from './components/post.vue'
 import nav_bar from './components/adherents/nav_bar.vue'
 import banner_profil from './components/adherents/banner.vue'
 import segment_profil from './components/adherents/segment_profil.vue'
@@ -24,7 +22,6 @@ import filter_review from './components/filter_review.vue'
 import card from './components/card.vue'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
-import Slider from 'primevue/slider'
 import pushService from './services/push.service'
 import { warnIfLegalIncomplete } from './config/legal'
 
@@ -38,8 +35,6 @@ app.use(PrimeVue, {
     }
 })
 app.config.globalProperties.$func = func
-app.component("post", post)
-app.component("Grid", Grid)
 app.component("nav_bar", nav_bar)
 app.component("banner_profil", banner_profil)
 app.component("segment_profil", segment_profil)
@@ -49,7 +44,6 @@ app.component("review_card", review_card)
 app.component("ImageCarousel", ImageCarousel)
 app.component("filter_review", filter_review)
 app.component("post-card", card)
-app.component("Slider", Slider)
 app.mount('#app')
 
 // Enregistre le service worker au démarrage (PWA + push). On NE demande PAS

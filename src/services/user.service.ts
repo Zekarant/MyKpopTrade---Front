@@ -1,10 +1,8 @@
 // services/user.service.ts
 import type { AxiosInstance, AxiosResponse } from "axios";
 
-import Cookies from "js-cookie";
 import authentificationService  from '@/services/authentification.service';
 import type {
-    IUser,
     UserResponse,
     ImgUserProfile
 } from "@/types/user.types";
@@ -16,15 +14,6 @@ const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 };
 const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
-
-const getSessionToken = (): string | undefined => Cookies.get('sessionToken');
-const getIdUser = (): string | undefined => Cookies.get('id_user');
-
-interface ApiError {
-  message: string;
-  status?: number;
-  code?: string;
-}
 
 
 

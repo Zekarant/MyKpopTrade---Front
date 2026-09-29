@@ -117,7 +117,7 @@ class authentificationService {
     try {
       const refreshToken = Cookies.get("refreshToken");
       await this.authApiClient.post("/logout", { refreshToken });
-    } catch (_) {
+    } catch {
       // Ignore errors on logout request
     } finally {
       this.clearCookies();

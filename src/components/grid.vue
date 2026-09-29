@@ -26,7 +26,7 @@
 
 
     export default defineComponent({
-        name: "Grid",
+        name: "ProductGrid",
         components: {
             post,
             card

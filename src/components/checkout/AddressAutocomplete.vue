@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, type PropType } from 'vue';
+import { defineComponent, ref } from 'vue';
 import addressService, { type AddressResult } from '@/services/address.service';
 
 export default defineComponent({
@@ -49,7 +49,7 @@ export default defineComponent({
       try {
         results.value = await addressService.lookup({ q, limit: 8 });
         showResults.value = results.value.length > 0;
-      } catch (err) {
+      } catch {
         results.value = [];
       } finally {
         loading.value = false;

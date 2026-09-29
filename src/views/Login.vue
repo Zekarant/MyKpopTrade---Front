@@ -169,13 +169,13 @@
   </main>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import authentificationService from "@/services/authentification.service";
 import { API_URL } from '@/config/api';
 
-const OAUTH_ERROR_MESSAGES = {
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   google_no_email: "Google n'a pas fourni d'adresse e-mail.",
   google_auth_failed: "La connexion Google a échoué. Réessaie.",
   google_email_unverified: "Ton adresse e-mail Google n'est pas vérifiée.",
@@ -187,7 +187,7 @@ const OAUTH_ERROR_MESSAGES = {
 };
 
 export default defineComponent({
-  name: "Login",
+  name: "LoginView",
   setup() {
     const passwordError = ref("");
     const username = ref("");

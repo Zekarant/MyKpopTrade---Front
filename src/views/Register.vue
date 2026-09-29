@@ -164,13 +164,13 @@
     </div>
   </main>
 </template>
-  <script>
+  <script lang="ts">
   import { defineComponent, ref } from 'vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
 
   export default defineComponent ({
-    name: "Register",
+    name: "RegisterView",
     setup() {
       const router = useRouter();
       const errorBase = ref('');

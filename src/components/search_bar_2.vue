@@ -177,7 +177,7 @@ export default {
       try {
         await searchService.deleteHistoryItem(h._id);
         this.history = this.history.filter((x) => x._id !== h._id);
-      } catch (e) {
+      } catch {
         // silent fail
       }
     },
@@ -185,7 +185,7 @@ export default {
       try {
         await searchService.clearHistory();
         this.history = [];
-      } catch (e) {
+      } catch {
         // silent fail
       }
     },
