@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
+import type { ShippingMethod } from '@/services/payment.service';
 
 export interface CartItem {
   product: {
@@ -18,6 +19,8 @@ export interface CartItem {
   currencySnapshot: string;
   /** Prix produit que PayPal facturera : négociation acceptée comprise, hors livraison. */
   buyerPrice?: number;
+  /** Frais de port que PayPal ajoutera, par méthode ; `null` si le vendeur ne la propose pas. */
+  shippingCosts?: Record<ShippingMethod, number | null> | null;
 }
 
 export interface Cart {
@@ -74,7 +77,7 @@ class CartService {
   }
 
   async checkout(payload: {
-    shippingMethod: 'national' | 'worldwide' | 'localPickup';
+    shippingMethod: ShippingMethod;
     shippingAddress?: {
       recipientName: string;
       streetLine1: string;

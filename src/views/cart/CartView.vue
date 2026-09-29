@@ -75,11 +75,14 @@
         <!-- Summary -->
         <div class="cart-page__summary">
           <div class="cart-page__summary-row">
-            <span>Total</span>
+            <span>Sous-total articles</span>
             <span class="cart-page__summary-total">{{ totalFormatted }}</span>
           </div>
           <p class="cart-page__summary-note">
-            <i class="bi bi-info-circle"></i> Un paiement PayPal séparé sera créé par vendeur.
+            <i class="bi bi-truck"></i> Hors frais de port : ils s'ajoutent à chaque article selon le mode de livraison, choisi à l'étape suivante.
+          </p>
+          <p class="cart-page__summary-note">
+            <i class="bi bi-info-circle"></i> Un paiement PayPal séparé sera créé par article.
           </p>
         </div>
 
@@ -126,9 +129,28 @@
             <input v-model="shippingAddress.phone" type="text" placeholder="Téléphone (optionnel)" class="cart-page__input" />
           </div>
 
+          <div v-if="shipping.undeliverable.length" class="cart-page__alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            Non livrable avec ce mode : {{ shipping.undeliverable.join(', ') }}. Choisissez un autre mode ou retirez ces articles.
+          </div>
+          <dl v-else class="cart-page__recap">
+            <div class="cart-page__recap-row">
+              <dt>Articles</dt>
+              <dd>{{ formatAmount(itemsTotal) }}</dd>
+            </div>
+            <div class="cart-page__recap-row">
+              <dt>Livraison</dt>
+              <dd>{{ formatAmount(shipping.amount) }}</dd>
+            </div>
+            <div class="cart-page__recap-row cart-page__recap-row--total">
+              <dt>Total à payer</dt>
+              <dd>{{ formatAmount(itemsTotal + shipping.amount) }}</dd>
+            </div>
+          </dl>
+
           <div class="cart-page__modal-actions">
             <button class="cart-page__btn cart-page__btn--outline" @click="showShippingModal = false">Annuler</button>
-            <button class="cart-page__btn cart-page__btn--primary" @click="confirmCheckout" :disabled="checkingOut">
+            <button class="cart-page__btn cart-page__btn--primary" @click="confirmCheckout" :disabled="checkingOut || shipping.undeliverable.length > 0">
               {{ checkingOut ? 'Traitement...' : 'Confirmer & Payer' }}
             </button>
           </div>
@@ -146,7 +168,8 @@ import cartService from '@/services/cart.service';
 import type { Cart, CartItem } from '@/services/cart.service';
 import { API_URL } from '@/config/api';
 import { savePendingPayments } from '@/views/payment/pendingPayments';
-import { cartItemPrice, isNegotiatedPrice, sumCartItems } from './cartPricing';
+import { cartItemPrice, cartShipping, isNegotiatedPrice, sumCartItems, type CartShipping } from './cartPricing';
+import type { ShippingMethod } from '@/services/payment.service';
 
 export default defineComponent({
   name: 'CartView',
@@ -160,7 +183,7 @@ export default defineComponent({
       checkingOut: false,
       validationIssues: [] as string[],
       showShippingModal: false,
-      shippingMethod: 'national' as 'national' | 'worldwide' | 'localPickup',
+      shippingMethod: 'national' as ShippingMethod,
       shippingAddress: {
         recipientName: '',
         streetLine1: '',
@@ -183,12 +206,14 @@ export default defineComponent({
       }
       return groups;
     },
+    itemsTotal(): number {
+      return this.cart ? sumCartItems(this.cart.items) : 0;
+    },
+    shipping(): CartShipping {
+      return cartShipping(this.cart?.items ?? [], this.shippingMethod);
+    },
     totalFormatted(): string {
-      if (!this.cart) return '0 €';
-      const total = sumCartItems(this.cart.items);
-      // Use the currency of the first item as reference
-      const currency = this.cart.items[0]?.currencySnapshot || 'EUR';
-      return `${total.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
+      return this.formatAmount(this.itemsTotal);
     }
   },
   async mounted() {
@@ -294,6 +319,11 @@ export default defineComponent({
     },
     isNegotiated(item: CartItem): boolean {
       return isNegotiatedPrice(item);
+    },
+    /** Montant dans la devise du premier article, prise comme référence du panier. */
+    formatAmount(amount: number): string {
+      const currency = this.cart?.items[0]?.currencySnapshot || 'EUR';
+      return `${amount.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
     },
     formatGroupTotal(group: CartItem[]): string {
       const total = sumCartItems(group);
@@ -530,6 +560,25 @@ export default defineComponent({
   }
 
   &__input-row { display: flex; gap: 0.75rem; }
+
+  &__recap {
+    margin: 0 0 1.5rem; padding: 1rem; border-radius: 8px;
+    background: var(--bg-secondary, #f5f5f5); font-size: 0.9rem;
+  }
+
+  &__recap-row {
+    display: flex; justify-content: space-between;
+    dt { font-weight: 400; }
+    dd { margin: 0; }
+    & + & { margin-top: 0.5rem; }
+
+    &--total {
+      padding-top: 0.5rem; border-top: 1px solid var(--surface-border, #ddd);
+      font-weight: 600; font-size: 1rem;
+      dt { font-weight: 600; }
+      dd { color: var(--primary, #7c3aed); }
+    }
+  }
 
   &__modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
 }
