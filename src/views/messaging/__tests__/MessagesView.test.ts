@@ -34,7 +34,9 @@ const conversations = [
   }
 ]
 
-const defaultFetchConversation = async (id: string, _params?: { page?: number }): Promise<Record<string, unknown>> => ({
+type FetchConversation = (id: string, params?: { page?: number }) => Promise<Record<string, unknown>>
+
+const defaultFetchConversation: FetchConversation = async (id) => ({
   conversation: { ...conversations.find((c) => c._id === id) },
   messages: [],
   media: []
@@ -48,7 +50,8 @@ const store = reactive({
     store.sortedConversations = store.conversations
   }),
   fetchConversation: vi.fn(defaultFetchConversation),
-  markAsRead: vi.fn(async () => undefined)
+  markAsRead: vi.fn(async () => undefined),
+  respondToNegotiation: vi.fn()
 })
 
 const route = { params: {} as Record<string, string> }
@@ -165,6 +168,26 @@ describe('MessagesView', () => {
     expect(area.querySelectorAll('.message')).toHaveLength(5)
     // Deux messages ajoutés au-dessus : la lecture descend d'autant (10 + 2 × 100).
     expect(area.scrollTop).toBe(210)
+    wrapper.unmount()
+    store.fetchConversation.mockImplementation(defaultFetchConversation)
+  })
+
+  it('transmet le message de refus d\'une offre', async () => {
+    const offerAt = '2026-09-28T10:00:00Z'
+    store.fetchConversation.mockImplementation(async (id: string) => ({
+      conversation: { ...conversations.find((c) => c._id === id), offerHistory: [{ createdAt: offerAt, status: 'pending' }] },
+      messages: [{ _id: 'offre', content: 'Je te propose 20 €', contentType: 'offer', sender: { _id: 'alice' }, createdAt: offerAt }],
+      media: []
+    }))
+    store.respondToNegotiation.mockResolvedValue({ conversation: { ...conversations[0] } })
+    const wrapper = await mountView()
+
+    await wrapper.find('.btns-offers .btn-outline').trigger('click')
+    await wrapper.find('.popup-textarea').setValue('Trop bas, désolé')
+    await wrapper.findAll('.popup-actions button').find((b) => b.text() === 'Refuser')!.trigger('click')
+    await flushPromises()
+
+    expect(store.respondToNegotiation).toHaveBeenCalledWith('c-alice', 'reject', undefined, 'Trop bas, désolé')
     wrapper.unmount()
     store.fetchConversation.mockImplementation(defaultFetchConversation)
   })

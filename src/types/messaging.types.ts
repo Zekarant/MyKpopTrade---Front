@@ -33,8 +33,19 @@ export interface Message {
   preview?: string;
 }
 
+/** Modes de livraison d'une annonce (renvoyés avec le détail d'une conversation). */
+export interface ProductShippingOptions {
+  worldwide?: boolean;
+  nationalOnly?: boolean;
+  localPickup?: boolean;
+  nationalCost?: number | null;
+  worldwideCost?: number | null;
+  shippingCost?: number | null;
+}
+
 export interface ProductReference {
   _id: string;
+  shippingOptions?: ProductShippingOptions;
   title: string;
   description?: string;
   price?: number;
@@ -103,11 +114,23 @@ export interface ConversationListResponse {
   pagination: MessagingPagination;
 }
 
+/** Pièce jointe d'une conversation, telle que listée avec son détail. */
+export interface ConversationMedia {
+  filename: string;
+  originalName: string;
+  url: string;
+  type: 'image' | 'document' | 'other';
+  extension: string;
+  uploadedAt: string;
+  messageId: string;
+}
+
 export interface ConversationDetailResponse {
   success: boolean;
   message?: string;
   conversation: Conversation;
   messages: Message[];
+  media?: ConversationMedia[];
   pagination: MessagingPagination;
 }
 
@@ -154,6 +177,7 @@ export interface NegotiationActionResponse {
   success: boolean;
   message: string;
   negotiation: NegotiationStatus;
+  conversation: Conversation;
 }
 
 export interface PayWhatYouWantRequest {

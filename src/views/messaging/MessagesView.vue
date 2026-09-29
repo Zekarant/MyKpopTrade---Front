@@ -62,8 +62,8 @@
             >
               <i class="bi" :class="isFavoriteConversation(selectedConversation) ? 'bi-star-fill' : 'bi-star'"></i>
             </button>
-            <button class="action-btn btn_computer" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
-              <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
+            <button class="action-btn btn_computer" @click="toggleReadStatus(selectedConversation)" :title="(selectedConversation.unreadCount ?? 0) > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
+              <i class="bi" :class="(selectedConversation.unreadCount ?? 0) > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
             </button>
             <button class="action-btn" @click="expandOptions" @click.stop title="Options">
               <i class="bi bi-three-dots"></i>
@@ -103,10 +103,10 @@
                 <span style="display: inline-block;" v-if="isFavoriteConversation(selectedConversation)">Retirer</span>
                 <span style="display: inline-block;" v-if="!isFavoriteConversation(selectedConversation)">Ajouter</span>
               </button>
-              <button class="dropdown-item  btn_mobile" @click="toggleReadStatus(selectedConversation)" :title="selectedConversation.unreadCount > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
-                <i class="bi" :class="selectedConversation.unreadCount > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
-                  <span style="display: inline-block;" v-if="selectedConversation.unreadCount > 0">Lu</span>
-                  <span style="display: inline-block;" v-if="!selectedConversation.unreadCount > 0">Non lu</span>
+              <button class="dropdown-item  btn_mobile" @click="toggleReadStatus(selectedConversation)" :title="(selectedConversation.unreadCount ?? 0) > 0 ? 'Marquer comme lu' : 'Marquer comme non lu'">
+                <i class="bi" :class="(selectedConversation.unreadCount ?? 0) > 0 ? 'bi-check2-all' : 'bi-check2'"></i>
+                  <span style="display: inline-block;" v-if="(selectedConversation.unreadCount ?? 0) > 0">Lu</span>
+                  <span style="display: inline-block;" v-if="!selectedConversation.unreadCount">Non lu</span>
               </button>
               <button @click="deleteConversation(selectedConversation)" class="dropdown-item danger">
                 <i class="bi bi-trash"></i>
@@ -221,8 +221,8 @@
     />
 
     <!--Faire offre Modal -->
-    <div v-if="showOfferOption && selectedConversation.productId">
-      <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="selectedConversation"></send_offer>
+    <div v-if="showOfferOption && selectedConversation?.productId">
+      <send_offer @offerSent="handleOfferSent"   @close="showOfferOption = false" :conversation="offerConversation"></send_offer>
     </div>
 
     <div v-if="showCounterOfferOption" class="counter-popup-overlay" @click.self="closeCounterOfferPopup">
@@ -278,7 +278,7 @@
   </main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, getCurrentInstance } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMessagingStore } from '@/store/messaging.store'
@@ -297,6 +297,8 @@ import EmojiPicker from 'vue3-emoji-picker'
 import Cookies from 'js-cookie';
 import 'vue3-emoji-picker/css'
 import messagingService from '@/services/messaging.service';
+import type { IUser } from '@/types/user.types';
+import type { ViewConversation, ViewMessage } from './types';
 import {
   countConversationsByTab,
   filterConversations,
@@ -304,8 +306,20 @@ import {
   getOtherParticipant as getOtherParticipantFor,
   isArchivedConversation,
   isFavoriteConversation as isFavoriteConversationFor,
-  isOwnMessage as isOwnMessageFor
+  isOwnMessage as isOwnMessageFor,
+  type ConversationLike
 } from './conversationHelpers';
+
+interface OfferInfo {
+  offerData: { productId: string };
+  amount: number;
+  message?: string;
+}
+
+interface CheckoutResult {
+  success?: boolean;
+  payment?: { approvalUrl?: string; paypalOrderId?: string };
+}
 
 // Store
 const messagingStore = useMessagingStore()
@@ -314,12 +328,12 @@ const route = useRoute()
 // State
 const activeTab = ref('all')
 const searchQuery = ref('')
-const selectedConversation = ref(null)
-const currentMessages = ref([])
+const selectedConversation = ref<ViewConversation | null>(null)
+const currentMessages = ref<ViewMessage[]>([])
 const newMessage = ref('')
-const attachments = ref([])
-const attachmentView = ref([])
-const openAttachmentView = ref([])
+const attachments = ref<File[]>([])
+const attachmentView = ref<string[]>([])
+const openAttachmentView = ref<string[]>([])
 const openAttachmentIndex = ref(0)
 const openAttachment = ref(false)
 const showNewConversationModal = ref(false)
@@ -328,14 +342,14 @@ const showSalesOptions = ref(false)
 const showBuyOption = ref(false)
 const showOfferOption = ref(false)
 const showCounterOfferOption = ref(false)
-const showConversationMenu = ref(null)
+const showConversationMenu = ref<string | null>(null)
 const showEmojiPicker = ref(false)
-const userInfo = ref(null)
+const userInfo = ref<(IUser & { id?: string }) | null>(null)
 const loading = ref(false)
 const sending = ref(false)
 const declineOffer_popup = ref(false);
 const declineMessage = ref('');
-const counterOfferAmount = ref(null);
+const counterOfferAmount = ref<number | null>(null);
 const counterOfferMessage = ref('');
 const errorMessageCounterOffer = ref('');
 const messagePagination = ref({
@@ -347,31 +361,51 @@ const messagePagination = ref({
 });
 const loadingMoreMessages = ref(false);
 
-const { proxy } = getCurrentInstance()
+const toast = getCurrentInstance()!.proxy!.$func
 
-const currentUserId = () => Cookies.get('id_user') || userInfo.value?.id || userInfo.value?._id || null
+const currentUserId = (): string | null => Cookies.get('id_user') || userInfo.value?.id || userInfo.value?._id || null
+
+const conversationId = (conversation: ViewConversation): string => conversation._id || conversation.id || ''
+
+/** Le produit peut arriver peuplé ou sous forme d'identifiant. */
+const productIdOf = (conversation: { productId?: unknown }): string | undefined =>
+  typeof conversation.productId === 'string'
+    ? conversation.productId
+    : (conversation.productId as { _id?: string } | null | undefined)?._id
+
+const participantIdOf = (participant: unknown): string | undefined =>
+  typeof participant === 'string'
+    ? participant
+    : (participant as { _id?: string; id?: string } | null | undefined)?._id
+      || (participant as { id?: string } | null | undefined)?.id
 
 const filteredConversations = computed(() =>
-  filterConversations(messagingStore.sortedConversations || [], {
+  filterConversations((messagingStore.sortedConversations || []) as ConversationLike[], {
     tab: activeTab.value,
     query: searchQuery.value,
     userId: currentUserId()
-  })
+  }) as ViewConversation[]
 )
-const tabCounts = computed(() => countConversationsByTab(messagingStore.conversations || [], currentUserId()))
 
-const isFavoriteConversation = (conversation) => isFavoriteConversationFor(conversation, currentUserId())
-const isArchived = (conversation) => isArchivedConversation(conversation, currentUserId())
+/** send_offer attend un objet non typé. */
+const offerConversation = computed(() =>
+  (selectedConversation.value ?? undefined) as Record<string, unknown> | undefined
+)
+const tabCounts = computed(() =>
+  countConversationsByTab((messagingStore.conversations || []) as ConversationLike[], currentUserId())
+)
 
+const isFavoriteConversation = (conversation: ConversationLike) => isFavoriteConversationFor(conversation, currentUserId())
+const isArchived = (conversation: ConversationLike) => isArchivedConversation(conversation, currentUserId())
 
-const getOtherParticipant = (conversation) => getOtherParticipantFor(conversation, currentUserId())
+const getOtherParticipant = (conversation: ConversationLike) => getOtherParticipantFor(conversation, currentUserId())
 
 // Methods
-const isOwnMessage = (message) => isOwnMessageFor(message, currentUserId())
+const isOwnMessage = (message: ViewMessage) => isOwnMessageFor(message, currentUserId())
 
-const getAvatar = (user) => avatarHtml(user)
+const getAvatar = (user: unknown) => avatarHtml(user as Parameters<typeof avatarHtml>[0])
 
-const onSelectEmoji = (emoji) => {
+const onSelectEmoji = (emoji: { i: string }) => {
   newMessage.value += emoji.i
   showEmojiPicker.value = false
 }
@@ -382,7 +416,7 @@ const expandOptions = () => {
 const expandSalesOptions = () => {
   showSalesOptions.value = !showSalesOptions.value
 }
-const selectConversation = async (conversation) => {
+const selectConversation = async (conversation: ViewConversation) => {
   selectedConversation.value = conversation
   showConversationOptions.value = false
   showConversationMenu.value = null
@@ -397,16 +431,16 @@ const selectConversation = async (conversation) => {
       hasMore: true
     };
 
-    if (conversation.unreadCount > 0) {
-      await messagingStore.markAsRead(conversation._id || conversation.id)
+    if ((conversation.unreadCount ?? 0) > 0) {
+      await messagingStore.markAsRead(conversationId(conversation))
     }
 
     // Fetch conversation details and messages
-    const response = await messagingStore.fetchConversation(conversation._id || conversation.id)
-    selectedConversation.value = response.conversation
-    selectedConversation.value.otherParticipant = conversation.otherParticipant
-
-    selectedConversation.value.media = response.media || []
+    const response = await messagingStore.fetchConversation(conversationId(conversation))
+    const detail: ViewConversation = response.conversation
+    detail.otherParticipant = conversation.otherParticipant
+    detail.media = response.media || []
+    selectedConversation.value = detail
 
     currentMessages.value = response.messages || conversation.messages || []
     if (response.pagination) {
@@ -469,8 +503,8 @@ const loadMoreMessages = async () => {
     loadingMoreMessages.value = false;
   }
 };
-const handleMessagesScroll = (event) => {
-  const container = event.target;
+const handleMessagesScroll = (event: Event) => {
+  const container = event.target as HTMLElement;
   // Si on est proche du haut (50px), charger plus de messages
   if (container.scrollTop < 50 && messagePagination.value.hasMore && !loadingMoreMessages.value) {
     loadMoreMessages();
@@ -496,15 +530,15 @@ const closeConversation = () => {
   document.getElementsByClassName('chat-area')[0].classList.remove('active');
 
 }
-const toggleConversationMenu = (conversationId) => {
-  showConversationMenu.value = showConversationMenu.value === conversationId ? null : conversationId
+const toggleConversationMenu = (menuConversationId: string) => {
+  showConversationMenu.value = showConversationMenu.value === menuConversationId ? null : menuConversationId
 }
 
-const toggleFavorite = async (conversation) => {
+const toggleFavorite = async (conversation: ViewConversation & { favoritedBy?: string[] }) => {
   try {
     showConversationMenu.value = null;
 
-    await messagingStore.favorite(conversation._id || conversation.id);
+    await messagingStore.favorite(conversationId(conversation));
 
     // Mettre à jour localement
     if (!conversation.favoritedBy) {
@@ -512,7 +546,7 @@ const toggleFavorite = async (conversation) => {
     }
 
     await messagingStore.fetchConversations();
-    selectConversation(selectedConversation.value);
+    if (selectedConversation.value) selectConversation(selectedConversation.value);
 
   } catch (error) {
     console.error('Erreur lors de la mise à jour des favoris:', error);
@@ -556,7 +590,7 @@ const confirmCounterOffer = async () => {
   }
 }
 
-const handleOfferSent = async (offerInfo) => {
+const handleOfferSent = async (offerInfo: OfferInfo) => {
   showOfferOption.value = false
 
   const offerData = {
@@ -568,33 +602,35 @@ const handleOfferSent = async (offerInfo) => {
     offerData
   ).then(response => {
     selectedConversation.value = response.conversation;
-    currentMessages.value.push(response.conversation.lastMessage)
+    if (response.conversation.lastMessage) currentMessages.value.push(response.conversation.lastMessage)
     scrollToBottom()
-  }).catch(error => {
-    proxy.$func.showToastError(error.message || 'Erreur lors de l\'envoi de l\'offre.');
+  }).catch((error: Error) => {
+    toast.showToastError(error.message || 'Erreur lors de l\'envoi de l\'offre.');
 
   })
   await sendMessage()
 }
-const acceptOffer = async (message) => {
+const acceptOffer = async (message: ViewMessage) => {
   try {
     const response = await messagingStore.respondToNegotiation(
-      message.conversation || message.id,
+      message.conversation || message.id || '',
       'accept'
     )
-    proxy.$func.showToastSuccess('Offre acceptée avec succès.');
+    toast.showToastSuccess('Offre acceptée avec succès.');
     selectConversation(response.conversation);
 
   } catch (error) {
-    proxy.$func.showToastError('Erreur lors de l\'acceptation de l\'offre.');
+    toast.showToastError('Erreur lors de l\'acceptation de l\'offre.');
     console.error('Erreur lors de l\'acceptation de l\'offre:', error)
   }
 }
-const declineOffer = async (message, text) => {
+const declineOffer = async (conversation: ViewConversation | null, text?: string) => {
   try {
+    // Le message de refus est le 4e paramètre ; le 3e est le montant d'une contre-offre.
     const response = await messagingStore.respondToNegotiation(
-      message._id || message.id,
+      conversation?._id || conversation?.id || '',
       'reject',
+      undefined,
       text
     )
     declineOffer_popup.value = false;
@@ -605,21 +641,25 @@ const declineOffer = async (message, text) => {
   }
 }
 
-const getOfferStatus = (message) => findOfferStatus(selectedConversation.value, message)
+const getOfferStatus = (message: ViewMessage) => findOfferStatus(selectedConversation.value as ConversationLike | null, message)
 
-const cancelOffer = async (message) => {
+const cancelOffer = async (message: ViewMessage) => {
   try {
+    const conversation = selectedConversation.value
+    if (!conversation?.negotiation || !conversation.productId) {
+      throw new Error('Aucune offre à annuler dans cette conversation')
+    }
     await messagingStore.cancelNegotiation(
-      selectedConversation.value.negotiation.initialPrice,
-      selectedConversation.value.productId._id,
-      selectedConversation.value._id,
-      message._id || message.id
+      conversation.productId._id,
+      conversation.negotiation.initialPrice,
+      conversation._id,
+      message._id || message.id || ''
     )
-    proxy.$func.showToastSuccess('Offre annulée avec succès.');
-    selectConversation(selectedConversation.value);
+    toast.showToastSuccess('Offre annulée avec succès.');
+    selectConversation(conversation);
 
   } catch (error) {
-    proxy.$func.showToastError('Erreur lors de l\'annulation de l\'offre.');
+    toast.showToastError('Erreur lors de l\'annulation de l\'offre.');
     console.error('Erreur lors de l\'annulation de l\'offre:', error)
   }
 }
@@ -632,7 +672,7 @@ const sendMessage = async () => {
     sending.value = true
 
     const response = await messagingStore.sendMessage(
-      selectedConversation.value._id || selectedConversation.value.id,
+      conversationId(selectedConversation.value),
       newMessage.value.trim(),
       attachments.value
     )
@@ -650,10 +690,10 @@ const sendMessage = async () => {
   }
 }
 
-const toggleReadStatus = async (conversation) => {
+const toggleReadStatus = async (conversation: ViewConversation) => {
   try {
-    if (conversation.unreadCount > 0) {
-      await messagingStore.markAsRead(conversation._id || conversation.id)
+    if ((conversation.unreadCount ?? 0) > 0) {
+      await messagingStore.markAsRead(conversationId(conversation))
       conversation.unreadCount = 0
     } else {
       conversation.unreadCount = 1
@@ -672,7 +712,7 @@ const buyOption = () => {
   showBuyOption.value = ! showBuyOption.value
 }
 const sendOfferOption = () => {
-  if(selectedConversation.value.isOwner){
+  if(selectedConversation.value?.isOwner){
     showCounterOfferOption.value = !showCounterOfferOption.value
 
   }else{
@@ -688,7 +728,7 @@ const checkoutProductPrice = computed(() => {
   return accepted ?? conv.productId?.price ?? 0;
 });
 
-const onCheckoutConfirmed = (result) => {
+const onCheckoutConfirmed = (result: CheckoutResult | null | undefined) => {
   showBuyOption.value = false;
 
   // L'URL d'approbation vient de PayPal via l'API : elle pointe donc toujours
@@ -699,7 +739,7 @@ const onCheckoutConfirmed = (result) => {
     if (result?.payment?.paypalOrderId) {
       paymentService.cancelPayPal(result.payment.paypalOrderId).catch(() => {});
     }
-    proxy.$func.showToastError('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
+    toast.showToastError('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
     return;
   }
 
@@ -707,14 +747,17 @@ const onCheckoutConfirmed = (result) => {
   window.location.href = approvalUrl;
 };
 
-const archiveConversation = async (conversation) => {
-  if(isArchived(conversation) == false){
+const isSelected = (conversation: ViewConversation) =>
+  Boolean(selectedConversation.value) &&
+  (selectedConversation.value!._id === conversation._id || selectedConversation.value!.id === conversation.id)
+
+const archiveConversation = async (conversation: ViewConversation) => {
+  if(isArchived(conversation as ConversationLike) == false){
     if (confirm('Êtes-vous sûr de vouloir archiver cette conversation ?')){
       try {
-        await messagingStore.archiveConversation(conversation._id || conversation.id)
+        await messagingStore.archiveConversation(conversationId(conversation))
 
-        if (selectedConversation.value &&
-            (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+        if (isSelected(conversation)) {
           selectedConversation.value = null
         }
 
@@ -732,10 +775,9 @@ const archiveConversation = async (conversation) => {
   }else{
     if (confirm('Êtes-vous sûr de vouloir de désarchiver cette conversation ?')){
     try {
-      await messagingStore.unarchiveConversation(conversation._id || conversation.id)
+      await messagingStore.unarchiveConversation(conversationId(conversation))
 
-      if (selectedConversation.value &&
-          (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+      if (isSelected(conversation)) {
         selectedConversation.value = null
       }
 
@@ -754,19 +796,18 @@ const archiveConversation = async (conversation) => {
   }
 }
 
-const deleteConversation = async (conversation) => {
+const deleteConversation = async (conversation: ViewConversation) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')){
     try {
-      await messagingStore.deleteConversation(conversation._id || conversation.id)
-      const index = messagingStore.conversations.findIndex(c =>
-        (c._id || c.id) === (conversation._id || conversation.id)
+      await messagingStore.deleteConversation(conversationId(conversation))
+      const index = messagingStore.conversations.findIndex((c: ViewConversation) =>
+        conversationId(c) === conversationId(conversation)
       )
       if (index !== -1) {
         messagingStore.conversations.splice(index, 1)
       }
 
-      if (selectedConversation.value &&
-          (selectedConversation.value._id === conversation._id || selectedConversation.value.id === conversation.id)) {
+      if (isSelected(conversation)) {
         selectedConversation.value = null
       }
 
@@ -797,11 +838,11 @@ const closeInformation = () => {
   }
 }
 
-const onNewConversationCreated = (newConversation) => {
+const onNewConversationCreated = (newConversation: ViewConversation) => {
   const newConvId = newConversation.id || newConversation._id;
 
   // Vérifier si la conversation existe déjà par son ID
-  const existingById = messagingStore.conversations.find((conv) => {
+  const existingById = messagingStore.conversations.find((conv: ViewConversation) => {
     const convId = conv.id || conv._id;
     return convId === newConvId;
   });
@@ -814,16 +855,15 @@ const onNewConversationCreated = (newConversation) => {
   }
 
   // Vérifier s'il existe déjà une conversation avec le même utilisateur et le même produit
-  const otherParticipant = getOtherParticipant(newConversation);
-  const newProductId = newConversation.productId?._id || newConversation.productId;
+  const otherParticipant = getOtherParticipant(newConversation as ConversationLike);
+  const newProductId = productIdOf(newConversation);
 
-  const existingConversation = messagingStore.conversations.find((conv) => {
-    const convOtherParticipant = getOtherParticipant(conv);
-    const convProductId = conv.productId?._id || conv.productId;
+  const existingConversation = messagingStore.conversations.find((conv: ViewConversation) => {
+    const convOtherParticipant = getOtherParticipant(conv as ConversationLike);
+    const convProductId = productIdOf(conv);
 
     // Même utilisateur
-    const sameUser = convOtherParticipant?.id === otherParticipant?.id ||
-                     convOtherParticipant?._id === otherParticipant?._id;
+    const sameUser = participantIdOf(convOtherParticipant) === participantIdOf(otherParticipant);
 
     // Même produit (ou tous deux sans produit)
     const sameProduct = (!convProductId && !newProductId) ||
@@ -845,14 +885,15 @@ const onNewConversationCreated = (newConversation) => {
 };
 
 
-const handleImageUpload = (event) => {
-  for (let index = 0; index < event.target?.files?.length; index++) {
-    const file = event.target?.files[index];
+const handleImageUpload = (event: Event) => {
+  const files = (event.target as HTMLInputElement | null)?.files ?? [];
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
     if (file) {
       attachments.value.push(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (e.target?.result) {
+        if (typeof e.target?.result === 'string') {
           attachmentView.value.push(e.target.result);
         }
       };
@@ -867,29 +908,27 @@ const closePopupImgList = () => {
   openAttachmentIndex.value = 0;
 }
 
-const deleteAttachement = (index) => {
+const deleteAttachement = (index: number) => {
   attachments.value.splice(index, 1);
   attachmentView.value.splice(index, 1);
 }
 
-const openImgList = (urls, index) => {
+const openImgList = (urls: string[], index: number) => {
   openAttachmentView.value = [...urls];
   openAttachmentIndex.value = index;
   openAttachment.value = true;
 }
 
-const openImgListPreview = (attachments, index) => {
-  for (let index = 0; index < attachments.length; index++) {
-    const attachment = attachments[index];
-    openAttachmentView.value[index] = attachment;
+const openImgListPreview = (previews: string[], index: number) => {
+  for (let position = 0; position < previews.length; position++) {
+    openAttachmentView.value[position] = previews[position];
   }
   openAttachmentIndex.value = index;
   openAttachment.value = true;
 }
 
 const handleAttachment = () => {
-  const fileInput = document.getElementById('imageUpload');
-  fileInput.click();
+  document.getElementById('imageUpload')?.click();
 }
 
 const scrollToBottom = () => {
@@ -905,7 +944,7 @@ onMounted(async () => {
     loading.value = true
 
     const userResponse = await userService.getMyInformation()
-    userInfo.value = userResponse.user || userResponse.profile
+    userInfo.value = userResponse.user || (userResponse as unknown as { profile?: IUser }).profile || null
 
 
     await messagingStore.fetchConversations()
@@ -914,7 +953,7 @@ onMounted(async () => {
       // /adherents/messages/:id ouvre cette conversation ; sinon, la plus récente.
       const requestedId = route.params.id
       const requested = requestedId
-        ? messagingStore.conversations.find((c) => (c._id || c.id) === requestedId)
+        ? messagingStore.conversations.find((c: ViewConversation) => conversationId(c) === requestedId)
         : null
       await selectConversation(requested || messagingStore.conversations[0])
     }

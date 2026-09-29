@@ -81,6 +81,7 @@ import { computed } from 'vue'
 import { formatMessageTimestamp, messageStatusIcon } from '../conversationHelpers'
 import { avatarHtml } from '../avatar'
 import { attachmentUrl, messageAttachmentUrls } from '../attachments'
+import type { ViewMessage } from '../types'
 
 const props = defineProps<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- message de l'API non typé côté front
@@ -91,9 +92,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'open-attachments': [urls: string[], index: number]
-  'cancel-offer': [message: unknown]
-  'accept-offer': [message: unknown]
-  'decline-offer': [message: unknown]
+  'cancel-offer': [message: ViewMessage]
+  'accept-offer': [message: ViewMessage]
+  'decline-offer': [message: ViewMessage]
 }>()
 
 // Un message système n'a pas de tableau `attachments`.

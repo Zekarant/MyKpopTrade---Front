@@ -166,6 +166,7 @@ import {
   isFavoriteConversation
 } from '../conversationHelpers'
 import { avatarHtml } from '../avatar'
+import type { ViewConversation } from '../types'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- conversations de l'API non typées côté front */
 const props = defineProps<{
@@ -184,12 +185,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:activeTab': [tab: string]
   'update:searchQuery': [query: string]
-  select: [conversation: unknown]
+  select: [conversation: ViewConversation]
   'toggle-menu': [conversationId: string]
-  'toggle-favorite': [conversation: unknown]
-  'toggle-read': [conversation: unknown]
-  archive: [conversation: unknown]
-  delete: [conversation: unknown]
+  'toggle-favorite': [conversation: ViewConversation]
+  'toggle-read': [conversation: ViewConversation]
+  archive: [conversation: ViewConversation]
+  delete: [conversation: ViewConversation]
   'new-conversation': []
 }>()
 
