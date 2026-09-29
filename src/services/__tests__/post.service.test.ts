@@ -71,7 +71,7 @@ describe('post.service — enregistrement d\'une annonce', () => {
     vi.clearAllMocks()
   })
 
-  it('renvoie l\'identifiant de l\'annonce créée et n\'envoie pas de frais de port vides', async () => {
+  it('renvoie l\'identifiant de l\'annonce créée et offre le port quand son coût est laissé vide', async () => {
     client.post.mockResolvedValue({ status: 201, data: { product: { _id: 'p1' } } })
     const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' })
 
@@ -80,7 +80,20 @@ describe('post.service — enregistrement d\'une annonce', () => {
     expect(result).toEqual({ ok: true, productId: 'p1' })
     const form = client.post.mock.calls[0][1] as FormData
     expect(form.getAll('productImages')).toHaveLength(1)
-    expect(JSON.parse(form.get('shippingOptions') as string)).toEqual({ worldwide: false, nationalOnly: true, localPickup: false })
+    expect(JSON.parse(form.get('shippingOptions') as string)).toEqual({
+      worldwide: false, nationalOnly: true, localPickup: false, nationalCost: 0
+    })
+  })
+
+  it('n\'envoie que le coût des modes proposés, sans l\'ancien champ unique', async () => {
+    client.put.mockResolvedValue({ status: 200, data: {} })
+    const shippingOptions = { worldwide: true, nationalOnly: false, localPickup: true, nationalCost: 3, worldwideCost: 9, shippingCost: 3 }
+
+    await postService.updatePost('p1', { ...baseData, shippingOptions, images: [] })
+
+    expect(client.put.mock.calls[0][1].shippingOptions).toEqual({
+      worldwide: true, nationalOnly: false, localPickup: true, worldwideCost: 9
+    })
   })
 
   it('met à jour les champs en JSON, sans les photos, avec le type et l\'acceptation des offres', async () => {

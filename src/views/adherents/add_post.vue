@@ -263,11 +263,21 @@
                             <span>Retrait local</span>
                         </label>
                     </div>
-                    <div>
-                        <label for="shippingCost">Frais de livraison</label>
+                    <div v-if="formData.shippingOptions.nationalOnly">
+                        <label for="nationalCost">Frais de port (nationale)</label>
                         <div class="input-with-addon">
-                            <input type="number" id="shippingCost" v-model.number="formData.shippingOptions.shippingCost" step="0.01" min="0" placeholder="0.00" />
-                            <span class="input-addon">€</span>
+                            <input type="number" id="nationalCost" v-model.number="formData.shippingOptions.nationalCost" step="0.01" min="0" placeholder="0.00" />
+                            <span class="input-addon">{{ currencySymbol }}</span>
+                        </div>
+                        <small class="form-hint">
+                            Laissez vide ou à 0 pour offrir les frais de port.
+                        </small>
+                    </div>
+                    <div v-if="formData.shippingOptions.worldwide">
+                        <label for="worldwideCost">Frais de port (mondiale)</label>
+                        <div class="input-with-addon">
+                            <input type="number" id="worldwideCost" v-model.number="formData.shippingOptions.worldwideCost" step="0.01" min="0" placeholder="0.00" />
+                            <span class="input-addon">{{ currencySymbol }}</span>
                         </div>
                         <small class="form-hint">
                             Laissez vide ou à 0 pour offrir les frais de port.
@@ -322,8 +332,8 @@
                             <h4 class="sell-recap__title">{{ formData.title || 'Sans titre' }}</h4>
                             <p class="sell-recap__price">
                                 {{ formatPrice(formData.price) }}
-                                <span v-if="formData.shippingOptions.shippingCost" class="sell-recap__shipping">
-                                    + {{ formatPrice(formData.shippingOptions.shippingCost) }} de port
+                                <span v-if="recapShippingCost" class="sell-recap__shipping">
+                                    + {{ formatPrice(recapShippingCost) }} de port
                                 </span>
                                 <span v-else class="sell-recap__shipping">· port offert</span>
                             </p>
@@ -550,7 +560,8 @@
                 worldwide: false,
                 nationalOnly: false,
                 localPickup: false,
-                shippingCost: null,
+                nationalCost: null,
+                worldwideCost: null,
             },
         });
 
@@ -580,6 +591,13 @@
 
         if (postDataObjet) {
             formData.value = { ...formData.value, ...postDataObjet, images: [...postDataObjet.images] };
+            // Une annonce antérieure aux coûts par mode n'a que le champ unique `shippingCost`.
+            const { shippingCost: legacyCost, ...shippingOptions } = formData.value.shippingOptions;
+            formData.value.shippingOptions = {
+                ...shippingOptions,
+                nationalCost: shippingOptions.nationalCost ?? legacyCost ?? null,
+                worldwideCost: shippingOptions.worldwideCost ?? legacyCost ?? null,
+            };
             postDataObjet.images.forEach((image: string) => {
                 const API_URL = import.meta.env.VITE_API_URL;
                 const imgTmp = API_URL+image;
@@ -798,6 +816,13 @@
         const conditionLabel = computed(
             () => CONDITION_LABELS[formData.value.condition] ?? formData.value.condition
         );
+        /** Frais de port du mode proposé (national et mondial s'excluent dans ce formulaire). */
+        const recapShippingCost = computed(() => {
+            const shipping = formData.value.shippingOptions;
+            if (shipping.nationalOnly) return shipping.nationalCost;
+            if (shipping.worldwide) return shipping.worldwideCost;
+            return null;
+        });
         const shippingLabel = computed(() => {
             const shipping = formData.value.shippingOptions;
             const modes: string[] = [];
@@ -974,6 +999,7 @@
             typeLabel,
             conditionLabel,
             shippingLabel,
+            recapShippingCost,
             // Prix libre
             pwyw,
             pwywRecap,

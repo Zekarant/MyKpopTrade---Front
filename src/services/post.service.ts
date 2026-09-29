@@ -27,22 +27,20 @@ function saveFailure(error: unknown): PostSaveResult {
 }
 
 /**
- * Frais de port sans les champs vides : l'API valide des nombres, et un coût
- * laissé vide (null) ferait refuser la création de l'annonce.
+ * Frais de port envoyés à l'API : un coût par mode d'envoi proposé, 0 quand le
+ * champ est laissé vide (port offert). Sans coût, l'API refuserait le paiement
+ * par ce mode. L'ancien champ unique `shippingCost` n'est plus envoyé.
  */
 export function cleanShippingOptions(options: PostData['shippingOptions']): PostData['shippingOptions'] {
-  const cleaned: PostData['shippingOptions'] = {
+  const costOrFree = (value: number | null | undefined) =>
+    typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  return {
     worldwide: options.worldwide,
     nationalOnly: options.nationalOnly,
     localPickup: options.localPickup,
+    ...(options.nationalOnly ? { nationalCost: costOrFree(options.nationalCost) } : {}),
+    ...(options.worldwide ? { worldwideCost: costOrFree(options.worldwideCost) } : {}),
   };
-  for (const key of ['nationalCost', 'worldwideCost', 'shippingCost'] as const) {
-    const value = options[key];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      cleaned[key] = value;
-    }
-  }
-  return cleaned;
 }
 
 /** Réponse « session invalide » de l'API. */
