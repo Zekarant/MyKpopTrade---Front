@@ -25,6 +25,9 @@
       </p>
       <p class="message" v-else-if="captureError">
         {{ captureError }}
+        <template v-if="otherPaymentsCancelled">
+          <br />Les autres articles de votre commande n'ont pas été payés : ils restent dans votre panier.
+        </template>
       </p>
       <p class="message" v-else>
         Votre paiement via PayPal a été traité avec succès.
@@ -114,7 +117,7 @@ import { isAxiosError } from 'axios';
 import paymentService from '@/services/payment.service';
 import cartService from '@/services/cart.service';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
-import { pendingApprovalUrl, takeNextPendingPayment } from './pendingPayments';
+import { cancelPendingPayments, pendingApprovalUrl, readPendingPayments, takeNextPendingPayment } from './pendingPayments';
 
 type CaptureErrorBody = { message?: string; error?: string; approvalUrl?: string };
 
@@ -128,6 +131,14 @@ export default defineComponent({
     const payerId = ref<string>('');
     const capturing = ref<boolean>(false);
     const captureError = ref<string>('');
+    const otherPaymentsCancelled = ref(false);
+
+    // Un paiement du panier a échoué : les suivants ne seront pas enchaînés,
+    // on les annule plutôt que de les laisser en attente.
+    const cancelRemainingPayments = async () => {
+      otherPaymentsCancelled.value = readPendingPayments().length > 0;
+      await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
+    };
 
     onMounted(async () => {
       // Récupérer les paramètres de query
@@ -177,6 +188,10 @@ export default defineComponent({
       } else if (token.value && !payerId.value) {
         // Token sans PayerID = l'acheteur n'a pas approuvé (redirection forcée)
         captureError.value = 'Le paiement n\'a pas été approuvé. Veuillez réessayer.';
+      }
+
+      if (captureError.value) {
+        await cancelRemainingPayments();
       }
     });
 
@@ -232,6 +247,7 @@ export default defineComponent({
       payerId,
       capturing,
       captureError,
+      otherPaymentsCancelled,
       goToDashboard,
       goToMessages,
       showContact,

@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   PENDING_PAYPAL_PAYMENTS_KEY,
+  cancelPendingPayments,
   pendingApprovalUrl,
   readPendingPayments,
   savePendingPayments,
@@ -72,6 +73,16 @@ describe('pendingPayments', () => {
     const next = takeNextPendingPayment()
 
     expect(next && pendingApprovalUrl(next)).toBe('https://paypal.test/legacy')
+    expect(localStorage.getItem(PENDING_PAYPAL_PAYMENTS_KEY)).toBeNull()
+  })
+
+  it('annule tous les ordres restants, même quand une annulation échoue (paiement échoué)', async () => {
+    savePendingPayments([payment(2), payment(3)])
+    const cancelOrder = vi.fn().mockRejectedValueOnce(new Error('déjà annulé')).mockResolvedValue(undefined)
+
+    await cancelPendingPayments(cancelOrder)
+
+    expect(cancelOrder.mock.calls).toEqual([['ORDER-2'], ['ORDER-3']])
     expect(localStorage.getItem(PENDING_PAYPAL_PAYMENTS_KEY)).toBeNull()
   })
 })

@@ -4,7 +4,7 @@ import type { PendingPaypalPayment } from './types';
 /**
  * Paiements PayPal d'un checkout panier multi-vendeurs restant à approuver :
  * PayPal n'approuve qu'un ordre à la fois, success.vue enchaîne sur le suivant
- * et cancel.vue annule ceux qui restent (sinon leurs produits restent réservés).
+ * et cancel.vue annule ceux qui restent, comme success.vue quand un paiement échoue.
  */
 export const PENDING_PAYPAL_PAYMENTS_KEY = 'pendingPaypalPayments';
 
@@ -69,4 +69,21 @@ export function takePendingOrderIds(storage: Storage = localStorage): string[] {
     .filter((orderId): orderId is string => Boolean(orderId));
   storage.removeItem(PENDING_PAYPAL_PAYMENTS_KEY);
   return orderIds;
+}
+
+/**
+ * Annule chaque ordre restant ; un échec (ordre déjà annulé ou expiré) n'arrête
+ * pas les suivants. Sans cela, les paiements restent en attente côté back.
+ */
+export async function cancelPendingPayments(
+  cancelOrder: (orderId: string) => Promise<unknown>,
+  storage: Storage = localStorage
+): Promise<void> {
+  for (const orderId of takePendingOrderIds(storage)) {
+    try {
+      await cancelOrder(orderId);
+    } catch {
+      // Déjà annulé ou expiré côté PayPal : rien à faire.
+    }
+  }
 }

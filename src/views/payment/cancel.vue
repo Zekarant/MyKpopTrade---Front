@@ -27,7 +27,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import paymentService from '@/services/payment.service';
-import { takePendingOrderIds } from './pendingPayments';
+import { cancelPendingPayments } from './pendingPayments';
 
 export default defineComponent({
   name: 'PaymentCancel',
@@ -43,7 +43,7 @@ export default defineComponent({
       paymentToken.value = (route.query.token as string) || '';
       source.value = (route.query.source as string) || '';
 
-      // Annuler le paiement et libérer la réservation
+      // Annuler le paiement
       if (paymentToken.value) {
         try {
           await paymentService.cancelPayPal(paymentToken.value);
@@ -52,12 +52,8 @@ export default defineComponent({
         }
       }
 
-      // Annuler les paiements suivants d'un checkout panier, qui réservent encore leurs produits
-      for (const orderId of takePendingOrderIds()) {
-        try {
-          await paymentService.cancelPayPal(orderId);
-        } catch { /* ignore */ }
-      }
+      // Annuler les paiements suivants d'un checkout panier
+      await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
     });
 
 
