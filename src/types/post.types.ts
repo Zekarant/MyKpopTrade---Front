@@ -57,7 +57,6 @@ export interface Post {
   isAvailable?: boolean;
   isSold?: boolean;
   state?: string;
-  isReserved?: boolean;
   allowOffers?: boolean;
   isPayWhatYouWant?: boolean;
   pwywMinPrice?: number | null;
@@ -103,7 +102,6 @@ export interface ProductDetail {
   albumId?: string;
   images: string[];
   isAvailable: boolean;
-  isReserved: boolean;
   isSold?: boolean;
   allowOffers: boolean;
   minOfferPercentage?: number;

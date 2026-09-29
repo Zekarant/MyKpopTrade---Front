@@ -291,6 +291,19 @@ class PostService {
     }
   }
 
+  /**
+   * Remet une annonce en vente. Pour un article vendu à la main, l'API annule
+   * la vente ; elle refuse (409) un article payé via la plateforme.
+   */
+  async relist(id: string): Promise<void> {
+    try {
+      await this.apiClient.put(`/products/${id}`, { isAvailable: true });
+    } catch (error) {
+      await endSessionIfUnauthorized(error);
+      throw error;
+    }
+  }
+
   // Rechercher des posts
   async search(
     query: string,

@@ -7,8 +7,11 @@
         <div v-else-if="dataInitialized" class="post-modal__card">
             <!-- Image section -->
             <div class="post-modal__gallery">
-                <div v-if="dataPost.isReserved" class="post-modal__badge post-modal__badge--reserved">
-                    <i class="bi bi-lock-fill"></i> Réservé
+                <div v-if="dataPost.isSold" class="post-modal__badge post-modal__badge--sold">
+                    <i class="bi bi-bag-check-fill"></i> Vendu
+                </div>
+                <div v-else-if="dataPost.isAvailable === false" class="post-modal__badge post-modal__badge--withdrawn">
+                    <i class="bi bi-eye-slash"></i> Retiré de la vente
                 </div>
                 <ImageCarousel :images="dataPost?.images || []" />
                 <button v-if="!myProfile && sellerId != myId && !isFav" @click="addFav(dataPost._id)" class="post-modal__fav-btn">
@@ -41,8 +44,11 @@
                             <button v-if="!myProfile && !isRoot" @click="showPopupReport=true">
                                 <i class="bi bi-flag"></i> Signaler
                             </button>
-                            <button v-if="myProfile || isRoot" @click="hidePopup()">
+                            <button v-if="(myProfile || isRoot) && !dataPost.isSold" @click="hidePopup()">
                                 <i class="bi bi-cart-check"></i> Vendu
+                            </button>
+                            <button v-if="(myProfile || isRoot) && dataPost.isAvailable === false" @click="showRelistPopup = true">
+                                <i class="bi bi-arrow-counterclockwise"></i> Remettre en vente
                             </button>
                             <button v-if="myProfile || isRoot" @click="showDeletePopup = !showDeletePopup">
                                 <i class="bi bi-trash"></i> Supprimer
@@ -118,7 +124,7 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div v-if="!dataPost.isReserved && !myProfile && !isRoot" class="post-modal__footer">
+                <div v-if="isPurchasable && !myProfile && !isRoot" class="post-modal__footer">
                     <button v-if="canMakeOffer" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
                         <i class="bi bi-tag"></i> Faire une offre
                     </button>
@@ -152,6 +158,19 @@
             <div class="post-modal__confirm-actions">
                 <button class="post-modal__btn post-modal__btn--outline" @click="hidePopup">Annuler</button>
                 <button class="post-modal__btn post-modal__btn--danger" @click="sold(dataPost._id, sellerId)">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relist confirmation -->
+    <div v-if="showRelistPopup" class="post-modal__confirm-overlay" @click.self="showRelistPopup = false">
+        <div class="post-modal__confirm">
+            <i class="bi bi-arrow-counterclockwise post-modal__confirm-icon"></i>
+            <p>Remettre cet article en vente ?</p>
+            <p v-if="dataPost.isSold" class="post-modal__confirm-hint">La vente sera annulée et l'article de nouveau visible par les acheteurs.</p>
+            <div class="post-modal__confirm-actions">
+                <button class="post-modal__btn post-modal__btn--outline" @click="showRelistPopup = false">Annuler</button>
+                <button class="post-modal__btn post-modal__btn--primary" :disabled="relisting" @click="relist(dataPost._id)">Remettre en vente</button>
             </div>
         </div>
     </div>
@@ -221,7 +240,7 @@
 
 
     export default defineComponent({
-        name: "post",
+        name: "PostModal",
         components: {
             ImageCarousel,
             report_card,
@@ -254,6 +273,8 @@
                 isMenuVisible: false,
                 isRoot: false,
                 showSoldPopup: false,
+                showRelistPopup: false,
+                relisting: false,
                 showDeletePopup: false,
                 isFav: false,
                 showPopupReport: false,
@@ -332,6 +353,10 @@
             sellerId(): string | undefined {
                 return sellerIdOf(this.dataSeller);
             },
+            /** Ni vendu, ni retiré de la vente par son vendeur ou la modération. */
+            isPurchasable(): boolean {
+                return !this.dataPost.isSold && this.dataPost.isAvailable !== false;
+            },
             canMakeOffer(): boolean {
                 return acceptsOffers(this.dataPost);
             },
@@ -394,6 +419,19 @@
                 if (response) {
                     this.showSoldPopup = false;
                     this.$emit('sold');
+                }
+            },
+            async relist(id: string) {
+                this.relisting = true;
+                try {
+                    await postService.relist(id);
+                    this.showRelistPopup = false;
+                    this.$func.showToastSuccess('Article remis en vente');
+                    this.$emit('sold');
+                } catch (error) {
+                    this.$func.showToastError(apiErrorMessage(error, 'Impossible de remettre cet article en vente.'));
+                } finally {
+                    this.relisting = false;
                 }
             },
             async deletePost(id: string ){

@@ -149,7 +149,7 @@
   };
 
   export default defineComponent({
-    name: 'admin',
+    name: 'AdminView',
     components: { AdminCommandPalette, AdminSidebar, Nav_bar },
     setup() {
       const route = useRoute();
@@ -161,7 +161,6 @@
         total: 0,
         available: 0,
         sold: 0,
-        reserved: 0,
         suspended: 0,
         newProducts: 0,
         recentSales: 0,

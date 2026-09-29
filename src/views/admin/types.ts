@@ -72,7 +72,6 @@ export interface AdminProductStats {
   total: number;
   available: number;
   sold: number;
-  reserved: number;
   suspended: number;
   newProducts: number;
   recentSales: number;
@@ -155,7 +154,6 @@ export interface ReportTarget {
     productType?: string;
     isSold?: boolean;
     isAvailable?: boolean;
-    isReserved?: boolean;
     rating?: number;
     isHidden?: boolean;
     recipient?: UsernameRef | null;
@@ -223,7 +221,6 @@ export interface AdminProduct {
   condition?: string;
   images: string[];
   isAvailable: boolean;
-  isReserved: boolean;
   isSold: boolean;
   seller: UsernameRef | null;
   createdAt: string;

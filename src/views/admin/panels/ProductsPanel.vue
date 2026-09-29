@@ -12,7 +12,6 @@
         <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Tous les statuts</option>
           <option value="available">Disponibles</option>
-          <option value="reserved">Réservés</option>
           <option value="sold">Vendus</option>
         </select>
         <select v-model="state.type" class="admin__select" @change="commit({ page: 1 })">
@@ -162,7 +161,6 @@
 
       const statusBadge = (product: AdminProduct) => {
         if (product.isSold) return { label: 'Vendu', class: 'admin__badge--success' };
-        if (product.isReserved) return { label: 'Réservé', class: 'admin__badge--info' };
         if (product.isAvailable) return { label: 'Disponible', class: 'admin__badge--accent' };
         return { label: 'Indisponible', class: 'admin__badge' };
       };

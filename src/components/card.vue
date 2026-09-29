@@ -5,9 +5,6 @@
             <div v-if="admin && !data.isAvailable && !data.isSold" class="product-card__badge product-card__badge--draft">
                 Brouillon
             </div>
-            <div v-else-if="data.isReserved" class="product-card__badge product-card__badge--reserved">
-                Réservé
-            </div>
             <ImageCarousel class="product-card__carousel" :images="data.images" />
         </div>
         <div class="product-card__info">
@@ -107,11 +104,6 @@
       &--draft {
         background: var(--warning-light);
         color: var(--warning);
-      }
-
-      &--reserved {
-        background: var(--info-light);
-        color: var(--info);
       }
     }
 

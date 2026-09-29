@@ -77,10 +77,6 @@
                 <dd>{{ productStats.available }}</dd>
               </div>
               <div class="admin__definition">
-                <dt>Réservés</dt>
-                <dd>{{ productStats.reserved }}</dd>
-              </div>
-              <div class="admin__definition">
                 <dt>Vendus</dt>
                 <dd>{{ productStats.sold }}</dd>
               </div>

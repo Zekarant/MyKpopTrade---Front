@@ -75,9 +75,14 @@
   align-items: center;
   gap: var(--space-xs);
 
-  &--reserved {
+  &--sold {
     background: var(--danger);
     color: white;
+  }
+
+  &--withdrawn {
+    background: var(--warning-light);
+    color: var(--warning);
   }
 }
 
@@ -468,6 +473,12 @@
     font-size: var(--font-size-base);
     color: var(--text-primary);
     margin: var(--space-md) 0 var(--space-lg);
+  }
+
+  .post-modal__confirm-hint {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-top: calc(-1 * var(--space-md));
   }
 }
 

@@ -23,6 +23,11 @@
           >Vendus</button>
           <button
             class="collection__tab"
+            :class="{ 'collection__tab--active': activeTab === 'withdrawn' }"
+            @click="switchTab('withdrawn')"
+          >Retirés</button>
+          <button
+            class="collection__tab"
             :class="{ 'collection__tab--active': activeTab === 'favorites' }"
             @click="switchTab('favorites')"
           >Favoris</button>
@@ -40,6 +45,7 @@
           <i class="bi" :class="activeTab === 'favorites' ? 'bi-heart' : 'bi-box-seam'"></i>
           <h3 v-if="activeTab === 'available'">Aucun article en vente</h3>
           <h3 v-else-if="activeTab === 'sold'">Aucun article vendu</h3>
+          <h3 v-else-if="activeTab === 'withdrawn'">Aucune annonce retirée</h3>
           <h3 v-else>Aucun favori</h3>
           <p class="text-muted">Les articles apparaîtront ici</p>
           <button v-if="activeTab === 'available'" class="btn btn-primary" @click="$router.push({ name: 'add_post' })">
@@ -55,12 +61,14 @@
     import authentification from '@/services/authentification.service';
     import postService from '@/services/post.service';
     import Nav_bar from '@/components/adherents/nav_bar.vue';
+    import Grid from '@/components/grid.vue';
     import type { Post } from '@/types/post.types';
 
   export default defineComponent({
-    name: 'collection',
+    name: 'CollectionView',
     components: {
       Nav_bar,
+      Grid,
     },
     setup() {
       const products = ref<Post[]>([]);

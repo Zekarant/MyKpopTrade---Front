@@ -39,7 +39,7 @@ const seller = { _id: ME, username: 'MoiMeme', profilePicture: '/uploads/profile
 export const inventory = {
   products: [
     { _id: 'p1', title: 'Photocard Jungkook Butter', price: 12, currency: 'EUR', condition: 'likeNew', images: ['/uploads/products/p1.jpg'], isAvailable: true, seller },
-    { _id: 'p2', title: 'Album Proof édition standard', price: 35, currency: 'EUR', condition: 'good', images: ['/uploads/products/p2.jpg'], isAvailable: true, isReserved: true, seller },
+    { _id: 'p2', title: 'Album Proof édition standard', price: 35, currency: 'EUR', condition: 'good', images: ['/uploads/products/p2.jpg'], isAvailable: true, seller },
     { _id: 'p3', title: 'Lightstick Army Bomb v4', price: 48, currency: 'EUR', condition: 'new', images: ['/uploads/products/p3.jpg'], isAvailable: true, seller }
   ]
 }
