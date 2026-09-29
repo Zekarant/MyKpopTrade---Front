@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@primevue/themes": "^4.3.6",
+    "@vue/devtools-api": "^8.2.1",
     "@vueuse/core": "^13.9.0",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
@@ -23,7 +24,7 @@
     "date-fns": "^4.1.0",
     "js-cookie": "^3.0.5",
     "mitt": "^3.0.1",
-    "pinia": "^2.2.4",
+    "pinia": "^4.0.3",
     "primevue": "^4.3.6",
     "swiper": "^12.1.4",
     "vue": "^3.5.13",
