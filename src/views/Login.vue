@@ -183,6 +183,7 @@ const OAUTH_ERROR_MESSAGES = {
   discord_auth_failed: "La connexion Discord a échoué. Réessaie.",
   discord_email_unverified: "Vérifie d'abord ton adresse e-mail sur Discord, puis réessaie.",
   server_error: "Erreur serveur pendant la connexion.",
+  oauth_state_invalid: "La connexion a expiré ou a été lancée depuis un autre navigateur. Réessaie.",
 };
 
 export default defineComponent({

@@ -130,7 +130,8 @@ const SOCIAL_LINK_ERRORS: Record<string, string> = {
   discord_link_failed: 'La liaison du compte Discord a échoué. Réessayez.',
   no_token: 'Session expirée. Reconnectez-vous puis réessayez.',
   invalid_token: 'Session expirée. Reconnectez-vous puis réessayez.',
-  user_not_found: 'Compte introuvable. Reconnectez-vous puis réessayez.'
+  user_not_found: 'Compte introuvable. Reconnectez-vous puis réessayez.',
+  oauth_state_invalid: 'La liaison a expiré ou a été lancée depuis un autre navigateur. Réessayez.'
 };
 
 /**
