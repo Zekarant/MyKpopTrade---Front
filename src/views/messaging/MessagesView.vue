@@ -448,6 +448,13 @@ const loadMoreMessages = async () => {
     );
 
     if (response.messages && response.messages.length > 0) {
+      // Mesures AVANT l'insertion : prises après, la hauteur « précédente »
+      // incluait déjà les nouveaux messages, la lecture revenait tout en haut
+      // et relançait aussitôt un chargement, en cascade sur tout l'historique.
+      const container = document.querySelector('.messages-area');
+      const previousScrollHeight = container?.scrollHeight ?? 0;
+      const previousScrollTop = container?.scrollTop ?? 0;
+
       currentMessages.value = [...response.messages, ...currentMessages.value];
 
       if (response.pagination) {
@@ -458,11 +465,8 @@ const loadMoreMessages = async () => {
       }
 
       await nextTick();
-      const container = document.querySelector('.messages-area');
       if (container) {
-        const previousScrollHeight = container.scrollHeight;
-        await nextTick();
-        container.scrollTop = container.scrollHeight - previousScrollHeight;
+        container.scrollTop = container.scrollHeight - previousScrollHeight + previousScrollTop;
       }
     }
   } catch (error) {

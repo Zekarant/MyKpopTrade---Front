@@ -38,6 +38,12 @@ const conversations = [
   }
 ]
 
+const defaultFetchConversation = async (id: string, _params?: { page?: number }): Promise<Record<string, unknown>> => ({
+  conversation: { ...conversations.find((c) => c._id === id) },
+  messages: [],
+  media: []
+})
+
 const store = reactive({
   conversations: [] as typeof conversations,
   sortedConversations: [] as typeof conversations,
@@ -45,11 +51,7 @@ const store = reactive({
     store.conversations = conversations.map((c) => ({ ...c }))
     store.sortedConversations = store.conversations
   }),
-  fetchConversation: vi.fn(async (id: string) => ({
-    conversation: { ...conversations.find((c) => c._id === id) },
-    messages: [],
-    media: []
-  })),
+  fetchConversation: vi.fn(defaultFetchConversation),
   markAsRead: vi.fn(async () => undefined)
 })
 
@@ -136,6 +138,40 @@ describe('MessagesView', () => {
 
     expect(store.fetchConversation).toHaveBeenCalledWith('c-alice')
     wrapper.unmount()
+  })
+
+  it('garde la lecture en place en chargeant les messages plus anciens', async () => {
+    const message = (id: string, minute: number) => ({
+      _id: id,
+      content: `message ${id}`,
+      contentType: 'text',
+      sender: { _id: 'alice', username: 'Alice' },
+      createdAt: `2026-09-28T10:${String(minute).padStart(2, '0')}:00Z`
+    })
+    store.fetchConversation.mockImplementation(async (id: string, params?: { page?: number }) => ({
+      conversation: { ...conversations.find((c) => c._id === id) },
+      messages: params?.page === 2 ? [message('m1', 1), message('m2', 2)] : [message('m3', 3), message('m4', 4), message('m5', 5)],
+      media: [],
+      pagination: { page: params?.page ?? 1, pages: 2, total: 5 }
+    }))
+    const wrapper = await mountView()
+    const area = wrapper.find('.messages-area').element as HTMLElement
+    // jsdom ne calcule aucune mise en page : 100 px par message affiché.
+    let scrollTop = 0
+    Object.defineProperty(area, 'scrollHeight', { get: () => area.querySelectorAll('.message').length * 100 })
+    Object.defineProperty(area, 'scrollTop', { get: () => scrollTop, set: (value: number) => { scrollTop = value } })
+
+    area.scrollTop = 10
+    area.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+
+    expect(store.fetchConversation).toHaveBeenCalledWith('c-alice', expect.objectContaining({ page: 2 }))
+    expect(area.querySelectorAll('.message')).toHaveLength(5)
+    // Deux messages ajoutés au-dessus : la lecture descend d'autant, elle ne
+    // revient pas en haut (ce qui relançait un chargement en cascade).
+    expect(area.scrollTop).toBe(210)
+    wrapper.unmount()
+    store.fetchConversation.mockImplementation(defaultFetchConversation)
   })
 
   it('ouvre la conversation demandée par /adherents/messages/:id', async () => {
