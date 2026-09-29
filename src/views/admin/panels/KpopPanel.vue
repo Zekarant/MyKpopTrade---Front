@@ -62,7 +62,13 @@
             <tr v-for="group in groups" :key="group._id">
               <td>
                 <div class="admin__user-cell">
-                  <img v-if="group.image" :src="group.image" class="admin__thumb" alt="" />
+                  <img
+                    v-if="thumbUrl(group._id, group.profileImage)"
+                    :src="thumbUrl(group._id, group.profileImage)!"
+                    class="admin__thumb"
+                    alt=""
+                    @error="onThumbError(group._id)"
+                  />
                   <span v-else class="admin__avatar-letter">{{ getInitial(group.name) }}</span>
                   {{ group.name }}
                 </div>
@@ -113,7 +119,13 @@
             <tr v-for="album in albums" :key="album._id">
               <td>
                 <div class="admin__user-cell">
-                  <img v-if="album.coverImage" :src="album.coverImage" class="admin__thumb" alt="" />
+                  <img
+                    v-if="thumbUrl(album._id, album.coverImage)"
+                    :src="thumbUrl(album._id, album.coverImage)!"
+                    class="admin__thumb"
+                    alt=""
+                    @error="onThumbError(album._id)"
+                  />
                   <span v-else class="admin__avatar-letter">{{ getInitial(album.name) }}</span>
                   {{ album.name }}
                 </div>
@@ -121,7 +133,7 @@
               <td class="admin__muted">{{ album.artistName || '—' }}</td>
               <td>
                 <span class="admin__badge admin__badge--accent">
-                  {{ ALBUM_TYPE_LABELS[albumType(album)] || albumType(album) || '—' }}
+                  {{ album.albumType ? ALBUM_TYPE_LABELS[album.albumType] || album.albumType : '—' }}
                 </span>
               </td>
               <td class="admin__cell-nowrap admin__muted">{{ formatDate(album.releaseDate) }}</td>
@@ -161,7 +173,7 @@
           </div>
           <div class="admin__field">
             <label for="group-image">Image (URL)</label>
-            <input id="group-image" v-model="groupForm.image" type="url" class="admin__input" placeholder="https://…" />
+            <input id="group-image" v-model="groupForm.profileImage" type="url" class="admin__input" placeholder="https://…" />
           </div>
           <div class="admin__field">
             <label for="group-members">Membres</label>
@@ -199,14 +211,14 @@
           </div>
           <div class="admin__field">
             <label for="album-group">Groupe</label>
-            <select id="album-group" v-model="albumForm.group" class="admin__select">
-              <option value="">— Aucun —</option>
+            <select id="album-group" v-model="albumForm.artistId" class="admin__select" required>
+              <option value="" disabled>— Choisir un groupe —</option>
               <option v-for="group in groups" :key="group._id" :value="group._id">{{ group.name }}</option>
             </select>
           </div>
           <div class="admin__field">
             <label for="album-type">Type</label>
-            <select id="album-type" v-model="albumForm.type" class="admin__select">
+            <select id="album-type" v-model="albumForm.albumType" class="admin__select">
               <option value="">—</option>
               <option v-for="(label, value) in ALBUM_TYPE_LABELS" :key="value" :value="value">{{ label }}</option>
             </select>
@@ -259,29 +271,30 @@
 <script lang="ts">
   import { defineComponent, onMounted, ref } from 'vue';
   import albumService, { type KpopAlbum } from '@/services/album.service';
-  import groupService, { type KpopGroup } from '@/services/group.service';
+  import groupService, { type GroupFollower, type KpopGroup } from '@/services/group.service';
   import { func } from '@/function';
   import { apiErrorMessage, formatDate, getInitial } from '../adminFormat';
-  import type { AdminAlbum, CatalogEntity, UsernameRef } from '../types';
+  import {
+    ALBUM_TYPE_LABELS,
+    albumFormFrom,
+    buildAlbumPayload,
+    buildGroupPayload,
+    groupFormFrom
+  } from '../kpopForms';
+  import type { CatalogEntity } from '../types';
 
   const CATALOG_LIMIT = 2000;
   const SEARCH_DEBOUNCE_MS = 300;
   const FOLLOWERS_PAGE_SIZE = 50;
-
-  const ALBUM_TYPE_LABELS: Record<string, string> = {
-    mini: 'Mini album',
-    full: 'Full album',
-    single: 'Single',
-    repackage: 'Repackage',
-    special: 'Special'
-  };
+  // Images par défaut du modèle back (`/images/groups/…`, `/images/albums/…`) : servies par aucune des deux apps.
+  const DEFAULT_IMAGE_PREFIX = '/images/';
 
   export default defineComponent({
     name: 'KpopPanel',
     setup() {
       const subTab = ref<'groups' | 'albums'>('groups');
       const groups = ref<KpopGroup[]>([]);
-      const albums = ref<AdminAlbum[]>([]);
+      const albums = ref<KpopAlbum[]>([]);
       const groupSearch = ref('');
       const albumSearch = ref('');
       const loading = ref(false);
@@ -290,13 +303,21 @@
       const showGroupForm = ref(false);
       const showAlbumForm = ref(false);
       const editing = ref<CatalogEntity | null>(null);
-      const groupForm = ref({ name: '', image: '', membersRaw: '' });
-      const albumForm = ref({ name: '', group: '', type: '', releaseDate: '', coverImage: '' });
+      const groupForm = ref(groupFormFrom());
+      const albumForm = ref(albumFormFrom());
 
       const followersGroup = ref<KpopGroup | null>(null);
-      const followers = ref<UsernameRef[]>([]);
+      const followers = ref<GroupFollower[]>([]);
+      const brokenThumbs = ref<Set<string>>(new Set());
 
-      const albumType = (album: AdminAlbum): string => album.albumType || album.type || '';
+      const thumbUrl = (id: string, url?: string): string | null => {
+        if (!url || url.startsWith(DEFAULT_IMAGE_PREFIX) || brokenThumbs.value.has(id)) return null;
+        return url;
+      };
+
+      const onThumbError = (id: string) => {
+        brokenThumbs.value = new Set(brokenThumbs.value).add(id);
+      };
 
       const load = async () => {
         loading.value = true;
@@ -340,40 +361,19 @@
         editing.value = entity ?? null;
 
         if (subTab.value === 'groups') {
-          groupForm.value = entity
-            ? {
-                name: entity.name,
-                image: entity.image || '',
-                membersRaw: (entity.members || []).join(', ')
-              }
-            : { name: '', image: '', membersRaw: '' };
+          groupForm.value = groupFormFrom(entity);
           showGroupForm.value = true;
           return;
         }
 
-        albumForm.value = entity
-          ? {
-              name: entity.name,
-              group: (typeof entity.group === 'object' ? entity.group?._id : entity.group) || '',
-              type: albumType(entity),
-              releaseDate: entity.releaseDate ? String(entity.releaseDate).substring(0, 10) : '',
-              coverImage: entity.coverImage || ''
-            }
-          : { name: '', group: '', type: '', releaseDate: '', coverImage: '' };
+        albumForm.value = albumFormFrom(entity);
         showAlbumForm.value = true;
       };
 
       const submitGroup = async () => {
         if (submitting.value) return;
 
-        const payload: Partial<KpopGroup> & { name: string } = { name: groupForm.value.name.trim() };
-        if (groupForm.value.image) payload.image = groupForm.value.image;
-        if (groupForm.value.membersRaw.trim()) {
-          payload.members = groupForm.value.membersRaw
-            .split(',')
-            .map((member) => member.trim())
-            .filter(Boolean);
-        }
+        const payload = buildGroupPayload(groupForm.value);
 
         submitting.value = true;
         try {
@@ -396,20 +396,20 @@
       const submitAlbum = async () => {
         if (submitting.value) return;
 
-        const payload: Partial<KpopAlbum> & { name: string } = { name: albumForm.value.name.trim() };
-        if (albumForm.value.group) payload.group = albumForm.value.group;
-        if (albumForm.value.type) payload.type = albumForm.value.type;
-        if (albumForm.value.releaseDate) payload.releaseDate = albumForm.value.releaseDate;
-        if (albumForm.value.coverImage) payload.coverImage = albumForm.value.coverImage;
+        const payload = buildAlbumPayload(albumForm.value);
+        const { artistId } = payload;
+        if (!editing.value && !artistId) {
+          func.showToastError('Choisissez le groupe de l\'album');
+          return;
+        }
 
         submitting.value = true;
         try {
           if (editing.value) {
             await albumService.updateAlbum(editing.value._id, payload);
             func.showToastSuccess('Album modifié');
-          } else {
-            // createAlbum exige `group` alors que le formulaire le laisse facultatif : payload envoyé tel quel.
-            await albumService.createAlbum(payload as Partial<KpopAlbum> & { name: string; group: string });
+          } else if (artistId) {
+            await albumService.createAlbum({ ...payload, artistId });
             func.showToastSuccess('Album créé');
           }
           showAlbumForm.value = false;
@@ -447,9 +447,10 @@
 
       const viewFollowers = async (group: KpopGroup) => {
         followersGroup.value = group;
+        followers.value = [];
         try {
-          const data = await groupService.getFollowers(group._id, 1, FOLLOWERS_PAGE_SIZE);
-          followers.value = data.followers || data || [];
+          const { followers: loaded } = await groupService.getFollowers(group._id, 1, FOLLOWERS_PAGE_SIZE);
+          followers.value = loaded;
         } catch {
           followers.value = [];
         }
@@ -473,7 +474,8 @@
         albumForm,
         followersGroup,
         followers,
-        albumType,
+        thumbUrl,
+        onThumbError,
         formatDate,
         getInitial,
         debouncedSearchGroups,

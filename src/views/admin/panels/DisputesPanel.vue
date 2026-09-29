@@ -208,8 +208,7 @@
             limit: PAGE_SIZE
           });
           disputes.value = data.disputes || [];
-          // L'API renvoie `pages` et non `totalPages` : la pagination reste masquée, comme avant le typage.
-          pagination.value = { totalPages: 1, ...data.pagination };
+          pagination.value = { totalPages: data.pagination?.pages || 1 };
         } catch (error) {
           func.showToastError(apiErrorMessage(error, 'Impossible de charger les litiges'));
           disputes.value = [];

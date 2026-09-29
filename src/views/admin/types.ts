@@ -250,7 +250,4 @@ export interface DeletionRequest {
   createdAt: string;
 }
 
-/** Album tel que renvoyé par l'API : le modèle expose `artistName` et `albumType`. */
-export type AdminAlbum = KpopAlbum & { artistName?: string; albumType?: string };
-
-export type CatalogEntity = Partial<KpopGroup> & Partial<AdminAlbum> & { _id: string; name: string };
+export type CatalogEntity = Partial<KpopGroup> & Partial<KpopAlbum> & { _id: string; name: string };

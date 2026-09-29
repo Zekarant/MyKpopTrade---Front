@@ -2,14 +2,31 @@ import { type AxiosInstance } from 'axios';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 
+/** Valeurs acceptées par l'enum `albumType` du modèle back. */
+export type AlbumType = 'album' | 'single' | 'ep' | 'compilation';
+
 export interface KpopAlbum {
   _id: string;
   name: string;
-  group?: string | { _id: string; name: string };
+  /** Peuplé (`name`, `profileImage`) par les routes de liste et de recherche. */
+  artistId?: string | { _id: string; name: string; profileImage?: string };
+  artistName?: string;
+  albumType?: AlbumType;
+  releaseDate?: string | null;
+  coverImage?: string;
+  totalTracks?: number;
+}
+
+/** Corps admin de création / mise à jour : le back résout `artistName` à partir de `artistId`. */
+export interface AlbumPayload {
+  name?: string;
+  artistId?: string;
+  albumType?: AlbumType;
   releaseDate?: string;
   coverImage?: string;
-  type?: string;
 }
+
+export type CreateAlbumPayload = AlbumPayload & { name: string; artistId: string };
 
 class AlbumService {
   private apiClient: AxiosInstance;
@@ -43,12 +60,12 @@ class AlbumService {
   }
 
   // Admin
-  async createAlbum(payload: Partial<KpopAlbum> & { name: string; group: string }): Promise<KpopAlbum> {
+  async createAlbum(payload: CreateAlbumPayload): Promise<KpopAlbum> {
     const response = await this.apiClient.post('/', payload);
     return response.data?.album || response.data;
   }
 
-  async updateAlbum(albumId: string, payload: Partial<KpopAlbum>): Promise<KpopAlbum> {
+  async updateAlbum(albumId: string, payload: AlbumPayload): Promise<KpopAlbum> {
     const response = await this.apiClient.put(`/${albumId}`, payload);
     return response.data?.album || response.data;
   }
