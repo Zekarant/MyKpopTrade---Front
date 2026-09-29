@@ -12,6 +12,7 @@ async function openMessaging(page: Page) {
   await setupSession(page, { now: NOW, userId: ME })
   await mockApi(page, (path, method, url) => {
     if (path === '/api/users/me' || path === '/api/auth/profile') return currentUser
+    if (path === '/api/messaging/attachment-token') return { token: 'test-attachment', expiresIn: 3600 }
     if (path === '/api/messaging/' || path === '/api/messaging') {
       return { conversations, pagination: { page: 1, pages: 1, total: conversations.length } }
     }

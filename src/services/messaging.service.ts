@@ -4,7 +4,8 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { AxiosInstance } from 'axios';
 import authentificationService  from '@/services/authentification.service';
-import { createApiClient, getAccessToken } from '@/services/http';
+import { createApiClient } from '@/services/http';
+import { attachmentTokenParam } from '@/services/attachmentAccess';
 
 import type {
   ConversationListResponse,
@@ -232,10 +233,7 @@ class MessagingService {
       throw new Error('ID de message et nom de la pièce jointe requis');
     }
 
-    const token = getAccessToken();
-    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-
-    return `${API_BASE_URL}/messaging/messages/${messageId}/attachments/${attachmentName}${tokenParam}`;
+    return `${API_BASE_URL}/messaging/messages/${messageId}/attachments/${attachmentName}${attachmentTokenParam()}`;
   }
 
   // Initier une négociation
