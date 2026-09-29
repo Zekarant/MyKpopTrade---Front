@@ -72,28 +72,15 @@ export interface NegotiationStatus {
   expiresAt?: string;
 }
 
-export interface PayWhatYouWantStatus {
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
-  minimumPrice: number;
-  maximumPrice?: number;
-  proposedPrice?: number;
-  proposedBy?: string;
-  proposedAt?: string;
-  acceptedPrice?: number;
-  acceptedAt?: string;
-  expiresAt?: string;
-}
-
 export interface Conversation {
   _id: string;
   participants: IUserParticipant[];
   productId?: ProductReference | null;
   isActive: boolean;
-  type: 'general' | 'product_inquiry' | 'negotiation' | 'pay_what_you_want';
+  type: 'general' | 'product_inquiry' | 'negotiation';
   status: 'open' | 'closed' | 'archived' | 'pending' | 'accepted' | 'rejected' | 'expired' | 'completed';
   createdBy: string;
   negotiation?: NegotiationStatus;
-  payWhatYouWant?: PayWhatYouWantStatus;
   lastMessageAt?: string;
   createdAt: string;
   updatedAt: string;
