@@ -55,8 +55,14 @@
                 <span v-if="detail.target.meta?.isSuspended" class="admin__badge admin__badge--warning">
                   Compte déjà suspendu
                 </span>
+                <span v-if="detail.target.meta?.attachmentsCount">
+                  <i class="bi bi-paperclip"></i> {{ detail.target.meta.attachmentsCount }} pièce(s) jointe(s)
+                </span>
+                <span v-if="detail.target.meta?.isDeleted" class="admin__badge admin__badge--warning">
+                  Supprimé par son auteur
+                </span>
                 <span class="admin__muted">
-                  {{ detail.target.type === 'user' ? 'inscrit' : 'publié' }} le
+                  {{ detail.target.type === 'user' ? 'inscrit' : detail.target.type === 'message' ? 'envoyé' : 'publié' }} le
                   {{ formatDate(detail.target.createdAt) }}
                 </span>
               </div>
@@ -126,6 +132,12 @@
                 La majorité des signalements de ce compte ont été rejetés.
               </p>
             </div>
+          </div>
+
+          <!-- Copie prise au signalement : l'auteur a pu supprimer son message depuis. -->
+          <div v-if="detail.report.reportedContent" class="admin__field" style="margin-top: var(--space-md)">
+            <label>Message au moment du signalement</label>
+            <p style="margin: 0; white-space: pre-wrap">{{ detail.report.reportedContent }}</p>
           </div>
 
           <div v-if="detail.report.details" class="admin__field" style="margin-top: var(--space-md)">

@@ -1,6 +1,6 @@
 <template>
     <div @click="close" class="report-overlay">
-        <div @click="$event.stopPropagation()" class="report-modal">
+        <div @click="$event.stopPropagation()" class="report-modal" role="dialog" aria-modal="true" :aria-label="title">
             <div class="report-modal__header">
                 <div class="report-modal__icon">
                     <i class="bi bi-exclamation-triangle"></i>
@@ -61,7 +61,8 @@
         product: 'Signaler cet article',
         rating: 'Signaler cet avis',
         user: 'Signaler ce profil',
-        post: 'Signaler cette publication'
+        post: 'Signaler cette publication',
+        message: 'Signaler ce message'
     };
 
     export default {

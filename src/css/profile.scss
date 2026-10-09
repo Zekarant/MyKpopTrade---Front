@@ -23,6 +23,7 @@
 .profile-banner-wrap__actions {
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-sm);
   margin-top: var(--space-sm);
 }
 

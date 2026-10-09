@@ -24,7 +24,8 @@ export const REPORT_TARGET_LABELS: Record<string, string> = {
   product: 'Produit',
   rating: 'Avis',
   user: 'Profil',
-  post: 'Publication'
+  post: 'Publication',
+  message: 'Message'
 };
 
 export const REPORT_STATUS_LABELS: Record<string, string> = {

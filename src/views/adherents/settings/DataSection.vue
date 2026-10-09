@@ -19,6 +19,8 @@
     </div>
   </section>
 
+  <BlockedUsersCard />
+
   <section class="settings-card">
     <h3 class="settings-card__title"><i class="bi bi-database"></i> Mes données</h3>
     <div class="settings-card__body">
@@ -75,6 +77,7 @@
 import { ref, watch } from 'vue';
 import { func } from '@/function';
 import userService from '@/services/user.service';
+import BlockedUsersCard from './BlockedUsersCard.vue';
 import { api, apiMessage, formatDate, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 

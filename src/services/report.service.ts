@@ -2,7 +2,9 @@ import { type AxiosInstance, type AxiosResponse } from 'axios';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 
-export type ReportTargetType = 'product' | 'rating' | 'user' | 'post';
+export type ReportTargetType = 'product' | 'rating' | 'user' | 'post' | 'message';
+
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'rejected';
 
 export interface Report {
   _id: string;
@@ -10,12 +12,14 @@ export interface Report {
   targetId: string;
   reason: string;
   details?: string;
-  status: string;
+  status: ReportStatus;
+  adminNotes?: string;
   createdAt: string;
 }
 
 export interface ReportsResponse {
   reports: Report[];
+  pagination: { page: number; limit: number; totalItems: number; totalPages: number };
 }
 
 class ReportService {
@@ -39,8 +43,8 @@ class ReportService {
     return response.data;
   }
 
-  async getMyReports(): Promise<ReportsResponse> {
-    const response: AxiosResponse<ReportsResponse> = await this.apiClient.get('/me');
+  async getMyReports(page = 1): Promise<ReportsResponse> {
+    const response: AxiosResponse<ReportsResponse> = await this.apiClient.get('/me', { params: { page } });
     return response.data;
   }
 

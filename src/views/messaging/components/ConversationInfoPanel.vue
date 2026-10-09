@@ -43,6 +43,15 @@
             </span>
           </div>
         </div>
+
+        <div v-if="other?._id" class="user-actions">
+          <BlockUserButton
+            :user-id="other._id"
+            :username="other.username"
+            :initial-status="blockStatus"
+            @change="(status) => emit('block-change', status)"
+          />
+        </div>
       </div>
 
       <!-- Product/Transaction Context -->
@@ -109,6 +118,8 @@
 import { computed } from 'vue'
 import { mediaUrl } from '@/utils/format'
 import UserAvatar from '@/components/UserAvatar.vue'
+import BlockUserButton from '@/components/adherents/BlockUserButton.vue'
+import type { BlockStatus } from '@/services/block.service'
 import {
   formatLongDate,
   getOtherParticipant,
@@ -140,7 +151,14 @@ const stats = computed(() => participantStats(other.value))
 const emit = defineEmits<{
   close: []
   'open-media': [urls: string[], index: number]
+  'block-change': [status: BlockStatus]
 }>()
+
+/** Situation fournie par le détail de la conversation : le bouton n'a pas à la redemander. */
+const blockStatus = computed<BlockStatus>(() => ({
+  isBlocked: Boolean(props.conversation.isBlocked),
+  blockedByMe: Boolean(props.conversation.blockedByMe)
+}))
 
 const product = computed(() => props.conversation?.productContext || props.conversation?.productId)
 const sharedMedia = computed<{ messageId: string; filename: string }[]>(() => props.conversation?.media ?? [])

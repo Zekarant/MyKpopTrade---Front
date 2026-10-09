@@ -12,6 +12,7 @@
                 >
                   <i class="bi bi-flag"></i> Signaler ce profil
                 </button>
+                <BlockUserButton :user-id="profileUserId" :username="profile.username" />
               </div>
             </div>
             <segment_profil @partDisplayed="(part: string) => (partView = part)"></segment_profil>
@@ -75,6 +76,7 @@
     import banner_profil from '@/components/adherents/banner.vue';
     import segment_profil from '@/components/adherents/segment_profil.vue';
     import report_card from '@/components/report_card.vue';
+    import BlockUserButton from '@/components/adherents/BlockUserButton.vue';
     import authentificationService from '@/services/authentification.service';
     import { API_URL } from '@/config/api';
     import { createApiClient } from '@/services/http';

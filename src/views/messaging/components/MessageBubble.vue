@@ -71,17 +71,33 @@
                   <div v-if="own" class="message-status">
                     <i class="bi" :class="messageStatusIcon(message)"></i>
                   </div>
+                  <button
+                    v-if="isReportable"
+                    type="button"
+                    class="message-report-btn"
+                    title="Signaler ce message"
+                    @click="showReport = true"
+                  >
+                    <i class="bi bi-flag"></i> Signaler
+                  </button>
                 </div>
               </div>
             </div>
+            <report_card
+              v-if="showReport"
+              type="message"
+              :id="message._id || message.id || ''"
+              @closeReport="showReport = false"
+            ></report_card>
           </div>
 </template>
 
 <script setup lang="ts">
 /** Un message du fil : texte, pièces jointes et, pour une offre, son statut et ses actions. */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { formatMessageTimestamp, messageStatusIcon } from '../conversationHelpers'
 import UserAvatar from '@/components/UserAvatar.vue'
+import report_card from '@/components/report_card.vue'
 import { attachmentUrl, messageAttachmentUrls } from '../attachments'
 import type { ViewMessage } from '../types'
 
@@ -101,6 +117,13 @@ const emit = defineEmits<{
 
 // Un message système n'a pas de tableau `attachments`.
 const attachments = computed<string[]>(() => props.message?.attachments ?? [])
+
+const showReport = ref(false)
+// Seuls les messages écrits par l'interlocuteur se signalent : le back refuse les siens,
+// et les messages d'offre ou système sont générés par le serveur.
+const isReportable = computed(() =>
+  !props.own && props.message.contentType === 'text' && !props.message.isDeleted && Boolean(props.message._id || props.message.id)
+)
 </script>
 
 <style lang="scss" scoped>
