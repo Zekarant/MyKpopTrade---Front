@@ -4,6 +4,31 @@ import messagingService from '@/services/messaging.service';
 import type { Conversation, Message, NegotiationRequest } from '@/types/messaging.types';
 import { currentUserId } from '@/services/session.cookies';
 
+export interface ReadReceipt {
+  conversationId: string;
+  readerId: string;
+  /** Absent : tous les messages que le lecteur n'avait pas écrits. */
+  messageIds?: string[];
+}
+
+/**
+ * Ajoute le lecteur à `readBy` des messages concernés. Exportée pour la vue de
+ * messagerie, qui garde sa propre liste de messages affichés.
+ */
+export function applyReadReceipt(
+  messages: Pick<Message, '_id' | 'sender' | 'readBy'>[],
+  receipt: ReadReceipt
+): void {
+  for (const message of messages) {
+    const isConcerned = message.sender?._id !== receipt.readerId &&
+      (!receipt.messageIds || receipt.messageIds.includes(message._id));
+    if (!isConcerned) continue;
+    // Message affiché avant d'avoir été relu par l'API : readBy peut manquer.
+    message.readBy = message.readBy ?? [];
+    if (!message.readBy.includes(receipt.readerId)) message.readBy.push(receipt.readerId);
+  }
+}
+
 interface MessagingState {
   conversations: Conversation[];
   currentConversation: Conversation | null;
@@ -361,36 +386,54 @@ export const useMessagingStore = defineStore('messaging', {
       this.messages = [];
     },
 
-    // WebSocket handlers pour les mises à jour en temps réel
+    // Événements temps réel (SSE), branchés par src/store/realtimeSync.ts
     handleNewMessage(message: Message) {
-      // Si le message appartient à la conversation actuelle
-      if (this.currentConversation && message.conversation === this.currentConversation._id) {
+      // Un message peut arriver deux fois : envoyé depuis cet onglet (déjà
+      // ajouté par sendMessage) puis reçu par le flux, commun à tous les onglets.
+      const isInCurrentConversation = this.currentConversation?._id === message.conversation;
+      if (isInCurrentConversation && !this.messages.some(m => m._id === message._id)) {
         this.messages.push(message);
       }
 
-      // Mettre à jour la conversation dans la liste
       const conversation = this.conversations.find(c => c._id === message.conversation);
-      if (conversation) {
-        conversation.lastMessage = message;
-        conversation.lastMessageAt = message.createdAt;
+      if (!conversation) {
+        // Nouvelle conversation (ou hors de la page chargée) : on ne recharge la
+        // liste que si elle a déjà été chargée, sinon rien ne l'affiche.
+        if (this.conversations.length > 0) this.fetchConversations().catch(() => {});
+        return;
+      }
+      if (conversation.lastMessage?._id === message._id) return;
 
-        // Incrémenter le compteur de non-lus si ce n'est pas notre message
+      // lastMessageAt fait remonter la conversation (cf. sortedConversations).
+      conversation.lastMessage = message;
+      conversation.lastMessageAt = message.createdAt;
 
-        const myId = currentUserId() || '';
-        if (message.sender._id !== myId && !message.readBy.includes(myId)) {
-          conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+      const myId = currentUserId() || '';
+      if (message.sender?._id !== myId && !message.readBy.includes(myId)) {
+        conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+        this.updateUnreadCount();
+      }
+    },
+
+    /** Accusé de lecture : `messageIds` absent = tout ce que le lecteur n'avait pas écrit. */
+    handleConversationRead(data: ReadReceipt) {
+      if (this.currentConversation?._id === data.conversationId) {
+        applyReadReceipt(this.messages, data);
+      }
+
+      // Lu depuis un autre onglet ou appareil : plus rien de non lu ici.
+      if (data.readerId === currentUserId() && !data.messageIds) {
+        const conversation = this.conversations.find(c => c._id === data.conversationId);
+        if (conversation) {
+          conversation.unreadCount = 0;
           this.updateUnreadCount();
         }
       }
     },
 
-    handleMessageRead(data: { conversationId: string; userId: string; messageIds: string[] }) {
-      // Mettre à jour le statut de lecture des messages
-      this.messages.forEach(message => {
-        if (data.messageIds.includes(message._id) && !message.readBy.includes(data.userId)) {
-          message.readBy.push(data.userId);
-        }
-      });
+    /** Total calculé par l'API, toutes conversations confondues (et pas seulement la page chargée). */
+    applyUnreadCount(total: number) {
+      this.unreadCount = total;
     }
   }
 });

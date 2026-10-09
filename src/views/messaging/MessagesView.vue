@@ -146,12 +146,18 @@
               <img @click="openImgListPreview(attachmentView, index)" :src="attachement" alt="Attachment" class="attachment-image">
             </div>
           </div>
+          <p v-if="isConversationBlocked" class="composer-blocked-notice" role="status">
+            <i class="bi bi-slash-circle"></i>
+            {{ selectedConversation.blockedByMe
+              ? 'Vous avez bloqué ce membre : débloquez-le depuis le panneau d\'informations pour lui écrire à nouveau.'
+              : 'Vous ne pouvez plus envoyer de messages dans cette conversation.' }}
+          </p>
           <div class="input-container">
 
             <!-- input caché + bouton -->
             <input type="file" id="imageUpload" @change="handleImageUpload" accept="image/*" hidden multiple  ref="fileInput"/>
 
-            <button class="attach-btn" @click="handleAttachment">
+            <button class="attach-btn" @click="handleAttachment" :disabled="isConversationBlocked">
               <i class="bi bi-paperclip"></i>
             </button>
             <div class="input-wrapper">
@@ -161,16 +167,16 @@
                 @keyup.enter="sendMessage"
                 placeholder="Tapez un message..."
                 class="message-input"
-                :disabled="sending"
+                :disabled="sending || isConversationBlocked"
               />
             </div>
-            <button class="emoji-btn" @click.stop="showEmojiPicker = !showEmojiPicker">
+            <button class="emoji-btn" @click.stop="showEmojiPicker = !showEmojiPicker" :disabled="isConversationBlocked">
               <i class="bi bi-emoji-smile"></i>
             </button>
             <button
               class="send-btn"
               @click="sendMessage"
-              :disabled="!newMessage.trim() || sending"
+              :disabled="!newMessage.trim() || sending || isConversationBlocked"
             >
               <i class="bi" :class="sending ? 'bi-arrow-clockwise' : 'bi-send'"></i>
             </button>
@@ -194,6 +200,7 @@
       :user-id="currentUserId()"
       @close="closeInformation"
       @open-media="openImgList"
+      @block-change="onBlockChange"
     />
 
     <!-- Composant send_message pour nouvelle conversation -->
@@ -284,7 +291,7 @@
 import { ref, computed, onMounted, nextTick, getCurrentInstance } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEventListener } from '@vueuse/core'
-import { useMessagingStore } from '@/store/messaging.store'
+import { useMessagingStore, applyReadReceipt, type ReadReceipt } from '@/store/messaging.store'
 import { useUserStore } from '@/store/user.store'
 import { currentUserId as sessionUserId } from '@/services/session.cookies'
 import paymentService from '@/services/payment.service'
@@ -304,6 +311,7 @@ const EmojiPicker = defineAsyncComponent(() =>
   Promise.all([import('vue3-emoji-picker'), import('vue3-emoji-picker/css')]).then(([m]) => m.default)
 )
 import messagingService from '@/services/messaging.service';
+import { BLOCKED_ERROR_CODE, type BlockStatus } from '@/services/block.service';
 import type { ViewConversation, ViewMessage } from './types';
 import {
   countConversationsByTab,
@@ -681,17 +689,32 @@ const sendMessage = async () => {
       attachments.value
     )
 
-    currentMessages.value.push(response.data)
+    // Le flux temps réel a pu l'afficher avant la réponse HTTP.
+    if (!currentMessages.value.some((m) => m._id === response.data._id)) currentMessages.value.push(response.data)
     newMessage.value = ''
     attachments.value = []
     attachmentView.value = []
     await nextTick()
     scrollToBottom()
   } catch (error) {
+    // Blocage posé par l'interlocuteur depuis l'ouverture : on désactive la saisie.
+    if ((error as { code?: string } | null)?.code === BLOCKED_ERROR_CODE && selectedConversation.value) {
+      selectedConversation.value.isBlocked = true
+      toast.showToastError('Vous ne pouvez plus envoyer de messages dans cette conversation.')
+    }
     console.error('Erreur lors de l\'envoi du message:', error)
   } finally {
     sending.value = false
   }
+}
+
+/** Le blocage se gère depuis le panneau d'informations ; la saisie suit son état. */
+const isConversationBlocked = computed(() => Boolean(selectedConversation.value?.isBlocked))
+
+const onBlockChange = (status: BlockStatus) => {
+  if (!selectedConversation.value) return
+  selectedConversation.value.isBlocked = status.isBlocked
+  selectedConversation.value.blockedByMe = status.blockedByMe
 }
 
 const toggleReadStatus = async (conversation: ViewConversation) => {
@@ -941,6 +964,34 @@ const scrollToBottom = () => {
     container.scrollTop = container.scrollHeight
   }
 }
+
+const isOpenConversation = (id: string) =>
+  Boolean(selectedConversation.value) && conversationId(selectedConversation.value!) === id
+
+const onRealtimeMessage = async (message: ViewMessage) => {
+  // Déjà affiché : envoyé depuis cet onglet, ou reçu avant la réponse de l'envoi.
+  if (!isOpenConversation(message.conversation) || currentMessages.value.some((m) => m._id === message._id)) return
+
+  currentMessages.value.push(message)
+  await nextTick()
+  scrollToBottom()
+  // Conversation sous les yeux : le message est lu, l'expéditeur en est averti.
+  if (!isOwnMessage(message) && document.visibilityState === 'visible') {
+    await messagingStore.markAsRead(message.conversation)
+  }
+}
+
+const onRealtimeReadReceipt = (receipt: ReadReceipt) => {
+  if (isOpenConversation(receipt.conversationId)) applyReadReceipt(currentMessages.value, receipt)
+}
+
+// La vue garde sa propre liste de messages affichés : elle suit les actions
+// du store déclenchées par le flux temps réel (cf. store/realtimeSync.ts).
+// Abonnement lié au composant, retiré à son démontage.
+messagingStore.$onAction(({ name, args, after }) => {
+  if (name === 'handleNewMessage') after(() => onRealtimeMessage(args[0]))
+  else if (name === 'handleConversationRead') after(() => onRealtimeReadReceipt(args[0]))
+})
 
 // Lifecycle
 onMounted(async () => {

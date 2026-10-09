@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import notificationService, { type Notification } from '@/services/notification.service';
 
+/** Plus que la page chargée par fetch() : la liste déroulante n'en montre pas davantage. */
+const MAX_NOTIFICATIONS_KEPT = 50;
+
 interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
@@ -41,6 +44,35 @@ export const useNotificationStore = defineStore('notification', {
       } catch {
         // Échec réseau : rien n'a changé côté API, l'affichage non plus.
       }
+    },
+
+    /**
+     * Supprime une notification. Retrait local seulement après l'accord de
+     * l'API : sinon elle réapparaîtrait au prochain chargement.
+     */
+    async remove(id: string) {
+      try {
+        await notificationService.deleteNotification(id);
+      } catch {
+        return;
+      }
+      const removed = this.notifications.find((n) => n._id === id);
+      this.notifications = this.notifications.filter((n) => n._id !== id);
+      if (removed && !removed.isRead) this.unreadCount = Math.max(0, this.unreadCount - 1);
+    },
+
+    /** Notification poussée par le flux temps réel (SSE). */
+    handleNewNotification(notification: Notification) {
+      // Déjà là (rechargement de la liste juste avant l'événement) : ne pas compter deux fois.
+      if (this.notifications.some((n) => n._id === notification._id)) return;
+      // Liste bornée : un onglet ouvert des heures ne doit pas l'allonger sans fin.
+      this.notifications = [notification, ...this.notifications].slice(0, MAX_NOTIFICATIONS_KEPT);
+      if (!notification.isRead) this.unreadCount += 1;
+    },
+
+    /** Total calculé par l'API (resynchronisation à chaque ouverture du flux). */
+    applyUnreadCount(total: number) {
+      this.unreadCount = total;
     },
 
     reset() {

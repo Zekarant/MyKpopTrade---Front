@@ -3,6 +3,7 @@ import { useUserStore } from '@/store/user.store';
 import { useCartStore } from '@/store/cart.store';
 import { useNotificationStore } from '@/store/notification.store';
 import { useMessagingStore } from '@/store/messaging.store';
+import { stopRealtimeSync } from '@/store/realtimeSync';
 
 /**
  * Vide tout ce qui appartient à l'utilisateur connecté. Appelé à la
@@ -10,6 +11,9 @@ import { useMessagingStore } from '@/store/messaging.store';
  * profil, le panier ou les conversations du précédent.
  */
 export function resetSessionStores(): void {
+  // Avant tout : un événement arrivé après le vidage remplirait à nouveau les stores.
+  stopRealtimeSync();
+
   // Pas de Pinia active (service appelé hors application, tests) : rien à vider.
   if (!getActivePinia()) return;
 

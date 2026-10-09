@@ -9,7 +9,8 @@ const carts = vi.hoisted(() => ({ getCart: vi.fn() }))
 const notifications = vi.hoisted(() => ({
   getNotifications: vi.fn(),
   markAsRead: vi.fn(async () => undefined),
-  markAllAsRead: vi.fn(async () => undefined)
+  markAllAsRead: vi.fn(async () => undefined),
+  deleteNotification: vi.fn()
 }))
 
 vi.mock('@/services/session.cookies', () => session)
@@ -144,6 +145,31 @@ describe('useNotificationStore', () => {
 
     expect(store.unreadCount).toBe(0)
     expect(store.notifications.every((n) => n.isRead)).toBe(true)
+  })
+
+  it('supprime une notification non lue et décompte le badge', async () => {
+    notifications.getNotifications.mockResolvedValue({ notifications: list(), pagination: { unreadCount: 2 } })
+    notifications.deleteNotification.mockResolvedValue(undefined)
+    const store = useNotificationStore()
+    await store.fetch()
+
+    await store.remove('n1')
+
+    expect(notifications.deleteNotification).toHaveBeenCalledWith('n1')
+    expect(store.notifications.map((n) => n._id)).toEqual(['n2'])
+    expect(store.unreadCount).toBe(1)
+  })
+
+  it('garde la notification si l\'API refuse la suppression', async () => {
+    notifications.getNotifications.mockResolvedValue({ notifications: list(), pagination: { unreadCount: 2 } })
+    notifications.deleteNotification.mockRejectedValue(new Error('réseau'))
+    const store = useNotificationStore()
+    await store.fetch()
+
+    await store.remove('n1')
+
+    expect(store.notifications).toHaveLength(2)
+    expect(store.unreadCount).toBe(2)
   })
 })
 
