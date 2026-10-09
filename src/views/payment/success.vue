@@ -119,7 +119,7 @@ import cartService from '@/services/cart.service';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 import { cancelPendingPayments, pendingApprovalUrl, readPendingPayments, takeNextPendingPayment } from './pendingPayments';
 
-type CaptureErrorBody = { message?: string; error?: string; approvalUrl?: string };
+type CaptureErrorBody = { message?: string; code?: string; approvalUrl?: string };
 
 export default defineComponent({
   name: 'PaymentSuccess',
@@ -153,11 +153,10 @@ export default defineComponent({
         } catch (e) {
           const data = isAxiosError<CaptureErrorBody>(e) ? e.response?.data : undefined;
           const msg = data?.message || '';
-          const errorDetail = data?.error || '';
           // Ignorer si déjà capturé
           if (msg.includes('déjà traité')) {
             // OK, déjà traité
-          } else if (errorDetail.includes('non approuvé') || errorDetail.includes('CREATED')) {
+          } else if (data?.code === 'ORDER_NOT_APPROVED') {
             // L'ordre n'est pas encore approuvé — re-rediriger vers PayPal
             const approvalUrl = data?.approvalUrl;
             if (approvalUrl) {

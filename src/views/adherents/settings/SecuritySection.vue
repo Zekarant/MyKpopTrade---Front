@@ -71,11 +71,17 @@ const confirmPassword = ref('');
 
 async function savePassword() {
   try {
-    const res = await api.put('/api/auth/update-password', {
-      currentPassword: currentPassword.value,
-      newPassword: newPassword.value,
-      confirmPassword: confirmPassword.value
-    });
+    // `withCredentials` : l'API lit le cookie de session pour garder celle-ci
+    // ouverte et fermer toutes les autres.
+    const res = await api.put(
+      '/api/auth/update-password',
+      {
+        currentPassword: currentPassword.value,
+        newPassword: newPassword.value,
+        confirmPassword: confirmPassword.value
+      },
+      { withCredentials: true }
+    );
     func.showToastSuccess(res.data.message);
     showPasswordForm.value = false;
     currentPassword.value = '';
