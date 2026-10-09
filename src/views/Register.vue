@@ -18,49 +18,51 @@
             </div>
           </div>
 
+          <!-- Pas de champ téléphone : l'API l'ignorait à l'inscription (il se
+               vérifie plus tard, depuis les paramètres). Le collecter ici
+               contredisait la minimisation des données (RGPD art. 5(1)(c)). -->
           <form @submit.prevent="register" class="auth-form">
             <!-- Username -->
             <div class="form-group">
-              <label class="form-label">Pseudo</label>
-              <div class="input-group--custom" :class="{ 'input-group--error': nameError }">
+              <label class="form-label" for="register-username">Pseudo</label>
+              <div class="input-group--custom" :class="{ 'input-group--error': errorField === 'username' }">
                 <span class="input-icon"><i class="bi bi-person"></i></span>
-                <input type="text" v-model="username" placeholder="Ton pseudo" required />
-              </div>
-            </div>
-
-            <!-- Phone -->
-            <div class="form-group">
-              <label class="form-label">Téléphone</label>
-              <div class="input-group--custom" :class="{ 'input-group--error': telError }">
-                <span class="input-icon"><i class="bi bi-phone"></i></span>
-                <input type="tel" v-model="tel" placeholder="Numéro de téléphone" required />
+                <input id="register-username" type="text" v-model="username" placeholder="Ton pseudo"
+                  autocomplete="username" required />
               </div>
             </div>
 
             <!-- Email -->
             <div class="form-group">
-              <label class="form-label">Email</label>
-              <div class="input-group--custom" :class="{ 'input-group--error': emailError }">
+              <label class="form-label" for="register-email">Email</label>
+              <div class="input-group--custom" :class="{ 'input-group--error': errorField === 'email' }">
                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                <input type="email" v-model="email" placeholder="Ton adresse email" required />
+                <input id="register-email" type="email" v-model="email" placeholder="Ton adresse email"
+                  autocomplete="email" required />
               </div>
             </div>
 
             <!-- Password -->
             <div class="form-group">
-              <label class="form-label">Mot de passe</label>
-              <div class="input-group--custom" :class="{ 'input-group--error': passwordError }">
+              <label class="form-label" for="register-password">Mot de passe</label>
+              <div class="input-group--custom" :class="{ 'input-group--error': errorField === 'password' }">
                 <span class="input-icon"><i class="bi bi-lock"></i></span>
-                <input type="password" v-model="password" placeholder="Mot de passe" required />
+                <input id="register-password" type="password" v-model="password" placeholder="Mot de passe"
+                  autocomplete="new-password" required />
               </div>
+              <small class="hint">
+                8 caractères minimum, avec une majuscule, une minuscule, un chiffre et un
+                caractère spécial parmi {{ PASSWORD_SPECIAL_CHARS }}
+              </small>
             </div>
 
             <!-- Confirm password -->
             <div class="form-group">
-              <label class="form-label">Confirmation</label>
-              <div class="input-group--custom" :class="{ 'input-group--error': passwordError }">
+              <label class="form-label" for="register-password-confirm">Confirmation</label>
+              <div class="input-group--custom" :class="{ 'input-group--error': errorField === 'passwordConfirm' }">
                 <span class="input-icon"><i class="bi bi-lock"></i></span>
-                <input type="password" v-model="password_confirm" placeholder="Confirmer le mot de passe" required />
+                <input id="register-password-confirm" type="password" v-model="passwordConfirm"
+                  placeholder="Confirmer le mot de passe" autocomplete="new-password" required />
               </div>
             </div>
 
@@ -76,13 +78,13 @@
 
             <!-- Beta acknowledgement checkbox -->
             <label class="auth-checkbox">
-              <input type="checkbox" v-model="acceptBeta" :class="{ 'is-invalid': betaError }" />
+              <input type="checkbox" v-model="acceptBeta" :class="{ 'is-invalid': errorField === 'acceptBeta' }" />
               <span>Je comprends que MyKpopTrade est en bêta et j'utilise le service à mes risques.</span>
             </label>
 
             <!-- Policy checkbox -->
             <label class="auth-checkbox">
-              <input type="checkbox" v-model="acceptPolicy" :class="{ 'is-invalid': policyError }" />
+              <input type="checkbox" v-model="acceptPolicy" :class="{ 'is-invalid': errorField === 'acceptPolicy' }" />
               <span>
                 J'accepte les
                 <router-link to="/cgu" target="_blank">CGU</router-link>
@@ -104,10 +106,9 @@
 
             <!-- Errors -->
             <Transition name="fade">
-              <div v-if="emailError || passwordError || nameError || telError || errorBase || policyError || betaError"
-                class="auth-message auth-message--error">
+              <div v-if="errorMessage" class="auth-message auth-message--error" role="alert">
                 <i class="bi bi-exclamation-circle"></i>
-                <span>{{ emailError || passwordError || nameError || telError || errorBase || policyError || betaError }}</span>
+                <span>{{ errorMessage }}</span>
               </div>
             </Transition>
 
@@ -118,7 +119,9 @@
               </div>
             </Transition>
 
-            <button class="btn btn-primary w-full" type="submit">S'inscrire</button>
+            <button class="btn btn-primary w-full" type="submit" :disabled="loading">
+              {{ loading ? 'Inscription…' : "S'inscrire" }}
+            </button>
 
             <!-- Divider -->
             <div class="auth-divider">
@@ -164,157 +167,45 @@
     </div>
   </main>
 </template>
-  <script lang="ts">
-  import { defineComponent, ref } from 'vue';
-  import axios from 'axios';
-  import { useRouter } from 'vue-router';
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { API_URL } from '@/config/api';
+import { PASSWORD_SPECIAL_CHARS, useRegisterForm } from '@/composables/useRegisterForm';
 
-  export default defineComponent ({
-    name: "RegisterView",
-    setup() {
-      const router = useRouter();
-      const errorBase = ref('');
-      const successMessage = ref('');
+defineOptions({ name: 'RegisterView' });
 
-      const username = ref('');
-      const nameError = ref('');
+const router = useRouter();
+const {
+  username,
+  email,
+  password,
+  passwordConfirm,
+  acceptBeta,
+  acceptPolicy,
+  acceptMarketing,
+  errorMessage,
+  errorField,
+  successMessage,
+  loading,
+  submit
+} = useRegisterForm();
 
-      /*const firstname = ref('');
-      const firstnameError = ref('');*/
+async function register() {
+  if (await submit()) {
+    // Le temps de lire le message de l'API (vérification de l'email à faire).
+    setTimeout(() => router.push('/login'), 1500);
+  }
+}
 
-      const tel = ref('');
-      const telError = ref('');
+function registerWithGoogle() {
+  window.location.href = `${API_URL}/api/auth/google`;
+}
 
-      const email = ref('');
-      const emailError = ref('');
+function registerWithDiscord() {
+  window.location.href = `${API_URL}/api/auth/discord`;
+}
+</script>
 
-
-      const password = ref('');
-      const password_confirm = ref('');
-      const passwordError = ref('');
-      const acceptPolicy = ref(false);
-      const policyError = ref('');
-      // Décoché par défaut : un consentement pré-coché n'est pas un consentement.
-      const acceptMarketing = ref(false);
-      const acceptBeta = ref(false);
-      const betaError = ref('');
-
-      const register = async () => {
-        nameError.value = '';
-        successMessage.value = '';
-
-        //firstnameError.value = '';
-        telError.value = '';
-        emailError.value = '';
-        passwordError.value = '';
-
-
-        let verif_register = true;
-        if(username.value == '' || username.value.length < 5) {
-          verif_register = false;
-          nameError.value  = 'Le pseudo doit être plus long';
-        }
-        policyError.value = '';
-        betaError.value = '';
-        if (!acceptBeta.value) {
-          betaError.value = 'Vous devez reconnaître que le service est en version bêta.';
-          return;
-        }
-        if (!acceptPolicy.value) {
-          policyError.value = 'Vous devez accepter les CGU et la politique de confidentialité.';
-          return;
-        }
-        /*if(firstname.value == '' || firstname.value.length < 5) {
-          verif_register = false;
-          firstnameError.value  = 'Le prénom doit être plus long';
-        } */
-        if(tel.value == '' || tel.value.length < 5) {
-          verif_register = false;
-          telError.value  = 'Le numéro de téléphone est invalide';
-        }
-        if(email.value == '' || email.value.length < 5) {
-          verif_register = false;
-          emailError.value  = 'L\'email est invalide';
-        }
-
-
-        if(password.value == '' || password_confirm.value == '') {
-          verif_register = false;
-          passwordError.value  = 'Le mot de passe ne peut pas être vide';
-        }
-        /*if(password_confirm.value != password.value){
-          verif_register = false;
-          passwordError.value = "Les mots de passe sont différents";
-        }*/
-
-        if(verif_register){
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
-            email: email.value,
-            //firstname: firstname.value,
-            username: username.value,
-            numberPhone: tel.value,
-            password: password.value,
-            confirmPassword: password_confirm.value,
-            privacyPolicy: verif_register,
-            dataProcessing: verif_register,
-            marketing: acceptMarketing.value
-
-          }, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(response => {
-            if (response.status === 201) {
-            successMessage.value = 'Inscription réussie !';
-            setTimeout(() => {
-              router.push('/login');
-            }, 1000);
-          } else {
-            emailError.value = response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
-          }
-          }).catch(error => {
-            emailError.value = error.response.data.message || 'Une erreur est survenue. Veuillez réessayer.';
-
-          });
-
-
-        }
-      }
-      const registerWithGoogle = () => {
-        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
-      };
-      const registerWithDiscord = () => {
-        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/discord`;
-      };
-
-      return {
-        register,
-        passwordError,
-        username,
-        nameError,
-        //firstname,
-        //firstnameError,
-        tel,
-        telError,
-        email,
-        emailError,
-        errorBase,
-        successMessage,
-        password,
-        password_confirm,
-        acceptPolicy,
-        acceptMarketing,
-        policyError,
-        acceptBeta,
-        betaError,
-        registerWithGoogle,
-        registerWithDiscord,
-      };
-    }
-
-
-  });
-  </script>
 <style lang="scss" scoped>
 .auth-page {
   min-height: 100vh;
@@ -417,6 +308,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
 }
 
 .input-group--error {

@@ -70,9 +70,8 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import axios from 'axios';
 import { useRouter } from 'vue-router';
-import { apiErrorMessage } from '@/services/apiError';
+import authentificationService from '@/services/authentification.service';
 
 export default defineComponent({
   name: 'ForgotPassword',
@@ -92,20 +91,12 @@ export default defineComponent({
       }
 
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
-          { email: email.value },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
-
-        if (response.status === 200) {
-          successMessage.value = response.data.message;
-          setTimeout(() => router.push('/login'), 2000);
-        } else {
-          errorBase.value = response.data.message;
-        }
+        // Client d'authentification partagé : même URL d'API (config/api.ts)
+        // que le reste de l'application, au lieu de VITE_API_URL lue en direct.
+        successMessage.value = await authentificationService.forgotPassword(email.value.trim());
+        setTimeout(() => router.push('/login'), 2000);
       } catch (error) {
-        errorBase.value = apiErrorMessage(error, 'Une erreur est survenue.');
+        errorBase.value = error instanceof Error ? error.message : 'Une erreur est survenue.';
       }
     };
 

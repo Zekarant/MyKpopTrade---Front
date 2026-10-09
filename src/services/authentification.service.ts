@@ -4,6 +4,7 @@ import router from "@/router";
 import { API_URL } from '@/config/api';
 import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/session.cookies';
 import { createApiClient, refreshAccessToken } from '@/services/http';
+import { apiErrorMessage } from '@/services/apiError';
 
 interface ApiError {
   message: string;
@@ -21,6 +22,21 @@ interface ApiError {
 export type LoginResult =
   | { requiresTwoFactor: false }
   | { requiresTwoFactor: true; twoFactorToken: string };
+
+/**
+ * Corps attendu par POST /api/auth/register (registerController côté API).
+ * `privacyPolicy` et `dataProcessing` doivent valoir `true`, sinon l'API refuse ;
+ * `marketing` reste un consentement facultatif et séparé (RGPD art. 7(4)).
+ */
+export interface RegisterPayload {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  privacyPolicy: boolean;
+  dataProcessing: boolean;
+  marketing: boolean;
+}
 
 class authentificationService {
   private authApiClient: AxiosInstance;
@@ -67,6 +83,34 @@ class authentificationService {
     } catch (error) {
       const axiosError = error as AxiosError<ApiError>;
       throw new Error(axiosError.response?.data.message || "Erreur lors de la connexion");
+    }
+  }
+
+  /**
+   * Création de compte. Aucune session n'est ouverte : l'API envoie un email de
+   * vérification et rend un message à afficher tel quel.
+   * Une erreur réseau (sans `response`) donne le message générique au lieu de
+   * planter sur `error.response.data`.
+   */
+  async register(payload: RegisterPayload): Promise<string> {
+    try {
+      const response: AxiosResponse = await this.authApiClient.post("/register", payload);
+      return response.data?.message || "Inscription réussie !";
+    } catch (error) {
+      throw new Error(apiErrorMessage(error, "Une erreur est survenue. Veuillez réessayer."));
+    }
+  }
+
+  /**
+   * Demande d'un lien de réinitialisation. L'API répond le même message que
+   * l'email existe ou non, pour ne pas révéler les comptes inscrits.
+   */
+  async forgotPassword(email: string): Promise<string> {
+    try {
+      const response: AxiosResponse = await this.authApiClient.post("/forgot-password", { email });
+      return response.data?.message || "Si un compte existe pour cet email, un lien vient d'être envoyé.";
+    } catch (error) {
+      throw new Error(apiErrorMessage(error, "Une erreur est survenue."));
     }
   }
 
@@ -121,6 +165,11 @@ class authentificationService {
       // Ignore errors on logout request
     } finally {
       this.clearCookies();
+      // Profil, panier, notifications et conversations appartiennent au compte
+      // qui se déconnecte. Import différé : les stores importent des services
+      // qui importent celui-ci.
+      const { resetSessionStores } = await import('@/store/resetSessionStores');
+      resetSessionStores();
       router.push("/login");
     }
   }
