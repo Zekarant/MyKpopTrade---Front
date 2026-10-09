@@ -15,6 +15,12 @@ export interface AdvancedSearchPayload {
   era?: string;
   company?: string;
   currency?: string;
+  /** Métadonnées structurées : identifiants du catalogue, membre exact, version, officiel. */
+  group?: string;
+  member?: string;
+  album?: string;
+  version?: string;
+  isOfficial?: boolean;
   sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'popular';
   page?: number;
   limit?: number;

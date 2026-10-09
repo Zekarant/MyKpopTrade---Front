@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import type { PostResponse } from '@/types/post.types'
 import { useCartStore } from '@/store/cart.store'
@@ -50,10 +50,10 @@ const productResponse: PostResponse = {
   isFavorite: false,
 }
 
-async function mountPost() {
+async function mountPost(product: PostResponse = productResponse) {
   const wrapper = mount(Post, {
-    props: { idPost: 'p1', product: productResponse },
-    global: { mocks: { $func: func } },
+    props: { idPost: 'p1', product },
+    global: { mocks: { $func: func }, stubs: { 'router-link': RouterLinkStub } },
   })
   await flushPromises()
   return wrapper
@@ -116,6 +116,25 @@ describe('post (fiche annonce)', () => {
     await flushPromises()
 
     expect(useCartStore().count).toBe(2)
+  })
+
+  it('relie le groupe et l\'album aux pages catalogue, et affiche version et authenticité', async () => {
+    const wrapper = await mountPost({
+      ...productResponse,
+      product: {
+        ...productResponse.product,
+        kpopGroupName: 'BTS', kpopGroupId: 'g1', albumNameStr: 'BE', albumId: 'a1',
+        version: 'Ver. A', isOfficial: true,
+      },
+    })
+
+    const links = wrapper.findAllComponents(RouterLinkStub)
+    expect(links.map((link) => [link.text(), link.props('to')])).toEqual([
+      ['BTS', { name: 'group', params: { id: 'g1' } }],
+      ['BE', { name: 'album', params: { id: 'a1' } }],
+    ])
+    expect(wrapper.text()).toContain('Ver. A')
+    expect(wrapper.text()).toContain('Officiel')
   })
 
   it('copie le lien partageable de l\'annonce', async () => {

@@ -9,6 +9,16 @@ import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
 
 
 
+/** Réponse de GET /api/profiles/verification-stats/:userId (preuves par statut). */
+export interface VerificationStats {
+  verified: number;
+  pending: number;
+  rejected: number;
+  total: number;
+  totalSales: number;
+  totalPurchases: number;
+}
+
 class userService {
     private userApiClient: AxiosInstance;
     private rgpdApiClient: AxiosInstance;
@@ -73,6 +83,14 @@ class userService {
   }) {
     const response = await this.rgpdApiClient.put('/me/consents', payload);
     return response.data;
+  }
+
+  /** Indicateurs de confiance publics d'un membre (preuves de transaction, ventes, achats). */
+  async getVerificationStats(userId: string): Promise<VerificationStats> {
+    const response: AxiosResponse<{ statistics: VerificationStats }> = await this.userApiClient.get(
+      `/verification-stats/${encodeURIComponent(userId)}`
+    );
+    return response.data.statistics;
   }
 
   async exportMyData() {

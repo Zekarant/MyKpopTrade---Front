@@ -93,7 +93,12 @@
                     </div>
                     <div v-if="dataPost.kpopGroupName" class="post-modal__detail-item">
                         <span class="post-modal__detail-label">Groupe</span>
-                        <span class="post-modal__detail-value">{{ dataPost.kpopGroupName }}</span>
+                        <router-link
+                            v-if="dataPost.kpopGroupId"
+                            :to="{ name: 'group', params: { id: dataPost.kpopGroupId } }"
+                            class="post-modal__detail-value post-modal__detail-link"
+                        >{{ dataPost.kpopGroupName }}</router-link>
+                        <span v-else class="post-modal__detail-value">{{ dataPost.kpopGroupName }}</span>
                     </div>
                     <div v-if="dataPost.kpopMember" class="post-modal__detail-item">
                         <span class="post-modal__detail-label">Membre</span>
@@ -101,7 +106,28 @@
                     </div>
                     <div v-if="dataPost.albumNameStr" class="post-modal__detail-item">
                         <span class="post-modal__detail-label">Album</span>
-                        <span class="post-modal__detail-value">{{ dataPost.albumNameStr }}</span>
+                        <router-link
+                            v-if="dataPost.albumId"
+                            :to="{ name: 'album', params: { id: dataPost.albumId } }"
+                            class="post-modal__detail-value post-modal__detail-link"
+                        >{{ dataPost.albumNameStr }}</router-link>
+                        <span v-else class="post-modal__detail-value">{{ dataPost.albumNameStr }}</span>
+                    </div>
+                    <div v-if="dataPost.version" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Version</span>
+                        <span class="post-modal__detail-value">{{ dataPost.version }}</span>
+                    </div>
+                    <div v-if="dataPost.era" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Ère</span>
+                        <span class="post-modal__detail-value">{{ dataPost.era }}</span>
+                    </div>
+                    <div v-if="dataPost.pob" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">POB</span>
+                        <span class="post-modal__detail-value">{{ dataPost.pob }}</span>
+                    </div>
+                    <div v-if="typeof dataPost.isOfficial === 'boolean'" class="post-modal__detail-item">
+                        <span class="post-modal__detail-label">Authenticité</span>
+                        <span class="post-modal__detail-value">{{ dataPost.isOfficial ? 'Officiel' : 'Non officiel' }}</span>
                     </div>
                 </div>
 
@@ -556,5 +582,12 @@
 
 .post-modal__pwyw {
     margin-top: var(--space-xs);
+}
+
+.post-modal__detail-link {
+    color: var(--accent-pink);
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
 }
 </style>

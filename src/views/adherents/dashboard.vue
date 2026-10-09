@@ -41,7 +41,13 @@
               <i class="bi bi-chat-dots"></i>
               <span>Messages</span>
             </button>
+            <button class="quick-link" @click="$router.push({ name: 'followed_groups' })">
+              <i class="bi bi-stars"></i>
+              <span>Mes groupes suivis</span>
+            </button>
           </div>
+
+          <DashboardFeed />
 
           <!-- Favorites -->
           <section v-if="productFavorites.products && productFavorites.products.length > 0" class="dashboard-section stagger-children">
@@ -98,6 +104,7 @@
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
     import Grid from '@/components/grid.vue';
+    import DashboardFeed from '@/components/DashboardFeed.vue';
     import postService from '@/services/post.service';
     import authentification from '@/services/authentification.service';
     import { API_URL } from '@/config/api';
@@ -115,7 +122,8 @@
     components: {
       search_bar,
       row_products,
-      Grid
+      Grid,
+      DashboardFeed
     },
     mounted() {
       authentification.verifSession().then(() => {

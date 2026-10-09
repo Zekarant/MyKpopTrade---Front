@@ -72,6 +72,25 @@ const routes = [
     component: () => import('@/views/ProductView.vue'),
     meta: { title: 'Annonce' }
   },
+  // Pages catalogue publiques, listées dans le sitemap de l'API.
+  {
+    path: '/groups/:id',
+    name: 'group',
+    component: () => import('@/views/catalog/GroupView.vue'),
+    meta: { title: 'Groupe' }
+  },
+  {
+    path: '/albums/:id',
+    name: 'album',
+    component: () => import('@/views/catalog/AlbumView.vue'),
+    meta: { title: 'Album' }
+  },
+  {
+    path: '/adherents/groups',
+    name: 'followed_groups',
+    component: () => import('@p_v/followed_groups.vue'),
+    meta: { requiresAuth: true, title: 'Mes groupes suivis' }
+  },
   {
     path: '/',
     name: 'home',
@@ -141,6 +160,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/adherents/saved-searches',
+    name: 'saved_searches',
+    component: () => import('@p_v/savedSearches.vue'),
+    meta: { requiresAuth: true, title: 'Recherches sauvegardées' }
+  },
+  {
     path: '/adherents/profile/:id',
     name: 'profile',
     component: () => import('@p_v/profile.vue'),
@@ -151,6 +176,12 @@ const routes = [
     name: 'settings',
     component: () => import('@p_v/settings.vue'),
     meta: { requiresAuth: true, title: 'Paramètres' }
+  },
+  {
+    path: '/adherents/reports',
+    name: 'my_reports',
+    component: () => import('@p_v/MyReports.vue'),
+    meta: { requiresAuth: true, title: 'Mes signalements' }
   },
   {
     path: '/adherents/payments',

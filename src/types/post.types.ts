@@ -19,6 +19,14 @@ export interface PostData {
   kpopGroup: string;
   kpopMember: string;
   albumName: string;
+  /** Métadonnées structurées ; les champs libres ci-dessus restent remplis pour les anciens écrans. */
+  group?: string | null;
+  member?: string | null;
+  album?: string | null;
+  version?: string | null;
+  era?: string | null;
+  pob?: string | null;
+  isOfficial?: boolean;
   /**
    * Ordre final des photos : fichiers ajoutés, et chemins des images existantes
    * quand on modifie une annonce.
@@ -56,6 +64,8 @@ export interface Post {
   updatedAt: string;
   isAvailable?: boolean;
   isSold?: boolean;
+  /** Favoris uniquement : annonce vendue ou retirée, qui ne s'ouvre plus. */
+  unavailableReason?: 'sold' | 'withdrawn' | null;
   state?: string;
   allowOffers?: boolean;
   isPayWhatYouWant?: boolean;
@@ -100,6 +110,13 @@ export interface ProductDetail {
   albumName?: string;
   albumNameStr?: string;
   albumId?: string;
+  group?: string | null;
+  member?: string | null;
+  album?: string | null;
+  version?: string | null;
+  era?: string | null;
+  pob?: string | null;
+  isOfficial?: boolean;
   images: string[];
   isAvailable: boolean;
   isSold?: boolean;

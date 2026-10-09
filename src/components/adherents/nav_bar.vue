@@ -54,6 +54,14 @@
                     <span class="navbar__notif-text">{{ notif.content }}</span>
                     <span class="navbar__notif-time">{{ formatRelative(notif.createdAt) }}</span>
                   </div>
+                  <button
+                    type="button"
+                    class="navbar__notif-delete"
+                    aria-label="Supprimer la notification"
+                    @click.stop="notificationStore.remove(notif._id)"
+                  >
+                    <i class="bi bi-x"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -109,6 +117,10 @@
             <a @click="navPage('collection', null)" href="#" class="navbar__dropdown-item">
               <i class="bi bi-collection"></i>
               Ma collection
+            </a>
+            <a @click="navPage('saved_searches', null)" href="#" class="navbar__dropdown-item">
+              <i class="bi bi-bookmark-star"></i>
+              Recherches sauvegardées
             </a>
             <a @click="navPage('messages', 'me')" href="#" class="navbar__dropdown-item">
               <i class="bi bi-envelope"></i>
@@ -186,6 +198,10 @@
           <i class="bi bi-collection"></i>
           <span>Ma collection</span>
         </a>
+        <a @click="navPage('saved_searches', null)" href="#" class="navbar__mobile-link">
+          <i class="bi bi-bookmark-star"></i>
+          <span>Recherches sauvegardées</span>
+        </a>
         <a @click="navPage('messages', 'me')" href="#" class="navbar__mobile-link">
           <i class="bi bi-envelope"></i>
           <span>Mes messages</span>
@@ -232,6 +248,7 @@ import { safeRedirect } from '@/router/safeRedirect';
 import { useUserStore } from '@/store/user.store';
 import { useCartStore } from '@/store/cart.store';
 import { useNotificationStore } from '@/store/notification.store';
+import { startRealtimeSync } from '@/store/realtimeSync';
 import { formatRelative } from '@/utils/format';
 import UserAvatar from '@/components/UserAvatar.vue';
 
@@ -282,6 +299,9 @@ onMounted(() => {
   });
   notificationStore.fetch();
   cartStore.refresh();
+  // La barre ne s'affiche qu'une fois connecté et survit aux navigations : le
+  // flux est ouvert ici une fois, puis fermé à la déconnexion (resetSessionStores).
+  startRealtimeSync();
 });
 
 function navPage(page: RouteRecordNameGeneric, parameter: string | null) {
@@ -619,6 +639,20 @@ function logout() {
 .navbar__notif-time {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
+}
+
+.navbar__notif-delete {
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: 0 var(--space-xs);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover { color: var(--danger); }
 }
 
 .navbar__profile {

@@ -43,6 +43,30 @@ export function cleanShippingOptions(options: PostData['shippingOptions']): Post
   };
 }
 
+const CATALOG_TEXT_FIELDS = ['group', 'member', 'album', 'version', 'era', 'pob'] as const;
+
+/**
+ * Métadonnées structurées de l'annonce. Un champ vide part en `null` : en
+ * modification, c'est ce qui l'efface côté API (un champ absent serait conservé).
+ */
+export function catalogFields(postData: PostData): Record<string, string | boolean | null> {
+  const fields: Record<string, string | boolean | null> = {};
+  for (const field of CATALOG_TEXT_FIELDS) {
+    fields[field] = postData[field]?.trim() || null;
+  }
+  if (typeof postData.isOfficial === 'boolean') fields.isOfficial = postData.isOfficial;
+  return fields;
+}
+
+/** Filtres catalogue de GET /api/products (pages groupe et album). */
+export interface CatalogListParams {
+  group?: string;
+  album?: string;
+  member?: string;
+  page?: number;
+  limit?: number;
+}
+
 /** Réponse « session invalide » de l'API. */
 function isUnauthorized(error: unknown): boolean {
   const response = (error as { response?: { status?: number; data?: { code?: string; message?: string } } })?.response;
@@ -103,6 +127,12 @@ class PostService {
     }
   }
 
+  /** Annonces en vente d'un groupe ou d'un album (anciennes annonces comprises, côté API). */
+  async getCatalogPosts(params: CatalogListParams): Promise<PostsResponse> {
+    const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products', { params });
+    return response.data;
+  }
+
   // Récupérer un post par ID
   async getPost(id: string | number | undefined): Promise<PostResponse> {
     if (!id) {
@@ -152,6 +182,10 @@ class PostService {
     data.append('kpopGroup', postData.kpopGroup);
     data.append('kpopMember', postData.kpopMember);
     data.append('albumName', postData.albumName);
+    // Le multipart ne connaît que du texte : "" vaut « non renseigné » pour l'API.
+    for (const [field, value] of Object.entries(catalogFields(postData))) {
+      data.append(field, value === null ? '' : String(value));
+    }
     data.append('allowOffers', postData.allowOffers.toString());
 
     // À la création, toutes les photos sont des fichiers.
@@ -197,6 +231,7 @@ class PostService {
       kpopGroup: postData.kpopGroup,
       kpopMember: postData.kpopMember,
       albumName: postData.albumName,
+      ...catalogFields(postData),
       allowOffers: postData.allowOffers,
       shippingOptions: cleanShippingOptions(postData.shippingOptions),
     };

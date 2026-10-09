@@ -1,6 +1,7 @@
 import { type AxiosInstance, type AxiosResponse } from 'axios';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
+import type { KpopAlbum } from '@/services/album.service';
 
 export interface KpopGroup {
   _id: string;
@@ -32,6 +33,16 @@ export interface GroupFollowersResponse {
   groupId: string;
   groupName: string;
   followers: GroupFollower[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface GroupDetail {
+  group: KpopGroup;
+  albums: KpopAlbum[];
+}
+
+export interface FollowedGroupsPage {
+  groups: KpopGroup[];
   pagination: { page: number; limit: number; total: number; pages: number };
 }
 
@@ -72,6 +83,18 @@ class GroupService {
   async getMyFollowedGroups(): Promise<KpopGroup[]> {
     const response: AxiosResponse<{ groups: KpopGroup[] }> = await this.apiClient.get('/my-followed');
     return response.data.groups;
+  }
+
+  /** Groupes suivis, page par page (triés par nom côté API). */
+  async getMyFollowedGroupsPage(page = 1, limit = 24): Promise<FollowedGroupsPage> {
+    const response: AxiosResponse<FollowedGroupsPage> = await this.apiClient.get('/my-followed', { params: { page, limit } });
+    return response.data;
+  }
+
+  /** Page groupe : le groupe et ses albums (les plus récents d'abord), en une requête. */
+  async getGroupDetail(groupId: string): Promise<GroupDetail> {
+    const response: AxiosResponse<GroupDetail> = await this.apiClient.get(`/${groupId}`);
+    return { group: response.data.group, albums: response.data.albums ?? [] };
   }
 
   async getGroup(groupId: string): Promise<KpopGroup> {

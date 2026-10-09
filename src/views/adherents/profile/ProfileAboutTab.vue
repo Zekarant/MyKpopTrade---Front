@@ -60,6 +60,29 @@
         </p>
       </div>
 
+      <!-- Confiance : chiffres publics, utiles avant un échange avec ce membre. -->
+      <div v-if="trustStats" class="about-card__block">
+        <h3 class="about-card__title"><i class="bi bi-shield-check"></i> Confiance</h3>
+        <div class="about-card__grid">
+          <div class="about-card__row">
+            <span class="about-card__label">Ventes</span>
+            <span class="about-card__value">{{ trustStats.totalSales }}</span>
+          </div>
+          <div class="about-card__row">
+            <span class="about-card__label">Achats</span>
+            <span class="about-card__value">{{ trustStats.totalPurchases }}</span>
+          </div>
+          <div class="about-card__row">
+            <span class="about-card__label">Preuves de transaction vérifiées</span>
+            <span class="about-card__value">{{ trustStats.verified }}</span>
+          </div>
+          <div v-if="isOwnProfile && trustStats.pending" class="about-card__row">
+            <span class="about-card__label">Preuves en attente de vérification</span>
+            <span class="about-card__value">{{ trustStats.pending }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Date + Certif -->
       <div class="about-card__footer">
         <span v-if="profile.createdAt" class="about-card__date">
@@ -75,10 +98,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { ProfileInfo } from './types'
+import { computed, ref, watch } from 'vue'
+import userService, { type VerificationStats } from '@/services/user.service'
+import { profileIdOf, type ProfileInfo } from './types'
 
 const props = defineProps<{ profile: ProfileInfo; isOwnProfile: boolean }>()
+
+const trustStats = ref<VerificationStats | null>(null)
+
+watch(
+  () => profileIdOf(props.profile),
+  async (userId) => {
+    trustStats.value = null
+    if (!userId) return
+    try {
+      trustStats.value = await userService.getVerificationStats(userId)
+    } catch {
+      // Indicateurs indisponibles : le reste de la fiche s'affiche sans eux.
+    }
+  },
+  { immediate: true }
+)
 
 const links = computed(() => props.profile.socialLinks || {})
 

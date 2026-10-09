@@ -201,7 +201,12 @@
                             <span v-if="isMemberRequired" class="req">*</span>
                             <span v-else class="opt">(optionnel)</span>
                         </label>
-                        <input type="text" id="kpopMember" v-model="formData.kpopMember" placeholder="Ex: Jimin, Lisa, Felix..." />
+                        <!-- Liste du catalogue quand le groupe en a une : le membre devient filtrable. -->
+                        <select v-if="groupMembers.length" id="kpopMember" v-model="formData.kpopMember">
+                            <option value="">{{ isMemberRequired ? 'Choisir un membre' : 'Article de groupe' }}</option>
+                            <option v-for="member in groupMembers" :key="member" :value="member">{{ member }}</option>
+                        </select>
+                        <input v-else type="text" id="kpopMember" v-model="formData.kpopMember" placeholder="Ex: Jimin, Lisa, Felix..." />
                         <small v-if="!isMemberRequired" class="form-hint">
                             Laissez vide pour un article de groupe.
                         </small>
@@ -235,6 +240,30 @@
                             </div>
                         </div>
                         <small v-if="!formData.kpopGroup" class="form-hint">Choisissez un groupe pour voir ses albums</small>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="version">Version <span class="opt">(optionnel)</span></label>
+                            <input type="text" id="version" v-model="formData.version" maxlength="50" placeholder="Ex: Ver. A, Digipack..." />
+                        </div>
+                        <div class="form-col">
+                            <label for="era">Ère <span class="opt">(optionnel)</span></label>
+                            <input type="text" id="era" v-model="formData.era" maxlength="100" placeholder="Ex: Butter, MAP OF THE SOUL..." />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="pob">POB <span class="opt">(optionnel)</span></label>
+                            <input type="text" id="pob" v-model="formData.pob" maxlength="100" placeholder="Boutique du pre-order benefit" />
+                        </div>
+                        <div class="form-col">
+                            <label for="isOfficial">Authenticité</label>
+                            <select id="isOfficial" v-model="formData.isOfficial">
+                                <option :value="undefined">Non précisé</option>
+                                <option :value="true">Officiel</option>
+                                <option :value="false">Non officiel (fanmade, unofficial)</option>
+                            </select>
+                        </div>
                     </div>
                 </fieldset>
 
@@ -339,6 +368,8 @@
                             <ul class="sell-recap__meta">
                                 <li><i class="bi bi-tag"></i> {{ typeLabel }} · {{ conditionLabel }}</li>
                                 <li v-if="searchGroupKpop"><i class="bi bi-music-note-beamed"></i> {{ searchGroupKpop }}<template v-if="formData.kpopMember"> — {{ formData.kpopMember }}</template></li>
+                                <li v-if="searchAlbumName || formData.version"><i class="bi bi-disc"></i> {{ [searchAlbumName, formData.version].filter(Boolean).join(' · ') }}</li>
+                                <li v-if="formData.isOfficial !== undefined"><i class="bi bi-patch-check"></i> {{ formData.isOfficial ? 'Officiel' : 'Non officiel' }}</li>
                                 <li><i class="bi bi-truck"></i> {{ shippingLabel }}</li>
                                 <li><i class="bi bi-images"></i> {{ imagesPreview.length }} photo{{ imagesPreview.length > 1 ? 's' : '' }}</li>
                                 <li>
@@ -427,7 +458,7 @@
     import postService from '@/services/post.service';
     import messagingService from '@/services/messaging.service';
     import  authentification from '@/services/authentification.service';
-    import type { KpopGroup } from '@/services/group.service';
+    import groupService, { type KpopGroup } from '@/services/group.service';
     import type { KpopAlbum } from '@/services/album.service';
     import type { PostData, ProductDetail } from '@/types/post.types';
     import paymentService from '@/services/payment.service';
@@ -504,6 +535,8 @@
         const searchAlbumName = ref('');
         const isAlbumDropdownOpen = ref(false);
         const albumsList = ref<KpopAlbum[]>([]);
+        /** Membres du groupe choisi selon le catalogue ; vide = saisie libre. */
+        const groupMembers = ref<string[]>([]);
 
         // Un vendeur ne peut publier que s'il peut réellement encaisser.
         // PayPal est le seul canal depuis le retrait de Stripe.
@@ -552,6 +585,13 @@
             kpopGroup: '',
             kpopMember: '',
             albumName: '',
+            group: null,
+            member: null,
+            album: null,
+            version: null,
+            era: null,
+            pob: null,
+            isOfficial: undefined,
             allowOffers: true,
             images: [],
             shippingOptions: {
@@ -608,6 +648,11 @@
             // Libellés résolus par l'API : sans eux, les champs groupe et album paraissent vides.
             searchGroupKpop.value = postDataObjet.kpopGroupName ?? '';
             searchAlbumName.value = postDataObjet.albumNameStr ?? '';
+            // Une annonce antérieure aux champs structurés n'a que les identifiants
+            // résolus par l'API : les reprendre la rend filtrable dès son enregistrement.
+            formData.value.group = postDataObjet.group ?? postDataObjet.kpopGroupId ?? null;
+            formData.value.album = postDataObjet.album ?? postDataObjet.albumId ?? null;
+            formData.value.isOfficial = postDataObjet.isOfficial ?? undefined;
         }
 
         const currencySymbol = computed(() => (formData.value.currency === 'USD' ? '$' : '€'));
@@ -643,6 +688,7 @@
         };
         const selectAlbum = (album: KpopAlbum) => {
             formData.value.albumName = album._id;
+            formData.value.album = album._id;
             searchAlbumName.value = album.name;
             isAlbumDropdownOpen.value = false;
         };
@@ -922,25 +968,43 @@
         };
         const selectGroupKpop = (group: KpopGroup) => {
             formData.value.kpopGroup = group._id;
+            formData.value.group = group._id;
             searchGroupKpop.value = group.name;
             isGroupDropdownOpen.value = false;
-            // Reset album when group changes
+            // Album et membre appartiennent à l'ancien groupe : l'API les refuserait.
             formData.value.albumName = '';
+            formData.value.album = null;
+            formData.value.kpopMember = '';
             searchAlbumName.value = '';
             albumsList.value = [];
-            // Load albums for this group
-            loadAlbumsForGroup(group._id);
+            groupMembers.value = [];
+            loadGroupCatalog(group._id);
         };
 
-        const loadAlbumsForGroup = async (groupId: string) => {
+        /** Membres et albums du groupe, en une requête (la recherche de groupes ne renvoie pas les membres). */
+        const loadGroupCatalog = async (groupId: string) => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/albums/group/${groupId}`);
-                albumsList.value = response.data.albums || response.data || [];
+                const { group, albums } = await groupService.getGroupDetail(groupId);
+                groupMembers.value = group.members ?? [];
+                albumsList.value = albums;
             } catch (error) {
-                console.error('Erreur lors du chargement des albums du groupe:', error);
+                console.error('Erreur lors du chargement des membres et albums du groupe:', error);
+                groupMembers.value = [];
                 albumsList.value = [];
             }
         };
+
+        if (formData.value.group) {
+            loadGroupCatalog(formData.value.group);
+        }
+
+        // Le membre structuré n'est envoyé que s'il figure au catalogue du
+        // groupe (ou si le groupe n'a pas de liste) : sinon l'API refuserait
+        // l'annonce, alors que le champ libre `kpopMember` suffit.
+        watch([() => formData.value.kpopMember, groupMembers], ([kpopMember, members]) => {
+            const name = kpopMember?.trim() ?? '';
+            formData.value.member = name && (members.length === 0 || members.includes(name)) ? name : null;
+        }, { immediate: true });
 
         const closeGroupDropdown = () => {
             setTimeout(() => {
@@ -970,7 +1034,8 @@
             filteredAlbums,
             selectAlbum,
             closeAlbumDropdown,
-            loadAlbumsForGroup,
+            loadGroupCatalog,
+            groupMembers,
             paypalOAuthConnected,
             paymentConfigured,
             loadingPaymentStatus,
