@@ -41,7 +41,10 @@
                     <div class="post-modal__actions-menu" @click.stop="toggleMenu($event)">
                         <i class="bi bi-three-dots-vertical"></i>
                         <div v-if="isMenuVisible" class="post-modal__dropdown">
-                            <button v-if="!myProfile && !isRoot" @click="showPopupReport=true">
+                            <button @click="copyLink">
+                                <i class="bi bi-link-45deg"></i> Copier le lien
+                            </button>
+                            <button v-if="!myProfile && !isRoot" @click="showPopupReport = requireSession()">
                                 <i class="bi bi-flag"></i> Signaler
                             </button>
                             <button v-if="(myProfile || isRoot) && !dataPost.isSold" @click="hidePopup()">
@@ -124,7 +127,7 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div v-if="isPurchasable && !myProfile && !isRoot" class="post-modal__footer">
+                <div v-if="isPurchasable && !myProfile && !isRoot" class="post-modal__footer" @click.capture="guardAnonymousAction">
                     <button v-if="canMakeOffer" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
                         <i class="bi bi-tag"></i> Faire une offre
                     </button>
@@ -224,7 +227,7 @@
     import Cookies from 'js-cookie';
     import userService from "@/services/user.service";
     import type { ImgUserProfile } from '@/types/user.types';
-    import type { ProductDetail, ProductSeller } from '@/types/post.types';
+    import type { PostResponse, ProductDetail, ProductSeller } from '@/types/post.types';
     import messagingService from '@/services/messaging.service';
     import { apiErrorMessage } from '@/services/apiError';
     import { acceptsOffers, pwywRangeLabel } from './offerRules';
@@ -256,6 +259,11 @@
             },
             idPost:{
                 type: String
+            },
+            /** Annonce déjà chargée par le parent : évite une seconde requête (et une seconde vue comptée). */
+            product: {
+                type: Object as PropType<PostResponse>,
+                required: false,
             },
             myProfile: {
                 type: Boolean,
@@ -397,7 +405,7 @@
                 }
             },
             async getData() {
-                const response = await postService.getPost(this.idPost);
+                const response = this.product ?? await postService.getPost(this.idPost);
                 if (response && response.product) {
                     this.dataPost = response.product;
                     this.isFav = response.isFavorite || false;
@@ -451,6 +459,7 @@
             },
             // addFavorite bascule le favori (ajout comme retrait) et rend `false` en cas d'échec.
             async addFav(id: string){
+                if (!this.requireSession()) return;
                 if (await postService.addFavorite(id)) {
                     this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
                     this.isFav = true;
@@ -475,6 +484,26 @@
 
             closePost() {
                 this.$emit('closePost');
+            },
+            /** Visiteur anonyme : renvoie vers la connexion, qui ramènera sur la fiche de l'annonce. */
+            requireSession(): boolean {
+                if (this.myId) return true;
+                this.router.push({ name: 'login', query: { redirect: `/products/${this.dataPost._id}` } });
+                return false;
+            },
+            /** Acheter, offre, panier, message : tous exigent un compte. */
+            guardAnonymousAction(event: MouseEvent) {
+                if ((event.target as Element).closest('button') && !this.requireSession()) {
+                    event.stopPropagation();
+                }
+            },
+            async copyLink() {
+                try {
+                    await navigator.clipboard.writeText(`${window.location.origin}/products/${this.dataPost._id}`);
+                    this.$func.showToastSuccess('Lien copié');
+                } catch {
+                    this.$func.showToastError('Impossible de copier le lien.');
+                }
             },
             viewUser(){
                 this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
