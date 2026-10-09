@@ -31,7 +31,9 @@
 
                 <!-- Seller header -->
                 <div class="post-modal__seller" @click="viewUser()">
-                    <div class="post-modal__avatar" v-html="profilePictureUrl"></div>
+                    <div class="post-modal__avatar">
+                        <UserAvatar :user="dataSeller" />
+                    </div>
                     <div class="post-modal__seller-info">
                         <span class="post-modal__username">
                             @{{ dataSeller.username }}
@@ -66,7 +68,7 @@
                 <!-- Title & Price -->
                 <div class="post-modal__header">
                     <h2 class="post-modal__title">{{ dataPost.title }}</h2>
-                    <div class="post-modal__price">{{ dataPost.price }} {{ currencySymbol }}</div>
+                    <div class="post-modal__price">{{ formatPrice(dataPost.price, dataPost.currency) }}</div>
                 </div>
                 <div v-if="dataPost.isPayWhatYouWant" class="post-modal__pwyw">
                     <span class="post-modal__tag">
@@ -216,17 +218,17 @@
     import send_offer from '../components/send_offer.vue';
     import CheckoutDialog from '../components/checkout/CheckoutDialog.vue';
     import VerifiedBadge from '../components/VerifiedBadge.vue';
+    import UserAvatar from '../components/UserAvatar.vue';
 
     import postService from '@/services/post.service';
     import { hasSession } from '@/services/http';
     import paymentService from '@/services/payment.service';
     import cartService from '@/services/cart.service';
-    import eventBus from '@/eventBus';
+    import { useCartStore } from '@/store/cart.store';
+    import { currentUserId } from '@/services/session.cookies';
+    import { formatPrice } from '@/utils/format';
     import { func } from '@/function';
     import { useRoute, useRouter } from "vue-router";
-    import Cookies from 'js-cookie';
-    import userService from "@/services/user.service";
-    import type { ImgUserProfile } from '@/types/user.types';
     import type { PostResponse, ProductDetail, ProductSeller } from '@/types/post.types';
     import messagingService from '@/services/messaging.service';
     import { apiErrorMessage } from '@/services/apiError';
@@ -250,7 +252,8 @@
             send_message,
             send_offer,
             CheckoutDialog,
-            VerifiedBadge
+            VerifiedBadge,
+            UserAvatar
         },
         props: {
             dataUser: {
@@ -295,10 +298,11 @@
             };
         },
         setup(){
-            const myId = Cookies.get('id_user');
+            const myId = currentUserId();
             const route = useRoute();
             const router = useRouter();
             const showBuyOption = ref(false);
+            const cartStore = useCartStore();
 
 
             const buyOption = () => {
@@ -330,6 +334,8 @@
                 router,
                 id,
                 myId,
+                cartStore,
+                formatPrice,
                 showBuyOption,
                 buyOption,
                 onCheckoutConfirmed,
@@ -341,13 +347,6 @@
 
 
         computed: {
-            profilePictureUrl() {
-                const profileImgInfo: ImgUserProfile = {
-                username: this.dataSeller.username,
-                profilePicture: this.dataSeller.profilePicture
-                };
-                return userService.renderUserAvatar(profileImgInfo);
-            },
             currencySymbol() {
                 const symbols = {
                     EUR: '€',
@@ -536,7 +535,8 @@
                     await cartService.addItem(this.dataPost._id);
                     this.addedToCart = true;
                     this.$func.showToastSuccess('Article ajouté au panier !');
-                    eventBus.emit('cart:updated');
+                    // Le badge du panier dans la barre de navigation suit le store.
+                    this.cartStore.refresh();
                 } catch (error) {
                     const msg = apiErrorMessage(error, 'Erreur lors de l\'ajout au panier');
                     this.$func.showToastError(msg);

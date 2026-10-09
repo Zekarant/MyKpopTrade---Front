@@ -81,6 +81,7 @@
     import { API_URL } from '@/config/api';
     import send_message from './send_message.vue';
     import VerifiedBadge from '@/components/VerifiedBadge.vue';
+    import { mediaUrl as sharedMediaUrl } from '@/utils/format';
 
     const DEFAULT_PROFILE_PICTURE = 'https://mykpoptrade.com/images/avatar-default.png';
 
@@ -88,10 +89,8 @@
     const api = createApiClient({ baseURL: API_URL });
 
     /** Chemin d'upload de l'API, ou URL absolue (avatars Google / Discord). */
-    const mediaUrl = (path: unknown): string | null => {
-        if (typeof path !== 'string' || !path) return null;
-        return /^https?:\/\//.test(path) ? path : `${API_URL}${path}`;
-    };
+    const mediaUrl = (path: unknown): string | null =>
+        typeof path === 'string' && path ? sharedMediaUrl(path) : null;
 
     type ApiError = { response?: { status?: number; data?: { message?: string } } };
 

@@ -1,6 +1,5 @@
 <template>
     <main class="page">
-        <Nav_bar></Nav_bar>
         <div class="content">
             <!-- En-tête -->
             <div class="sell-header">
@@ -443,7 +442,7 @@
     import 'swiper/css';
     import 'swiper/css/navigation';
 
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
+    import { formatPrice as formatAmount, mediaUrl } from '@/utils/format';
     import axios from "axios";
 
     /** Découpage purement visuel : `formData` reste un objet unique. */
@@ -475,7 +474,6 @@
   export default defineComponent({
     name: 'add_post',
     components: {
-        Nav_bar,
         Swiper,
         SwiperSlide,
     },
@@ -599,9 +597,7 @@
                 worldwideCost: shippingOptions.worldwideCost ?? legacyCost ?? null,
             };
             postDataObjet.images.forEach((image: string) => {
-                const API_URL = import.meta.env.VITE_API_URL;
-                const imgTmp = API_URL+image;
-                imagesPreview.value.push(imgTmp);
+                imagesPreview.value.push(mediaUrl(image));
             });
             pwywInitiallyEnabled = Boolean(postDataObjet.isPayWhatYouWant);
             pwyw.value = {
@@ -634,7 +630,11 @@
 
         const getAllGroupsKpop = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups`);
+                // Sans `limit`, l'API n'en rend que 20 : la liste déroulante doit
+                // proposer tout le catalogue (plafonné à 2000 côté API).
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups`, {
+                    params: { limit: 2000 }
+                });
                 return response.data.groups || [];
             } catch (error) {
                 console.error('Erreur lors du chargement des groupes K-pop:', error);
@@ -804,13 +804,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        const formatPrice = (value: number | null | undefined) => {
-            const amount = Number(value) || 0;
-            return new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: formData.value.currency || 'EUR'
-            }).format(amount);
-        };
+        // Champ vide pendant la saisie : le récapitulatif affiche 0 plutôt que rien.
+        const formatPrice = (value: number | null | undefined) =>
+            formatAmount(Number(value) || 0, formData.value.currency || 'EUR');
 
         const typeLabel = computed(() => TYPE_LABELS[formData.value.type] ?? formData.value.type);
         const conditionLabel = computed(

@@ -8,7 +8,9 @@
     ref="swiperRef"
   >
     <swiper-slide v-for="(image, index) in imagesWithDomain" :key="index">
-      <img style="width: 100%; height: 100%; object-fit: cover;" :src="image" alt="Slide image" @error="onImageError($event)" />
+      <!-- Pas d'aspect-ratio ici : le carrousel sert aussi en grand format ; la place
+           est réservée par le conteneur (carré dans card.vue). -->
+      <img style="width: 100%; height: 100%; object-fit: cover;" :src="image" :alt="`Photo ${index + 1}`" loading="lazy" decoding="async" @error="onImageError($event)" />
     </swiper-slide>
   </swiper>
   <div v-else class="carousel-placeholder">
@@ -27,6 +29,7 @@ import { Swiper, SwiperSlide } from 'swiper/vue';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { mediaUrl } from '@/utils/format';
 
 export default {
   components: {
@@ -59,17 +62,9 @@ export default {
     };
   },
   computed: {
-    imagesWithDomain() {
-      const baseUrl = import.meta.env.VITE_API_URL;
-      return (this.images as Array<string | undefined>).filter(Boolean).map((img: string | undefined): string => {
-        // Si l'image commence par 'data:' (base64) ou 'http' (URL complète),
-        // on la retourne telle quelle
-        if (img?.startsWith('data:') || img?.startsWith('http')) {
-          return img!;
-        }
-        // Sinon, on ajoute le baseUrl
-        return `${baseUrl}${img}`;
-      });
+    imagesWithDomain(): string[] {
+      // Aperçus base64 et URL absolues passent tels quels ; les chemins de l'API sont préfixés.
+      return (this.images as Array<string | undefined>).filter(Boolean).map((img) => mediaUrl(img));
     }
   },
   watch: {

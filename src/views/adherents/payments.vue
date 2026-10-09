@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar />
     <div class="payments-page">
       <div class="payments-page__container">
         <div class="payments-page__header">
@@ -31,7 +30,7 @@
           >
             <div class="payment-card__head">
               <div class="payment-card__product">
-                <img v-if="getProductImage(p)" :src="absUrl(getProductImage(p))" :alt="getProductTitle(p)" />
+                <img v-if="getProductImage(p)" :src="absUrl(getProductImage(p))" :alt="getProductTitle(p)" loading="lazy" decoding="async" />
                 <div class="payment-card__product-info">
                   <strong>{{ getProductTitle(p) }}</strong>
                   <small>{{ formatDate(p.createdAt) }}</small>
@@ -235,12 +234,11 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue';
-import Cookies from 'js-cookie';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { currentUserId } from '@/services/session.cookies';
+import { formatDate, formatDateTime, formatPrice, mediaUrl } from '@/utils/format';
 import { apiErrorMessage } from '@/services/apiError';
 import paymentService from '@/services/payment.service';
 import disputeService, { type DisputeReason } from '@/services/dispute.service';
-import { API_URL } from '@/config/api';
 
 interface Payment {
   _id: string;
@@ -295,7 +293,6 @@ function roleFromQuery(value: unknown): PaymentRole {
 
 export default defineComponent({
   name: 'PaymentsPage',
-  components: { Nav_bar },
   data() {
     return {
       payments: [] as Payment[],
@@ -308,7 +305,7 @@ export default defineComponent({
       page: 1,
       limit: 10,
       loading: false,
-      currentUserId: Cookies.get('id_user') || '',
+      currentUserId: currentUserId() || '',
       shipmentModal: {
         open: false,
         paymentId: '',
@@ -446,24 +443,12 @@ export default defineComponent({
       const img = p.product?.images?.[0];
       return img || null;
     },
-    absUrl(url: string | null): string {
-      if (!url) return '';
-      if (url.startsWith('http')) return url;
-      return `${API_URL}${url}`;
-    },
-    formatAmount(amount: number, currency = 'EUR'): string {
-      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount);
-    },
+    absUrl: mediaUrl,
+    formatAmount: formatPrice,
     formatDate(iso?: string): string {
-      if (!iso) return '';
-      return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+      return formatDate(iso);
     },
-    formatDateTime(iso?: string): string {
-      if (!iso) return '';
-      return new Date(iso).toLocaleString('fr-FR', {
-        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-    },
+    formatDateTime,
     getTimeline(p: Payment): ShipmentEvent[] {
       const events = p.shipment?.events ?? [];
       return [...events].sort(

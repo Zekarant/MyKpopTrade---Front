@@ -1,6 +1,5 @@
 <template>
     <main class="page profile-root">
-        <Nav_bar></Nav_bar>
         <div class="profile-layout">
           <div class="profile-layout__content">
             <div class="profile-banner-wrap">
@@ -73,7 +72,6 @@
   <script setup lang="ts">
     import { computed, onMounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
     import banner_profil from '@/components/adherents/banner.vue';
     import segment_profil from '@/components/adherents/segment_profil.vue';
     import report_card from '@/components/report_card.vue';

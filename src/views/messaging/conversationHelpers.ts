@@ -3,6 +3,8 @@
  * l'utilisateur courant est toujours passé explicitement.
  */
 
+import { formatDate } from '@/utils/format';
+
 type Id = string;
 type Ref = Id | { _id?: Id; id?: Id; username?: string } | null | undefined;
 
@@ -177,8 +179,7 @@ export function participantStats(participant: ParticipantProfile | null | undefi
 }
 
 export function formatLongDate(date: string | Date | null | undefined): string {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+  return formatDate(date, 'long') || 'N/A';
 }
 
 const CONVERSATION_TYPE_LABELS: Record<string, string> = {

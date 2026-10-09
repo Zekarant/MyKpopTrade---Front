@@ -1,6 +1,5 @@
 ﻿<template>
     <main class="page">
-        <Nav_bar></Nav_bar>
 
         <!-- Deletion scheduled banner -->
         <div v-if="deletionDate" class="deletion-banner">
@@ -96,7 +95,6 @@
     import { defineComponent } from 'vue';
     import { useRouter } from "vue-router";
 
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
     import Grid from '@/components/grid.vue';
@@ -105,6 +103,7 @@
     import { API_URL } from '@/config/api';
     import { createApiClient } from '@/services/http';
     import type { Post, PostsResponse } from '@/types/post.types';
+    import { formatDate } from '@/utils/format';
 
     type ListPagination = PostsResponse['pagination'];
 
@@ -114,7 +113,6 @@
   export default defineComponent({
     name: 'DashboardView',
     components: {
-      Nav_bar,
       search_bar,
       row_products,
       Grid
@@ -187,7 +185,7 @@
         }
       },
       formatDate(iso: string) {
-        return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+        return formatDate(iso, 'long');
       },
       goToSettings() {
         this.router.push('/adherents/settings');

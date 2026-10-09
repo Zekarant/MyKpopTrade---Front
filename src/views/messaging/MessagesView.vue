@@ -1,6 +1,5 @@
 ﻿<template>
   <main class="page">
-  <nav_bar></nav_bar>
   <div class="messaging-container">
     <ConversationSidebar
       v-model:active-tab="activeTab"
@@ -40,7 +39,9 @@
         <div class="chat-header">
           <i @click="closeConversation" class="bi bi-chevron-compact-left back-btn"></i>
           <div class="chat-participant">
-            <div class="userPicture" v-html="getAvatar(selectedConversation.otherParticipant)"></div>
+            <div class="userPicture">
+              <UserAvatar :user="selectedConversation.otherParticipant" />
+            </div>
             <div class="participant-info">
               <div class="participant-name">
                 <span class="name">{{ selectedConversation.otherParticipant?.username || selectedConversation.username }}</span>
@@ -280,12 +281,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, nextTick, getCurrentInstance } from 'vue'
 import { useRoute } from 'vue-router'
+import { useEventListener } from '@vueuse/core'
 import { useMessagingStore } from '@/store/messaging.store'
-import userService from '@/services/user.service'
+import { useUserStore } from '@/store/user.store'
+import { currentUserId as sessionUserId } from '@/services/session.cookies'
 import paymentService from '@/services/payment.service'
-import nav_bar from '@/components/adherents/nav_bar.vue';
+import UserAvatar from '@/components/UserAvatar.vue';
 import ImageCarousel from '@/components/ImageCarousel.vue';
 import send_message from '@/components/adherents/send_message.vue';
 import send_offer from '@/components/send_offer.vue';
@@ -293,12 +296,14 @@ import CheckoutDialog from '@/components/checkout/CheckoutDialog.vue';
 import ConversationSidebar from './components/ConversationSidebar.vue';
 import ConversationInfoPanel from './components/ConversationInfoPanel.vue';
 import MessageBubble from './components/MessageBubble.vue';
-import { avatarHtml } from './avatar';
-import EmojiPicker from 'vue3-emoji-picker'
-import Cookies from 'js-cookie';
-import 'vue3-emoji-picker/css'
+import { defineAsyncComponent } from 'vue'
+// Le sélecteur d'emojis (~150 kB avec sa base d'emojis) n'est chargé qu'à la
+// première ouverture du popup (v-if) : la messagerie s'affiche sans l'attendre.
+// Sa feuille de style suit le même chunk pour ne pas être injectée d'avance.
+const EmojiPicker = defineAsyncComponent(() =>
+  Promise.all([import('vue3-emoji-picker'), import('vue3-emoji-picker/css')]).then(([m]) => m.default)
+)
 import messagingService from '@/services/messaging.service';
-import type { IUser } from '@/types/user.types';
 import type { ViewConversation, ViewMessage } from './types';
 import {
   countConversationsByTab,
@@ -345,7 +350,10 @@ const showOfferOption = ref(false)
 const showCounterOfferOption = ref(false)
 const showConversationMenu = ref<string | null | undefined>(null)
 const showEmojiPicker = ref(false)
-const userInfo = ref<(IUser & { id?: string }) | null>(null)
+// Profil partagé avec la barre de navigation : chargé une fois par session.
+const userStore = useUserStore()
+const userInfo = computed(() => userStore.profile)
+const messagesContainer = ref<HTMLElement | null>(null)
 const loading = ref(false)
 const sending = ref(false)
 const declineOffer_popup = ref(false);
@@ -364,7 +372,7 @@ const loadingMoreMessages = ref(false);
 
 const toast = getCurrentInstance()!.proxy!.$func
 
-const currentUserId = (): string | null => Cookies.get('id_user') || userInfo.value?.id || userInfo.value?._id || null
+const currentUserId = (): string | null => sessionUserId() || userInfo.value?.id || userInfo.value?._id || null
 
 const conversationId = (conversation: ViewConversation): string => conversation._id || conversation.id || ''
 
@@ -399,8 +407,6 @@ const getOtherParticipant = (conversation: ConversationLike) => getOtherParticip
 
 // Methods
 const isOwnMessage = (message: ViewMessage) => isOwnMessageFor(message, currentUserId())
-
-const getAvatar = (user: unknown) => avatarHtml(user as Parameters<typeof avatarHtml>[0])
 
 const onSelectEmoji = (emoji: { i: string }) => {
   newMessage.value += emoji.i
@@ -941,9 +947,8 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    const userResponse = await userService.getMyInformation()
-    userInfo.value = userResponse.user || userResponse.profile || null
-
+    // Le profil ne sert qu'à l'en-tête : son échec ne doit pas priver de la messagerie.
+    await userStore.fetchProfile().catch(() => null)
 
     await messagingStore.fetchConversations()
 
@@ -954,10 +959,6 @@ onMounted(async () => {
         ? messagingStore.conversations.find((c: ViewConversation) => conversationId(c) === requestedId)
         : null
       await selectConversation(requested || messagingStore.conversations[0])
-    }
-    const messagesArea = document.querySelector('.messages-area');
-    if (messagesArea) {
-      messagesArea.addEventListener('scroll', handleMessagesScroll);
     }
   } catch (error) {
     console.error('Erreur lors du chargement:', error)
@@ -976,8 +977,16 @@ showOfferOption.value = false
 showConversationMenu.value = null
   showEmojiPicker.value = false
 }
-document.addEventListener('click', closeDropdowns)
-onBeforeUnmount(() => document.removeEventListener('click', closeDropdowns))
+// Tout clic qui n'est pas arrêté (@click.stop sur les menus) ferme les menus
+// ouverts : il ne s'agit pas d'un « clic hors d'un élément » unique, d'où un
+// écouteur global, retiré automatiquement au démontage.
+useEventListener(document, 'click', closeDropdowns)
+
+// La zone des messages n'existe qu'une fois une conversation ouverte (v-else) :
+// l'écouteur suit la ref, posé à son apparition et retiré à sa disparition ou au
+// démontage — l'ancien addEventListener du montage n'était jamais retiré et
+// manquait la zone si aucune conversation n'était ouverte au départ.
+useEventListener(messagesContainer, 'scroll', handleMessagesScroll)
 </script>
 
 

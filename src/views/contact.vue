@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar></Nav_bar>
     <div class="contact-container">
       <div class="contact-card">
         <div class="contact-header">
@@ -92,12 +91,10 @@
 <script lang="ts">
 import { defineComponent, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
 export default defineComponent({
   name: 'ContactView',
-  components: { Nav_bar },
   setup() {
     const router = useRouter();
     const loading = ref(false);

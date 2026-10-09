@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import type { PostResponse } from '@/types/post.types'
+import { useCartStore } from '@/store/cart.store'
 
 /** Fiche d'une annonce : lien partageable et actions réservées aux membres connectés. */
 
 const router = vi.hoisted(() => ({ push: vi.fn() }))
 const cookies = vi.hoisted(() => ({ get: vi.fn() }))
 const postService = vi.hoisted(() => ({ getPost: vi.fn(), addFavorite: vi.fn() }))
-const cartService = vi.hoisted(() => ({ addItem: vi.fn() }))
+const cartService = vi.hoisted(() => ({ addItem: vi.fn(), getCart: vi.fn() }))
 const func = vi.hoisted(() => ({ showToastSuccess: vi.fn(), showToastError: vi.fn() }))
 
 vi.mock('vue-router', () => ({ useRoute: () => ({ params: {} }), useRouter: () => router }))
@@ -17,7 +19,6 @@ vi.mock('@/services/cart.service', () => ({ default: cartService }))
 vi.mock('@/services/http', () => ({ hasSession: () => Boolean(cookies.get('id_user')) }))
 vi.mock('@/services/payment.service', () => ({ default: {} }))
 vi.mock('@/services/messaging.service', () => ({ default: {} }))
-vi.mock('@/services/user.service', () => ({ default: { renderUserAvatar: () => '' } }))
 vi.mock('@/components/ImageCarousel.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/report_card.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/adherents/send_message.vue', () => ({ default: { template: '<div />' } }))
@@ -64,6 +65,7 @@ const button = (wrapper: Awaited<ReturnType<typeof mountPost>>, label: string) =
 describe('post (fiche annonce)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setActivePinia(createPinia())
     cookies.get.mockReturnValue(undefined)
   })
 
@@ -102,6 +104,18 @@ describe('post (fiche annonce)', () => {
 
     expect(cartService.addItem).toHaveBeenCalledWith('p1')
     expect(router.push).not.toHaveBeenCalled()
+  })
+
+  it('met à jour le badge du panier après un ajout', async () => {
+    cookies.get.mockReturnValue('u1')
+    cartService.addItem.mockResolvedValue(undefined)
+    cartService.getCart.mockResolvedValue({ items: [{}, {}] })
+    const wrapper = await mountPost()
+
+    await button(wrapper, 'Panier').trigger('click')
+    await flushPromises()
+
+    expect(useCartStore().count).toBe(2)
   })
 
   it('copie le lien partageable de l\'annonce', async () => {

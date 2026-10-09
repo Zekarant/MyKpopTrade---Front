@@ -31,7 +31,7 @@
       <!-- Right section -->
       <div class="navbar__right">
         <!-- Notifications -->
-        <div class="navbar__notif-wrapper" @click.stop="toggleNotifications">
+        <div ref="notifWrapper" class="navbar__notif-wrapper" @click.stop="toggleNotifications">
           <button class="navbar__icon-btn" aria-label="Notifications">
             <i class="bi bi-bell"></i>
             <span v-if="unreadNotifications > 0" class="navbar__badge">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
@@ -52,7 +52,7 @@
                   <i class="bi" :class="getNotifIcon(notif.type)"></i>
                   <div class="navbar__notif-content">
                     <span class="navbar__notif-text">{{ notif.content }}</span>
-                    <span class="navbar__notif-time">{{ formatTime(notif.createdAt) }}</span>
+                    <span class="navbar__notif-time">{{ formatRelative(notif.createdAt) }}</span>
                   </div>
                 </div>
               </div>
@@ -72,8 +72,10 @@
         </button>
 
         <!-- Profile dropdown trigger -->
-        <div class="navbar__profile" @click.stop="toggleDropdown">
-          <div v-if="profilePicture" class="navbar__avatar" v-html="profilePicture"></div>
+        <div ref="profileTrigger" class="navbar__profile" @click.stop="toggleDropdown">
+          <div v-if="dataUser" class="navbar__avatar">
+            <UserAvatar :user="dataUser" />
+          </div>
           <div v-else class="navbar__avatar navbar__avatar--placeholder">
             <i class="bi bi-person-fill"></i>
           </div>
@@ -82,14 +84,16 @@
 
         <!-- Profile Dropdown -->
         <Transition name="dropdown">
-          <div v-if="dropdownOpen" class="navbar__dropdown" @click.stop>
+          <div v-if="dropdownOpen" ref="profileDropdown" class="navbar__dropdown" @click.stop>
             <div class="navbar__dropdown-header">
-              <div v-if="profilePicture" class="navbar__dropdown-avatar" v-html="profilePicture"></div>
+              <div v-if="dataUser" class="navbar__dropdown-avatar">
+                <UserAvatar :user="dataUser" />
+              </div>
               <div v-else class="navbar__dropdown-avatar navbar__dropdown-avatar--placeholder">
                 <i class="bi bi-person-fill"></i>
               </div>
               <div class="navbar__dropdown-info">
-                <span class="navbar__dropdown-name">{{ dataUser.username || 'Utilisateur' }}</span>
+                <span class="navbar__dropdown-name">{{ dataUser?.username || 'Utilisateur' }}</span>
                 <span class="navbar__dropdown-sub">{{ fullName || 'Mon compte' }}</span>
               </div>
             </div>
@@ -123,7 +127,7 @@
               <i class="bi bi-gear"></i>
               Paramètres
             </a>
-            <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__dropdown-item navbar__dropdown-item--admin">
+            <a v-if="isAdmin" @click="navPage('admin', null)" href="#" class="navbar__dropdown-item navbar__dropdown-item--admin">
               <i class="bi bi-shield-check"></i>
               Administration
             </a>
@@ -149,11 +153,13 @@
       <div v-if="menuOpen" class="navbar__mobile">
         <!-- Mobile user info -->
         <div class="navbar__mobile-user">
-          <div v-if="profilePicture" class="navbar__mobile-user-avatar" v-html="profilePicture"></div>
+          <div v-if="dataUser" class="navbar__mobile-user-avatar">
+            <UserAvatar :user="dataUser" />
+          </div>
           <div v-else class="navbar__mobile-user-avatar navbar__mobile-user-avatar--placeholder">
             <i class="bi bi-person-fill"></i>
           </div>
-          <span class="navbar__mobile-user-name">{{ dataUser.username || 'Utilisateur' }}</span>
+          <span class="navbar__mobile-user-name">{{ dataUser?.username || 'Utilisateur' }}</span>
         </div>
         <div class="navbar__dropdown-divider"></div>
         <a
@@ -196,7 +202,7 @@
           <i class="bi bi-gear"></i>
           <span>Paramètres</span>
         </a>
-        <a v-if="dataUser.role === 'admin'" @click="navPage('admin', null)" href="#" class="navbar__mobile-link">
+        <a v-if="isAdmin" @click="navPage('admin', null)" href="#" class="navbar__mobile-link">
           <i class="bi bi-shield-check"></i>
           <span>Administration</span>
         </a>
@@ -209,230 +215,133 @@
   </nav>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+/**
+ * Barre de navigation des pages connectées. Rendue une seule fois par App.vue
+ * (selon `meta.navbar` de la route) : elle survit aux navigations et lit
+ * profil, panier et notifications dans les stores au lieu de les recharger à
+ * chaque page.
+ */
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
-import userService from '@/services/user.service';
+import { onClickOutside } from '@vueuse/core';
+import { storeToRefs } from 'pinia';
 import authentificationService from '@/services/authentification.service';
-import notificationService, { type Notification } from '@/services/notification.service';
-import cartService from '@/services/cart.service';
-import eventBus from '@/eventBus';
+import type { Notification } from '@/services/notification.service';
 import { safeRedirect } from '@/router/safeRedirect';
-import type { ImgUserProfile, IUser } from '@/types/user.types';
+import { useUserStore } from '@/store/user.store';
+import { useCartStore } from '@/store/cart.store';
+import { useNotificationStore } from '@/store/notification.store';
+import { formatRelative } from '@/utils/format';
+import UserAvatar from '@/components/UserAvatar.vue';
 
-declare global {
-  interface Window {
-    $func?: {
-      logout?: () => void;
-    };
+const route = useRoute();
+const router = useRouter();
+
+const userStore = useUserStore();
+const cartStore = useCartStore();
+const notificationStore = useNotificationStore();
+const { profile: dataUser, isAdmin } = storeToRefs(userStore);
+const { count: cartCount } = storeToRefs(cartStore);
+const { notifications, unreadCount: unreadNotifications } = storeToRefs(notificationStore);
+
+const dropdownOpen = ref(false);
+const notificationsOpen = ref(false);
+const menuOpen = ref(false);
+
+const notifWrapper = ref<HTMLElement | null>(null);
+const profileTrigger = ref<HTMLElement | null>(null);
+const profileDropdown = ref<HTMLElement | null>(null);
+
+const fullName = computed(() =>
+  [dataUser.value?.firstName, dataUser.value?.lastName].filter(Boolean).join(' ')
+);
+
+function isActive(page: RouteRecordNameGeneric): boolean {
+  if (route.name === 'conversation' && page === 'messages') return true;
+  if (route.name !== page) return false;
+  if (page === 'profile') return route.params?.id === 'me';
+  return true;
+}
+
+// Calculé (et non posé une fois dans data()) : la barre n'est plus remontée à
+// chaque page, l'entrée active doit donc suivre la route.
+const itemMenu = computed(() => [
+  { label: 'Accueil', iconClass: 'bi bi-house', page: 'dashboard', parameter: null },
+  { label: 'Rechercher', iconClass: 'bi bi-search', page: 'searchList', parameter: null },
+  { label: 'Contact', iconClass: 'bi bi-headset', page: 'contact', parameter: null }
+].map((item) => ({ ...item, active: isActive(item.page) })));
+
+// Le déclencheur est ignoré : son propre @click bascule déjà le menu.
+onClickOutside(profileDropdown, () => { dropdownOpen.value = false; }, { ignore: [profileTrigger] });
+onClickOutside(notifWrapper, () => { notificationsOpen.value = false; });
+
+onMounted(() => {
+  userStore.fetchProfile().catch((error) => {
+    console.error('Error fetching user information:', error);
+  });
+  notificationStore.fetch();
+  cartStore.refresh();
+});
+
+function navPage(page: RouteRecordNameGeneric, parameter: string | null) {
+  menuOpen.value = false;
+  dropdownOpen.value = false;
+  setTimeout(() => {
+    const target: { name: RouteRecordNameGeneric; params?: { id: string } } = { name: page };
+    if (parameter) target.params = { id: parameter };
+    router.push(target);
+  }, 0);
+}
+
+function togglePopup() {
+  router.push({ name: 'add_post' });
+}
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value;
+  if (dropdownOpen.value) notificationsOpen.value = false;
+}
+
+function toggleNotifications() {
+  notificationsOpen.value = !notificationsOpen.value;
+  if (notificationsOpen.value) {
+    dropdownOpen.value = false;
+    // La barre ne se recharge plus à chaque page : la liste est rafraîchie à l'ouverture.
+    notificationStore.fetch();
   }
 }
 
-    export default {
-        name: "nav_bar",
-        data() {
-            return {
-                dropdownOpen: false,
-                notificationsOpen: false,
-                menuOpen: false,
-                currentRoute: '',
-                htmlImgProfile: '',
-                unreadNotifications: 0,
-                notifications: [] as Notification[],
-                cartCount: 0,
-                itemMenu: [
-                    {
-                    label: 'Accueil',
-                    iconClass: 'bi bi-house',
-                    active: this.verifBtn('dashboard'),
-                    page: 'dashboard',
-                    parameter: null
-                    },
-                    {
-                    label: 'Rechercher',
-                    iconClass: 'bi bi-search',
-                    active: this.verifBtn('searchList'),
-                    page: 'searchList',
-                    parameter: null
-                    },
-                    {
-                      label: 'Contact',
-                      iconClass: 'bi bi-headset',
-                      active: this.verifBtn('contact'),
-                      page: 'contact',
-                      parameter: null
-                    }
-                ],
-                itemMenuEnd: [
-                    {},{},{},{}
-                ],
-                dataUser: {} as IUser,
-                showFullMenu:false
-            };
-        },
-        setup() {
-            const route = useRoute();
-            const router = useRouter();
-            const id = route.params.id;
-            return { route, router, id };
-        },
-        mounted() {
-          if(this.htmlImgProfile != ''){
-            return this.htmlImgProfile;
-          }else{
-            userService.getMyInformation().then((data) => {
-              this.dataUser = data.profile as IUser;
-              if(this.dataUser){
-                const profileImgInfo : ImgUserProfile = {
-                  username: this.dataUser.username,
-                  profilePicture: this.dataUser.profilePicture
-                };
-                this.htmlImgProfile = userService.renderUserAvatar(profileImgInfo);
-              }else{
-                return false;
-              }
-            }).catch((error) => {
-              console.error('Error fetching user information:', error);
-              return false;
-            });
-          }
-          window.addEventListener('click', this.handleWindowClick);
-          this.fetchNotifications();
-          this.fetchCartCount();
-          eventBus.on('cart:updated', this.fetchCartCount);
-        },
-        beforeUnmount() {
-            window.removeEventListener('click', this.handleWindowClick);
-            eventBus.off('cart:updated', this.fetchCartCount);
-        },
-        computed: {
-          profilePicture() {
-            return this.htmlImgProfile;
-          },
-          fullName(): string {
-            return [this.dataUser.firstName, this.dataUser.lastName].filter(Boolean).join(' ');
-          },
-        },
-        methods: {
-            handleWindowClick(event: MouseEvent) {
-                if (this.dropdownOpen) {
-                    const dropdown = this.$el.querySelector('.navbar__dropdown');
-                    const profile = this.$el.querySelector('.navbar__profile');
-                    if (
-                        dropdown && !dropdown.contains(event.target as Node) &&
-                        profile && !profile.contains(event.target as Node)
-                    ) {
-                        this.dropdownOpen = false;
-                    }
-                }
-                if (this.notificationsOpen) {
-                    const notifDropdown = this.$el.querySelector('.navbar__notif-dropdown');
-                    const notifWrapper = this.$el.querySelector('.navbar__notif-wrapper');
-                    if (
-                        notifDropdown && !notifDropdown.contains(event.target as Node) &&
-                        notifWrapper && !notifWrapper.contains(event.target as Node)
-                    ) {
-                        this.notificationsOpen = false;
-                    }
-                }
-            },
-            verifBtn(btn:RouteRecordNameGeneric){
-                if(this.route.name == 'conversation' && btn === 'messages') return true;
-                if(this.route.name == btn){
-                    if (btn === 'profile') {
-                        return this.route.params?.id === 'me' || this.route.params?.parameter === 'me';
-                    }
-                    return true;
-                }
-                return false;
-            },
-            navPage(page:RouteRecordNameGeneric, parameter: string | null){
-                this.menuOpen = false;
-                this.dropdownOpen = false;
-                setTimeout(() => {
-                    const route: { name: RouteRecordNameGeneric; params?: { id: string } } = { name: page };
-                    if (parameter) route.params = { id: parameter };
-                    this.router.push(route);
-                }, 0);
-            },
-            togglePopup() {
-                this.router.push({ name: 'add_post' });
-            },
-            toggleDropdown() {
-              this.dropdownOpen = !this.dropdownOpen;
-              if (this.dropdownOpen) this.notificationsOpen = false;
-            },
-            toggleNotifications() {
-              this.notificationsOpen = !this.notificationsOpen;
-              if (this.notificationsOpen) this.dropdownOpen = false;
-            },
-            async markAllRead() {
-              try {
-                await notificationService.markAllAsRead();
-                this.notifications.forEach((n: Notification) => n.isRead = true);
-                this.unreadNotifications = 0;
-              } catch { /* ignore */ }
-            },
-            onNotifClick(notif: Notification) {
-              if (!notif.isRead) {
-                notificationService.markAsRead(notif._id).catch(() => {});
-                notif.isRead = true;
-                this.unreadNotifications = Math.max(0, this.unreadNotifications - 1);
-              }
-              this.notificationsOpen = false;
-              // Le routeur traduit les anciens chemins de l'API (/account/…, /conversations/…).
-              const target = safeRedirect(notif.link);
-              if (target) this.router.push(target);
-            },
-            getNotifIcon(type: string) {
-              const icons: Record<string, string> = {
-                message: 'bi-chat-dots',
-                offer: 'bi-tag',
-                counter_offer: 'bi-arrow-repeat',
-                offer_accepted: 'bi-check-circle',
-                offer_rejected: 'bi-x-circle',
-                product_sold: 'bi-bag-check',
-                order_status: 'bi-truck',
-                system: 'bi-info-circle',
-                rating_received: 'bi-star',
-              };
-              return icons[type] || 'bi-bell';
-            },
-            formatTime(dateStr: string) {
-              if (!dateStr) return '';
-              const diff = Date.now() - new Date(dateStr).getTime();
-              const mins = Math.floor(diff / 60000);
-              if (mins < 1) return "À l'instant";
-              if (mins < 60) return `${mins} min`;
-              const hours = Math.floor(mins / 60);
-              if (hours < 24) return `${hours}h`;
-              const days = Math.floor(hours / 24);
-              if (days < 7) return `${days}j`;
-              if (days < 30) return `${Math.floor(days / 7)} sem.`;
-              if (days < 365) return `${Math.floor(days / 30)} mois`;
-              return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-            },
-            async fetchNotifications() {
-              try {
-                const data = await notificationService.getNotifications();
-                this.unreadNotifications = data.pagination?.unreadCount || 0;
-                this.notifications = data.notifications || [];
-              } catch {
-                // silently fail
-              }
-            },
-            async fetchCartCount() {
-              try {
-                const cart = await cartService.getCart();
-                this.cartCount = cart.items?.length || 0;
-              } catch {
-                // silently fail
-              }
-            },
-            logout() {
-              authentificationService.logout()
-            },
-        },
-    };
+function markAllRead() {
+  notificationStore.markAllRead();
+}
+
+function onNotifClick(notif: Notification) {
+  notificationStore.markRead(notif._id);
+  notificationsOpen.value = false;
+  // Le routeur traduit les anciens chemins de l'API (/account/…, /conversations/…).
+  const target = safeRedirect(notif.link);
+  if (target) router.push(target);
+}
+
+function getNotifIcon(type: string) {
+  const icons: Record<string, string> = {
+    message: 'bi-chat-dots',
+    offer: 'bi-tag',
+    counter_offer: 'bi-arrow-repeat',
+    offer_accepted: 'bi-check-circle',
+    offer_rejected: 'bi-x-circle',
+    product_sold: 'bi-bag-check',
+    order_status: 'bi-truck',
+    system: 'bi-info-circle',
+    rating_received: 'bi-star',
+  };
+  return icons[type] || 'bi-bell';
+}
+
+function logout() {
+  authentificationService.logout();
+}
 </script>
 
 <style lang="scss" scoped>

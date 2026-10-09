@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { formatDate as sharedFormatDate, formatPrice as sharedFormatPrice } from '@/utils/format';
 
 export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   photocard: 'Photocard',
@@ -79,14 +80,8 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin'
 };
 
-export const formatDate = (value?: string | Date | null): string => {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-};
+// Formatage partagé avec le reste du site ; l'admin affiche « — » pour une valeur absente.
+export const formatDate = (value?: string | Date | null): string => sharedFormatDate(value) || '—';
 
 export const formatDateTime = (value?: string | Date | null): string => {
   if (!value) return '—';
@@ -106,10 +101,8 @@ export const formatAge = (value?: string | Date | null): string => {
 export const getInitial = (username?: string | null): string =>
   username ? username.charAt(0).toUpperCase() : '?';
 
-export const formatPrice = (amount?: number, currency = 'EUR'): string => {
-  if (amount === undefined || amount === null) return '—';
-  return `${amount.toFixed(2)} ${currency === 'EUR' ? '€' : currency}`;
-};
+export const formatPrice = (amount?: number, currency = 'EUR'): string =>
+  sharedFormatPrice(amount, currency) || '—';
 
 type ApiErrorBody = { message?: string; error?: { message?: string } };
 

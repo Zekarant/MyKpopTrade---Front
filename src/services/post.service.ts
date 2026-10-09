@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import Cookies from "js-cookie";
+import { currentUserId } from '@/services/session.cookies';
 import authentificationService  from '@/services/authentification.service';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
@@ -20,7 +20,7 @@ export type PostSaveResult =
   | { ok: true; productId: string }
   | { ok: false; error?: PostSaveErrorBody };
 
-const getIdUser = (): string | undefined => Cookies.get('id_user');
+const getIdUser = (): string | undefined => currentUserId() ?? undefined;
 
 function saveFailure(error: unknown): PostSaveResult {
   return { ok: false, error: (error as { response?: { data?: PostSaveErrorBody } }).response?.data };

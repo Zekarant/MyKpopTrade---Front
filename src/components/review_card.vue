@@ -5,7 +5,7 @@
             <div class="review-card__content">
                 <div class="review-card__header">
                     <div class="review-card__avatar">
-                        <img :src="getUrlImage(review.reviewer.profilePicture)" @error="onImgError($event)" alt="Profile" />
+                        <img :src="getUrlImage(review.reviewer.profilePicture)" @error="onImgError($event)" :alt="`Avatar de ${review.reviewer.username}`" width="44" height="44" loading="lazy" decoding="async" />
                     </div>
                     <div class="review-card__user">
                         <span class="review-card__username">@{{ review.reviewer.username }}</span>
@@ -38,6 +38,7 @@
   <script lang="ts">
     import ImageCarousel from '../components/ImageCarousel.vue';
     import report_card from '../components/report_card.vue';
+    import { formatDate, mediaUrl } from '@/utils/format';
 
     export default {
         name: "review_card",
@@ -68,17 +69,10 @@
                 }
             },
             getUrlImage(url: string) {
-                if (!url) return '';
-                if (url.startsWith('http')) return url;
-                return `${import.meta.env.VITE_API_URL}${url}`;
+                return mediaUrl(url);
             },
             formatDate(dateString: string) {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('fr-FR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                });
+                return formatDate(dateString, 'long');
             },
         },
     };

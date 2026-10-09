@@ -14,7 +14,7 @@
               <VerifiedBadge v-if="data.seller.isIdentityVerified" :size="11" />
             </div>
             <span class="product-card__condition">{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>
-            <span class="product-card__price">{{ data.price }} €</span>
+            <span class="product-card__price">{{ formatPrice(data.price, data.currency || 'EUR') }}</span>
         </div>
     </div>
 </template>
@@ -22,12 +22,17 @@
 <script lang="ts">
     import ImageCarousel from '@/components/ImageCarousel.vue';
     import VerifiedBadge from '@/components/VerifiedBadge.vue';
+    import { formatPrice } from '@/utils/format';
 
     export default {
         name: "post-card",
         components: {
             ImageCarousel,
             VerifiedBadge,
+        },
+        setup() {
+            // L'annonce porte sa devise : « 20 € » en dur affichait aussi les prix en dollars en euros.
+            return { formatPrice };
         },
         props: {
             data: {

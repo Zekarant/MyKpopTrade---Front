@@ -1,6 +1,5 @@
 <template>
   <main class="page settings-root">
-    <Nav_bar />
     <div class="settings-page">
       <div class="settings-page__container">
         <!-- Header -->
@@ -101,7 +100,6 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import ProfileSection from './settings/ProfileSection.vue';
 import SecuritySection from './settings/SecuritySection.vue';
 import AccountSection from './settings/AccountSection.vue';
@@ -137,7 +135,6 @@ const SOCIAL_LINK_ERRORS: Record<string, string> = {
 export default defineComponent({
   name: 'SettingsPage',
   components: {
-    Nav_bar,
     ProfileSection,
     SecuritySection,
     AccountSection,

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import Cookies from 'js-cookie'
 
 /** Test de montage de MessagesView : vérifie le comportement visible, pas l'implémentation. */
@@ -60,15 +61,13 @@ vi.mock('@/store/messaging.store', () => ({ useMessagingStore: () => store }))
 vi.mock('vue-router', () => ({ useRoute: () => route, useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/services/user.service', () => ({
   default: {
-    getMyInformation: vi.fn(async () => ({ user: { id: ME, username: 'Moi' } })),
-    renderUserAvatar: () => '<span></span>'
+    getMyInformation: vi.fn(async () => ({ user: { id: ME, username: 'Moi' } }))
   }
 }))
 vi.mock('@/services/payment.service', () => ({ default: {} }))
 vi.mock('@/services/messaging.service', () => ({ default: { getAttachmentUrl: () => '' } }))
 vi.mock('vue3-emoji-picker', () => ({ default: { template: '<div />' } }))
 vi.mock('vue3-emoji-picker/css', () => ({}))
-vi.mock('@/components/adherents/nav_bar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/components/ImageCarousel.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/adherents/send_message.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/send_offer.vue', () => ({ default: { template: '<div />' } }))
@@ -98,6 +97,8 @@ const tabCount = (wrapper: Awaited<ReturnType<typeof mountView>>, label: string)
 describe('MessagesView', () => {
   beforeEach(() => {
     Cookies.set('id_user', ME)
+    // Le profil vient du store utilisateur (le store de messagerie reste simulé).
+    setActivePinia(createPinia())
     route.params = {}
     store.fetchConversation.mockClear()
     document.body.innerHTML = ''

@@ -4,7 +4,9 @@
             :class="{ 'own-message': own, 'other-message': !own }"
           >
             <div v-if="!own">
-              <div class="message-avatar" v-html="avatarHtml(message.sender)"></div>
+              <div class="message-avatar">
+                <UserAvatar :user="message.sender" />
+              </div>
             </div>
             <div class="message-content">
               <div class="message-bubble">
@@ -15,7 +17,7 @@
                     :key="index"
                     :class="{ 'has-more': index === 3 && attachments.length > 4 }"
                     :data-count="index === 3 && attachments.length > 4 ? `+${attachments.length - 4}` : ''" @click="emit('open-attachments', messageAttachmentUrls(message), index)">
-                    <img :src="attachmentUrl(message._id || message.id, attachement)">
+                    <img :src="attachmentUrl(message._id || message.id, attachement)" alt="Pièce jointe" loading="lazy" decoding="async">
                   </div>
                 </div>
                 <p>{{ message.content }}</p>
@@ -79,7 +81,7 @@
 /** Un message du fil : texte, pièces jointes et, pour une offre, son statut et ses actions. */
 import { computed } from 'vue'
 import { formatMessageTimestamp, messageStatusIcon } from '../conversationHelpers'
-import { avatarHtml } from '../avatar'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { attachmentUrl, messageAttachmentUrls } from '../attachments'
 import type { ViewMessage } from '../types'
 

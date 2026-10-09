@@ -1,5 +1,5 @@
 <template>
-<div class="search-bar-wrapper" @click.stop>
+<div ref="wrapper" class="search-bar-wrapper">
   <span class="search-icon">
     <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" fill="currentColor" viewBox="0 0 256 256">
       <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/>
@@ -63,6 +63,8 @@
 </template>
 
 <script lang="ts">
+import { getCurrentInstance, ref } from 'vue';
+import { onClickOutside } from '@vueuse/core';
 import searchService, { type SearchSuggestions } from '@/services/search.service';
 import Cookies from 'js-cookie';
 
@@ -93,16 +95,24 @@ export default {
       dropdownOpen: false,
       cursor: -1,
       debounceHandle: null as ReturnType<typeof setTimeout> | null,
-      onDocClick: null as ((e: MouseEvent) => void) | null,
     };
+  },
+  setup() {
+    const wrapper = ref<HTMLElement | null>(null);
+    // Méthodes Options API : accessibles via le proxy une fois le composant créé.
+    const instance = getCurrentInstance();
+    // Un clic hors de la barre ferme les suggestions ; le @click.stop qui
+    // protégeait la barre d'un écouteur global n'est plus nécessaire, et
+    // l'écouteur est retiré automatiquement au démontage.
+    onClickOutside(wrapper, () => {
+      (instance?.proxy as { closeDropdown?: () => void } | null)?.closeDropdown?.();
+    });
+    return { wrapper };
   },
   mounted() {
     if (this.query) this.searchQuery = this.query;
-    this.onDocClick = () => this.closeDropdown();
-    document.addEventListener('click', this.onDocClick);
   },
   beforeUnmount() {
-    if (this.onDocClick) document.removeEventListener('click', this.onDocClick);
     if (this.debounceHandle) clearTimeout(this.debounceHandle);
   },
   methods: {

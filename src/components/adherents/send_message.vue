@@ -29,7 +29,7 @@
                             class="msg-modal__result-item"
                             @click="selectMember(member)"
                         >
-                            <img v-if="member.profilePicture" :src="getImageUrl(member.profilePicture)" :alt="member.username" class="msg-modal__avatar" />
+                            <img v-if="member.profilePicture" :src="getImageUrl(member.profilePicture)" :alt="member.username" class="msg-modal__avatar" loading="lazy" decoding="async" />
                             <span v-else class="msg-modal__avatar msg-modal__avatar--letter">{{ member.username?.charAt(0).toUpperCase() }}</span>
                             <div class="msg-modal__result-info">
                                 <span class="msg-modal__result-name">
@@ -83,7 +83,7 @@
 import mssagingService from '@/services/messaging.service';
 import { useRoute, useRouter } from "vue-router";
 import { ref, getCurrentInstance } from 'vue';
-import { API_URL } from '@/config/api';
+import { mediaUrl } from '@/utils/format';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
 
 export interface Member {
@@ -103,7 +103,6 @@ interface SearchMembersResponse {
     user?: Member;
 }
 
-const API_BASE_URL = API_URL;
 
 export default {
     name: "send_message",
@@ -145,17 +144,7 @@ export default {
         }
 
         // Fonction pour construire l'URL complète de l'image
-        const getImageUrl = (imagePath?: string): string => {
-            if (!imagePath) {
-                return '/api/placeholder/50/50';
-            }
-            // Si le chemin commence déjà par http, le retourner tel quel
-            if (imagePath.startsWith('http')) {
-                return imagePath;
-            }
-            // Sinon, ajouter le domaine API
-            return `${API_BASE_URL}${imagePath}`;
-        };
+        const getImageUrl = (imagePath?: string): string => mediaUrl(imagePath);
 
         // Pré-sélection si on a déjà un utilisateur ciblé
         if (props.id_user || props.pseudo_user) {

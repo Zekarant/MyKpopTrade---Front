@@ -3,7 +3,8 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="user-profile">
-          <div v-html="avatarHtml(userInfo)" class="avatar">
+          <div class="avatar">
+            <UserAvatar :user="userInfo" />
           </div>
           <div class="user-info">
             <span class="username">{{ userInfo?.username || '@nom_d_utilisateur' }}</span>
@@ -83,7 +84,9 @@
             @click="emit('select', conversation)">
 
             <div>
-              <div class="conversation-avatar" v-html="avatarHtml(otherParticipant(conversation))"></div>
+              <div class="conversation-avatar">
+                <UserAvatar :user="otherParticipant(conversation)" />
+              </div>
               <div class="online-indicator" v-if="otherParticipant(conversation)?.isOnline"></div>
             </div>
             <div class="conversation-content">
@@ -165,7 +168,7 @@ import {
   isArchivedConversation,
   isFavoriteConversation
 } from '../conversationHelpers'
-import { avatarHtml } from '../avatar'
+import UserAvatar from '@/components/UserAvatar.vue'
 import type { IUser } from '@/types/user.types'
 import type { ViewConversation } from '../types'
 

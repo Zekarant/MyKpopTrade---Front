@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar />
     <div class="disputes-page">
       <div class="disputes-page__container">
         <header class="disputes-page__header">
@@ -41,13 +40,12 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { apiErrorMessage } from '@/services/apiError';
 import disputeService, { type Dispute, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
+import { formatDate } from '@/utils/format';
 
 export default defineComponent({
   name: 'DisputesList',
-  components: { Nav_bar },
   data() {
     return { disputes: [] as Dispute[], loading: false };
   },
@@ -64,7 +62,7 @@ export default defineComponent({
     },
     open(id: string) { this.$router.push(`/disputes/${id}`); },
     formatDate(iso: string) {
-      return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+      return formatDate(iso);
     },
     truncate(s: string, n: number) { return s.length > n ? s.substring(0, n) + '…' : s; },
     statusLabel(s: DisputeStatus) {

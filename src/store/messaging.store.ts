@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import messagingService from '@/services/messaging.service';
 import type { Conversation, Message, NegotiationRequest } from '@/types/messaging.types';
-import Cookies from 'js-cookie';
+import { currentUserId } from '@/services/session.cookies';
 
 interface MessagingState {
   conversations: Conversation[];
@@ -75,7 +75,7 @@ export const useMessagingStore = defineStore('messaging', {
             for (let i = 0; i < this.conversations[index].participants.length; i++) {
               const participant = this.conversations[index].participants[i];
 
-              if(participant._id != Cookies.get('id_user')) {
+              if(participant._id != currentUserId()) {
                 if(!this.conversations[index].otherParticipant){
                   this.conversations[index].otherParticipant = participant;
                 }
@@ -154,7 +154,7 @@ export const useMessagingStore = defineStore('messaging', {
         const index = this.messages.findIndex(m => m._id === messageId);
 
         if (index !== -1) {
-          const myId = Cookies.get('id_user') || '';
+          const myId = currentUserId() || '';
           // Initialiser favoritedBy si undefined
           if (!this.messages[index].favoritedBy) {
             this.messages[index].favoritedBy = [];
@@ -182,7 +182,7 @@ export const useMessagingStore = defineStore('messaging', {
     async archiveConversation(messageId: string) {
       try {
         await messagingService.archiveConversation(messageId);
-        const myId = Cookies.get('id_user') || '';
+        const myId = currentUserId() || '';
 
         // Retirer le message de la liste
         const index = this.messages.findIndex(m => m._id === messageId);
@@ -199,7 +199,7 @@ export const useMessagingStore = defineStore('messaging', {
     async unarchiveConversation(messageId: string) {
       try {
         await messagingService.unarchiveConversation(messageId);
-        const myId = Cookies.get('id_user') || '';
+        const myId = currentUserId() || '';
 
         // Retirer le message de la liste
         const index = this.messages.findIndex(m => m._id === messageId);
@@ -376,8 +376,8 @@ export const useMessagingStore = defineStore('messaging', {
 
         // Incrémenter le compteur de non-lus si ce n'est pas notre message
 
-        const currentUserId = Cookies.get('id_user') || '';
-        if (message.sender._id !== currentUserId && !message.readBy.includes(currentUserId || '')) {
+        const myId = currentUserId() || '';
+        if (message.sender._id !== myId && !message.readBy.includes(myId)) {
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
           this.updateUnreadCount();
         }

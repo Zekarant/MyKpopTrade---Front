@@ -75,11 +75,13 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/HomeView.vue')
+    component: () => import('../views/HomeView.vue'),
+    meta: { title: 'Accueil' }
   },
   { path: '/login',
     name: 'login',
-    component: Login
+    component: Login,
+    meta: { title: 'Connexion' }
   },
   {
     path: '/auth/callback',
@@ -89,7 +91,8 @@ const routes = [
   },
   { path: '/register',
     name: 'register',
-    component: Register
+    component: Register,
+    meta: { title: 'Inscription' }
   },
   {
     path: '/profile-completion',
@@ -101,7 +104,7 @@ const routes = [
     path: '/adherents/dashboard',
     name: 'dashboard',
     component: () => import('@p_v/dashboard.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Accueil' }
   },
   {
     path: '/adherents/admin',
@@ -129,7 +132,7 @@ const routes = [
     path: '/adherents/',
     name: 'adherents',
     component: () => import('@p_v/dashboard.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Accueil' }
   },
   {
     path: '/adherents/collection',
@@ -141,7 +144,7 @@ const routes = [
     path: '/adherents/profile/:id',
     name: 'profile',
     component: () => import('@p_v/profile.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Profil' }
   },
   {
     path: '/adherents/settings',
@@ -164,6 +167,7 @@ const routes = [
   path: '/search-:combined?',
   name: 'searchList',
   component: () => import('../views/adherents/searchList.vue'),
+  meta: { title: 'Recherche' },
   props: (route: RouteLocationGeneric) => {
     const combined = (route.params.combined as string | undefined) || '';
     const parts = combined.split('-');
@@ -325,7 +329,17 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routes
+  routes: routes,
+  scrollBehavior(to, from, savedPosition) {
+    // Précédent / suivant : on retrouve la position quittée.
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    // Même page, seule la query change (onglet admin, filtre…) : on ne bouge pas,
+    // sinon chaque frappe dans un champ synchronisé avec l'URL remonterait en haut.
+    if (to.path === from.path) return false
+    // Nouvelle page : en haut, comme une navigation classique.
+    return { top: 0 }
+  }
 })
 
 /**
@@ -336,14 +350,16 @@ const router = createRouter({
 const GUEST_ONLY_ROUTES = new Set(['home', 'login', 'register'])
 
 /**
- * Rôle lu auprès de l'API, jamais déduit côté client. Import différé : le
- * service utilisateur importe des modules qui importent ce routeur.
+ * Rôle lu auprès de l'API, jamais déduit côté client — via le store, qui ne
+ * charge le profil qu'une fois par session. Import différé : le store importe
+ * le service utilisateur, qui importe des modules qui importent ce routeur.
  */
 async function isAdmin(): Promise<boolean> {
   try {
-    const { default: userService } = await import('@/services/user.service')
-    const { profile } = await userService.getMyInformation()
-    return profile?.role === 'admin'
+    const { useUserStore } = await import('@/store/user.store')
+    const userStore = useUserStore()
+    await userStore.fetchProfile()
+    return userStore.isAdmin
   } catch {
     return false
   }

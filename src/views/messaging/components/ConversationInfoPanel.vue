@@ -4,7 +4,9 @@
       <!-- User Information -->
       <div class="user-section">
         <div class="user-header">
-          <div class="user-avatar" v-html="avatarHtml(other || conversation)"></div>
+          <div class="user-avatar">
+            <UserAvatar :user="other || conversation" />
+          </div>
           <div class="user-details">
             <h3>{{ other?.username || conversation.username }}</h3>
             <div class="user-badges" v-if="other?.isIdentityVerified || other?.isSellerVerified">
@@ -53,7 +55,7 @@
         </div>
 
         <div class="product-card" v-if="product">
-          <img :src="API_URL+product.images[0]" alt="Product" />
+          <img :src="mediaUrl(product.images[0])" :alt="product.title || 'Article'" loading="lazy" decoding="async" />
           <div class="product-info">
             <h4>{{ product.title }}</h4>
             <p class="product-kpopMember">{{ product.kpopMember }}, {{ product.kpopGroup }} </p>
@@ -92,7 +94,7 @@
             @click="emit('open-media', conversationMediaUrls(conversation), index)"
 
           >
-            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Media">
+            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Média partagé" loading="lazy" decoding="async">
             <div v-if="index === 3 && sharedMedia.length > 4" class="media-overlay">
               <span class="media-count">+{{ sharedMedia.length - 4 }}</span>
             </div>
@@ -105,7 +107,8 @@
 <script setup lang="ts">
 /** Barre latérale droite de la messagerie : interlocuteur, encadré transaction et médias partagés. */
 import { computed } from 'vue'
-import { API_URL } from '@/config/api'
+import { mediaUrl } from '@/utils/format'
+import UserAvatar from '@/components/UserAvatar.vue'
 import {
   formatLongDate,
   getOtherParticipant,
@@ -114,7 +117,6 @@ import {
   transactionStatusLabel,
   transactionTitle
 } from '../conversationHelpers'
-import { avatarHtml } from '../avatar'
 import { attachmentUrl, conversationMediaUrls } from '../attachments'
 import type { ProductReference } from '@/types/messaging.types'
 import type { TransactionContext } from '../conversationHelpers'

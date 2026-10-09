@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-  <nav_bar></nav_bar>
   <div class="add-review-container">
     <div class="add-review-content">
       <h1>Ajouter un avis</h1>
@@ -144,7 +143,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import nav_bar from '@/components/adherents/nav_bar.vue';
 import reviewService from '@/services/review.service';
 import postService from '@/services/post.service';
 import type { ReviewData } from '@/types/review.types';

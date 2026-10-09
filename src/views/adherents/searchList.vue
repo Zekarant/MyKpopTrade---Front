@@ -1,6 +1,5 @@
 ﻿<template>
     <main class="page">
-        <Nav_bar></Nav_bar>
        <div class="content" style="display: flex;">
           <div style="width: 2%;"></div>
           <div v-if="!isMobile" class="filter_content">
@@ -44,7 +43,6 @@
     import searchService, { type AdvancedSearchPayload } from '@/services/search.service';
     import type { Post } from '@/types/post.types';
 
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar_2 from '@/components/search_bar_2.vue';
     import filter_list from '@/components/filter_list.vue';
     import Grid from '@/components/grid.vue';
@@ -63,7 +61,6 @@
   export default defineComponent({
     name: 'searchList',
     components: {
-      Nav_bar,
       search_bar_2,
       filter_list,
       Grid

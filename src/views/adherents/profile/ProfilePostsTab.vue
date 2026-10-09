@@ -40,7 +40,7 @@
         </div>
         <p class="feed-post__content">{{ post.content }}</p>
         <div v-if="post.images?.length" class="feed-post__images">
-          <img v-for="(img, i) in post.images" :key="i" :src="API_URL + img" class="feed-post__img" />
+          <img v-for="(img, i) in post.images" :key="i" :src="mediaUrl(img)" alt="Image de la publication" class="feed-post__img" loading="lazy" decoding="async" />
         </div>
         <div class="feed-post__actions">
           <button class="feed-post__action" @click="likePost(post)">
@@ -84,7 +84,7 @@
 import { onActivated, ref, watch } from 'vue'
 import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import feedPostService from '@/services/feedPost.service'
-import { API_URL } from '@/config/api'
+import { mediaUrl } from '@/utils/format'
 import { initialOf, type ReportTarget } from './types'
 
 const props = defineProps<{ profileUserId: string; isOwnProfile: boolean; username?: string }>()

@@ -1,6 +1,5 @@
 <template>
   <main class="faq-page" :class="{ 'faq-page--guest': !isAuthenticated }">
-    <Nav_bar v-if="isAuthenticated" />
     <div class="faq-page__container">
       <header class="faq-page__header">
         <router-link v-if="!isAuthenticated" to="/" class="faq-page__back">
@@ -43,7 +42,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { hasSession } from '@/services/session.cookies';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import faqService, { type Faq } from '@/services/faq.service';
 
 interface FaqGroup {
@@ -53,7 +51,6 @@ interface FaqGroup {
 
 export default defineComponent({
   name: 'FaqPage',
-  components: { Nav_bar },
   data() {
     return {
       groups: [] as FaqGroup[],

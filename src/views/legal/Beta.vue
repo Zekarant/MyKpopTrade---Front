@@ -1,6 +1,5 @@
 <template>
   <main class="beta-page" :class="{ 'beta-page--guest': !isAuthenticated }">
-    <Nav_bar v-if="isAuthenticated" />
     <div class="beta-page__container">
       <header class="beta-page__header">
         <router-link v-if="!isAuthenticated" to="/" class="beta-page__back">
@@ -109,13 +108,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { hasSession } from '@/services/session.cookies';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 
 export default defineComponent({
   name: 'BetaPage',
-  components: { Nav_bar },
   computed: {
-    // Session rétablissable : on affiche donc la barre de navigation complète.
+    // Session rétablissable : App.vue affiche la barre de navigation, la page
+    // retire donc son lien de retour et sa réserve d'espace « invité ».
     isAuthenticated(): boolean {
       return hasSession();
     }

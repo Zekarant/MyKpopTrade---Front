@@ -21,7 +21,8 @@
         <div class="product-section">
           <div class="product-images">
             <img
-              :src="product.images[0] ? API_URL + product.images[0] : '/placeholder.png'"
+              :src="product.images[0] ? mediaUrl(product.images[0]) : '/placeholder.png'"
+              decoding="async"
               :alt="product.title"
               class="main-image"
             />
@@ -147,7 +148,7 @@ import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessagingStore } from '@/store/messaging.store';
 import postService from '@/services/post.service';
-import { API_URL } from '@/config/api';
+import { mediaUrl } from '@/utils/format';
 import type { ProductDetail } from '@/types/post.types';
 import { offerBounds, pwywRangeLabel, validateOfferAmount, type OfferBounds } from '@/components/offerRules';
 
@@ -268,7 +269,7 @@ export default defineComponent({
     });
 
     return {
-      API_URL,
+      mediaUrl,
       product,
       loading,
       offerAmount,

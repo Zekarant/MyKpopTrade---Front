@@ -44,7 +44,15 @@ export function setSessionCookies(session: { accessToken: string; userId?: strin
  * n'est qu'un indice : l'API reste seule juge au renouvellement.
  */
 export function hasSession(): boolean {
-  return Boolean(Cookies.get('id_user'));
+  return Boolean(currentUserId());
+}
+
+/**
+ * Id de l'utilisateur connecté, `null` sans session. Seul point de lecture du
+ * cookie `id_user` : les vues et stores passent par ici plutôt que par js-cookie.
+ */
+export function currentUserId(): string | null {
+  return Cookies.get('id_user') || null;
 }
 
 /** Supprime tous les cookies de session lisibles par le front. */

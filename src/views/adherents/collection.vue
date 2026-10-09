@@ -1,6 +1,5 @@
 <template>
     <main class="page">
-      <Nav_bar></Nav_bar>
       <div class="collection">
         <div class="collection__header">
           <h1 class="collection__title">
@@ -60,14 +59,12 @@
     import { defineComponent, ref } from 'vue';
     import authentification from '@/services/authentification.service';
     import postService from '@/services/post.service';
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
     import Grid from '@/components/grid.vue';
     import type { Post } from '@/types/post.types';
 
   export default defineComponent({
     name: 'CollectionView',
     components: {
-      Nav_bar,
       Grid,
     },
     setup() {

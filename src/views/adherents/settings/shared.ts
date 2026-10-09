@@ -1,5 +1,6 @@
 import { createApiClient } from '@/services/http';
 import { API_URL } from '@/config/api';
+import { formatDate as formatSharedDate } from '@/utils/format';
 
 /** Adresse de facturation, telle que stockée par l'API. */
 export interface BillingAddress {
@@ -72,7 +73,7 @@ export function isSessionLost(error: unknown): boolean {
   return apiStatus(error) === 401;
 }
 
+/** Dates en toutes lettres dans les phrases des paramètres (« programmée le 9 octobre 2026 »). */
 export function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  return formatSharedDate(iso, 'long');
 }

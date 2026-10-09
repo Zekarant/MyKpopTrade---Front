@@ -1,6 +1,5 @@
 <template>
   <div class="cart-page">
-    <nav_bar />
     <div class="cart-page__container">
       <h1 class="cart-page__title">
         <i class="bi bi-cart3"></i> Mon panier
@@ -45,7 +44,7 @@
 
           <div v-for="item in group" :key="item.product._id" class="cart-page__item">
             <div class="cart-page__item-image">
-              <img v-if="item.product.images && item.product.images.length" :src="getImageUrl(item.product.images[0])" :alt="item.product.title" @error="onImgError($event)" />
+              <img v-if="item.product.images && item.product.images.length" :src="getImageUrl(item.product.images[0])" :alt="item.product.title" loading="lazy" decoding="async" @error="onImgError($event)" />
               <div v-else class="cart-page__item-placeholder">
                 <i class="bi bi-image"></i>
               </div>
@@ -53,8 +52,8 @@
             <div class="cart-page__item-info">
               <h3 class="cart-page__item-title">{{ item.product.title }}</h3>
               <div class="cart-page__item-price">
-                {{ itemPrice(item) }} {{ getCurrencySymbol(item.currencySnapshot) }}
-                <span v-if="isNegotiated(item)" class="cart-page__item-catalogue-price">{{ item.product.price }} {{ getCurrencySymbol(item.currencySnapshot) }}</span>
+                {{ formatPrice(itemPrice(item), item.currencySnapshot) }}
+                <span v-if="isNegotiated(item)" class="cart-page__item-catalogue-price">{{ formatPrice(item.product.price, item.currencySnapshot) }}</span>
               </div>
               <div v-if="isNegotiated(item)" class="cart-page__item-negotiated">
                 <i class="bi bi-tag"></i> Prix négocié
@@ -162,18 +161,20 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import nav_bar from '@/components/adherents/nav_bar.vue';
 import { apiErrorMessage } from '@/services/apiError';
 import cartService from '@/services/cart.service';
 import type { Cart, CartItem } from '@/services/cart.service';
-import { API_URL } from '@/config/api';
+import { useCartStore } from '@/store/cart.store';
+import { formatPrice, mediaUrl } from '@/utils/format';
 import { savePendingPayments } from '@/views/payment/pendingPayments';
 import { cartItemPrice, cartShipping, isNegotiatedPrice, sumCartItems, type CartShipping } from './cartPricing';
 import type { ShippingMethod } from '@/services/payment.service';
 
 export default defineComponent({
   name: 'CartView',
-  components: { nav_bar },
+  setup() {
+    return { cartStore: useCartStore(), formatPrice };
+  },
   data() {
     return {
       cart: null as Cart | null,
@@ -214,6 +215,12 @@ export default defineComponent({
     },
     totalFormatted(): string {
       return this.formatAmount(this.itemsTotal);
+    }
+  },
+  watch: {
+    // Retrait, vidage ou rechargement : le badge de la barre de navigation suit.
+    cart(cart: Cart | null) {
+      if (cart) this.cartStore.setCount(cart.items.length);
     }
   },
   async mounted() {
@@ -292,9 +299,10 @@ export default defineComponent({
         this.checkingOut = false;
       }
     },
+    // L'API stocke le chemin complet (« /uploads/products/x.jpg ») : le préfixer
+    // une seconde fois de /uploads/products/ donnait une image toujours cassée.
     getImageUrl(img: string): string {
-      if (img.startsWith('http')) return img;
-      return `${API_URL}/uploads/products/${img}`;
+      return mediaUrl(img);
     },
     onImgError(event: Event) {
       const img = event.target as HTMLImageElement;
@@ -310,10 +318,6 @@ export default defineComponent({
     getSellerName(item: CartItem): string {
       return item.product.sellerUsername ? `@${item.product.sellerUsername}` : 'Vendeur inconnu';
     },
-    getCurrencySymbol(currency: string): string {
-      const symbols: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };
-      return symbols[currency] || currency;
-    },
     itemPrice(item: CartItem): number {
       return cartItemPrice(item);
     },
@@ -322,13 +326,10 @@ export default defineComponent({
     },
     /** Montant dans la devise du premier article, prise comme référence du panier. */
     formatAmount(amount: number): string {
-      const currency = this.cart?.items[0]?.currencySnapshot || 'EUR';
-      return `${amount.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
+      return formatPrice(amount, this.cart?.items[0]?.currencySnapshot || 'EUR');
     },
     formatGroupTotal(group: CartItem[]): string {
-      const total = sumCartItems(group);
-      const currency = group[0]?.currencySnapshot || 'EUR';
-      return `${total.toFixed(2)} ${this.getCurrencySymbol(currency)}`;
+      return formatPrice(sumCartItems(group), group[0]?.currencySnapshot || 'EUR');
     }
   }
 });

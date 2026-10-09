@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 
 /** Gardes du routeur : pages protégées, administration et URL inconnues. */
 
-const session = vi.hoisted(() => ({ hasSession: vi.fn(() => false) }))
+const session = vi.hoisted(() => ({ hasSession: vi.fn(() => false), currentUserId: vi.fn(() => 'u1') }))
 const users = vi.hoisted(() => ({ getMyInformation: vi.fn() }))
 
 vi.mock('@/services/session.cookies', () => session)
@@ -19,6 +20,8 @@ import router from '../index'
 describe('router — gardes', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
+    // Le profil est mis en cache par session : une Pinia neuve par test.
+    setActivePinia(createPinia())
     session.hasSession.mockReturnValue(false)
     await router.push('/login')
   })
@@ -54,6 +57,17 @@ describe('router — gardes', () => {
     await router.push('/adherents/admin')
 
     expect(router.currentRoute.value.name).toBe('admin')
+  })
+
+  it('ne recharge pas le profil à chaque passage par l\'administration', async () => {
+    session.hasSession.mockReturnValue(true)
+    users.getMyInformation.mockResolvedValue({ profile: { role: 'admin' } })
+
+    await router.push('/adherents/admin')
+    await router.push('/cart')
+    await router.push('/adherents/admin')
+
+    expect(users.getMyInformation).toHaveBeenCalledTimes(1)
   })
 
   it('affiche la page 404 pour une URL inconnue', async () => {

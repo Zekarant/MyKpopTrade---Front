@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar />
     <div class="product-page">
       <div v-if="state === 'loading'" class="product-page__status" role="status">
         <div class="product-page__spinner"></div>
@@ -41,7 +40,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Nav_bar from '@/components/adherents/nav_bar.vue'
 import PostDetail from '@/components/post.vue'
 import postService from '@/services/post.service'
 import { apiErrorResponse } from '@/services/apiError'

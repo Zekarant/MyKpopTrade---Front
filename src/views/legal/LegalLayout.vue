@@ -1,7 +1,7 @@
 <template>
   <main class="legal-page" :class="{ 'legal-page--guest': !isAuthenticated }">
-    <Nav_bar v-if="isAuthenticated" />
-    <header v-else class="legal-page__guest-nav">
+    <!-- Connecté : la barre de navigation est rendue par App.vue. -->
+    <header v-if="!isAuthenticated" class="legal-page__guest-nav">
       <router-link to="/" class="legal-page__back">
         <i class="bi bi-arrow-left"></i> Retour à l'accueil
       </router-link>
@@ -41,7 +41,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { hasSession } from '@/services/session.cookies';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { missingLegalKeys } from '@/config/legal';
 
 const legalDocuments = [
@@ -53,7 +52,6 @@ const legalDocuments = [
 
 export default defineComponent({
   name: 'LegalLayout',
-  components: { Nav_bar },
   props: {
     title: { type: String, required: true },
     updatedAt: { type: String, required: true }

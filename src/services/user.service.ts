@@ -2,18 +2,10 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 
 import authentificationService  from '@/services/authentification.service';
-import type {
-    UserResponse,
-    ImgUserProfile
-} from "@/types/user.types";
+import type { UserResponse } from "@/types/user.types";
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
-
-const HTML_ESCAPES: Record<string, string> = {
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-};
-const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
 
 
 
@@ -102,45 +94,6 @@ class userService {
     const response = await this.rgpdApiClient.post('/me/anonymize', payload);
     return response.data;
   }
-
-  // Le HTML rendu ici part dans des v-html : toute donnée utilisateur doit être
-  // échappée, sinon un pseudo ou une URL d'avatar piégés injectent du script.
-  renderUserAvatar(dataUser: ImgUserProfile): string {
-    const { username, profilePicture } = dataUser;
-    // Initiale limitée à [A-Z0-9] : elle est aussi insérée dans le JS de onerror.
-    const initial = username?.charAt(0).toUpperCase() ?? '';
-    const firstLetter = /^[A-Z0-9]$/.test(initial) ? initial : '?';
-
-    if (
-      profilePicture &&
-      profilePicture.trim() !== "" &&
-      profilePicture.trim() !==
-        "https://mykpoptrade.com/images/avatar-default.png"
-    ) {
-      // Les avatars Google / Discord sont des URL absolues, pas des chemins de l'API.
-      const src = /^https?:\/\//.test(profilePicture) ? profilePicture : `${API_URL}${profilePicture}`;
-      return `
-        <img src="${escapeHtml(src)}" alt="${escapeHtml(username ?? '')}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#ff2d78,#7c3aed);border-radius:3px;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;\\'>${firstLetter}</div>'" />
-      `;
-    } else {
-      return `
-        <div style="
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          background-color: var(--primary-color);
-          border-radius: 3px;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 20px;
-        ">
-          ${firstLetter}
-        </div>
-      `;
-    }
-  }
+  // L'avatar n'est plus rendu ici en HTML : voir components/UserAvatar.vue.
 };
 export default new userService();

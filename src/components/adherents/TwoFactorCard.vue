@@ -214,6 +214,7 @@ import twoFactorService, {
   type TwoFactorSetup
 } from '@/services/twoFactor.service';
 import { func } from '@/function';
+import { formatDate as formatSharedDate } from '@/utils/format';
 
 type Step = 'idle' | 'setup' | 'codes' | 'disable' | 'regenerate';
 
@@ -350,11 +351,7 @@ async function copyCodes() {
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
+  return formatSharedDate(value, 'long');
 }
 </script>
 
