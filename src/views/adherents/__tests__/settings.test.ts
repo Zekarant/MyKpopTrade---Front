@@ -69,6 +69,10 @@ describe('page Paramètres', () => {
     vi.clearAllMocks()
     http.get.mockImplementation(async (url: string) => {
       if (url === '/api/auth/profile') return { data: { user: savedProfile() } }
+      if (url === '/api/users/me/notification-preferences') {
+        const on = { email: true, push: true }
+        return { data: { preferences: { orders: on, offers: on, messages: on, disputes: on, reviews: on, social: on } } }
+      }
       throw new Error(`GET inattendu : ${url}`)
     })
     http.put.mockImplementation(async (_url: string, body: Record<string, unknown>) => ({

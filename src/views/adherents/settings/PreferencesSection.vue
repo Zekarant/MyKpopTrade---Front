@@ -13,16 +13,24 @@
           </div>
         </div>
         <label class="toggle">
-          <input type="checkbox" :checked="profile.preferences?.allowDirectMessages" @change="changeAllowDirectMessages" />
+          <input
+            type="checkbox"
+            aria-label="Autoriser les messages directs"
+            :checked="profile.preferences?.allowDirectMessages"
+            @change="changeAllowDirectMessages"
+          />
           <span class="toggle__slider"></span>
         </label>
       </div>
     </div>
   </section>
+
+  <NotificationPreferencesCard />
 </template>
 
 <script setup lang="ts">
 import { func } from '@/function';
+import NotificationPreferencesCard from './NotificationPreferencesCard.vue';
 import { api, apiMessage } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
