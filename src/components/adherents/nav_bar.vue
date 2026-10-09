@@ -216,6 +216,7 @@ import authentificationService from '@/services/authentification.service';
 import notificationService, { type Notification } from '@/services/notification.service';
 import cartService from '@/services/cart.service';
 import eventBus from '@/eventBus';
+import { safeRedirect } from '@/router/safeRedirect';
 import type { ImgUserProfile, IUser } from '@/types/user.types';
 
 declare global {
@@ -378,6 +379,9 @@ declare global {
                 this.unreadNotifications = Math.max(0, this.unreadNotifications - 1);
               }
               this.notificationsOpen = false;
+              // Le routeur traduit les anciens chemins de l'API (/account/…, /conversations/…).
+              const target = safeRedirect(notif.link);
+              if (target) this.router.push(target);
             },
             getNotifIcon(type: string) {
               const icons: Record<string, string> = {

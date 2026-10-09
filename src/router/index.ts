@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteLocationGeneric } from 'vue-router'
-import Cookies from 'js-cookie'
+import { hasSession } from '@/services/session.cookies'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
@@ -21,6 +21,56 @@ const routes = [
   {
     path: '/vendre',
     redirect: '/adherents/new'
+  },
+  // Chemins portés par les notifications et emails de l'API : ces liens
+  // restent valables dans les emails déjà envoyés, d'où des redirections.
+  {
+    path: '/conversations/:id',
+    redirect: (to: RouteLocationGeneric) => `/adherents/messages/${to.params.id}`
+  },
+  {
+    path: '/account/settings',
+    redirect: '/adherents/settings'
+  },
+  {
+    path: '/account/purchases/:id',
+    redirect: (to: RouteLocationGeneric) => ({
+      path: '/adherents/payments',
+      query: { role: 'buyer', payment: to.params.id }
+    })
+  },
+  {
+    path: '/account/sales/:id',
+    redirect: (to: RouteLocationGeneric) => ({
+      path: '/adherents/payments',
+      query: { role: 'seller', payment: to.params.id }
+    })
+  },
+  {
+    path: '/profile',
+    redirect: '/adherents/profile/me'
+  },
+  {
+    path: '/verification',
+    redirect: { path: '/adherents/settings', query: { section: 'compte' } }
+  },
+  {
+    path: '/reset-password/:token',
+    name: 'reset_password',
+    component: () => import('@/views/ResetPassword.vue'),
+    meta: { title: 'Nouveau mot de passe' }
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'verify_email',
+    component: () => import('@/views/VerifyEmail.vue'),
+    meta: { title: 'Vérification de l\'email' }
+  },
+  {
+    path: '/products/:id',
+    name: 'product',
+    component: () => import('@/views/ProductView.vue'),
+    meta: { title: 'Annonce' }
   },
   {
     path: '/',
@@ -50,12 +100,14 @@ const routes = [
   {
     path: '/adherents/dashboard',
     name: 'dashboard',
-    component: () => import('@p_v/dashboard.vue')
+    component: () => import('@p_v/dashboard.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/adherents/admin',
     name: 'admin',
-    component: () => import('@/views/admin/admin.vue')
+    component: () => import('@/views/admin/admin.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Administration' }
   },
 {
     path: '/payment/cancel',
@@ -76,17 +128,20 @@ const routes = [
     {
     path: '/adherents/',
     name: 'adherents',
-    component: () => import('@p_v/dashboard.vue')
+    component: () => import('@p_v/dashboard.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/adherents/collection',
     name: 'collection',
-    component: () => import('@p_v/collection.vue')
+    component: () => import('@p_v/collection.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/adherents/profile/:id',
     name: 'profile',
-    component: () => import('@p_v/profile.vue')
+    component: () => import('@p_v/profile.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/adherents/settings',
@@ -256,9 +311,14 @@ const routes = [
     name: 'faq',
     component: () => import('@/views/legal/Faq.vue'),
     meta: { title: 'FAQ' }
+  },
+  // Toujours en dernier : toute URL inconnue affiche la page 404.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not_found',
+    component: () => import('@/views/NotFound.vue'),
+    meta: { title: 'Page introuvable' }
   }
-
-
 ];
 
 
@@ -269,17 +329,42 @@ const router = createRouter({
 })
 
 /**
- * Pages réservées aux visiteurs non connectés. Le refresh token (cookie de
- * 7 jours) fait foi : tant qu'il est présent, la session peut être rétablie,
- * donc on renvoie l'utilisateur vers son tableau de bord plutôt que de lui
+ * Pages réservées aux visiteurs non connectés. Tant qu'une session peut être
+ * rétablie, on renvoie l'utilisateur vers son tableau de bord plutôt que de lui
  * réafficher l'accueil ou l'écran de connexion.
  */
 const GUEST_ONLY_ROUTES = new Set(['home', 'login', 'register'])
 
-router.beforeEach((to) => {
-  const hasSession = Boolean(Cookies.get('refreshToken'))
+/**
+ * Rôle lu auprès de l'API, jamais déduit côté client. Import différé : le
+ * service utilisateur importe des modules qui importent ce routeur.
+ */
+async function isAdmin(): Promise<boolean> {
+  try {
+    const { default: userService } = await import('@/services/user.service')
+    const { profile } = await userService.getMyInformation()
+    return profile?.role === 'admin'
+  } catch {
+    return false
+  }
+}
 
-  if (hasSession && typeof to.name === 'string' && GUEST_ONLY_ROUTES.has(to.name)) {
+/**
+ * Ces gardes évitent d'afficher une page cassée ; la seule vraie barrière
+ * reste le contrôle d'accès de l'API.
+ */
+router.beforeEach(async (to) => {
+  const loggedIn = hasSession()
+
+  if (loggedIn && typeof to.name === 'string' && GUEST_ONLY_ROUTES.has(to.name)) {
+    return { name: 'dashboard' }
+  }
+
+  if (to.meta.requiresAuth && !loggedIn) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !(await isAdmin())) {
     return { name: 'dashboard' }
   }
 

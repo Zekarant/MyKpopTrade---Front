@@ -174,6 +174,7 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import authentificationService from "@/services/authentification.service";
 import { API_URL } from '@/config/api';
+import { safeRedirect } from '@/router/safeRedirect';
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   google_no_email: "Google n'a pas fourni d'adresse e-mail.",
@@ -207,6 +208,10 @@ export default defineComponent({
 
     const router = useRouter();
     const route = useRoute();
+
+    /** Page protégée qui a renvoyé vers la connexion, sinon le tableau de bord. */
+    const afterLoginPath = (): string =>
+      safeRedirect(route.query.redirect) ?? "/adherents/dashboard";
 
     onMounted(() => {
       const errCode = route.query.error;
@@ -253,7 +258,7 @@ export default defineComponent({
           }
 
           successMessage.value = "Connexion réussie.";
-          router.push("/adherents/dashboard");
+          router.push(afterLoginPath());
         } catch (error) {
           ErroruserName.value = error instanceof Error ? error.message : String(error);
         }
@@ -272,7 +277,7 @@ export default defineComponent({
       try {
         await authentificationService.verifyTwoFactor(twoFactorToken.value, code);
         successMessage.value = "Connexion réussie.";
-        router.push("/adherents/dashboard");
+        router.push(afterLoginPath());
       } catch (error) {
         twoFactorError.value = error instanceof Error ? error.message : String(error);
         twoFactorCode.value = "";

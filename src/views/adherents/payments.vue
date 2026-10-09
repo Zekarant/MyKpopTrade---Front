@@ -23,7 +23,12 @@
         </div>
 
         <div v-else class="payments-list">
-          <article v-for="p in payments" :key="p._id" class="payment-card">
+          <article
+            v-for="p in payments"
+            :key="p._id"
+            :ref="(el) => registerCard(p._id, el)"
+            :class="['payment-card', { 'payment-card--focused': p._id === focusedPaymentId }]"
+          >
             <div class="payment-card__head">
               <div class="payment-card__product">
                 <img v-if="getProductImage(p)" :src="absUrl(getProductImage(p))" :alt="getProductTitle(p)" />
@@ -229,7 +234,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import Cookies from 'js-cookie';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { apiErrorMessage } from '@/services/apiError';
@@ -281,14 +286,25 @@ interface ShipmentEvent {
   source: 'system' | 'seller' | 'buyer' | 'carrier';
 }
 
+type PaymentRole = 'all' | 'buyer' | 'seller';
+
+/** Onglet initial : `?role=` vient des liens de notification (achat / vente). */
+function roleFromQuery(value: unknown): PaymentRole {
+  return value === 'buyer' || value === 'seller' ? value : 'all';
+}
+
 export default defineComponent({
   name: 'PaymentsPage',
   components: { Nav_bar },
   data() {
     return {
       payments: [] as Payment[],
+      // Non réactive : remplie par les refs de rendu, elle ne doit pas en déclencher.
+      paymentCards: markRaw(new Map<string, HTMLElement>()),
       pagination: null as { page: number; pages: number; total: number; limit: number } | null,
-      role: 'all' as 'all' | 'buyer' | 'seller',
+      role: roleFromQuery(this.$route.query.role),
+      // Paiement visé par un lien de notification (`?payment=`), mis en avant.
+      focusedPaymentId: typeof this.$route.query.payment === 'string' ? this.$route.query.payment : '',
       page: 1,
       limit: 10,
       loading: false,
@@ -330,6 +346,8 @@ export default defineComponent({
   },
   async mounted() {
     await this.fetchPayments();
+    await this.$nextTick();
+    this.paymentCards.get(this.focusedPaymentId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   },
   computed: {
     refundAmountError(): string {
@@ -350,6 +368,10 @@ export default defineComponent({
     },
   },
   methods: {
+    registerCard(paymentId: string, el: unknown) {
+      if (el instanceof HTMLElement) this.paymentCards.set(paymentId, el);
+      else this.paymentCards.delete(paymentId);
+    },
     async fetchPayments() {
       this.loading = true;
       try {
@@ -362,7 +384,7 @@ export default defineComponent({
         this.loading = false;
       }
     },
-    setRole(role: 'all' | 'buyer' | 'seller') {
+    setRole(role: PaymentRole) {
       if (this.role === role) return;
       this.role = role;
       this.page = 1;
@@ -619,6 +641,11 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+}
+
+.payment-card--focused {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 2px var(--accent-pink-light);
 }
 
 .payment-card__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
