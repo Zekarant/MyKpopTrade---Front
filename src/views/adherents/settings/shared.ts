@@ -60,6 +60,10 @@ export function apiStatus(error: unknown): number | undefined {
   return (error as ApiError)?.response?.status;
 }
 
+export function apiCode(error: unknown): string | undefined {
+  return (error as ApiError)?.response?.data?.code;
+}
+
 /**
  * Un 401 qui remonte jusqu'ici signifie que le renouvellement a échoué : le
  * client a déjà effacé la session et redirigé vers /login. Rien à afficher.

@@ -29,6 +29,8 @@ import SettingsPage from '../settings.vue'
 const savedProfile = () => ({
   _id: 'me',
   username: 'MoiMeme',
+  email: 'moi@example.com',
+  isEmailVerified: false,
   bio: 'Bio enregistrée',
   phoneNumber: '+33612345678',
   isPhoneVerified: true,
@@ -133,6 +135,54 @@ describe('page Paramètres', () => {
     expect((wrapper.find('#settings-bio').element as HTMLTextAreaElement).value).toBe('Bio enregistrée')
     await openSection(wrapper, 'Compte')
     expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe('+33612345678')
+  })
+
+  it('redemande l\'email de vérification pour l\'adresse du compte', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Vérifier')!.trigger('click')
+    await flushPromises()
+
+    expect(http.post).toHaveBeenCalledWith('/api/auth/resend-verification', { email: 'moi@example.com' })
+  })
+
+  it('changer d\'email exige le mot de passe actuel', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+    expect(wrapper.find('#settings-current-password').exists()).toBe(false)
+
+    await wrapper.find('#settings-email').setValue('nouveau@example.com')
+    expect(wrapper.find('#settings-current-password').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Compte créé avec Google ou Discord')
+
+    await wrapper.find('#settings-current-password').setValue('Secret1!')
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Changer l\'adresse')!.trigger('click')
+    await flushPromises()
+
+    expect(http.put).toHaveBeenCalledWith('/api/auth/profile', {
+      email: 'nouveau@example.com',
+      currentPassword: 'Secret1!'
+    })
+    // L'adresse enregistrée devient la référence : le champ mot de passe disparaît.
+    expect(wrapper.find('#settings-current-password').exists()).toBe(false)
+    expect(wrapper.text()).toContain('nouveau@example.com')
+  })
+
+  it('un mot de passe actuel refusé s\'affiche sous le champ, sans fermer la session', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+    await wrapper.find('#settings-email').setValue('nouveau@example.com')
+    await wrapper.find('#settings-current-password').setValue('mauvais')
+    http.put.mockRejectedValueOnce({
+      response: { status: 401, data: { message: 'Mot de passe actuel incorrect', code: 'CURRENT_PASSWORD_INVALID' } }
+    })
+
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Changer l\'adresse')!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.field__error').text()).toBe('Mot de passe actuel incorrect')
+    expect(toast.showToastError).not.toHaveBeenCalled()
   })
 
   it('lie un compte avec un ticket à usage unique, jamais avec le jeton d\'accès', async () => {
