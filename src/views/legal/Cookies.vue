@@ -32,8 +32,8 @@
             <td>15 minutes</td>
           </tr>
           <tr>
-            <td><code>refreshToken</code></td>
-            <td>Renouvellement de la session sans nouvelle saisie du mot de passe</td>
+            <td><code>mkt_refresh</code></td>
+            <td>Renouvellement de la session sans nouvelle saisie du mot de passe (illisible par les scripts de la page : <code>HttpOnly</code>)</td>
             <td>7 jours</td>
           </tr>
           <tr>

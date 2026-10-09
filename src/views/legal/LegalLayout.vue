@@ -40,7 +40,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Cookies from 'js-cookie';
+import { hasSession } from '@/services/session.cookies';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { missingLegalKeys } from '@/config/legal';
 
@@ -62,10 +62,9 @@ export default defineComponent({
     return { legalDocuments };
   },
   computed: {
-    // Le refresh token (cookie 7 jours) fait foi : présent = session
-    // rétablissable, on peut donc afficher la barre de navigation complète.
+    // Session rétablissable : on peut donc afficher la barre de navigation complète.
     isAuthenticated(): boolean {
-      return Boolean(Cookies.get('refreshToken'));
+      return hasSession();
     },
     missingCount(): number {
       return missingLegalKeys().length;

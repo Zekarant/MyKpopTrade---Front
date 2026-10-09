@@ -113,7 +113,7 @@ import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { API_URL } from '@/config/api';
 import { func } from '@/function';
-import { createApiClient, getRefreshToken } from '@/services/http';
+import { createApiClient, hasSession } from '@/services/http';
 import { apiErrorMessage } from '@/services/apiError';
 
 /** Client partagé : renouvelle la session expirée et rejoue la requête. */
@@ -154,7 +154,7 @@ export default defineComponent({
     onMounted(async () => {
       // Le refresh token fait foi : le jeton d'accès (15 min) peut avoir
       // expiré sans que la session le soit ; le client le renouvelle.
-      if (!getRefreshToken()) {
+      if (!hasSession()) {
         router.replace('/login');
         return;
       }

@@ -2,7 +2,7 @@ import { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 import router from "@/router";
 import { API_URL } from '@/config/api';
-import { setSessionCookies, clearSessionCookies } from '@/services/session.cookies';
+import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/session.cookies';
 import { createApiClient, refreshAccessToken } from '@/services/http';
 
 interface ApiError {
@@ -30,8 +30,11 @@ class authentificationService {
     // Les routes d'authentification (/login, /refresh-token, /logout, /2fa/)
     // sont exclues du renouvellement automatique côté `http.ts` : un 401 y
     // signifie « identifiants refusés », pas « session expirée ».
+    // `withCredentials` : l'API y pose et y lit le refresh token, dans un
+    // cookie HttpOnly qu'un appel cross-origin n'enverrait pas sinon.
     this.authApiClient = createApiClient({
       baseURL: `${this.API_BASE_URL}/auth`,
+      withCredentials: true,
       headers: {
         "Content-Type": "application/json",
       }
@@ -56,7 +59,6 @@ class authentificationService {
 
       setSessionCookies({
         accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
         userId: response.data.user.id
       });
       sessionStorage.removeItem("favorites");
@@ -78,7 +80,6 @@ class authentificationService {
 
       setSessionCookies({
         accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
         userId: response.data.user.id
       });
       sessionStorage.removeItem("favorites");
@@ -101,7 +102,6 @@ class authentificationService {
 
       setSessionCookies({
         accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
         userId: response.data.user.id
       });
       sessionStorage.removeItem("favorites");
@@ -115,8 +115,8 @@ class authentificationService {
 
   async logout(): Promise<void> {
     try {
-      const refreshToken = Cookies.get("refreshToken");
-      await this.authApiClient.post("/logout", { refreshToken });
+      // Le refresh token part dans son cookie HttpOnly, que l'API efface.
+      await this.authApiClient.post("/logout");
     } catch {
       // Ignore errors on logout request
     } finally {
@@ -125,12 +125,10 @@ class authentificationService {
     }
   }
   async verifSession(): Promise<void> {
-    const refreshToken = Cookies.get("refreshToken");
-
-    // Sans refresh token (durée de vie 7 jours), aucune session ne peut être
-    // rétablie : c'est le seul cookie qui survit à la fermeture de l'onglet et
-    // à l'expiration du token d'accès.
-    if (!refreshToken) {
+    // Sans session (durée de vie 7 jours), rien ne peut être rétabli : c'est la
+    // seule trace qui survit à la fermeture de l'onglet et à l'expiration du
+    // token d'accès.
+    if (!hasSession()) {
       await this.logout();
       throw new Error("No session token");
     }

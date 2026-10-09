@@ -26,7 +26,7 @@ export async function setupSession(page: Page, { now, userId }: { now: Date; use
   await page.context().addCookies([
     { name: 'id_user', value: userId, domain: 'localhost', path: '/' },
     { name: 'sessionToken', value: 'test-access', domain: 'localhost', path: '/' },
-    { name: 'refreshToken', value: 'test-refresh', domain: 'localhost', path: '/' },
+    { name: 'mkt_refresh', value: 'test-refresh', domain: 'localhost', path: '/api/auth', httpOnly: true },
     {
       name: 'cookie_consent',
       value: encodeURIComponent(JSON.stringify({ analytics: false, version: 1, decidedAt: now.toISOString() })),

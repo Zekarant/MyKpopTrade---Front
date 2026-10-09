@@ -42,7 +42,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Cookies from 'js-cookie';
+import { hasSession } from '@/services/session.cookies';
 import Nav_bar from '@/components/adherents/nav_bar.vue';
 import faqService, { type Faq } from '@/services/faq.service';
 
@@ -64,7 +64,7 @@ export default defineComponent({
   },
   computed: {
     isAuthenticated(): boolean {
-      return Boolean(Cookies.get('refreshToken'));
+      return hasSession();
     }
   },
   async mounted() {

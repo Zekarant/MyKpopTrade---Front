@@ -215,7 +215,7 @@
     import VerifiedBadge from '../components/VerifiedBadge.vue';
 
     import postService from '@/services/post.service';
-    import { getRefreshToken } from '@/services/http';
+    import { hasSession } from '@/services/http';
     import paymentService from '@/services/payment.service';
     import cartService from '@/services/cart.service';
     import eventBus from '@/eventBus';
@@ -468,7 +468,7 @@
             },
             /** Sans session, l'utilisateur est déjà renvoyé vers /login : rien à afficher. */
             reportFavoriteFailure() {
-                if (getRefreshToken()) {
+                if (hasSession()) {
                     this.$func.showToastError('Impossible de mettre à jour vos favoris. Réessayez.');
                 }
             },
