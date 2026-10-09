@@ -1,6 +1,6 @@
 <template>
     <div class="product-grid">
-        <card :data="data" :admin="admin" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
+        <card :data="data" :admin="admin" @click="openPostInfo(index)" @removeFavorite="removeFavorite" v-show="!isRemoved(data)" v-for="(data, index) in dataList" :key="index"></card>
     </div>
     <div v-if="dataList && dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more">
         <button type="button" class="load-more-btn" @click="loadMore()">
@@ -22,6 +22,7 @@
     import post from '@/components/post.vue';
     import card from '@/components/card.vue';
     import type { Post } from '@/types/post.types';
+    import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 
 
 
@@ -69,10 +70,13 @@
             const router = useRouter();
             const dataCardPost = ref<Post | null>(null);
             const stateCardPost = ref(false);
+            const { isRemoved, removeFavorite } = useFavoriteRemoval();
             return {
                 dataCardPost,
                 stateCardPost,
-                router
+                router,
+                isRemoved,
+                removeFavorite
             };
         },
         data() {
@@ -82,6 +86,8 @@
         },
         methods: {
             async openPostInfo(index: number) {
+                // Favori vendu ou retiré : sa fiche ne regarde plus que son vendeur (404).
+                if (this.dataList[index].unavailableReason) return;
                 if(this.stateCardPost){
                     this.stateCardPost = false;
                     await nextTick();

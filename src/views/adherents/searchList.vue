@@ -3,7 +3,7 @@
        <div class="content" style="display: flex;">
           <div style="width: 2%;"></div>
           <div v-if="!isMobile" class="filter_content">
-            <filter_list @saveFilter="applyFilter"></filter_list>
+            <filter_list :initialFilters="urlFilters" @saveFilter="applyFilter"></filter_list>
           </div>
           <div style="width: 2%;"></div>
           <div class="content_grid" ref="scrollContainer">
@@ -14,8 +14,17 @@
                 <template v-else-if="queryLocal">Résultat de la recherche : {{ queryLocal }}</template>
                 <template v-else>Tous les articles</template>
               </span>
+              <button
+                v-if="isLoggedIn && event !== 'morePageFavorites'"
+                type="button"
+                class="save-search-btn"
+                :disabled="savingSearch"
+                @click="saveCurrentSearch"
+              >
+                <i class="bi bi-bookmark-plus"></i> Sauvegarder cette recherche
+              </button>
               <div v-if="isMobile" class="filter_content">
-                <filter_list @saveFilter="applyFilter"></filter_list>
+                <filter_list :initialFilters="urlFilters" @saveFilter="applyFilter"></filter_list>
               </div>
             </div>
             <br>
@@ -42,6 +51,16 @@
     import postService from '@/services/post.service';
     import searchService, { type AdvancedSearchPayload } from '@/services/search.service';
     import type { Post } from '@/types/post.types';
+    import savedSearchService from '@/services/savedSearch.service';
+    import { apiErrorMessage } from '@/services/apiError';
+    import { hasSession } from '@/services/session.cookies';
+    import {
+      criteriaFromPayload,
+      criteriaFromRouteQuery,
+      defaultSavedSearchName,
+      hasCriteria,
+      type UrlSearchCriteria
+    } from '@/utils/savedSearch';
 
     import search_bar_2 from '@/components/search_bar_2.vue';
     import filter_list from '@/components/filter_list.vue';
@@ -51,11 +70,17 @@
     interface SearchFilters {
       min: number | null;
       max: number | null;
-      /** Le `<select>` n'en renvoie qu'un ; le tableau reste toléré par sécurité. */
+      /** Le `<select>` en renvoie un seul ; l'URL d'une recherche sauvegardée, un tableau. */
       conditions: string | string[] | null;
       type: string | null;
       group: string | null;
       member: string | null;
+      /** Choisis dans le catalogue : filtrent aussi les anciennes annonces côté API. */
+      groupId?: string | null;
+      albumId?: string | null;
+      isOfficial?: boolean;
+      /** Pas de champ dans le panneau : seulement rejouée depuis une recherche sauvegardée. */
+      version?: string | null;
     }
 
   export default defineComponent({
@@ -175,6 +200,10 @@
       return {
         queryLocal:'',
         isMobile: window.innerWidth <= 769,
+        isLoggedIn: hasSession(),
+        savingSearch: false,
+        /** Critères venus de l'URL, que le panneau de filtres doit afficher. */
+        urlFilters: null as UrlSearchCriteria['filters'] | null,
         // `posts` et `pagination` sont fournis par setup(), qui a la priorité sur
         // data() : les redéclarer ici créait une collision de noms sans effet
         // (les valeurs de data() n'étaient jamais lues). Source unique : setup().
@@ -211,6 +240,7 @@
         // Don't show internal event names in search bar
         const internalEvents = ['morePage', 'morePageFavorites', 'moreFavorites', 'search'];
         this.queryLocal = (this.query && !internalEvents.includes(this.query)) ? this.query : '';
+        this.applyCriteriaFromUrl();
         if(this.event && this.event !== ''){
           if(this.event === 'morePage') {
             // On restaure les articles déjà chargés (transmis via sessionStorage
@@ -285,15 +315,22 @@
         };
         if (this.queryLocal) payload.query = this.queryLocal;
         if (this.filters.type) payload.type = this.filters.type;
-        if (this.filters.conditions && Array.isArray(this.filters.conditions) && this.filters.conditions.length) {
-          payload.condition = this.filters.conditions;
+        // Le `<select>` d'état renvoie une seule valeur : seul un tableau était
+        // pris en compte, le filtre d'état n'était donc jamais appliqué.
+        const conditions = typeof this.filters.conditions === 'string' ? [this.filters.conditions] : this.filters.conditions;
+        if (conditions?.length) payload.condition = conditions;
+        // Groupe du catalogue : filtre par identifiant (le nom ne retrouve pas les
+        // annonces qui stockent l'identifiant). Le membre suit le même critère.
+        if (this.filters.groupId) {
+          payload.group = this.filters.groupId;
+          if (this.filters.member) payload.member = this.filters.member;
+        } else {
+          if (this.filters.group) payload.groups = [this.filters.group];
+          if (this.filters.member) payload.members = [this.filters.member];
         }
-        if (this.filters.group) {
-          payload.groups = [this.filters.group];
-        }
-        if (this.filters.member) {
-          payload.members = [this.filters.member];
-        }
+        if (this.filters.albumId) payload.album = this.filters.albumId;
+        if (this.filters.isOfficial) payload.isOfficial = true;
+        if (this.filters.version) payload.version = this.filters.version;
         const min = this.filters.min !== null && this.filters.min !== undefined ? Number(this.filters.min) : undefined;
         const max = this.filters.max !== null && this.filters.max !== undefined ? Number(this.filters.max) : undefined;
         if (min !== undefined || max !== undefined) {
@@ -326,6 +363,35 @@
           this.pagination.page--;
         }
       },
+      /**
+       * Critères transmis par l'URL (« Lancer » une recherche sauvegardée).
+       * Sans critère dans l'URL, les filtres déjà choisis restent en place.
+       */
+      applyCriteriaFromUrl() {
+        const fromUrl = criteriaFromRouteQuery(this.route.query);
+        if (!fromUrl) return;
+        if (fromUrl.query) this.queryLocal = fromUrl.query;
+        this.filters = fromUrl.filters;
+        this.urlFilters = fromUrl.filters;
+      },
+      async saveCurrentSearch() {
+        const criteria = criteriaFromPayload(this.buildAdvancedPayload());
+        // Le groupe du catalogue est enregistré par identifiant : son nom ne sert qu'au libellé.
+        const labels = this.filters.groupId && this.filters.group ? { [this.filters.groupId]: this.filters.group } : {};
+        if (!hasCriteria(criteria)) {
+          this.$func.showToastInfo('Ajoutez un texte ou un filtre avant de sauvegarder la recherche');
+          return;
+        }
+        this.savingSearch = true;
+        try {
+          await savedSearchService.create({ name: defaultSavedSearchName(criteria, labels), criteria });
+          this.$func.showToastSuccess('Recherche sauvegardée : retrouvez-la dans « Recherches sauvegardées »');
+        } catch (error) {
+          this.$func.showToastError(apiErrorMessage(error, 'Impossible de sauvegarder la recherche'));
+        } finally {
+          this.savingSearch = false;
+        }
+      },
       applyFilter(valFilters: SearchFilters){
         this.filters = valFilters;
         this.runSearch();
@@ -349,6 +415,30 @@
 
   <style scoped lang="scss">
   @use '../../css/searchList.scss' as *;
+
+  .save-search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-left: var(--space-md);
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    &:hover:not(:disabled) {
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  }
 
   .load-more-wrap {
     display: flex;

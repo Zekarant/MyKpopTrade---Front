@@ -1,9 +1,13 @@
 <template>
-    <div class="product-card">
+    <div class="product-card" :class="{ 'product-card--unavailable': data.unavailableReason }">
         <div class="product-card__image">
             <!-- Brouillon : annonce du vendeur connecté, retirée de la vente sans avoir été vendue. -->
             <div v-if="admin && !data.isAvailable && !data.isSold" class="product-card__badge product-card__badge--draft">
                 Brouillon
+            </div>
+            <!-- Favori vendu ou retiré : la fiche ne s'ouvre plus, on propose de le retirer. -->
+            <div v-if="data.unavailableReason" class="product-card__badge product-card__badge--unavailable">
+                Plus disponible
             </div>
             <ImageCarousel class="product-card__carousel" :images="data.images" />
         </div>
@@ -15,6 +19,14 @@
             </div>
             <span class="product-card__condition">{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>
             <span class="product-card__price">{{ formatPrice(data.price, data.currency || 'EUR') }}</span>
+            <button
+                v-if="data.unavailableReason"
+                type="button"
+                class="product-card__remove"
+                @click.stop="$emit('removeFavorite', data)"
+            >
+                <i class="bi bi-heartbreak"></i> Retirer des favoris
+            </button>
         </div>
     </div>
 </template>
@@ -30,6 +42,7 @@
             ImageCarousel,
             VerifiedBadge,
         },
+        emits: ['removeFavorite'],
         setup() {
             // L'annonce porte sa devise : « 20 € » en dur affichait aussi les prix en dollars en euros.
             return { formatPrice };
@@ -109,6 +122,50 @@
       &--draft {
         background: var(--warning-light);
         color: var(--warning);
+      }
+
+      &--unavailable {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--surface-border);
+      }
+    }
+
+    .product-card--unavailable {
+      cursor: default;
+
+      .product-card__carousel,
+      .product-card__title,
+      .product-card__price {
+        filter: grayscale(1);
+        opacity: 0.55;
+      }
+
+      &:hover {
+        border-color: var(--surface-border);
+        box-shadow: none;
+        transform: none;
+      }
+    }
+
+    .product-card__remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-top: var(--space-xs);
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--accent-pink);
+        color: var(--accent-pink);
       }
     }
 

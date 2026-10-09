@@ -31,15 +31,21 @@
       </div>
       <div v-if="tabFilter.group" class="filter-panel__tag">
         {{ tabFilter.group }}
-        <button @click="tabFilter.group = null; groupSearchInput = ''" class="filter-panel__tag-remove">
+        <button @click="clearGroup" class="filter-panel__tag-remove" aria-label="Retirer le groupe">
           <i class="bi bi-x"></i>
         </button>
       </div>
     </div>
 
     <div class="filter-panel__section">
-      <label class="filter-panel__label">Membre</label>
+      <label class="filter-panel__label" for="filter-member">Membre</label>
+      <select v-if="groupMembers.length" id="filter-member" v-model="tabFilter.member" class="filter-panel__select">
+        <option :value="null">Tous les membres</option>
+        <option v-for="member in groupMembers" :key="member" :value="member">{{ member }}</option>
+      </select>
       <input
+        v-else
+        id="filter-member"
         v-model="tabFilter.member"
         type="text"
         class="filter-panel__input"
@@ -47,10 +53,26 @@
       />
     </div>
 
+    <div v-if="groupAlbums.length" class="filter-panel__section">
+      <label class="filter-panel__label" for="filter-album">Album</label>
+      <select id="filter-album" v-model="tabFilter.albumId" class="filter-panel__select">
+        <option :value="null">Tous les albums</option>
+        <option v-for="album in groupAlbums" :key="album._id" :value="album._id">{{ album.name }}</option>
+      </select>
+    </div>
+
+    <div class="filter-panel__section">
+      <label class="filter-panel__check">
+        <input v-model="tabFilter.isOfficial" type="checkbox" />
+        <span>Articles officiels uniquement</span>
+      </label>
+    </div>
+
     <div class="filter-panel__section">
       <label class="filter-panel__label">État</label>
-      <select v-model="tabFilter.conditions" class="filter-panel__select">
-        <option value="null">Tous les états</option>
+      <!-- `:value="null"` : `value="null"` envoyait la chaîne « null » comme critère. -->
+      <select v-model="tabFilter.conditions" class="filter-panel__select" data-test="filter-condition">
+        <option :value="null">Tous les états</option>
         <option value="new">Neuf</option>
         <option value="likeNew">Comme neuf</option>
         <option value="good">Bon état</option>
@@ -61,8 +83,8 @@
 
     <div class="filter-panel__section">
       <label class="filter-panel__label">Type</label>
-      <select v-model="tabFilter.type" class="filter-panel__select">
-        <option value="null">Tous les types</option>
+      <select v-model="tabFilter.type" class="filter-panel__select" data-test="filter-type">
+        <option :value="null">Tous les types</option>
         <option value="photocard">Photocard</option>
         <option value="album">Album</option>
         <option value="merch">Merch</option>
@@ -72,7 +94,13 @@
 
     <div class="filter-panel__section">
       <label class="filter-panel__label">Prix</label>
-      <slider_price @changeMinPrice="onChangeMinPrice" @changeMaxPrice="onChangeMaxPrice"></slider_price>
+      <slider_price
+        :key="sliderKey"
+        :initialMin="tabFilter.min"
+        :initialMax="tabFilter.max"
+        @changeMinPrice="onChangeMinPrice"
+        @changeMaxPrice="onChangeMaxPrice"
+      ></slider_price>
     </div>
 
     <div class="filter-panel__actions">
@@ -87,39 +115,108 @@
 </template>
 
 <script lang="ts">
- import { ref } from "vue";
+ import { ref, watch, type PropType } from "vue";
   import slider_price from "../components/slider_price.vue";
   import groupService, { type KpopGroup } from '@/services/group.service';
+  import type { KpopAlbum } from '@/services/album.service';
+  import type { UrlSearchCriteria } from '@/utils/savedSearch';
+
+  /** Filtres vides : `group` garde le nom affiché, `groupId` / `albumId` filtrent côté API. */
+  const emptyFilters = () => ({
+    min: 0,
+    // `null` : pas de prix maximum (le curseur est en bout de piste).
+    max: null as number | null,
+    conditions: null as string | null,
+    type: null as string | null,
+    group: null as string | null,
+    groupId: null as string | null,
+    member: null as string | null,
+    albumId: null as string | null,
+    isOfficial: false,
+  });
 
 export default {
 
   name: "filter_list",
   emits: ['saveFilter'],
+  props: {
+    /** Critères déjà appliqués par la page (rejoués depuis l'URL) : le panneau les affiche. */
+    initialFilters: {
+      type: Object as PropType<UrlSearchCriteria['filters'] | null>,
+      default: null
+    }
+  },
 
-  setup(){
-    const tabFilter = ref({
-      min: 0,
-      max: 100,
-      conditions: null as string | null,
-      type: null as string | null,
-      group: null as string | null,
-      member: null as string | null,
-    });
+  setup(props: { initialFilters: UrlSearchCriteria['filters'] | null }){
+    const tabFilter = ref(emptyFilters());
     const filterMobileOpen = ref(false);
     const groupSearchInput = ref('');
     const groupSuggestions = ref<KpopGroup[]>([]);
+    const groupMembers = ref<string[]>([]);
+    const groupAlbums = ref<KpopAlbum[]>([]);
+    /** Remonte le curseur de prix, qui ne lit sa fourchette qu'au montage. */
+    const sliderKey = ref(0);
     let groupTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
+    /** Membres et albums du groupe choisi ; rend son nom, ou `null` si le détail est indisponible. */
+    async function loadGroupCatalog(groupId: string): Promise<string | null> {
+      try {
+        const detail = await groupService.getGroupDetail(groupId);
+        groupMembers.value = detail.group.members ?? [];
+        groupAlbums.value = detail.albums;
+        return detail.group.name;
+      } catch {
+        // Sans le détail, le membre reste en saisie libre et l'album non filtrable.
+        groupMembers.value = [];
+        groupAlbums.value = [];
+        return null;
+      }
+    }
+
+    async function applyInitialFilters(initial: UrlSearchCriteria['filters'] | null) {
+      if (!initial) return;
+      tabFilter.value = {
+        min: initial.min ?? 0,
+        max: initial.max ?? null,
+        // Le sélecteur d'état n'affiche qu'une valeur.
+        conditions: initial.conditions?.[0] ?? null,
+        type: initial.type,
+        group: initial.group,
+        groupId: initial.groupId,
+        member: initial.member,
+        albumId: initial.albumId,
+        isOfficial: initial.isOfficial,
+      };
+      groupSearchInput.value = initial.group ?? '';
+      sliderKey.value++;
+      if (initial.groupId) {
+        // L'URL ne porte que l'identifiant : le nom affiché vient du catalogue.
+        const name = await loadGroupCatalog(initial.groupId);
+        if (name && !tabFilter.value.group) {
+          tabFilter.value.group = name;
+          groupSearchInput.value = name;
+        }
+      }
+    }
+    watch(() => props.initialFilters, applyInitialFilters, { immediate: true });
 
     function onChangeMinPrice(val: number) {
       tabFilter.value.min = val;
     }
-    function onChangeMaxPrice(val: number) {
+    function onChangeMaxPrice(val: number | null) {
       tabFilter.value.max = val;
     }
-    function resetFilters() {
-      tabFilter.value = { min: 0, max: 100, conditions: null, type: null, group: null, member: null };
+    function clearGroup() {
+      tabFilter.value = { ...tabFilter.value, group: null, groupId: null, member: null, albumId: null };
       groupSearchInput.value = '';
+      groupMembers.value = [];
+      groupAlbums.value = [];
+    }
+    function resetFilters() {
+      clearGroup();
+      tabFilter.value = emptyFilters();
       groupSuggestions.value = [];
+      sliderKey.value++;
     }
     function searchGroupsDebounced() {
       clearTimeout(groupTimer);
@@ -133,10 +230,12 @@ export default {
         }
       }, 250);
     }
-    function selectGroup(group: KpopGroup) {
-      tabFilter.value.group = group.name;
+    /** Le groupe choisi propose ses membres et albums du catalogue. */
+    async function selectGroup(group: KpopGroup) {
+      tabFilter.value = { ...tabFilter.value, group: group.name, groupId: group._id, member: null, albumId: null };
       groupSearchInput.value = group.name;
       groupSuggestions.value = [];
+      await loadGroupCatalog(group._id);
     }
     return {
       tabFilter,
@@ -144,8 +243,12 @@ export default {
       onChangeMaxPrice,
       filterMobileOpen,
       resetFilters,
+      clearGroup,
       groupSearchInput,
       groupSuggestions,
+      groupMembers,
+      groupAlbums,
+      sliderKey,
       searchGroupsDebounced,
       selectGroup
     }
@@ -287,6 +390,15 @@ export default {
 
 .filter-panel__autocomplete {
   position: relative;
+}
+
+.filter-panel__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .filter-panel__suggestions {

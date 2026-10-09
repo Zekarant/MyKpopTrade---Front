@@ -7,28 +7,41 @@
  * Les <input type="range"> natifs restent accessibles au clavier et aux
  * lecteurs d'écran sans dépendance.
  *
- * Contrat inchangé pour le parent : `changeMinPrice` / `changeMaxPrice`
- * émis avec un nombre à chaque modification.
+ * `changeMinPrice` / `changeMaxPrice` sont émis à chaque modification.
+ * Le maximum vaut `null` (« pas de plafond ») tant que sa poignée est en bout
+ * de piste ou que son champ est vide : sinon la piste (0–100 €) excluait de
+ * toute recherche les annonces au-delà de 100 € dès qu'on cliquait sur Appliquer.
  */
 import { computed, ref } from 'vue'
 
-const props = withDefaults(defineProps<{ min?: number; max?: number; step?: number }>(), {
-  min: 0,
-  max: 100,
-  step: 1
-})
+/**
+ * `initialMin` / `initialMax` : fourchette affichée au montage (critères
+ * rejoués depuis l'URL). Lus une seule fois : le parent remonte le composant
+ * (`key`) pour en imposer une autre.
+ */
+const props = withDefaults(
+  defineProps<{ min?: number; max?: number; step?: number; initialMin?: number; initialMax?: number | null }>(),
+  {
+    min: 0,
+    max: 100,
+    step: 1,
+    initialMin: undefined,
+    initialMax: undefined
+  }
+)
 
 const emit = defineEmits<{
   changeMinPrice: [value: number]
-  changeMaxPrice: [value: number]
+  changeMaxPrice: [value: number | null]
 }>()
 
-const minValue = ref(props.min)
-const maxValue = ref(props.max)
+const minValue = ref(props.initialMin ?? props.min)
+const maxValue = ref(props.initialMax ?? props.max)
+const maxUnbounded = ref(props.initialMax === undefined || props.initialMax === null)
 
 function emitValues() {
   emit('changeMinPrice', minValue.value)
-  emit('changeMaxPrice', maxValue.value)
+  emit('changeMaxPrice', maxUnbounded.value ? null : maxValue.value)
 }
 
 /** Position (en %) d'une valeur sur la piste, bornée aux extrémités. */
@@ -59,6 +72,7 @@ function onMaxRange(event: Event) {
   const input = event.target as HTMLInputElement
   maxValue.value = Math.max(Number(input.value), minValue.value)
   input.value = String(maxValue.value)
+  maxUnbounded.value = maxValue.value >= props.max
   emitValues()
 }
 
@@ -78,9 +92,10 @@ function onMinTyped(event: Event) {
 
 function onMaxTyped(event: Event) {
   const input = event.target as HTMLInputElement
-  // Pas de plafond à `max` : la saisie permet de chercher au-delà de la piste.
+  // Champ vidé : plus de plafond. Une saisie, même au-delà de la piste, en fixe un.
+  maxUnbounded.value = input.value.trim() === ''
   maxValue.value = Math.max(parseTyped(input.value, props.max), minValue.value)
-  input.value = String(maxValue.value)
+  input.value = maxUnbounded.value ? '' : String(maxValue.value)
   emitValues()
 }
 </script>
@@ -110,7 +125,7 @@ function onMaxTyped(event: Event) {
       :step="step"
       :value="Math.min(maxValue, max)"
       aria-label="Prix maximum"
-      :aria-valuetext="`${maxValue} €`"
+      :aria-valuetext="maxUnbounded ? 'Pas de maximum' : `${maxValue} €`"
       @input="onMaxRange"
     >
   </div>
@@ -134,8 +149,8 @@ function onMaxTyped(event: Event) {
         type="number"
         :min="min"
         :step="step"
-        :value="maxValue"
-        placeholder="Max"
+        :value="maxUnbounded ? '' : maxValue"
+        placeholder="Pas de max"
         aria-label="Prix maximum en euros"
         @change="onMaxTyped"
       >

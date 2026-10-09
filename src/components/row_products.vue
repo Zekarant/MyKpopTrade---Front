@@ -16,10 +16,11 @@
             980: { slidesPerView: 4 }
         }"
                 v-if="dataList && dataList.length > 0">
-        <swiper-slide v-for="(data, index) in dataList" :key="index">
+        <swiper-slide v-for="(data, index) in visibleList" :key="index">
             <card
                 :data="data"
-                @click="openPostInfo(index)"
+                @click="openPostInfo(data)"
+                @removeFavorite="removeFavorite"
                 :key="index"
             ></card>
         </swiper-slide>
@@ -51,6 +52,7 @@
     import card from '../components/card.vue';
     import { Navigation, A11y } from 'swiper/modules';
     import type { Post } from '@/types/post.types';
+    import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 
     // Import Swiper Vue.js components
     import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -99,20 +101,31 @@
         setup() {
             const dataCardPost = ref<Post | null>(null);
             const stateCardPost = ref(false);
+            const { isRemoved, removeFavorite } = useFavoriteRemoval();
             return {
                 dataCardPost,
                 stateCardPost,
                 modules: [Navigation, A11y],
+                isRemoved,
+                removeFavorite,
 
             };
         },
+        computed: {
+            // Filtré plutôt que masqué : une diapositive cachée laisserait un trou dans le carrousel.
+            visibleList(): Post[] {
+                return this.dataList.filter((item) => !this.isRemoved(item));
+            },
+        },
         methods: {
-            async openPostInfo(index: number) {
+            async openPostInfo(data: Post) {
+                // Favori vendu ou retiré : sa fiche ne regarde plus que son vendeur (404).
+                if (data.unavailableReason) return;
                 if(this.stateCardPost){
                     this.stateCardPost = false;
                     await nextTick();
                 }
-                this.dataCardPost = this.dataList[index];
+                this.dataCardPost = data;
                 this.stateCardPost = true;
             },
             onVoirPlus() {
