@@ -1,7 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar />
-
     <div class="admin">
       <AdminSidebar :active-tab="currentTab" :counts="queueCounts" @select="switchTab" />
 
@@ -108,49 +106,38 @@
 </template>
 
 <script lang="ts">
-  import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
+  import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import Nav_bar from '@/components/adherents/nav_bar.vue';
   import authentificationService from '@/services/authentification.service';
   import adminService from '@/services/admin.service';
   import AdminCommandPalette from './components/AdminCommandPalette.vue';
   import AdminSidebar from './components/AdminSidebar.vue';
-  import AuditPanel from './panels/AuditPanel.vue';
-  import DisputesPanel from './panels/DisputesPanel.vue';
-  import FaqPanel from './panels/FaqPanel.vue';
-  import KpopPanel from './panels/KpopPanel.vue';
-  import ModerationPanel from './panels/ModerationPanel.vue';
-  import OverviewPanel from './panels/OverviewPanel.vue';
-  import ProductsPanel from './panels/ProductsPanel.vue';
-  import QueuePanel from './panels/QueuePanel.vue';
-  import ReportsPanel from './panels/ReportsPanel.vue';
-  import RgpdPanel from './panels/RgpdPanel.vue';
-  import SuspendedProductsPanel from './panels/SuspendedProductsPanel.vue';
-  import UsersPanel from './panels/UsersPanel.vue';
-  import VerificationsPanel from './panels/VerificationsPanel.vue';
   import { ADMIN_SECTIONS, DEFAULT_ADMIN_TAB } from './adminSections';
   import { formatPrice } from './adminFormat';
   import type { AdminProductStats, AdminQueue, AdminUserStats } from './types';
 
+  // Un seul panneau est affiché à la fois : chacun devient son propre chunk,
+  // chargé à la première ouverture de l'onglet, au lieu de tout embarquer dans
+  // le chunk de la vue admin. defineAsyncComponent met le chargement en cache.
   const PANELS: Record<string, Component> = {
-    queue: QueuePanel,
-    overview: OverviewPanel,
-    reports: ReportsPanel,
-    disputes: DisputesPanel,
-    moderation: ModerationPanel,
-    verifications: VerificationsPanel,
-    products: ProductsPanel,
-    suspended: SuspendedProductsPanel,
-    kpop: KpopPanel,
-    users: UsersPanel,
-    rgpd: RgpdPanel,
-    faq: FaqPanel,
-    audit: AuditPanel
+    queue: defineAsyncComponent(() => import('./panels/QueuePanel.vue')),
+    overview: defineAsyncComponent(() => import('./panels/OverviewPanel.vue')),
+    reports: defineAsyncComponent(() => import('./panels/ReportsPanel.vue')),
+    disputes: defineAsyncComponent(() => import('./panels/DisputesPanel.vue')),
+    moderation: defineAsyncComponent(() => import('./panels/ModerationPanel.vue')),
+    verifications: defineAsyncComponent(() => import('./panels/VerificationsPanel.vue')),
+    products: defineAsyncComponent(() => import('./panels/ProductsPanel.vue')),
+    suspended: defineAsyncComponent(() => import('./panels/SuspendedProductsPanel.vue')),
+    kpop: defineAsyncComponent(() => import('./panels/KpopPanel.vue')),
+    users: defineAsyncComponent(() => import('./panels/UsersPanel.vue')),
+    rgpd: defineAsyncComponent(() => import('./panels/RgpdPanel.vue')),
+    faq: defineAsyncComponent(() => import('./panels/FaqPanel.vue')),
+    audit: defineAsyncComponent(() => import('./panels/AuditPanel.vue'))
   };
 
   export default defineComponent({
     name: 'AdminView',
-    components: { AdminCommandPalette, AdminSidebar, Nav_bar },
+    components: { AdminCommandPalette, AdminSidebar },
     setup() {
       const route = useRoute();
       const router = useRouter();

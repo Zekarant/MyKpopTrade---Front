@@ -5,15 +5,18 @@
   <meta charset="UTF-8">
   <link rel="icon" href="/favicon.ico">
   <link rel="manifest" href="/manifest.webmanifest">
+  <!-- iOS ignore les icônes du manifest pour l'écran d'accueil. -->
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <meta name="theme-color" content="#ff3b8a">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyKpopTrade - Vendez et échangez en toute tranquillité</title>
   <meta name="description"
     content="MyKpopTrade : achetez, vendez et échangez vos photocards K-Pop en toute sécurité au sein d'une communauté de collectionneurs.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
-    rel="stylesheet">
+  <!--
+    Plus Jakarta Sans n'est plus chargée depuis Google Fonts (IP du visiteur
+    transmise à Google avant consentement) : elle est auto-hébergée via
+    @fontsource-variable, importée dans src/main.ts.
+  -->
   <!--
     Google Tag Manager n'est PAS chargé ici : le déposer avant consentement est
     contraire au RGPD / ePrivacy. Le conteneur est injecté par

@@ -74,8 +74,9 @@
   --space-3xl: 64px;
 
   // Typography
-  --font-sans: 'Plus Jakarta Sans', 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Sora', sans-serif;
+  // « Plus Jakarta Sans Variable » : nom déclaré par @fontsource-variable (main.ts).
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Sora', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;

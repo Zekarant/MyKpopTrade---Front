@@ -9,7 +9,11 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@c/*": ["./src/components/*"],
+      "@c_a/*": ["./src/components/adherents/*"],
+      "@p_v/*": ["./src/views/adherents/*"],
+      "@css/*": ["./src/css/*"]
     }
   }
 }
