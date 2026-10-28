@@ -1,5 +1,5 @@
 <template>
-    <div ref="dialog" role="dialog" aria-modal="true" aria-label="Faire une offre" @keydown.esc="emit('close')">
+    <div ref="dialog" role="dialog" aria-modal="true" aria-label="Faire une offre">
         <send_offer :product="product" @offer-sent="sendOffer" @close="emit('close')" />
     </div>
 </template>
@@ -23,7 +23,7 @@ defineProps<{ product: ProductDetail }>();
 const emit = defineEmits<{ close: [] }>();
 
 const dialog = ref<HTMLElement | null>(null);
-useDialogFocus(dialog);
+useDialogFocus(dialog, undefined, () => emit('close'));
 
 function sendOffer(offer: OfferSentPayload) {
     emit('close');

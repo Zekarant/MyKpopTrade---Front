@@ -1,5 +1,5 @@
 <template>
-    <div class="msg-modal-overlay" @click.self="closePopup" @keydown.esc="closePopup">
+    <div class="msg-modal-overlay" @click.self="closePopup">
         <div ref="dialog" class="msg-modal" role="dialog" aria-modal="true" :aria-labelledby="titleId">
             <div class="msg-modal__header">
                 <h2 :id="titleId" class="msg-modal__title"><i class="bi bi-chat-dots" aria-hidden="true"></i> Nouvelle conversation</h2>
@@ -127,7 +127,7 @@ const searchId = `send-message-search-${useId()}`;
 const messageId = `send-message-text-${useId()}`;
 
 // Premier champ utile : la recherche si aucun destinataire n'est imposé, sinon le message.
-useDialogFocus(dialog, computed(() => searchInput.value ?? messageInput.value));
+useDialogFocus(dialog, computed(() => searchInput.value ?? messageInput.value), closePopup);
 
 const memberSearch = ref('');
 const memberSearchResults = ref<Member[]>([]);
