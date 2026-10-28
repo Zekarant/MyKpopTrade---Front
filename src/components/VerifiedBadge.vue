@@ -78,7 +78,7 @@
     // en `overflow: hidden` (cartes d'annonces, modales...).
     .verified-badge__tooltip {
         position: fixed;
-        z-index: 3000;
+        z-index: var(--z-popover);
         transform: translate(-50%, -100%);
         padding: 6px 12px;
         max-width: min(240px, calc(100vw - 16px));

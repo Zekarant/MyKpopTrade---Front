@@ -521,7 +521,7 @@ onBeforeUnmount(() => {
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     max-width: 100%;
     border-radius: 0;
     overflow-y: auto;

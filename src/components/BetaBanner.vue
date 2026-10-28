@@ -51,7 +51,7 @@ function dismiss() {
 .beta-banner {
   position: sticky;
   bottom: 0;
-  z-index: var(--z-toast);
+  z-index: var(--z-sticky);
   background: var(--bg-card);
   border-top: 2px solid var(--warning);
   box-shadow: var(--shadow-lg);

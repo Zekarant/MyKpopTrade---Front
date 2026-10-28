@@ -366,7 +366,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--z-modal-backdrop);
+  z-index: var(--z-modal);
   animation: fadeIn var(--transition-fast) ease;
 }
 
@@ -384,15 +384,16 @@
 }
 
 // === POST OVERLAY ===
+// Fenêtre d'annonce : sous les boîtes de dialogue qu'elle ouvre (offre, signalement...).
 .post-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--z-modal);
+  z-index: var(--z-modal-backdrop);
   animation: fadeIn var(--transition-fast) ease;
 }
 

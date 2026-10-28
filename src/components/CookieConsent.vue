@@ -128,7 +128,7 @@ function saveChoice() {
   right: 0;
   bottom: 0;
   // Au-dessus du bandeau bêta : le consentement doit rester atteignable.
-  z-index: calc(var(--z-toast) + 1);
+  z-index: calc(var(--z-sticky) + 1);
   background: var(--bg-card);
   border-top: 2px solid var(--accent-pink);
   box-shadow: var(--shadow-xl);

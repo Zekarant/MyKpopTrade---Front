@@ -414,7 +414,7 @@
       border-radius: 0 0 var(--radius-md) var(--radius-md);
       max-height: 200px;
       overflow-y: auto;
-      z-index: 1000 !important;
+      z-index: var(--z-dropdown);
       box-shadow: var(--shadow-lg);
       margin-bottom: 0;
     }

@@ -748,7 +748,7 @@ a.setting-row:hover { color: inherit; }
   left: 50%;
   transform: translateX(-50%);
   bottom: var(--space-lg);
-  z-index: 60;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: var(--space-lg);

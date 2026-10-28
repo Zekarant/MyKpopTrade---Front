@@ -278,18 +278,6 @@ img:not([src]) {
   }
 }
 
-// === Post overlay (used in grid + row_products) ===
-.post-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 // === Text utilities ===
 .text-accent {
   background: var(--accent-gradient);
