@@ -32,6 +32,13 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  // Sauf les indicateurs de chargement : figés, ils feraient croire à une page
+  // bloquée. Ils tournent, mais lentement.
+  .spin, .spinner, [class*='__spinner'] {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
 }
 
 // Focus clavier toujours visible sur les commandes, même quand un composant
