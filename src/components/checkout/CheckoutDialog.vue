@@ -212,7 +212,7 @@ function cancel() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9998;
+  z-index: var(--z-modal);
   padding: var(--space-lg);
   animation: fadeIn 0.15s ease;
 }

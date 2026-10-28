@@ -132,7 +132,7 @@ function confirm() {
   &:focus { outline: none; }
 
   &__overlay {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 9999;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: var(--z-modal);
     display: flex; align-items: center; justify-content: center;
   }
 
