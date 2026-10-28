@@ -12,8 +12,10 @@ const SRC = join(__dirname, '..', '..')
 
 /** Fichier -> nombre de `!important` admis, avec la raison. */
 const IMPORTANT_ALLOWED: Record<string, number> = {
-  // « Réduire les animations » et anneau de focus : doivent l'emporter sur tout composant.
-  'css/main.scss': 4 + 1, // + `.text-muted`, qui surcharge celui de Bootstrap (lui-même !important)
+  // « Réduire les animations » (3), son exception pour les indicateurs de chargement (2)
+  // et l'anneau de focus (1) : doivent l'emporter sur tout composant ; plus `.text-muted`,
+  // qui surcharge celui de Bootstrap (lui-même !important).
+  'css/main.scss': 3 + 2 + 1 + 1,
   // Utilitaires d'affichage par taille d'écran (même convention que Bootstrap).
   'css/_responsive.scss': 7,
   // `.text-primary` : surcharge celui de Bootstrap (lui-même !important).
