@@ -150,7 +150,7 @@
     width: 48px;
     height: 48px;
     border-radius: var(--radius-full);
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--danger-light);
     display: flex;
     align-items: center;
     justify-content: center;

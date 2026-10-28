@@ -1,0 +1,10 @@
+/* Styles communs à la liste des litiges et au détail d'un litige. */
+.status-badge {
+  font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  &--opened { background: rgba(255,193,7,.15); color: #e0a800; }
+  &--under_review { background: rgba(33,150,243,.15); color: #2196f3; }
+  &--resolved, &--refunded { background: rgba(40,167,69,.15); color: #28a745; }
+  &--rejected, &--cancelled { background: rgba(108,117,125,.15); color: #6c757d; }
+}
+
+.empty { text-align: center; padding: var(--space-3xl); color: var(--text-muted); i { font-size: 2rem; display: block; margin-bottom: var(--space-md); } .spin { animation: spin 1s linear infinite; } }

@@ -199,7 +199,7 @@ const reset = async () => {
 
 .input-group--error {
   border-color: var(--danger) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  box-shadow: 0 0 0 3px var(--danger-light) !important;
 }
 
 .auth-message {
@@ -213,13 +213,13 @@ const reset = async () => {
   &--success {
     background: var(--success-light);
     color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    border: 1px solid var(--success-border);
   }
 
   &--error {
     background: var(--danger-light);
     color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--danger-border);
   }
 }
 

@@ -78,12 +78,12 @@ onMounted(fetchDisputes);
 </script>
 
 <style lang="scss" scoped>
+@use '../../css/disputes';
+
 .disputes-page { min-height: 100vh; padding: var(--space-xl) var(--space-md); padding-top: calc(var(--navbar-height) + var(--space-xl)); background: var(--bg-primary); }
 .disputes-page__container { max-width: 880px; margin: 0 auto; }
 .disputes-page__header h1 { font-size: var(--font-size-2xl); margin: 0 0 var(--space-xs); }
 .disputes-page__subtitle { color: var(--text-muted); margin-bottom: var(--space-xl); }
-.empty { text-align: center; padding: var(--space-3xl); color: var(--text-muted); i { font-size: 2rem; display: block; margin-bottom: var(--space-md); } .spin { animation: spin 1s linear infinite; } }
-@keyframes spin { to { transform: rotate(360deg); } }
 .disputes-list { display: flex; flex-direction: column; gap: var(--space-md); }
 .dispute-card {
   background: var(--bg-card); border: 1px solid var(--surface-border);
@@ -95,13 +95,4 @@ onMounted(fetchDisputes);
 .dispute-card__body strong { color: var(--text-primary); }
 .dispute-card__body p { color: var(--text-secondary); margin: 4px 0 0; font-size: var(--font-size-sm); }
 .dispute-card__foot { margin-top: var(--space-sm); small { color: var(--text-muted); } }
-.status-badge {
-  font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
-  &--opened { background: rgba(255,193,7,.15); color: #e0a800; }
-  &--under_review { background: rgba(33,150,243,.15); color: #2196f3; }
-  &--resolved { background: rgba(40,167,69,.15); color: #28a745; }
-  &--refunded { background: rgba(40,167,69,.15); color: #28a745; }
-  &--rejected { background: rgba(108,117,125,.15); color: #6c757d; }
-  &--cancelled { background: rgba(108,117,125,.15); color: #6c757d; }
-}
 </style>

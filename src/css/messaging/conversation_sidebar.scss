@@ -459,21 +459,6 @@
   text-align: center;
 }
 
-.empty-state > i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  color: #dee2e6;
-}
-
-.empty-state h3 {
-  margin: 0 0 8px 0;
-  color: #495057;
-}
-
-.empty-state p {
-  margin: 0 0 24px 0;
-}
-
 .participant-info .status {
   font-size: 13px;
   color: #6c757d;
@@ -545,10 +530,6 @@
 .loading i {
   font-size: 24px;
   animation: spin 1s linear infinite;
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* Responsive Design */

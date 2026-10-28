@@ -141,6 +141,8 @@ onMounted(fetchDispute);
 </script>
 
 <style lang="scss" scoped>
+@use '../../css/disputes';
+
 .dispute-detail { min-height: 100vh; padding: var(--space-xl) var(--space-md); padding-top: calc(var(--navbar-height) + var(--space-xl)); background: var(--bg-primary); }
 .dispute-detail__container { max-width: 880px; margin: 0 auto; }
 .dispute-detail__header h1 { margin: var(--space-md) 0; font-size: var(--font-size-2xl); }
@@ -189,13 +191,4 @@ onMounted(fetchDispute);
   &--ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--surface-border); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
-.status-badge {
-  font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
-  &--opened { background: rgba(255,193,7,.15); color: #e0a800; }
-  &--under_review { background: rgba(33,150,243,.15); color: #2196f3; }
-  &--resolved, &--refunded { background: rgba(40,167,69,.15); color: #28a745; }
-  &--rejected, &--cancelled { background: rgba(108,117,125,.15); color: #6c757d; }
-}
-.empty { text-align: center; padding: var(--space-3xl); color: var(--text-muted); i { font-size: 2rem; display: block; margin-bottom: var(--space-md); } .spin { animation: spin 1s linear infinite; } }
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>

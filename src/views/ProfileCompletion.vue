@@ -277,7 +277,7 @@ function skip() {
 @media (max-width: 480px) {
   .form-row { grid-template-columns: 1fr; }
 }
-.input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; }
+.input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px var(--danger-light) !important; }
 
 textarea {
   background: var(--bg-tertiary);
@@ -299,7 +299,7 @@ textarea {
 .auth-message {
   display: flex; align-items: center; gap: var(--space-sm);
   padding: var(--space-md); border-radius: var(--radius-md); font-size: var(--font-size-sm);
-  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
 }
 
 .auth-skip {
