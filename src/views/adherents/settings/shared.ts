@@ -1,5 +1,7 @@
 import { createApiClient } from '@/services/http';
+import { apiErrorStatus } from '@/services/apiError';
 import { API_URL } from '@/config/api';
+import { formatDate as formatSharedDate } from '@/utils/format';
 
 /** Adresse de facturation, telle que stockée par l'API. */
 export interface BillingAddress {
@@ -49,26 +51,23 @@ export interface SectionProps {
 /** Client partagé : renouvelle la session expirée et rejoue la requête. */
 export const api = createApiClient({ baseURL: API_URL });
 
-/** Forme utile d'une erreur axios, sans passer par `any`. */
-type ApiError = { response?: { status?: number; data?: { message?: string; code?: string } } };
-
-export function apiMessage(error: unknown, fallback: string): string {
-  return (error as ApiError)?.response?.data?.message || fallback;
-}
-
-export function apiStatus(error: unknown): number | undefined {
-  return (error as ApiError)?.response?.status;
-}
+// Lecteurs communs (apiError.ts) : ils comprennent les erreurs de `api` ci-dessus
+// comme les `ApiError` rejetées par les services (blocage, RGPD, paiements).
+export {
+  apiErrorMessage as apiMessage,
+  apiErrorStatus as apiStatus,
+  apiErrorCode as apiCode
+} from '@/services/apiError';
 
 /**
  * Un 401 qui remonte jusqu'ici signifie que le renouvellement a échoué : le
  * client a déjà effacé la session et redirigé vers /login. Rien à afficher.
  */
 export function isSessionLost(error: unknown): boolean {
-  return apiStatus(error) === 401;
+  return apiErrorStatus(error) === 401;
 }
 
+/** Dates en toutes lettres dans les phrases des paramètres (« programmée le 9 octobre 2026 »). */
 export function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  return formatSharedDate(iso, 'long');
 }

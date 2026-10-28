@@ -1,17 +1,10 @@
-import { type AxiosInstance } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
 class AdminService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    const baseURL = `${API_URL}/api`;
-    this.apiClient = createApiClient({ baseURL });
-  }
+  private client = apiClient('/api');
 
   private async downloadCsv(path: string, params: Record<string, unknown>, fileName: string) {
-    const response = await this.apiClient.get(path, {
+    const response = await this.client.get(path, {
       params: { ...params, format: 'csv' },
       responseType: 'blob'
     });
@@ -26,28 +19,28 @@ class AdminService {
 
   // === Stats ===
   async getStats() {
-    const response = await this.apiClient.get('/users/admin/stats');
+    const response = await this.client.get('/users/admin/stats');
     return response.data;
   }
 
   async getStatsTimeseries() {
-    const response = await this.apiClient.get('/users/admin/stats/timeseries');
+    const response = await this.client.get('/users/admin/stats/timeseries');
     return response.data;
   }
 
   async getQueue() {
-    const response = await this.apiClient.get('/users/admin/queue');
+    const response = await this.client.get('/users/admin/queue');
     return response.data;
   }
 
   async globalSearch(query: string) {
-    const response = await this.apiClient.get('/users/admin/search', { params: { q: query } });
+    const response = await this.client.get('/users/admin/search', { params: { q: query } });
     return response.data;
   }
 
   // === Users ===
   async getUsers(params: { page?: number; limit?: number; search?: string; role?: string; status?: string } = {}) {
-    const response = await this.apiClient.get('/users/admin/list', { params });
+    const response = await this.client.get('/users/admin/list', { params });
     return response.data;
   }
 
@@ -56,7 +49,7 @@ class AdminService {
     accountStatus: 'active' | 'suspended',
     options: { reason?: string; durationDays?: number | null } = {}
   ) {
-    const response = await this.apiClient.put(`/users/admin/${userId}/status`, {
+    const response = await this.client.put(`/users/admin/${userId}/status`, {
       accountStatus,
       ...options
     });
@@ -68,43 +61,43 @@ class AdminService {
   }
 
   async getUserDetail(userId: string) {
-    const response = await this.apiClient.get(`/users/admin/${userId}/detail`);
+    const response = await this.client.get(`/users/admin/${userId}/detail`);
     return response.data;
   }
 
   async addUserNote(userId: string, content: string) {
-    const response = await this.apiClient.post(`/users/admin/${userId}/notes`, { content });
+    const response = await this.client.post(`/users/admin/${userId}/notes`, { content });
     return response.data;
   }
 
   async deleteUserNote(userId: string, noteId: string) {
-    const response = await this.apiClient.delete(`/users/admin/${userId}/notes/${noteId}`);
+    const response = await this.client.delete(`/users/admin/${userId}/notes/${noteId}`);
     return response.data;
   }
 
   async updateUserRole(userId: string, role: 'user' | 'moderator' | 'admin') {
-    const response = await this.apiClient.put(`/users/admin/${userId}/role`, { role });
+    const response = await this.client.put(`/users/admin/${userId}/role`, { role });
     return response.data;
   }
 
   // === Reports ===
   async getReports(params: { page?: number; limit?: number; status?: string; targetType?: string } = {}) {
-    const response = await this.apiClient.get('/reports', { params });
+    const response = await this.client.get('/reports', { params });
     return response.data;
   }
 
   async getReportDetail(reportId: string) {
-    const response = await this.apiClient.get(`/reports/${reportId}`);
+    const response = await this.client.get(`/reports/${reportId}`);
     return response.data;
   }
 
   async updateReportStatus(reportId: string, status: string, adminNotes?: string) {
-    const response = await this.apiClient.put(`/reports/${reportId}`, { status, adminNotes });
+    const response = await this.client.put(`/reports/${reportId}`, { status, adminNotes });
     return response.data;
   }
 
   async bulkUpdateReports(reportIds: string[], status: string, adminNotes?: string) {
-    const response = await this.apiClient.put('/reports/bulk', { reportIds, status, adminNotes });
+    const response = await this.client.put('/reports/bulk', { reportIds, status, adminNotes });
     return response.data;
   }
 
@@ -114,41 +107,41 @@ class AdminService {
 
   // === Verifications ===
   async getPendingVerifications() {
-    const response = await this.apiClient.get('/verification/admin/pending');
+    const response = await this.client.get('/verification/admin/pending');
     return response.data;
   }
 
   /** Pièce d'identité déchiffrée d'une demande en attente (consultation tracée côté API). */
   async getVerificationDocument(id: string): Promise<Blob> {
-    const response = await this.apiClient.get(`/verification/admin/document/${id}`, {
+    const response = await this.client.get(`/verification/admin/document/${id}`, {
       responseType: 'blob'
     });
     return response.data as Blob;
   }
 
   async approveVerification(id: string) {
-    const response = await this.apiClient.post(`/verification/admin/approve/${id}`);
+    const response = await this.client.post(`/verification/admin/approve/${id}`);
     return response.data;
   }
 
   async rejectVerification(id: string, reason: string) {
-    const response = await this.apiClient.post(`/verification/admin/reject/${id}`, { reason });
+    const response = await this.client.post(`/verification/admin/reject/${id}`, { reason });
     return response.data;
   }
 
   // === Products ===
   async getProducts(params: { page?: number; limit?: number; search?: string; status?: string; type?: string } = {}) {
-    const response = await this.apiClient.get('/products/admin/list', { params });
+    const response = await this.client.get('/products/admin/list', { params });
     return response.data;
   }
 
   async getProductStats() {
-    const response = await this.apiClient.get('/products/admin/stats');
+    const response = await this.client.get('/products/admin/stats');
     return response.data;
   }
 
   async deleteProduct(productId: string, reason?: string) {
-    const response = await this.apiClient.delete(`/products/admin/${productId}`, {
+    const response = await this.client.delete(`/products/admin/${productId}`, {
       data: { reason }
     });
     return response.data;
@@ -159,65 +152,65 @@ class AdminService {
   }
 
   async reviewFlaggedProduct(productId: string, approve: boolean) {
-    const response = await this.apiClient.post(`/products/admin/${productId}/moderation-review`, { approve });
+    const response = await this.client.post(`/products/admin/${productId}/moderation-review`, { approve });
     return response.data;
   }
 
   // === RGPD ===
   async getDeletionRequests() {
-    const response = await this.apiClient.get('/users/admin/deletion-requests');
+    const response = await this.client.get('/users/admin/deletion-requests');
     return response.data;
   }
 
   async getRgpdStats() {
-    const response = await this.apiClient.get('/users/admin/rgpd-stats');
+    const response = await this.client.get('/users/admin/rgpd-stats');
     return response.data;
   }
 
   async exportUserData(search: string) {
-    const response = await this.apiClient.get('/users/admin/export-data', { params: { search } });
+    const response = await this.client.get('/users/admin/export-data', { params: { search } });
     return response.data;
   }
 
   async anonymizeUser(search: string) {
-    const response = await this.apiClient.post('/users/admin/anonymize', { search });
+    const response = await this.client.post('/users/admin/anonymize', { search });
     return response.data;
   }
 
   async confirmDeletion(userId: string) {
-    const response = await this.apiClient.post(`/users/admin/${userId}/confirm-deletion`);
+    const response = await this.client.post(`/users/admin/${userId}/confirm-deletion`);
     return response.data;
   }
 
   async cancelDeletion(userId: string) {
-    const response = await this.apiClient.post(`/users/admin/${userId}/cancel-deletion`);
+    const response = await this.client.post(`/users/admin/${userId}/cancel-deletion`);
     return response.data;
   }
 
   // === Modération Posts ===
   async getAdminPosts(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
-    const response = await this.apiClient.get('/users/admin/posts', { params });
+    const response = await this.client.get('/users/admin/posts', { params });
     return response.data;
   }
 
   async getPostStats() {
-    const response = await this.apiClient.get('/users/admin/posts/stats');
+    const response = await this.client.get('/users/admin/posts/stats');
     return response.data;
   }
 
   async adminDeletePost(postId: string, reason?: string) {
-    const response = await this.apiClient.delete(`/users/admin/posts/${postId}`, { data: { reason } });
+    const response = await this.client.delete(`/users/admin/posts/${postId}`, { data: { reason } });
     return response.data;
   }
 
   // === Audit ===
   async getAuditLogs(params: { page?: number; limit?: number; targetType?: string } = {}) {
-    const response = await this.apiClient.get('/users/admin/audit', { params });
+    const response = await this.client.get('/users/admin/audit', { params });
     return response.data;
   }
 
   async getAuditStats() {
-    const response = await this.apiClient.get('/users/admin/audit/stats');
+    const response = await this.client.get('/users/admin/audit/stats');
     return response.data;
   }
 }

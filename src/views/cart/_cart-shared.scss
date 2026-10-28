@@ -1,0 +1,26 @@
+// Boutons et alertes communs à la page panier et à sa modale de livraison :
+// les styles étant scoped, chaque composant inclut ce partiel via @use.
+
+.cart-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600;
+  font-size: 0.9rem; cursor: pointer; transition: all 0.2s; border: none;
+
+  &--primary {
+    background: var(--accent-purple); color: var(--text-on-accent);
+    &:hover:not(:disabled) { filter: brightness(1.1); }
+  }
+
+  &--outline {
+    background: transparent; border: 1px solid var(--surface-border); color: var(--text-primary);
+    &:hover:not(:disabled) { background: var(--surface-hover); }
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.cart-alert {
+  background: var(--warning-light); border: 1px solid var(--warning); border-radius: 8px;
+  padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem;
+  i { color: var(--warning); margin-right: 0.5rem; }
+}

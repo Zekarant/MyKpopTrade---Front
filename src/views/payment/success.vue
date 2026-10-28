@@ -1,18 +1,18 @@
 <template>
   <div class="payment-success-container" :class="{ 'error-state': captureError }">
     <div class="success-card" :class="{ 'error-card': captureError }">
-      <div class="confetti" v-if="!capturing && !captureError">
-        <div class="confetti-item" v-for="i in 20" :key="i"></div>
+      <div v-if="!capturing && !captureError" class="confetti" aria-hidden="true">
+        <div v-for="i in 20" :key="i" class="confetti-item"></div>
       </div>
 
-      <div class="icon-container">
-        <div class="check-icon success" v-if="!capturing && !captureError">
+      <div class="icon-container" aria-hidden="true">
+        <div v-if="!capturing && !captureError" class="check-icon success">
           <i class="bi bi-check-circle"></i>
         </div>
-        <div class="check-icon warning" v-else-if="capturing">
+        <div v-else-if="capturing" class="check-icon warning">
           <i class="bi bi-hourglass-split"></i>
         </div>
-        <div class="check-icon error" v-else>
+        <div v-else class="check-icon error">
           <i class="bi bi-exclamation-circle"></i>
         </div>
       </div>
@@ -20,16 +20,16 @@
       <h1 v-if="capturing">Finalisation en cours...</h1>
       <h1 v-else-if="captureError">Erreur de finalisation</h1>
       <h1 v-else>Paiement confirmé !</h1>
-      <p class="message" v-if="capturing">
+      <p v-if="capturing" class="message" role="status">
         Nous finalisons votre paiement, veuillez patienter...
       </p>
-      <p class="message" v-else-if="captureError">
+      <p v-else-if="captureError" class="message" role="alert">
         {{ captureError }}
         <template v-if="otherPaymentsCancelled">
           <br />Les autres articles de votre commande n'ont pas été payés : ils restent dans votre panier.
         </template>
       </p>
-      <p class="message" v-else>
+      <p v-else class="message">
         Votre paiement via PayPal a été traité avec succès.
         Merci de votre confiance !
       </p>
@@ -39,11 +39,11 @@
           <span class="label">Source</span>
           <span class="value">PayPal</span>
         </div>
-        <div class="detail-item" v-if="token">
+        <div v-if="token" class="detail-item">
           <span class="label">Référence de transaction</span>
           <span class="value token-value">{{ token }}</span>
         </div>
-        <div class="detail-item" v-if="payerId">
+        <div v-if="payerId" class="detail-item">
           <span class="label">ID Payer</span>
           <span class="value token-value">{{ payerId }}</span>
         </div>
@@ -51,216 +51,128 @@
 
       <div class="info-box success-info">
         <p>
-          <i class="bi bi-info-circle"></i>
+          <i class="bi bi-info-circle" aria-hidden="true"></i>
           Un email de confirmation a été envoyé à votre adresse email.
         </p>
       </div>
 
       <div class="actions">
-        <button @click="goToDashboard" class="btn btn-primary">
-          <i class="bi bi-house-fill"></i>
+        <button type="button" class="btn btn-primary" @click="leaveTo('dashboard')">
+          <i class="bi bi-house-fill" aria-hidden="true"></i>
           Retour au tableau de bord
         </button>
-        <button @click="goToMessages" class="btn btn-secondary">
-          <i class="bi bi-arrow-left"></i>
+        <button type="button" class="btn btn-secondary" @click="leaveTo('messages')">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
           Retour à la messagerie
         </button>
       </div>
 
       <div class="support-text">
-        <p>Besoin d'aide ? <a href="#" class="link" @click.prevent="openContact">Contactez-nous</a></p>
+        <p>Besoin d'aide ? <button type="button" class="link" @click="showContact = true">Contactez-nous</button></p>
       </div>
     </div>
   </div>
 
-  <!-- Contact Modal -->
-  <div v-if="showContact" class="modal-overlay" @click.self="closeContact">
-    <div class="modal-card">
-      <button class="modal-close" @click="closeContact"><i class="bi bi-x-lg"></i></button>
-      <h2><i class="bi bi-chat-dots"></i> Contactez-nous</h2>
-      <p class="modal-subtitle">Envoyez-nous un message, nous vous répondrons rapidement.</p>
-
-      <form @submit.prevent="sendMessage">
-        <div class="form-group">
-          <label>Votre nom</label>
-          <input v-model="form.name" type="text" placeholder="John Doe" required />
-        </div>
-        <div class="form-group">
-          <label>Votre email</label>
-          <input v-model="form.email" type="email" placeholder="john@exemple.com" required />
-        </div>
-        <div class="form-group">
-          <label>Message</label>
-          <textarea v-model="form.message" rows="4" placeholder="Décrivez votre problème..." required></textarea>
-        </div>
-
-        <div v-if="contactError" class="contact-error">
-          <i class="bi bi-exclamation-circle"></i> {{ contactError }}
-        </div>
-        <div v-if="contactSuccess" class="contact-success">
-          <i class="bi bi-check-circle"></i> Message envoyé ! Nous vous répondrons bientôt.
-        </div>
-
-        <button type="submit" class="btn btn-primary" :disabled="sending">
-          <i class="bi bi-send"></i>
-          {{ sending ? 'Envoi...' : 'Envoyer' }}
-        </button>
-      </form>
-    </div>
-  </div>
+  <PaymentContactDialog v-if="showContact" @close="showContact = false" />
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+<script setup lang="ts">
+/** Retour de PayPal : capture du paiement, puis enchaînement des paiements restants du panier. */
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { isAxiosError } from 'axios';
+import { apiErrorBody } from '@/services/apiError';
 import paymentService from '@/services/payment.service';
 import cartService from '@/services/cart.service';
-import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
-import { cancelPendingPayments, pendingApprovalUrl, readPendingPayments, takeNextPendingPayment } from './pendingPayments';
+import { cancelPendingPayments, pendingApprovalUrl, pendingOrderId, readPendingPayments, takeNextPendingPayment } from './pendingPayments';
+import { isPayPalUrl, redirectToPayPal } from './paypalUrl';
+import PaymentContactDialog from './PaymentContactDialog.vue';
 
-type CaptureErrorBody = { message?: string; error?: string; approvalUrl?: string };
+defineOptions({ name: 'PaymentSuccess' });
 
-export default defineComponent({
-  name: 'PaymentSuccess',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
+type CaptureErrorBody ={ message?: string; code?: string; approvalUrl?: string };
 
-    const token = ref<string>('');
-    const payerId = ref<string>('');
-    const capturing = ref<boolean>(false);
-    const captureError = ref<string>('');
-    const otherPaymentsCancelled = ref(false);
+const route = useRoute();
+const router = useRouter();
 
-    // Un paiement du panier a échoué : les suivants ne seront pas enchaînés,
-    // on les annule plutôt que de les laisser en attente.
-    const cancelRemainingPayments = async () => {
-      otherPaymentsCancelled.value = readPendingPayments().length > 0;
-      await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
-    };
+const token = ref('');
+const payerId = ref('');
+const capturing = ref(false);
+const captureError = ref('');
+const otherPaymentsCancelled = ref(false);
+const showContact = ref(false);
 
-    onMounted(async () => {
-      // Récupérer les paramètres de query
-      token.value = (route.query.token as string) || '';
-      payerId.value = (route.query.PayerID as string) || '';
+// Un paiement du panier a échoué : les suivants ne seront pas enchaînés,
+// on les annule plutôt que de les laisser en attente.
+async function cancelRemainingPayments(alreadySkipped: boolean) {
+  otherPaymentsCancelled.value = alreadySkipped || readPendingPayments().length > 0;
+  await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
+}
 
-      // Capturer le paiement seulement si on a un token ET un PayerID (= acheteur a approuvé)
-      if (token.value && payerId.value) {
-        capturing.value = true;
-        try {
-          await paymentService.capturePayPal({ paypalOrderId: token.value });
-        } catch (e) {
-          const data = isAxiosError<CaptureErrorBody>(e) ? e.response?.data : undefined;
-          const msg = data?.message || '';
-          const errorDetail = data?.error || '';
-          // Ignorer si déjà capturé
-          if (msg.includes('déjà traité')) {
-            // OK, déjà traité
-          } else if (errorDetail.includes('non approuvé') || errorDetail.includes('CREATED')) {
-            // L'ordre n'est pas encore approuvé — re-rediriger vers PayPal
-            const approvalUrl = data?.approvalUrl;
-            if (approvalUrl) {
-              window.location.href = approvalUrl;
-              return;
-            }
-            captureError.value = 'Le paiement n\'a pas été finalisé sur PayPal. Veuillez réessayer.';
-          } else {
-            captureError.value = msg || 'Erreur lors de la finalisation du paiement';
-          }
-        } finally {
-          capturing.value = false;
+async function capture() {
+  capturing.value = true;
+  try {
+    await paymentService.capturePayPal({ paypalOrderId: token.value });
+  } catch (e) {
+    const data = apiErrorBody<CaptureErrorBody>(e);
+    const msg = data?.message || '';
+    if (msg.includes('déjà traité')) {
+      // Déjà capturé (rechargement de la page) : rien à signaler.
+    } else if (data?.code === 'ORDER_NOT_APPROVED') {
+      // L'ordre n'est pas encore approuvé : retour sur PayPal.
+      if (redirectToPayPal(data.approvalUrl)) return false;
+      captureError.value = 'Le paiement n\'a pas été finalisé sur PayPal. Veuillez réessayer.';
+    } else {
+      captureError.value = msg || 'Erreur lors de la finalisation du paiement';
+    }
+  } finally {
+    capturing.value = false;
+  }
+  return true;
+}
+
+onMounted(async () => {
+  token.value = (route.query.token as string) || '';
+  payerId.value = (route.query.PayerID as string) || '';
+  let skippedPayment = false;
+
+  // Capturer seulement avec un token ET un PayerID (= l'acheteur a approuvé)
+  if (token.value && payerId.value) {
+    if (!(await capture())) return;
+
+    if (!captureError.value) {
+      // Retire du panier les articles payés (le back garde ceux qui restent à payer)
+      try { await cartService.finalizeCheckout(); } catch { /* ignore */ }
+
+      const next = takeNextPendingPayment();
+      if (next) {
+        const nextUrl = pendingApprovalUrl(next);
+        if (isPayPalUrl(nextUrl)) {
+          // Court délai pour que l'acheteur voie le succès avant le paiement suivant
+          setTimeout(() => { window.location.href = nextUrl; }, 1500);
+          return;
         }
-
-        // Handle pending multi-payment: redirect to next PayPal approval
-        if (!captureError.value) {
-          // Retire du panier les articles payés (le back garde ceux qui restent à payer)
-          try { await cartService.finalizeCheckout(); } catch { /* ignore */ }
-
-          const next = takeNextPendingPayment();
-          if (next) {
-            const nextUrl = pendingApprovalUrl(next);
-            // Small delay so user sees success briefly
-            setTimeout(() => { window.location.href = nextUrl; }, 1500);
-            return;
-          }
-        }
-      } else if (token.value && !payerId.value) {
-        // Token sans PayerID = l'acheteur n'a pas approuvé (redirection forcée)
-        captureError.value = 'Le paiement n\'a pas été approuvé. Veuillez réessayer.';
+        // Lien altéré dans le localStorage : on ne suit pas un domaine tiers, et
+        // l'ordre correspondant est annulé comme les suivants.
+        const orderId = pendingOrderId(next);
+        if (orderId) await paymentService.cancelPayPal(orderId).catch(() => {});
+        skippedPayment = true;
+        captureError.value = 'Votre paiement a bien été reçu, mais le lien du paiement suivant est invalide : il n\'a pas été ouvert.';
       }
+    }
+  } else if (token.value && !payerId.value) {
+    // Token sans PayerID = l'acheteur n'a pas approuvé (redirection forcée)
+    captureError.value = 'Le paiement n\'a pas été approuvé. Veuillez réessayer.';
+  }
 
-      if (captureError.value) {
-        await cancelRemainingPayments();
-      }
-    });
-
-    const goToDashboard = () => {
-      localStorage.removeItem('lastProductId');
-      router.push({ name: 'dashboard' });
-    };
-
-    const goToMessages = () => {
-      localStorage.removeItem('lastProductId');
-      router.push({ name: 'messages' });
-    };
-
-    const showContact = ref(false);
-    const sending = ref(false);
-    const contactError = ref('');
-    const contactSuccess = ref(false);
-    const form = ref({ name: '', email: '', message: '' });
-
-    const openContact = () => {
-      showContact.value = true;
-      contactError.value = '';
-      contactSuccess.value = false;
-    };
-
-    const closeContact = () => {
-      showContact.value = false;
-    };
-
-    const sendMessage = async () => {
-      sending.value = true;
-      contactError.value = '';
-      contactSuccess.value = false;
-
-      try {
-        await sendContactMessage({
-          ...form.value,
-          subject: 'Après paiement PayPal',
-          source: 'payment-success'
-        });
-
-        contactSuccess.value = true;
-        form.value = { name: '', email: '', message: '' };
-      } catch (error) {
-        contactError.value = contactErrorMessage(error, "Une erreur s'est produite. Veuillez réessayer.");
-      } finally {
-        sending.value = false;
-      }
-    };
-
-    return {
-      token,
-      payerId,
-      capturing,
-      captureError,
-      otherPaymentsCancelled,
-      goToDashboard,
-      goToMessages,
-      showContact,
-      sending,
-      contactError,
-      contactSuccess,
-      form,
-      openContact,
-      closeContact,
-      sendMessage,
-    };
+  if (captureError.value) {
+    await cancelRemainingPayments(skippedPayment);
   }
 });
+
+function leaveTo(name: 'dashboard' | 'messages') {
+  localStorage.removeItem('lastProductId');
+  router.push({ name });
+}
 </script>
 
 <style lang="scss" scoped>

@@ -13,8 +13,39 @@
         <span v-if="profile.isEmailVerified" class="setting-badge setting-badge--success">
           <i class="bi bi-check-circle-fill"></i> Vérifiée
         </span>
-        <button v-else @click="verifEmail" class="btn-settings btn-settings--sm">Vérifier</button>
+        <button v-else class="btn-settings btn-settings--sm" @click="verifEmail">Vérifier</button>
       </div>
+      <div class="field">
+        <label class="field__label" for="settings-email">Changer d'adresse</label>
+        <input id="settings-email" v-model.trim="email" type="email" class="settings-input" autocomplete="email" />
+      </div>
+      <template v-if="emailChanged">
+        <div class="field">
+          <label class="field__label" for="settings-current-password">Mot de passe actuel</label>
+          <input
+            id="settings-current-password"
+            v-model="currentPassword"
+            type="password"
+            class="settings-input"
+            autocomplete="current-password"
+          />
+          <small v-if="currentPasswordError" class="field__error">{{ currentPasswordError }}</small>
+          <small class="field__hint">
+            Requis pour changer d'adresse. Compte créé avec Google ou Discord ? Définissez d'abord un mot de passe
+            via <router-link to="/forgot_psw">Mot de passe oublié</router-link>.
+          </small>
+        </div>
+        <div class="setting-row__inline">
+          <button class="btn-settings btn-settings--ghost btn-settings--sm" @click="resetEmail">Annuler</button>
+          <button
+            class="btn-settings btn-settings--primary btn-settings--sm"
+            :disabled="!currentPassword || savingEmail"
+            @click="saveEmail"
+          >
+            {{ savingEmail ? 'Enregistrement…' : 'Changer l\'adresse' }}
+          </button>
+        </div>
+      </template>
     </div>
   </section>
 
@@ -32,22 +63,22 @@
           </span>
         </div>
         <div class="setting-row__inline">
-          <input type="tel" v-model="phoneNumber" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" />
-          <button @click="saveTel" class="btn-settings btn-settings--sm" v-if="phoneNumber && phoneNumber !== profile.phoneNumber">Enregistrer</button>
-          <button @click="verifTel" class="btn-settings btn-settings--sm" v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest">Vérifier</button>
+          <input v-model="phoneNumber" type="tel" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" />
+          <button v-if="phoneNumber && phoneNumber !== profile.phoneNumber" class="btn-settings btn-settings--sm" @click="saveTel">Enregistrer</button>
+          <button v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest" class="btn-settings btn-settings--sm" @click="verifTel">Vérifier</button>
         </div>
         <div v-if="telRequest && !codeVerified" class="setting-row__inline" style="margin-top: 8px;">
           <input
-            type="text"
             v-model="phoneCode"
+            type="text"
             class="settings-input settings-input--sm"
             placeholder="Code à 6 chiffres"
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
           />
-          <button @click="verifCodeTel" class="btn-settings btn-settings--primary btn-settings--sm">Valider</button>
-          <button @click="verifTel" class="btn-settings btn-settings--sm">Renvoyer</button>
+          <button class="btn-settings btn-settings--primary btn-settings--sm" @click="verifCodeTel">Valider</button>
+          <button class="btn-settings btn-settings--sm" @click="verifTel">Renvoyer</button>
         </div>
         <small class="field__hint">
           Facultatif : renforce la confiance et la sécurité de votre compte. Jamais affiché publiquement.
@@ -123,7 +154,7 @@
             <input ref="identityFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onIdentityFileChange" />
           </div>
           <label class="identity-consent">
-            <input type="checkbox" v-model="identityConsentGiven" />
+            <input v-model="identityConsentGiven" type="checkbox" />
             J'autorise le traitement de mes données personnelles pour la vérification d'identité
           </label>
           <div class="identity-form__actions">
@@ -144,9 +175,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { func } from '@/function';
-import { api, apiMessage, apiStatus, formatDate, isSessionLost } from './shared';
+import { api, apiCode, apiMessage, apiStatus, formatDate, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
 const props = defineProps<SectionProps>();
@@ -159,10 +190,48 @@ interface IdentityVerificationStatus {
 
 async function verifEmail() {
   try {
-    await api.post('/api/auth/send-verification-email', {});
+    await api.post('/api/auth/resend-verification', { email: props.profile.email });
     func.showToastSuccess('Email de vérification envoyé');
   } catch (error) {
     func.showToastError(apiMessage(error, 'Erreur'));
+  }
+}
+
+const email = ref(props.profile.email || '');
+const currentPassword = ref('');
+const currentPasswordError = ref('');
+const savingEmail = ref(false);
+
+const emailChanged = computed(() => email.value !== '' && email.value !== (props.profile.email || ''));
+
+function resetEmail() {
+  email.value = props.profile.email || '';
+  currentPassword.value = '';
+  currentPasswordError.value = '';
+}
+
+/** L'API exige le mot de passe actuel : l'email sert à réinitialiser le mot de passe. */
+async function saveEmail() {
+  savingEmail.value = true;
+  currentPasswordError.value = '';
+  try {
+    const { data } = await api.put('/api/auth/profile', {
+      email: email.value,
+      currentPassword: currentPassword.value
+    });
+    emit('patch', { email: data.user?.email ?? email.value, isEmailVerified: false });
+    resetEmail();
+    func.showToastSuccess(data.message || 'Adresse email modifiée.');
+  } catch (error) {
+    // Testé avant `isSessionLost` : ce 401 est un mauvais mot de passe, pas une session perdue.
+    const code = apiCode(error);
+    if (code === 'CURRENT_PASSWORD_INVALID' || code === 'CURRENT_PASSWORD_REQUIRED') {
+      currentPasswordError.value = apiMessage(error, 'Mot de passe actuel incorrect');
+    } else if (!isSessionLost(error)) {
+      func.showToastError(apiMessage(error, 'Erreur lors du changement d\'adresse.'));
+    }
+  } finally {
+    savingEmail.value = false;
   }
 }
 
@@ -171,9 +240,10 @@ const phoneCode = ref('');
 const telRequest = ref(false);
 const codeVerified = ref(false);
 
-// Profil rechargé : le champ repart du numéro enregistré.
+// Profil rechargé : les champs repartent des valeurs enregistrées.
 watch(() => props.profile, (profile) => {
   phoneNumber.value = profile.phoneNumber || '';
+  resetEmail();
 });
 
 async function saveTel() {

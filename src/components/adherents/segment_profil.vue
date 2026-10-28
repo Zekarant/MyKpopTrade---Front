@@ -4,12 +4,12 @@
             <div class="col-0 col-md-2"></div>
             <div class="col-12 col-md-8">
                 <div class="btn-group w-100" role="group" aria-label="Navigation profile">
-                    <button type="button" :class="{ clicked: part === 'post' }" @click="btnClick('post')" class="btn">Posts</button>
-                    <button type="button" :class="{ clicked: part === 'annoucement' }" @click="btnClick('annoucement')" class="btn">Annonces</button>
-                    <button type="button" :class="{ clicked: part === 'about' }" @click="btnClick('about')" class="btn">À propos</button>
-                    <button type="button" :class="{ clicked: part === 'review' }" @click="btnClick('review')" class="btn">Avis</button>
-                    <button type="button" :class="{ clicked: part === 'followers' }" @click="btnClick('followers')" class="btn">Abonnés</button>
-                    <button type="button" :class="{ clicked: part === 'wishlist' }" @click="btnClick('wishlist')" class="btn">Wishlist</button>
+                    <button type="button" :class="{ clicked: part === 'post' }" class="btn" @click="btnClick('post')">Posts</button>
+                    <button type="button" :class="{ clicked: part === 'annoucement' }" class="btn" @click="btnClick('annoucement')">Annonces</button>
+                    <button type="button" :class="{ clicked: part === 'about' }" class="btn" @click="btnClick('about')">À propos</button>
+                    <button type="button" :class="{ clicked: part === 'review' }" class="btn" @click="btnClick('review')">Avis</button>
+                    <button type="button" :class="{ clicked: part === 'followers' }" class="btn" @click="btnClick('followers')">Abonnés</button>
+                    <button type="button" :class="{ clicked: part === 'wishlist' }" class="btn" @click="btnClick('wishlist')">Wishlist</button>
                 </div>
             </div>
             <div class="col-0 col-md-2"></div>
@@ -19,7 +19,8 @@
 
 <script lang="ts">
     export default {
-        name: "segment_profil",
+        name: "SegmentProfil",
+        emits: ['partDisplayed'],
         data() {
             return {
                 part: 'post'

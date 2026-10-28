@@ -1,9 +1,9 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="$emit('cancel')">
+  <div class="admin__modal-overlay" @click.self="emit('cancel')">
     <div class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="reason-title">
       <div class="admin__modal-header">
         <h3 id="reason-title">{{ title }}</h3>
-        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="$emit('cancel')">
+        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('cancel')">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -47,13 +47,13 @@
       </div>
 
       <div class="admin__modal-footer">
-        <button type="button" class="admin__btn admin__btn--ghost" @click="$emit('cancel')">Annuler</button>
+        <button type="button" class="admin__btn admin__btn--ghost" @click="emit('cancel')">Annuler</button>
         <button
           type="button"
           class="admin__btn"
           :class="destructive ? 'admin__btn--danger' : 'admin__btn--primary'"
           :disabled="!isValid"
-          @click="$emit('confirm', reason.trim())"
+          @click="emit('confirm', reason.trim())"
         >
           <i :class="confirmIcon"></i> {{ confirmLabel }}
         </button>
@@ -62,36 +62,38 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref, type PropType } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 
-  const MIN_REASON_LENGTH = 5;
+const minLength = 5;
 
-  export default defineComponent({
-    name: 'ReasonPromptModal',
-    props: {
-      title: { type: String, required: true },
-      description: { type: String, default: '' },
-      presets: { type: Array as PropType<string[]>, default: () => [] },
-      confirmLabel: { type: String, default: 'Confirmer' },
-      confirmIcon: { type: String, default: 'bi bi-check-lg' },
-      placeholder: { type: String, default: 'Précisez le motif…' },
-      required: { type: Boolean, default: false },
-      destructive: { type: Boolean, default: false },
-      maxLength: { type: Number, default: 500 }
-    },
-    emits: ['confirm', 'cancel'],
-    setup(props) {
-      const reason = ref('');
-      const textarea = ref<HTMLTextAreaElement | null>(null);
+const props = withDefaults(defineProps<{
+  title: string;
+  description?: string;
+  presets?: string[];
+  confirmLabel?: string;
+  confirmIcon?: string;
+  placeholder?: string;
+  required?: boolean;
+  destructive?: boolean;
+  maxLength?: number;
+}>(), {
+  description: '',
+  presets: () => [],
+  confirmLabel: 'Confirmer',
+  confirmIcon: 'bi bi-check-lg',
+  placeholder: 'Précisez le motif…',
+  required: false,
+  destructive: false,
+  maxLength: 500
+});
 
-      const isValid = computed(() =>
-        props.required ? reason.value.trim().length >= MIN_REASON_LENGTH : true
-      );
+const emit = defineEmits<{ confirm: [reason: string]; cancel: [] }>();
 
-      onMounted(() => textarea.value?.focus());
+const reason = ref('');
+const textarea = ref<HTMLTextAreaElement | null>(null);
 
-      return { reason, textarea, isValid, minLength: MIN_REASON_LENGTH };
-    }
-  });
+const isValid = computed(() => (props.required ? reason.value.trim().length >= minLength : true));
+
+onMounted(() => textarea.value?.focus());
 </script>

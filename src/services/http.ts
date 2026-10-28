@@ -5,7 +5,11 @@ import axios, {
 } from 'axios';
 import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
-import { setSessionCookies, clearSessionCookies } from '@/services/session.cookies';
+import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/session.cookies';
+import { notifySessionEnded } from '@/services/sessionEvents';
+import { toApiError } from '@/services/apiError';
+
+export { hasSession };
 
 /**
  * Client HTTP partagé et renouvellement de session.
@@ -37,6 +41,19 @@ const REFRESH_ENDPOINT = `${API_URL}/api/auth/refresh-token`;
  */
 const AUTH_PATHS = ['/login', '/register', '/refresh-token', '/logout', '/2fa/', '/oauth/'];
 
+/**
+ * Codes qu'un 401 de l'API porte quand c'est la session qui est en cause.
+ * Un 401 avec un autre code est un refus métier (mot de passe actuel erroné,
+ * par exemple) : le renouveler déconnecterait à tort ou rejouerait la saisie.
+ */
+const SESSION_ERROR_CODES = new Set(['TOKEN_EXPIRED', 'USER_NOT_FOUND']);
+
+function isSessionError(error: { response?: { status?: number; data?: { code?: unknown } } }): boolean {
+  if (error?.response?.status !== 401) return false;
+  const code = error.response.data?.code;
+  return typeof code !== 'string' || SESSION_ERROR_CODES.has(code);
+}
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 /** Token d'accès courant, sans renouvellement. */
@@ -44,13 +61,10 @@ export function getAccessToken(): string | null {
   return Cookies.get('sessionToken') ?? null;
 }
 
-/** Refresh token courant : sa présence fait foi pour dire « une session existe ». */
-export function getRefreshToken(): string | null {
-  return Cookies.get('refreshToken') ?? null;
-}
-
 /**
- * Renouvelle le token d'accès à partir du refresh token.
+ * Renouvelle le token d'accès à partir du refresh token, que le navigateur
+ * envoie dans son cookie HttpOnly (d'où `withCredentials`) et que l'API
+ * remplace à chaque échange.
  * Rend `null` si aucune session ne peut être rétablie — l'appelant décide alors
  * quoi faire (rejeter l'erreur, rediriger...).
  */
@@ -59,28 +73,19 @@ export function refreshAccessToken(): Promise<string | null> {
     return refreshInFlight;
   }
 
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
+  if (!hasSession()) {
     return Promise.resolve(null);
   }
 
   // `axios` nu volontairement : passer par un client instrumenté relancerait
   // ces mêmes intercepteurs sur la requête de renouvellement.
   refreshInFlight = axios
-    .post<{ accessToken?: string; refreshToken?: string }>(
-      REFRESH_ENDPOINT,
-      { refreshToken },
-      { headers: { 'Content-Type': 'application/json' } }
-    )
+    .post<{ accessToken?: string }>(REFRESH_ENDPOINT, null, { withCredentials: true })
     .then(({ data }) => {
       if (!data?.accessToken) {
         return null;
       }
-      // Refresh token à usage unique : garder celui que rend l'API, sinon l'ancien.
-      setSessionCookies({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken || refreshToken,
-      });
+      setSessionCookies({ accessToken: data.accessToken });
       return data.accessToken;
     })
     .catch(() => null)
@@ -101,9 +106,10 @@ export async function ensureAccessToken(): Promise<string | null> {
 }
 
 /**
- * Session définitivement perdue : on nettoie et on renvoie vers la connexion.
+ * Session définitivement perdue : on nettoie et on l'annonce (l'application
+ * vide alors les stores et renvoie vers la connexion, cf. sessionEvents.ts).
  *
- * La redirection n'a lieu que si une session existait réellement. Sans ce
+ * L'annonce n'a lieu que si une session existait réellement. Sans ce
  * garde-fou, un visiteur anonyme qui effleure un endpoint protégé (une page
  * publique qui demande ses favoris, par exemple) se retrouverait propulsé sur
  * /login — ce que ne faisaient pas les services qui ignoraient les 401.
@@ -115,11 +121,7 @@ function handleSessionLost(hadSession: boolean): void {
     return;
   }
 
-  // Import différé : le routeur charge des vues qui importent des services,
-  // donc ce module. Un import statique créerait un cycle à l'initialisation.
-  void import('@/router').then(({ default: router }) => {
-    router.push('/login');
-  });
+  notifySessionEnded('expired');
 }
 
 function isAuthPath(url?: string): boolean {
@@ -131,7 +133,7 @@ export function installAuthInterceptors(client: AxiosInstance): AxiosInstance {
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     let token = getAccessToken();
 
-    if (!token && !isAuthPath(config.url) && getRefreshToken()) {
+    if (!token && !isAuthPath(config.url) && hasSession()) {
       token = await refreshAccessToken();
     }
 
@@ -150,7 +152,7 @@ export function installAuthInterceptors(client: AxiosInstance): AxiosInstance {
         | undefined;
 
       if (
-        error?.response?.status !== 401 ||
+        !isSessionError(error) ||
         !config ||
         config._authRetry ||
         isAuthPath(config.url)
@@ -158,7 +160,7 @@ export function installAuthInterceptors(client: AxiosInstance): AxiosInstance {
         return Promise.reject(error);
       }
 
-      const hadSession = Boolean(getRefreshToken());
+      const hadSession = hasSession();
       const token = await refreshAccessToken();
 
       if (!token) {
@@ -178,7 +180,23 @@ export function installAuthInterceptors(client: AxiosInstance): AxiosInstance {
   return client;
 }
 
-/** Crée un client axios déjà équipé du renouvellement de session. */
-export function createApiClient(config: CreateAxiosDefaults = {}): AxiosInstance {
-  return installAuthInterceptors(axios.create(config));
+export interface ApiClientOptions {
+  /** Rejette les erreurs en `ApiError` (cf. apiError.ts) plutôt qu'en erreur axios brute. */
+  normalizeErrors?: boolean;
+}
+
+/**
+ * Crée un client axios déjà équipé du renouvellement de session.
+ * Les services passent par `apiClient()` (apiClient.ts), qui normalise les erreurs.
+ */
+export function createApiClient(config: CreateAxiosDefaults = {}, options: ApiClientOptions = {}): AxiosInstance {
+  const client = installAuthInterceptors(axios.create(config));
+
+  if (options.normalizeErrors) {
+    // Posé après les intercepteurs de session : un 401 renouvelable a déjà été
+    // rejoué, seule une erreur définitive arrive jusqu'à cette conversion.
+    client.interceptors.response.use(undefined, (error: unknown) => Promise.reject(toApiError(error)));
+  }
+
+  return client;
 }

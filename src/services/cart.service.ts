@@ -1,6 +1,4 @@
-import type { AxiosInstance } from "axios";
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 import type { ShippingMethod } from '@/services/payment.service';
 
 export interface CartItem {
@@ -45,36 +43,29 @@ export interface CartCheckoutPayment {
 }
 
 class CartService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    this.apiClient = createApiClient({
-      baseURL: `${API_URL}/api/cart`,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  private client = apiClient('/api/cart');
 
   async getCart(): Promise<Cart> {
-    const response = await this.apiClient.get('/');
+    const response = await this.client.get('/');
     return response.data.cart;
   }
 
   async addItem(productId: string): Promise<Cart> {
-    const response = await this.apiClient.post('/items', { productId });
+    const response = await this.client.post('/items', { productId });
     return response.data.cart;
   }
 
   async removeItem(productId: string): Promise<Cart> {
-    const response = await this.apiClient.delete(`/items/${productId}`);
+    const response = await this.client.delete(`/items/${productId}`);
     return response.data.cart;
   }
 
   async clearCart(): Promise<void> {
-    await this.apiClient.delete('/');
+    await this.client.delete('/');
   }
 
   async validateCart(): Promise<{ valid: boolean; issues: string[] }> {
-    const response = await this.apiClient.post('/validate');
+    const response = await this.client.post('/validate');
     return response.data;
   }
 
@@ -90,12 +81,12 @@ class CartService {
       phone?: string;
     };
   }): Promise<CartCheckoutPayment[]> {
-    const response = await this.apiClient.post('/checkout', payload);
+    const response = await this.client.post('/checkout', payload);
     return response.data.payments;
   }
 
   async finalizeCheckout(): Promise<void> {
-    await this.apiClient.post('/finalize');
+    await this.client.post('/finalize');
   }
 }
 

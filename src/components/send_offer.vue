@@ -1,6 +1,6 @@
 <template>
 <div class="popup-overlay" @click.self="$emit('close')">
-  <div @click.stop class="popup-content offer-modal">
+  <div class="popup-content offer-modal" @click.stop>
     <div class="popup-header">
       <h3>Faire une offre</h3>
       <button class="close-btn" @click="$emit('close')">
@@ -20,13 +20,13 @@
       </div>
     </div>
 
-    <form @submit.prevent="submitOffer" class="offer-form" novalidate>
+    <form class="offer-form" novalidate @submit.prevent="submitOffer">
       <div class="form-group">
         <label for="offerAmount">Votre offre (€)</label>
         <input
-          type="number"
           id="offerAmount"
           v-model.number="offerAmount"
+          type="number"
           :min="inputMin"
           :max="inputMax"
           step="0.01"
@@ -39,7 +39,7 @@
         </div>
         <div v-if="offerError" class="offer-error" role="alert">{{ offerError }}</div>
         <div class="price-info">
-          <span class="savings" v-if="!offerError && typeof offerAmount === 'number' && offerAmount > 0 && offerAmount < price">
+          <span v-if="!offerError && typeof offerAmount === 'number' && offerAmount > 0 && offerAmount < price" class="savings">
             Économie: {{ (price - offerAmount).toFixed(2) }}€
           </span>
         </div>
@@ -58,7 +58,7 @@
       </div>
 
       <div class="form-group">
-           <input class="form-check-input" type="checkbox" v-model="offerTermsAccepted" required>
+           <input v-model="offerTermsAccepted" class="form-check-input" type="checkbox" required>
 
             <label class="checkbox-label">
             J'accepte les <a href="#" class="terms-link">conditions d'utilisation</a> pour les offres
@@ -120,15 +120,17 @@ export interface OfferSentPayload {
 }
 
 export default defineComponent({
-    name: 'send_offer',
+    name: 'SendOffer',
     props: {
         conversation: {
           type: Object as PropType<OfferConversation>,
           required: false,
+          default: undefined,
         },
         product: {
           type: Object as PropType<OfferProduct>,
           required: false,
+          default: undefined,
         },
     },
     emits: {

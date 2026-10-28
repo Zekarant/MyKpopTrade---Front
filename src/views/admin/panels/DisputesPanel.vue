@@ -71,7 +71,7 @@
       </table>
     </div>
 
-    <div v-if="pagination.totalPages > 1" class="admin__pagination">
+    <div v-if="pagination.pages > 1" class="admin__pagination">
       <button
         type="button"
         class="admin__icon-btn"
@@ -80,11 +80,11 @@
       >
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span>{{ state.page }} / {{ pagination.totalPages }}</span>
+      <span>{{ state.page }} / {{ pagination.pages }}</span>
       <button
         type="button"
         class="admin__icon-btn"
-        :disabled="state.page >= pagination.totalPages"
+        :disabled="state.page >= pagination.pages"
         @click="commit({ page: state.page + 1 })"
       >
         <i class="bi bi-chevron-right"></i>
@@ -152,134 +152,109 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import disputeService, {
-    type DisputeResolutionPayload,
-    type DisputeStatus,
-    type PopulatedDispute
-  } from '@/services/dispute.service';
-  import { func } from '@/function';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import {
-    DISPUTE_REASON_LABELS,
-    DISPUTE_STATUS_LABELS,
-    apiErrorMessage,
-    formatAge,
-    formatDate
-  } from '../adminFormat';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import disputeService, {
+  type DisputeResolutionPayload,
+  type DisputeStatus,
+  type PopulatedDispute
+} from '@/services/dispute.service';
+import { func } from '@/function';
+import { useAdminQueryState } from '../useAdminQueryState';
+import {
+  DISPUTE_REASON_LABELS,
+  DISPUTE_STATUS_LABELS,
+  apiErrorMessage,
+  formatAge,
+  formatDate
+} from '../adminFormat';
 
-  const PAGE_SIZE = 20;
-  const PENDING_STATUSES = ['opened', 'under_review'];
+const PAGE_SIZE = 20;
+const PENDING_STATUSES = ['opened', 'under_review'];
 
-  export default defineComponent({
-    name: 'DisputesPanel',
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const disputes = ref<PopulatedDispute[]>([]);
-      const pagination = ref({ totalPages: 1 });
-      const loading = ref(false);
-      const submitting = ref(false);
-      const activeDispute = ref<PopulatedDispute | null>(null);
-      const resolution = ref<{
-        outcome: 'resolved' | 'refunded' | 'rejected';
-        notes: string;
-        refundAmount: number | undefined;
-      }>({ outcome: 'resolved', notes: '', refundAmount: undefined });
+const emit = defineEmits<{ changed: [] }>();
 
-      const { state, commit } = useAdminQueryState({ status: 'opened', page: 1 }, () => load());
+const disputes = ref<PopulatedDispute[]>([]);
+const pagination = ref({ pages: 1 });
+const loading = ref(false);
+const submitting = ref(false);
+const activeDispute = ref<PopulatedDispute | null>(null);
+const resolution = ref<{
+  outcome: 'resolved' | 'refunded' | 'rejected';
+  notes: string;
+  refundAmount: number | undefined;
+}>({ outcome: 'resolved', notes: '', refundAmount: undefined });
 
-      const isPending = (dispute: PopulatedDispute) => PENDING_STATUSES.includes(dispute.status);
+const { state, commit } = useAdminQueryState({ status: 'opened', page: 1 }, () => load());
 
-      const statusBadgeClass = (status: string) =>
-        ({
-          opened: 'admin__badge--danger',
-          under_review: 'admin__badge--warning',
-          resolved: 'admin__badge--success',
-          refunded: 'admin__badge--info'
-        })[status] || 'admin__badge';
+const isPending = (dispute: PopulatedDispute) => PENDING_STATUSES.includes(dispute.status);
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await disputeService.adminList({
-            status: (state.status || undefined) as DisputeStatus | undefined,
-            page: state.page,
-            limit: PAGE_SIZE
-          });
-          disputes.value = data.disputes || [];
-          pagination.value = { totalPages: data.pagination?.pages || 1 };
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les litiges'));
-          disputes.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const statusBadgeClass = (status: string) =>
+  ({
+    opened: 'admin__badge--danger',
+    under_review: 'admin__badge--warning',
+    resolved: 'admin__badge--success',
+    refunded: 'admin__badge--info'
+  })[status] || 'admin__badge';
 
-      const take = async (dispute: PopulatedDispute) => {
-        try {
-          await disputeService.adminTake(dispute._id);
-          func.showToastSuccess('Litige pris en arbitrage');
-          await load();
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La prise en charge a échoué'));
-        }
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await disputeService.adminList({
+      status: (state.status || undefined) as DisputeStatus | undefined,
+      page: state.page,
+      limit: PAGE_SIZE
+    });
+    disputes.value = data.disputes || [];
+    pagination.value = { pages: data.pagination?.pages || 1 };
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les litiges'));
+    disputes.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const openResolution = (dispute: PopulatedDispute) => {
-        activeDispute.value = dispute;
-        resolution.value = { outcome: 'resolved', notes: '', refundAmount: undefined };
-      };
+const take = async (dispute: PopulatedDispute) => {
+  try {
+    await disputeService.adminTake(dispute._id);
+    func.showToastSuccess('Litige pris en arbitrage');
+    await load();
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La prise en charge a échoué'));
+  }
+};
 
-      const submitResolution = async () => {
-        if (!activeDispute.value || submitting.value) return;
+const openResolution = (dispute: PopulatedDispute) => {
+  activeDispute.value = dispute;
+  resolution.value = { outcome: 'resolved', notes: '', refundAmount: undefined };
+};
 
-        const payload: DisputeResolutionPayload = {
-          outcome: resolution.value.outcome,
-          notes: resolution.value.notes.trim() || undefined
-        };
-        if (resolution.value.outcome === 'refunded' && resolution.value.refundAmount) {
-          payload.refundAmount = Number(resolution.value.refundAmount);
-        }
+const submitResolution = async () => {
+  if (!activeDispute.value || submitting.value) return;
 
-        submitting.value = true;
-        try {
-          await disputeService.adminResolve(activeDispute.value._id, payload);
-          func.showToastSuccess('Litige clôturé');
-          activeDispute.value = null;
-          await load();
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La clôture a échoué'));
-        } finally {
-          submitting.value = false;
-        }
-      };
+  const payload: DisputeResolutionPayload = {
+    outcome: resolution.value.outcome,
+    notes: resolution.value.notes.trim() || undefined
+  };
+  if (resolution.value.outcome === 'refunded' && resolution.value.refundAmount) {
+    payload.refundAmount = Number(resolution.value.refundAmount);
+  }
 
-      onMounted(load);
+  submitting.value = true;
+  try {
+    await disputeService.adminResolve(activeDispute.value._id, payload);
+    func.showToastSuccess('Litige clôturé');
+    activeDispute.value = null;
+    await load();
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La clôture a échoué'));
+  } finally {
+    submitting.value = false;
+  }
+};
 
-      return {
-        DISPUTE_REASON_LABELS,
-        DISPUTE_STATUS_LABELS,
-        state,
-        commit,
-        disputes,
-        pagination,
-        loading,
-        submitting,
-        activeDispute,
-        resolution,
-        isPending,
-        statusBadgeClass,
-        formatAge,
-        formatDate,
-        load,
-        take,
-        openResolution,
-        submitResolution
-      };
-    }
-  });
+onMounted(load);
 </script>

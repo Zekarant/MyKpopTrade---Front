@@ -16,12 +16,23 @@ export default [
     ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'public/**'],
   },
 
-  ...pluginVue.configs['flat/essential'],
+  ...pluginVue.configs['flat/recommended'],
   ...vueTsEslintConfig(),
   
   {
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
+  },
+
+  {
+    name: 'app/test-doubles',
+    // Les tests déclarent des composants factices minimaux dans vi.mock : un
+    // par fichier ou des props typées n'y apportent rien.
+    files: ['src/**/__tests__/*'],
+    rules: {
+      'vue/one-component-per-file': 'off',
+      'vue/require-prop-types': 'off',
+    },
   },
   skipFormatting,
 ]

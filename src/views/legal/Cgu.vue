@@ -348,11 +348,11 @@ import { legal, isLegalMissing, legalApplies } from '@/config/legal';
 export default defineComponent({
   name: 'CguPage',
   components: { LegalLayout },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  },
   setup() {
     return { legal, isLegalMissing, legalApplies };
+  },
+  data() {
+    return { updatedAt: '3 septembre 2026' };
   }
 });
 </script>

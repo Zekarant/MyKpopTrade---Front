@@ -1,5 +1,6 @@
 
 import type { IUserParticipant } from './user.types';
+import type { Pagination } from './pagination.types';
 
 export type { IUserParticipant } from './user.types';
 
@@ -91,15 +92,14 @@ export interface Conversation {
   otherParticipant?: IUserParticipant;
   /** Ajouté par le back : l'appelant est-il le vendeur du produit concerné. */
   isOwner?: boolean;
+  /** Détail seulement : un blocage existe entre les participants (saisie désactivée). */
+  isBlocked?: boolean;
+  /** Détail seulement : c'est l'appelant qui a bloqué l'interlocuteur. */
+  blockedByMe?: boolean;
 }
 
 /** Pagination renvoyée par le module messagerie du back (toujours présente). */
-export interface MessagingPagination {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
+export type MessagingPagination = Pagination;
 
 export interface ConversationListResponse {
   success: boolean;

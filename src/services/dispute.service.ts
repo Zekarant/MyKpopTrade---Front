@@ -1,6 +1,4 @@
-import type { AxiosInstance } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
 export type DisputeStatus =
   | 'opened' | 'under_review' | 'resolved' | 'refunded' | 'rejected' | 'cancelled';
@@ -75,14 +73,7 @@ export interface DisputeResolutionPayload {
 }
 
 class DisputeService {
-  private client: AxiosInstance;
-
-  constructor() {
-    this.client = createApiClient({
-      baseURL: `${API_URL}/api/disputes`,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  private client = apiClient('/api/disputes');
 
   async open(payload: {
     paymentId: string;

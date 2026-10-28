@@ -1,6 +1,5 @@
-import { type AxiosInstance, AxiosError } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
+import { toApiError } from '@/services/apiError';
 
 /**
  * Gestion de la double authentification (TOTP) depuis les paramètres du compte.
@@ -25,19 +24,11 @@ export interface TwoFactorSetup {
 }
 
 class TwoFactorService {
-  private client: AxiosInstance;
+  private client = apiClient('/api/auth/2fa');
 
-  constructor() {
-    this.client = createApiClient({
-      baseURL: `${API_URL}/api/auth/2fa`,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  /** Transforme une erreur axios en Error portant le message de l'API. */
+  /** Message de l'API s'il y en a un, sinon le repli propre à l'action (lu par `error.message`). */
   private toError(error: unknown, fallback: string): Error {
-    const axiosError = error as AxiosError<{ message?: string }>;
-    return new Error(axiosError.response?.data?.message || fallback);
+    return toApiError(error, fallback);
   }
 
   async getStatus(): Promise<TwoFactorStatus> {

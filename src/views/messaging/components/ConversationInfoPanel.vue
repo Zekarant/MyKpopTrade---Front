@@ -1,38 +1,40 @@
 <template>
     <!-- Right Sidebar (User/Transaction Info) -->
-    <div class="right-sidebar">
+    <div class="right-sidebar" :class="{ active: open }">
       <!-- User Information -->
       <div class="user-section">
         <div class="user-header">
-          <div class="user-avatar" v-html="avatarHtml(other || conversation)"></div>
+          <div class="user-avatar">
+            <UserAvatar :user="other || conversation" />
+          </div>
           <div class="user-details">
             <h3>{{ other?.username || conversation.username }}</h3>
-            <div class="user-badges" v-if="other?.isIdentityVerified || other?.isSellerVerified">
-              <span class="badge verified" v-if="other?.isIdentityVerified">
+            <div v-if="other?.isIdentityVerified || other?.isSellerVerified" class="user-badges">
+              <span v-if="other?.isIdentityVerified" class="badge verified">
                 <i class="bi bi-patch-check"></i>
                 Vérifié
               </span>
-              <span class="badge pro" v-if="other?.isSellerVerified">
+              <span v-if="other?.isSellerVerified" class="badge pro">
                 <i class="bi bi-award"></i>
                 Certifié
               </span>
             </div>
           </div>
-          <button @click="emit('close')" @click.stop class="close-btn-information-mobile">
+          <button type="button" class="close-btn-information-mobile" aria-label="Fermer les informations" @click.stop="emit('close')">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
-        <div class="user-stats" v-if="stats.memberSince || stats.transactions !== null || stats.rating">
-          <div class="stat-item" v-if="stats.memberSince">
+        <div v-if="stats.memberSince || stats.transactions !== null || stats.rating" class="user-stats">
+          <div v-if="stats.memberSince" class="stat-item">
             <span class="stat-label">Membre depuis</span>
             <span class="stat-value">{{ formatLongDate(stats.memberSince) }}</span>
           </div>
-          <div class="stat-item" v-if="stats.transactions !== null">
+          <div v-if="stats.transactions !== null" class="stat-item">
             <span class="stat-label">Transactions</span>
             <span class="stat-value">{{ stats.transactions }}</span>
           </div>
-          <div class="stat-item" v-if="stats.rating">
+          <div v-if="stats.rating" class="stat-item">
             <span class="stat-label">Note</span>
             <span class="stat-value">
               <i v-if="stats.ratingCount > 0" class="bi bi-star-fill"></i>
@@ -41,10 +43,19 @@
             </span>
           </div>
         </div>
+
+        <div v-if="other?._id" class="user-actions">
+          <BlockUserButton
+            :user-id="other._id"
+            :username="other.username"
+            :initial-status="blockStatus"
+            @change="(status) => emit('block-change', status)"
+          />
+        </div>
       </div>
 
       <!-- Product/Transaction Context -->
-      <div class="transaction-section" v-if="conversation.productContext || conversation.context || conversation.productId">
+      <div v-if="conversation.productContext || conversation.context || conversation.productId" class="transaction-section">
         <div class="section-header">
           <h3>{{ transactionTitle(conversation) }}</h3>
           <span class="transaction-status" :class="transactionStatus(conversation)">
@@ -52,8 +63,8 @@
           </span>
         </div>
 
-        <div class="product-card" v-if="product">
-          <img :src="API_URL+product.images[0]" alt="Product" />
+        <div v-if="product" class="product-card">
+          <img :src="mediaUrl(product.images[0])" :alt="product.title || 'Article'" loading="lazy" decoding="async" />
           <div class="product-info">
             <h4>{{ product.title }}</h4>
             <p class="product-kpopMember">{{ product.kpopMember }}, {{ product.kpopGroup }} </p>
@@ -63,15 +74,15 @@
                 <span>Prix</span>
                 <span class="price">{{ product.price }}</span>
               </div>
-              <div class="detail-row" v-if="product.type">
+              <div v-if="product.type" class="detail-row">
                 <span>Type</span>
                 <span>{{ product.type }}</span>
               </div>
-              <div class="detail-row" v-if="product.condition">
+              <div v-if="product.condition" class="detail-row">
                 <span>État</span>
                 <span>{{ product.condition }}</span>
               </div>
-              <div class="detail-row" v-if="product.categoryLabel">
+              <div v-if="product.categoryLabel" class="detail-row">
                 <span class="category-label">{{ product.categoryLabel }}</span>
               </div>
             </div>
@@ -79,7 +90,7 @@
         </div>
       </div>
 
-      <div class="media-section" v-if="sharedMedia.length">
+      <div v-if="sharedMedia.length" class="media-section">
         <h3 class="section-title">Médias partagés</h3>
         <div class="media-grid">
           <div
@@ -92,7 +103,7 @@
             @click="emit('open-media', conversationMediaUrls(conversation), index)"
 
           >
-            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Media">
+            <img :src="attachmentUrl(media.messageId, media.filename)" alt="Média partagé" loading="lazy" decoding="async">
             <div v-if="index === 3 && sharedMedia.length > 4" class="media-overlay">
               <span class="media-count">+{{ sharedMedia.length - 4 }}</span>
             </div>
@@ -105,7 +116,10 @@
 <script setup lang="ts">
 /** Barre latérale droite de la messagerie : interlocuteur, encadré transaction et médias partagés. */
 import { computed } from 'vue'
-import { API_URL } from '@/config/api'
+import { mediaUrl } from '@/utils/format'
+import UserAvatar from '@/components/UserAvatar.vue'
+import BlockUserButton from '@/components/adherents/BlockUserButton.vue'
+import type { BlockStatus } from '@/services/block.service'
 import {
   formatLongDate,
   getOtherParticipant,
@@ -114,7 +128,6 @@ import {
   transactionStatusLabel,
   transactionTitle
 } from '../conversationHelpers'
-import { avatarHtml } from '../avatar'
 import { attachmentUrl, conversationMediaUrls } from '../attachments'
 import type { ProductReference } from '@/types/messaging.types'
 import type { TransactionContext } from '../conversationHelpers'
@@ -128,7 +141,12 @@ type InfoConversation = Omit<ViewConversation, 'productId'> & {
   context?: TransactionContext
 }
 
-const props = defineProps<{ conversation: InfoConversation; userId?: string | null }>()
+const props = defineProps<{
+  conversation: InfoConversation
+  userId?: string | null
+  /** Panneau déplié (affichage mobile, où il recouvre la conversation). */
+  open?: boolean
+}>()
 
 /** Interlocuteur : fourni par le détail de la conversation, sinon déduit des participants. */
 const other = computed(() => getOtherParticipant(props.conversation, props.userId))
@@ -138,7 +156,14 @@ const stats = computed(() => participantStats(other.value))
 const emit = defineEmits<{
   close: []
   'open-media': [urls: string[], index: number]
+  'block-change': [status: BlockStatus]
 }>()
+
+/** Situation fournie par le détail de la conversation : le bouton n'a pas à la redemander. */
+const blockStatus = computed<BlockStatus>(() => ({
+  isBlocked: Boolean(props.conversation.isBlocked),
+  blockedByMe: Boolean(props.conversation.blockedByMe)
+}))
 
 const product = computed(() => props.conversation?.productContext || props.conversation?.productId)
 const sharedMedia = computed<{ messageId: string; filename: string }[]>(() => props.conversation?.media ?? [])

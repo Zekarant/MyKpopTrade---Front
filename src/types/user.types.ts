@@ -1,5 +1,7 @@
 // types/user.types.ts
 
+import type { Pagination } from './pagination.types';
+
 export interface IUserProfile {
   location?: string;
   country?: string;
@@ -102,14 +104,5 @@ export interface UsersListResponse {
   success: boolean;
   message?: string;
   users: IUser[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-export interface ImgUserProfile {
-  username?: string;
-  profilePicture?: string;
+  pagination?: Pagination;
 }

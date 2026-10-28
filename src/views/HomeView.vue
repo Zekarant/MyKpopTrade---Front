@@ -7,7 +7,8 @@
 
     <header class="landing__header">
       <div class="landing__brand">
-        <img src="@/assets/images/logo.png" alt="Logo" class="landing__logo" />
+        <!-- Décoratif : le nom de la marque est écrit juste à côté. -->
+        <img src="@/assets/images/logo.png" alt="" class="landing__logo" />
         <span class="landing__brand-name">MyKpop<br/>Trade</span>
       </div>
       <router-link to="/login" class="landing__login-btn">
@@ -27,27 +28,37 @@
         <!-- Formulaire d'inscription -->
         <div class="landing__register-card">
           <h2 class="landing__register-title">Créer un compte</h2>
-          <form @submit.prevent="register" class="landing__register-form">
-            <div class="landing__input-group">
+          <form class="landing__register-form" @submit.prevent="register">
+            <!-- Pas de champ téléphone : l'API l'ignorait à l'inscription
+                 (minimisation des données, RGPD art. 5(1)(c)). -->
+            <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'username' }">
               <i class="bi bi-person"></i>
-              <input type="text" v-model="username" placeholder="Pseudo" required />
+              <input
+v-model="username" type="text" placeholder="Pseudo" aria-label="Pseudo"
+                autocomplete="username" required />
             </div>
-            <div class="landing__input-group">
-              <i class="bi bi-phone"></i>
-              <input type="tel" v-model="tel" placeholder="Téléphone" required />
-            </div>
-            <div class="landing__input-group">
+            <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'email' }">
               <i class="bi bi-envelope"></i>
-              <input type="email" v-model="email" placeholder="Adresse email" required />
+              <input
+v-model="email" type="email" placeholder="Adresse email" aria-label="Adresse email"
+                autocomplete="email" required />
             </div>
-            <div class="landing__input-group">
+            <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'password' }">
               <i class="bi bi-lock"></i>
-              <input type="password" v-model="password" placeholder="Mot de passe" required />
+              <input
+v-model="password" type="password" placeholder="Mot de passe" aria-label="Mot de passe"
+                autocomplete="new-password" required />
             </div>
-            <div class="landing__input-group">
+            <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'passwordConfirm' }">
               <i class="bi bi-lock-fill"></i>
-              <input type="password" v-model="password_confirm" placeholder="Confirmer le mot de passe" required />
+              <input
+v-model="passwordConfirm" type="password" placeholder="Confirmer le mot de passe"
+                aria-label="Confirmer le mot de passe" autocomplete="new-password" required />
             </div>
+            <small class="landing__hint">
+              8 caractères minimum, avec une majuscule, une minuscule, un chiffre et un
+              caractère spécial parmi {{ PASSWORD_SPECIAL_CHARS }}
+            </small>
 
             <div class="landing__beta-notice">
               <span class="landing__beta-tag">BÊTA</span>
@@ -59,12 +70,12 @@
             </div>
 
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptBeta" />
+              <input v-model="acceptBeta" type="checkbox" />
               <span>Je comprends que MyKpopTrade est en bêta et j'utilise le service à mes risques.</span>
             </label>
 
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptPolicy" />
+              <input v-model="acceptPolicy" type="checkbox" />
               <span>
                 J'accepte les <router-link to="/cgu" target="_blank">CGU</router-link>
                 et la <router-link to="/privacy" target="_blank">politique de confidentialité</router-link>.
@@ -74,7 +85,7 @@
             <!-- Consentement marketing : RGPD art. 4(11) et 7(4) — spécifique,
                  libre et décoché par défaut. Il était codé en dur à `true`. -->
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptMarketing" />
+              <input v-model="acceptMarketing" type="checkbox" />
               <span>
                 J'accepte de recevoir les actualités et bons plans de MyKpopTrade par email.
                 <em>(facultatif, révocable à tout moment)</em>
@@ -82,8 +93,8 @@
             </label>
 
             <Transition name="fade">
-              <div v-if="registerError" class="landing__msg landing__msg--error">
-                <i class="bi bi-exclamation-circle"></i> {{ registerError }}
+              <div v-if="errorMessage" class="landing__msg landing__msg--error" role="alert">
+                <i class="bi bi-exclamation-circle"></i> {{ errorMessage }}
               </div>
             </Transition>
             <Transition name="fade">
@@ -92,8 +103,8 @@
               </div>
             </Transition>
 
-            <button type="submit" class="landing__register-btn">
-              <i class="bi bi-rocket-takeoff"></i> S'inscrire gratuitement
+            <button type="submit" class="landing__register-btn" :disabled="loading">
+              <i class="bi bi-rocket-takeoff"></i> {{ loading ? 'Inscription…' : "S'inscrire gratuitement" }}
             </button>
           </form>
 
@@ -105,96 +116,42 @@
       </div>
 
       <div class="landing__hero-visual">
-        <img src="@/assets/images/image.webp" alt="K-Pop cards" class="landing__hero-img" />
+        <img
+src="@/assets/images/image.webp" alt="Photocards K-pop : achetez, vendez, collectionnez"
+          class="landing__hero-img" />
       </div>
     </section>
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
-import axios from 'axios';
+<script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { apiErrorMessage } from '@/services/apiError';
+import { PASSWORD_SPECIAL_CHARS, useRegisterForm } from '@/composables/useRegisterForm';
 
-export default defineComponent({
-  name: 'HomeView',
-  setup() {
-    const router = useRouter();
-    const username = ref('');
-    const tel = ref('');
-    const email = ref('');
-    const password = ref('');
-    const password_confirm = ref('');
-    const acceptPolicy = ref(false);
-    const acceptBeta = ref(false);
-    // Décoché par défaut : un consentement pré-coché n'est pas un consentement.
-    const acceptMarketing = ref(false);
-    const registerError = ref('');
-    const successMessage = ref('');
+defineOptions({ name: 'HomeView' });
 
-    const register = async () => {
-      registerError.value = '';
-      successMessage.value = '';
+const router = useRouter();
+const {
+  username,
+  email,
+  password,
+  passwordConfirm,
+  acceptBeta,
+  acceptPolicy,
+  acceptMarketing,
+  errorMessage,
+  errorField,
+  successMessage,
+  loading,
+  submit
+} = useRegisterForm();
 
-      if (!username.value || username.value.length < 5) {
-        registerError.value = 'Le pseudo doit faire au moins 5 caractères.';
-        return;
-      }
-      if (!tel.value || tel.value.length < 5) {
-        registerError.value = 'Numéro de téléphone invalide.';
-        return;
-      }
-      if (!email.value || email.value.length < 5) {
-        registerError.value = 'Email invalide.';
-        return;
-      }
-      if (!password.value || !password_confirm.value) {
-        registerError.value = 'Les mots de passe ne peuvent pas être vides.';
-        return;
-      }
-      if (password.value !== password_confirm.value) {
-        registerError.value = 'Les mots de passe ne correspondent pas.';
-        return;
-      }
-      if (!acceptBeta.value) {
-        registerError.value = 'Vous devez reconnaître que le service est en version bêta.';
-        return;
-      }
-      if (!acceptPolicy.value) {
-        registerError.value = 'Vous devez accepter les CGU et la politique de confidentialité.';
-        return;
-      }
-
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
-          email: email.value,
-          username: username.value,
-          numberPhone: tel.value,
-          password: password.value,
-          confirmPassword: password_confirm.value,
-          privacyPolicy: true,
-          dataProcessing: true,
-          marketing: acceptMarketing.value
-        }, { headers: { 'Content-Type': 'application/json' } });
-
-        if (response.status === 201) {
-          successMessage.value = 'Inscription réussie ! Redirection...';
-          setTimeout(() => router.push('/login'), 1500);
-        } else {
-          registerError.value = response.data.message || 'Une erreur est survenue.';
-        }
-      } catch (error) {
-        registerError.value = apiErrorMessage(error, 'Une erreur est survenue.');
-      }
-    };
-
-    return {
-      username, tel, email, password, password_confirm,
-      acceptPolicy, acceptBeta, acceptMarketing, registerError, successMessage, register
-    };
-  },
-});
+async function register() {
+  if (await submit()) {
+    // Le temps de lire le message de l'API (vérification de l'email à faire).
+    setTimeout(() => router.push('/login'), 1500);
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -272,7 +229,7 @@ export default defineComponent({
   &:hover {
     border-color: var(--accent-pink);
     color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -341,7 +298,7 @@ export default defineComponent({
 
   &:focus-within {
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.08);
+    box-shadow: var(--focus-ring);
   }
 
   i {
@@ -361,6 +318,17 @@ export default defineComponent({
 
     &::placeholder { color: var(--text-muted); }
   }
+}
+
+.landing__input-group--error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-light);
+}
+
+.landing__hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
 }
 
 .landing__beta-notice {
@@ -426,7 +394,7 @@ export default defineComponent({
   background: var(--accent-gradient);
   border: none;
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-on-accent);
   font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
@@ -436,11 +404,11 @@ export default defineComponent({
   gap: var(--space-sm);
   margin-top: var(--space-sm);
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 16px rgba(255, 45, 120, 0.3);
+  box-shadow: var(--shadow-accent-md);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.4);
+    box-shadow: var(--shadow-accent-lg);
   }
 }
 
@@ -490,12 +458,7 @@ export default defineComponent({
   max-height: 70vh;
   max-width: 100%;
   object-fit: contain;
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+  animation: floatLarge 4s ease-in-out infinite;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }

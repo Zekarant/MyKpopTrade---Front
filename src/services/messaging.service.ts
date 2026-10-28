@@ -1,11 +1,5 @@
-// services/messaging.service.ts - Version entièrement typée et mise à jour
-
-import axios, { AxiosError } from 'axios';
-import type { AxiosResponse } from 'axios';
-import type { AxiosInstance } from 'axios';
-import authentificationService  from '@/services/authentification.service';
-import { createApiClient } from '@/services/http';
-import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
+import { API_URL } from '@/config/api';
+import { apiClient } from '@/services/apiClient';
 import { attachmentTokenParam } from '@/services/attachmentAccess';
 
 import type {
@@ -27,230 +21,111 @@ import type {
   ConversationListParams,
   ConversationDetailParams
 } from '@/types/messaging.types';
-import type { IUser, UserResponse } from '@/types/user.types';
-import { API_URL } from '@/config/api';
+import type { UserResponse } from '@/types/user.types';
 
-const API_BASE_URL = `${API_URL}/api`;
+/**
+ * Messagerie : conversations, messages, négociations et prix libre.
+ *
+ * Les erreurs réseau et API arrivent en `ApiError` (cf. apiClient) ; les
+ * contrôles locaux ci-dessous lèvent une `Error` avant tout appel, pour ne pas
+ * solliciter l'API avec une requête qu'elle refuserait.
+ */
 
-interface ApiError {
-  message: string;
-  status?: number;
-  code?: string;
+function requireId(value: string | undefined, message: string): void {
+  if (!value?.trim()) {
+    throw new Error(message);
+  }
 }
 
+const CONVERSATION_ID_REQUIRED = 'ID de conversation requis';
 
 class MessagingService {
-  private apiClient: AxiosInstance;
-  private userApiClient: AxiosInstance;
+  private client = apiClient('/api/messaging');
+  private usersClient = apiClient('/api/users');
 
-  constructor() {
-    this.apiClient = createApiClient({
-      baseURL: `${API_BASE_URL}/messaging`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    this.userApiClient = createApiClient({
-      baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  // Récupérer les conversations de l'utilisateur
   async getUserConversations(params?: ConversationListParams): Promise<ConversationListResponse> {
-    try {
-      const response: AxiosResponse<ConversationListResponse> = await this.apiClient.get('/', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la récupération des conversations:', error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.get<ConversationListResponse>('/', { params });
+    return data;
   }
 
-  // Récupérer une conversation spécifique avec ses messages
-  async getConversation(
-    conversationId: string,
-    params?: ConversationDetailParams
-  ): Promise<ConversationDetailResponse> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      const response: AxiosResponse<ConversationDetailResponse> = await this.apiClient.get(`/${conversationId}`, { params });
-      return response.data;
-    } catch (error) {
-      console.error(`Erreur lors de la récupération de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+  /** Une conversation et une page de ses messages. */
+  async getConversation(conversationId: string, params?: ConversationDetailParams): Promise<ConversationDetailResponse> {
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    const { data } = await this.client.get<ConversationDetailResponse>(`/${conversationId}`, { params });
+    return data;
   }
 
-  // Créer une nouvelle conversation
-  async startConversation(data: StartConversationRequest): Promise<StartConversationResponse> {
-    if (!data.recipientId?.trim()) {
-      throw new Error('ID du destinataire requis');
-    }
-
-    try {
-      const response: AxiosResponse<StartConversationResponse> = await this.apiClient.post('/', data);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la création de la conversation:', error);
-      throw this.handleError(error);
-    }
+  async startConversation(request: StartConversationRequest): Promise<StartConversationResponse> {
+    requireId(request.recipientId, 'ID du destinataire requis');
+    const { data } = await this.client.post<StartConversationResponse>('/', request);
+    return data;
   }
 
-  // Envoyer un message
-  async sendMessage(
-    conversationId: string,
-    data: SendMessageRequest
-  ): Promise<SendMessageResponse> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
+  /** Envoi en multipart : le message peut porter des pièces jointes. */
+  async sendMessage(conversationId: string, request: SendMessageRequest): Promise<SendMessageResponse> {
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    requireId(request.content, 'Contenu du message requis');
 
-    if (!data.content?.trim()) {
-      throw new Error('Contenu du message requis');
-    }
+    const formData = new FormData();
+    formData.append('content', request.content);
+    formData.append('contentType', request.contentType || 'text');
+    request.attachments?.forEach((file) => formData.append('attachments', file));
 
-    try {
-      const formData = new FormData();
-      formData.append('content', data.content);
-      formData.append('contentType', data.contentType || 'text');
-
-      // Ajouter les pièces jointes si présentes
-      if (data.attachments && data.attachments.length > 0) {
-        data.attachments.forEach((file) => {
-          formData.append('attachments', file);
-        });
-      }
-
-      const response: AxiosResponse<SendMessageResponse> = await this.apiClient.post(
-        `/${conversationId}/messages`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Erreur lors de l'envoi du message dans la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.post<SendMessageResponse>(`/${conversationId}/messages`, formData);
+    return data;
   }
 
-  // Marquer une conversation comme lue
   async markConversationAsRead(conversationId: string): Promise<void> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      await this.apiClient.put(`/${conversationId}/read`);
-    } catch (error) {
-      console.error(`Erreur lors du marquage comme lu de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    await this.client.put(`/${conversationId}/read`);
   }
 
-  // Supprimer un message
   async deleteMessage(messageId: string): Promise<void> {
-    if (!messageId.trim()) {
-      throw new Error('ID de message requis');
-    }
-
-    try {
-      await this.apiClient.delete(`/messages/${messageId}`);
-    } catch (error) {
-      console.error(`Erreur lors de la suppression du message ${messageId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(messageId, 'ID de message requis');
+    await this.client.delete(`/messages/${messageId}`);
   }
-  // Supprimer une coneversation
+
   async deleteConversation(conversationId: string): Promise<void> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      await this.apiClient.delete(`/${conversationId}`);
-    } catch (error) {
-      console.error(`Erreur lors de la suppression de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    await this.client.delete(`/${conversationId}`);
   }
 
-  // Archiver une coneversation
+  /** Bascule la conversation dans les favoris (ou l'en retire). */
   async favorite(conversationId: string): Promise<void> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      await this.apiClient.put(`/${conversationId}/favorite`);
-    } catch (error) {
-      console.error(`Erreur lors de la mise en favoris de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    await this.client.put(`/${conversationId}/favorite`);
   }
 
-  // Archiver une coneversation
   async archiveConversation(conversationId: string): Promise<void> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      await this.apiClient.put(`/${conversationId}/archive`);
-    } catch (error) {
-      console.error(`Erreur lors de l\'archivage de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    await this.client.put(`/${conversationId}/archive`);
   }
+
   async unarchiveConversation(conversationId: string): Promise<void> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    try {
-      await this.apiClient.put(`/${conversationId}/unarchive`);
-    } catch (error) {
-      console.error(`Erreur lors du désarchivage de la conversation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    await this.client.put(`/${conversationId}/unarchive`);
   }
 
-  // Récupérer une pièce jointe
+  /**
+   * URL d'une pièce jointe, pour `<img src>` : la route vérifie l'appartenance
+   * à la conversation grâce au jeton de lecture placé dans l'URL.
+   */
   getAttachmentUrl(messageId: string, attachmentName: string): string {
     if (!messageId.trim() || !attachmentName.trim()) {
       throw new Error('ID de message et nom de la pièce jointe requis');
     }
 
-    return `${API_BASE_URL}/messaging/messages/${messageId}/attachments/${attachmentName}${attachmentTokenParam()}`;
+    return `${API_URL}/api/messaging/messages/${messageId}/attachments/${attachmentName}${attachmentTokenParam()}`;
   }
 
-  // Initier une négociation
-  async initiateNegotiation(data: NegotiationRequest): Promise<NegotiationResponse> {
-    if (!data.productId?.trim()) {
-      throw new Error('ID du produit requis');
-    }
-
-    if (typeof data.initialOffer !== 'number' || data.initialOffer <= 0) {
+  async initiateNegotiation(request: NegotiationRequest): Promise<NegotiationResponse> {
+    requireId(request.productId, 'ID du produit requis');
+    if (typeof request.initialOffer !== 'number' || request.initialOffer <= 0) {
       throw new Error('Prix proposé invalide');
     }
 
-    try {
-      const response: AxiosResponse<NegotiationResponse> = await this.apiClient.post('/negotiate', data);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de l\'initiation de la négociation:', error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.post<NegotiationResponse>('/negotiate', request);
+    return data;
   }
 
   async cancelNegotiation(
@@ -259,232 +134,101 @@ class MessagingService {
     conversationId: string,
     message?: string
   ): Promise<CancelOfferResponse> {
-    try {
-      const response: AxiosResponse<CancelOfferResponse> = await this.apiClient.delete(
-        `/${conversationId}/cancel-offer`,
-        {
-          data: {
-            productId,
-            initialOffer,
-            message
-          }
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de l\'annulation de la négociation:', error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.delete<CancelOfferResponse>(`/${conversationId}/cancel-offer`, {
+      data: { productId, initialOffer, message }
+    });
+    return data;
   }
 
-
-  // Répondre à une négociation
   async respondToNegotiation(
     conversationId: string,
-    data: NegotiationActionRequest
+    request: NegotiationActionRequest
   ): Promise<NegotiationActionResponse> {
-
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
 
     const validActions: NegotiationActionRequest['action'][] = ['accept', 'reject', 'counter'];
-    if (!validActions.includes(data.action)) {
+    if (!validActions.includes(request.action)) {
       throw new Error('Action invalide');
     }
-
-    if (data.action === 'counter' && (typeof data.counterOffer !== 'number' || data.counterOffer <= 0)) {
+    if (request.action === 'counter' && (typeof request.counterOffer !== 'number' || request.counterOffer <= 0)) {
       throw new Error('Contre-offre invalide');
     }
 
-    try {
-      const response: AxiosResponse<NegotiationActionResponse> = await this.apiClient.post(`/${conversationId}/respond`, data);
-      return response.data;
-    } catch (error) {
-      console.error(`Erreur lors de la réponse à la négociation ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.post<NegotiationActionResponse>(`/${conversationId}/respond`, request);
+    return data;
   }
 
-  // Activer ou mettre à jour le prix libre d'une annonce (vendeur uniquement)
-  async initiatePayWhatYouWant(data: PayWhatYouWantRequest): Promise<PayWhatYouWantResponse> {
-    if (!data.productId?.trim()) {
-      throw new Error('ID du produit requis');
-    }
+  /** Active ou met à jour le prix libre d'une annonce (vendeur uniquement). */
+  async initiatePayWhatYouWant(request: PayWhatYouWantRequest): Promise<PayWhatYouWantResponse> {
+    requireId(request.productId, 'ID du produit requis');
 
-    if (typeof data.minimumPrice !== 'number' || !Number.isFinite(data.minimumPrice) || data.minimumPrice < 0) {
+    const { minimumPrice, maximumPrice } = request;
+    if (typeof minimumPrice !== 'number' || !Number.isFinite(minimumPrice) || minimumPrice < 0) {
       throw new Error('Prix minimum invalide');
     }
 
-    const hasMaximum = data.maximumPrice !== undefined && data.maximumPrice !== null;
-    if (hasMaximum && (!Number.isFinite(data.maximumPrice) || (data.maximumPrice as number) <= data.minimumPrice)) {
-      throw new Error('Prix maximum invalide');
+    // Maximum facultatif : la clé n'est envoyée que s'il est renseigné.
+    const payload: PayWhatYouWantRequest = { productId: request.productId, minimumPrice };
+    if (maximumPrice !== undefined && maximumPrice !== null) {
+      if (!Number.isFinite(maximumPrice) || maximumPrice <= minimumPrice) {
+        throw new Error('Prix maximum invalide');
+      }
+      payload.maximumPrice = maximumPrice;
     }
 
-    const payload: PayWhatYouWantRequest = { productId: data.productId, minimumPrice: data.minimumPrice };
-    if (hasMaximum) {
-      payload.maximumPrice = data.maximumPrice;
-    }
-
-    try {
-      const response: AxiosResponse<PayWhatYouWantResponse> = await this.apiClient.post('/pwyw', payload);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de l\'activation du prix libre:', error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.post<PayWhatYouWantResponse>('/pwyw', payload);
+    return data;
   }
 
-  // Retirer le prix libre d'une annonce (vendeur uniquement)
+  /** Retire le prix libre d'une annonce (vendeur uniquement). */
   async disablePayWhatYouWant(productId: string): Promise<PayWhatYouWantResponse> {
-    if (!productId?.trim()) {
-      throw new Error('ID du produit requis');
-    }
-
-    try {
-      const response: AxiosResponse<PayWhatYouWantResponse> = await this.apiClient.post('/pwyw', {
-        productId,
-        enabled: false,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la désactivation du prix libre:', error);
-      throw this.handleError(error);
-    }
+    requireId(productId, 'ID du produit requis');
+    const { data } = await this.client.post<PayWhatYouWantResponse>('/pwyw', { productId, enabled: false });
+    return data;
   }
 
-  // Nouvelle proposition de prix libre depuis une conversation existante (même circuit qu'une offre)
+  /** Nouvelle proposition de prix libre depuis une conversation existante (même circuit qu'une offre). */
   async makePayWhatYouWantOffer(
     conversationId: string,
-    data: PayWhatYouWantOfferRequest
+    request: PayWhatYouWantOfferRequest
   ): Promise<PayWhatYouWantOfferResponse> {
-    if (!conversationId.trim()) {
-      throw new Error('ID de conversation requis');
-    }
-
-    if (typeof data.proposedPrice !== 'number' || data.proposedPrice <= 0) {
+    requireId(conversationId, CONVERSATION_ID_REQUIRED);
+    if (typeof request.proposedPrice !== 'number' || request.proposedPrice <= 0) {
       throw new Error('Prix proposé invalide');
     }
 
-    try {
-      const response: AxiosResponse<PayWhatYouWantOfferResponse> = await this.apiClient.post(`/${conversationId}/pwyw-offer`, data);
-      return response.data;
-    } catch (error) {
-      console.error(`Erreur lors de la proposition PWYW ${conversationId}:`, error);
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.post<PayWhatYouWantOfferResponse>(`/${conversationId}/pwyw-offer`, request);
+    return data;
   }
 
-  // Récupérer un utilisateur par son ID
-  async getUserById(userId: string): Promise<IUser> {
-    if (!userId.trim()) {
-      throw new Error('ID utilisateur requis');
-    }
-
-    try {
-      const response: AxiosResponse<UserResponse | IUser> = await this.userApiClient.get(`/users/${userId}`);
-
-      // Gérer les deux formats de réponse possibles
-      if ('user' in response.data) {
-        return (response.data as UserResponse).user;
-      }
-
-      return response.data as IUser;
-    } catch (error) {
-      console.error(`Erreur lors de la récupération de l'utilisateur ${userId}:`, error);
-      throw this.handleError(error);
-    }
-  }
+  /** Recherche de membres par nom, pour démarrer une conversation. */
   async getUserByName(name: string): Promise<UserResponse> {
-    try {
-      const response: AxiosResponse<UserResponse & ApiErrorBody> = await this.userApiClient.get(
-        `/users/search?query=${name}`
-      );
-
-      if (
-        response.data.message === "Token invalide" ||
-        response.data.code === "TOKEN_EXPIRED" ||
-        response.status === 401
-      ) {
-        await authentificationService.verifSession().catch(() => {});
-      }
-
-      return response.data;
-    } catch (error) {
-      const errorResponse = apiErrorResponse(error);
-      if (
-        errorResponse?.data?.message === "Token invalide" ||
-        errorResponse?.data?.code === "TOKEN_EXPIRED" ||
-        errorResponse?.status === 401
-      ) {
-        await authentificationService.verifSession().catch(() => {});
-      }
-      console.error("Erreur lors de la recherche :", error);
-      throw error;
-    }
+    // `params` encode la saisie : un « & » ou un « # » dans le nom ne casse plus la requête.
+    const { data } = await this.usersClient.get<UserResponse>('/search', { params: { query: name } });
+    return data;
   }
 
   async getConversationOffers(conversationId: string) {
-    try {
-      const response = await this.apiClient.get(`/${conversationId}/offers`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.get(`/${conversationId}/offers`);
+    return data;
   }
 
   async getConversationMedia(conversationId: string) {
-    try {
-      const response = await this.apiClient.get(`/${conversationId}/media`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.get(`/${conversationId}/media`);
+    return data;
   }
 
   async markMessageAsRead(messageId: string) {
-    try {
-      const response = await this.apiClient.put(`/messages/${messageId}/read`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    const { data } = await this.client.put(`/messages/${messageId}/read`);
+    return data;
   }
 
   async downloadAttachment(messageId: string, attachment: string): Promise<Blob> {
-    try {
-      const response = await this.apiClient.get(
-        `/messages/${messageId}/attachments/${encodeURIComponent(attachment)}`,
-        { responseType: 'blob' }
-      );
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  // Gestion centralisée des erreurs
-  private handleError(error: unknown): ApiError {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string; code?: string }>;
-
-      return {
-        message: axiosError.response?.data?.message || axiosError.message || 'Une erreur est survenue',
-        status: axiosError.response?.status,
-        code: axiosError.response?.data?.code
-      };
-    }
-
-    if (error instanceof Error) {
-      return {
-        message: error.message
-      };
-    }
-
-    return {
-      message: 'Une erreur inconnue est survenue'
-    };
+    const { data } = await this.client.get<Blob>(
+      `/messages/${messageId}/attachments/${encodeURIComponent(attachment)}`,
+      { responseType: 'blob' }
+    );
+    return data;
   }
 }
 

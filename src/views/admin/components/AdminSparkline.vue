@@ -57,80 +57,64 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, type PropType } from 'vue';
+<script setup lang="ts">
+import { computed, useId } from 'vue';
 
-  const VIEWBOX_WIDTH = 300;
-  const VIEWBOX_HEIGHT = 72;
-  const PADDING_Y = 6;
+const VIEWBOX_WIDTH = 300;
+const VIEWBOX_HEIGHT = 72;
+const PADDING_Y = 6;
 
-  let gradientCounter = 0;
+const props = withDefaults(defineProps<{
+  title: string;
+  values: number[];
+  labels?: string[];
+  color?: string;
+  total?: number;
+  isCurrency?: boolean;
+}>(), { labels: () => [], color: 'var(--accent-pink)', total: undefined, isCurrency: false });
 
-  export default defineComponent({
-    name: 'AdminSparkline',
-    props: {
-      title: { type: String, required: true },
-      values: { type: Array as PropType<number[]>, required: true },
-      labels: { type: Array as PropType<string[]>, default: () => [] },
-      color: { type: String, default: 'var(--accent-pink)' },
-      total: { type: Number, default: undefined },
-      isCurrency: { type: Boolean, default: false }
-    },
-    setup(props) {
-      const gradientId = `admin-spark-${++gradientCounter}`;
+// Identifiant propre à chaque graphique : plusieurs dégradés coexistent dans la page.
+const gradientId = `admin-spark-${useId()}`;
 
-      const points = computed(() => {
-        const values = props.values;
-        if (values.length === 0) return [];
+const points = computed(() => {
+  const values = props.values;
+  if (values.length === 0) return [];
 
-        const max = Math.max(...values, 1);
-        const usableHeight = VIEWBOX_HEIGHT - PADDING_Y * 2;
-        const step = values.length > 1 ? VIEWBOX_WIDTH / (values.length - 1) : 0;
+  const max = Math.max(...values, 1);
+  const usableHeight = VIEWBOX_HEIGHT - PADDING_Y * 2;
+  const step = values.length > 1 ? VIEWBOX_WIDTH / (values.length - 1) : 0;
 
-        return values.map((value, index) => ({
-          x: values.length > 1 ? index * step : VIEWBOX_WIDTH / 2,
-          y: VIEWBOX_HEIGHT - PADDING_Y - (value / max) * usableHeight
-        }));
-      });
+  return values.map((value, index) => ({
+    x: values.length > 1 ? index * step : VIEWBOX_WIDTH / 2,
+    y: VIEWBOX_HEIGHT - PADDING_Y - (value / max) * usableHeight
+  }));
+});
 
-      const linePath = computed(() =>
-        points.value.length === 0
-          ? ''
-          : points.value
-              .map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(2)},${point.y.toFixed(2)}`)
-              .join(' ')
-      );
+const linePath = computed(() =>
+  points.value.length === 0
+    ? ''
+    : points.value
+        .map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+        .join(' ')
+);
 
-      const areaPath = computed(() => {
-        if (points.value.length === 0) return '';
-        const first = points.value[0];
-        const last = points.value[points.value.length - 1];
-        return `${linePath.value} L${last.x.toFixed(2)},${VIEWBOX_HEIGHT} L${first.x.toFixed(2)},${VIEWBOX_HEIGHT} Z`;
-      });
+const areaPath = computed(() => {
+  if (points.value.length === 0) return '';
+  const first = points.value[0];
+  const last = points.value[points.value.length - 1];
+  return `${linePath.value} L${last.x.toFixed(2)},${VIEWBOX_HEIGHT} L${first.x.toFixed(2)},${VIEWBOX_HEIGHT} Z`;
+});
 
-      const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
+const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
 
-      const formattedTotal = computed(() => {
-        const value = props.total ?? props.values.reduce((sum, entry) => sum + entry, 0);
-        return props.isCurrency ? `${value.toFixed(2)} €` : String(value);
-      });
+const formattedTotal = computed(() => {
+  const value = props.total ?? props.values.reduce((sum, entry) => sum + entry, 0);
+  return props.isCurrency ? `${value.toFixed(2)} €` : String(value);
+});
 
-      const shortDay = (isoDate?: string): string =>
-        !isoDate
-          ? ''
-          : new Date(isoDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+const shortDay = (isoDate?: string): string =>
+  !isoDate ? '' : new Date(isoDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 
-      return {
-        VIEWBOX_WIDTH,
-        VIEWBOX_HEIGHT,
-        gradientId,
-        linePath,
-        areaPath,
-        lastPoint,
-        formattedTotal,
-        firstLabel: computed(() => shortDay(props.labels[0])),
-        lastLabel: computed(() => shortDay(props.labels[props.labels.length - 1]))
-      };
-    }
-  });
+const firstLabel = computed(() => shortDay(props.labels[0]));
+const lastLabel = computed(() => shortDay(props.labels[props.labels.length - 1]));
 </script>

@@ -268,225 +268,190 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import albumService, { type KpopAlbum } from '@/services/album.service';
-  import groupService, { type GroupFollower, type KpopGroup } from '@/services/group.service';
-  import { func } from '@/function';
-  import { apiErrorMessage, formatDate, getInitial } from '../adminFormat';
-  import {
-    ALBUM_TYPE_LABELS,
-    albumFormFrom,
-    buildAlbumPayload,
-    buildGroupPayload,
-    groupFormFrom
-  } from '../kpopForms';
-  import type { CatalogEntity } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import albumService, { type KpopAlbum } from '@/services/album.service';
+import groupService, { type GroupFollower, type KpopGroup } from '@/services/group.service';
+import { func } from '@/function';
+import { apiErrorMessage, formatDate, getInitial } from '../adminFormat';
+import {
+  ALBUM_TYPE_LABELS,
+  albumFormFrom,
+  buildAlbumPayload,
+  buildGroupPayload,
+  groupFormFrom
+} from '../kpopForms';
+import type { CatalogEntity } from '../types';
 
-  const CATALOG_LIMIT = 2000;
-  const SEARCH_DEBOUNCE_MS = 300;
-  const FOLLOWERS_PAGE_SIZE = 50;
-  // Images par défaut du modèle back (`/images/groups/…`, `/images/albums/…`) : servies par aucune des deux apps.
-  const DEFAULT_IMAGE_PREFIX = '/images/';
+const CATALOG_LIMIT = 2000;
+const SEARCH_DEBOUNCE_MS = 300;
+const FOLLOWERS_PAGE_SIZE = 50;
+// Images par défaut du modèle back (`/images/groups/…`, `/images/albums/…`) : servies par aucune des deux apps.
+const DEFAULT_IMAGE_PREFIX = '/images/';
 
-  export default defineComponent({
-    name: 'KpopPanel',
-    setup() {
-      const subTab = ref<'groups' | 'albums'>('groups');
-      const groups = ref<KpopGroup[]>([]);
-      const albums = ref<KpopAlbum[]>([]);
-      const groupSearch = ref('');
-      const albumSearch = ref('');
-      const loading = ref(false);
-      const submitting = ref(false);
+const subTab = ref<'groups' | 'albums'>('groups');
+const groups = ref<KpopGroup[]>([]);
+const albums = ref<KpopAlbum[]>([]);
+const groupSearch = ref('');
+const albumSearch = ref('');
+const loading = ref(false);
+const submitting = ref(false);
 
-      const showGroupForm = ref(false);
-      const showAlbumForm = ref(false);
-      const editing = ref<CatalogEntity | null>(null);
-      const groupForm = ref(groupFormFrom());
-      const albumForm = ref(albumFormFrom());
+const showGroupForm = ref(false);
+const showAlbumForm = ref(false);
+const editing = ref<CatalogEntity | null>(null);
+const groupForm = ref(groupFormFrom());
+const albumForm = ref(albumFormFrom());
 
-      const followersGroup = ref<KpopGroup | null>(null);
-      const followers = ref<GroupFollower[]>([]);
-      const brokenThumbs = ref<Set<string>>(new Set());
+const followersGroup = ref<KpopGroup | null>(null);
+const followers = ref<GroupFollower[]>([]);
+const brokenThumbs = ref<Set<string>>(new Set());
 
-      const thumbUrl = (id: string, url?: string): string | null => {
-        if (!url || url.startsWith(DEFAULT_IMAGE_PREFIX) || brokenThumbs.value.has(id)) return null;
-        return url;
-      };
+const thumbUrl = (id: string, url?: string): string | null => {
+  if (!url || url.startsWith(DEFAULT_IMAGE_PREFIX) || brokenThumbs.value.has(id)) return null;
+  return url;
+};
 
-      const onThumbError = (id: string) => {
-        brokenThumbs.value = new Set(brokenThumbs.value).add(id);
-      };
+const onThumbError = (id: string) => {
+  brokenThumbs.value = new Set(brokenThumbs.value).add(id);
+};
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const [loadedGroups, loadedAlbums] = await Promise.all([
-            groupService.getGroups({ limit: CATALOG_LIMIT }),
-            albumService.getAlbums({ limit: CATALOG_LIMIT })
-          ]);
-          groups.value = loadedGroups;
-          albums.value = loadedAlbums;
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger le catalogue K-pop'));
-        } finally {
-          loading.value = false;
-        }
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const [loadedGroups, loadedAlbums] = await Promise.all([
+      groupService.getGroups({ limit: CATALOG_LIMIT }),
+      albumService.getAlbums({ limit: CATALOG_LIMIT })
+    ]);
+    groups.value = loadedGroups;
+    albums.value = loadedAlbums;
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger le catalogue K-pop'));
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const debounce = (action: () => void) => {
-        let timer: ReturnType<typeof setTimeout> | null = null;
-        return () => {
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(action, SEARCH_DEBOUNCE_MS);
-        };
-      };
+const debounce = (action: () => void) => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(action, SEARCH_DEBOUNCE_MS);
+  };
+};
 
-      const debouncedSearchGroups = debounce(async () => {
-        const term = groupSearch.value.trim();
-        groups.value = term
-          ? await groupService.searchGroups(term, true)
-          : await groupService.getGroups({ limit: CATALOG_LIMIT });
-      });
+const debouncedSearchGroups = debounce(async () => {
+  const term = groupSearch.value.trim();
+  groups.value = term
+    ? await groupService.searchGroups(term, true)
+    : await groupService.getGroups({ limit: CATALOG_LIMIT });
+});
 
-      const debouncedSearchAlbums = debounce(async () => {
-        const term = albumSearch.value.trim();
-        albums.value = term
-          ? await albumService.searchAlbums(term, CATALOG_LIMIT)
-          : await albumService.getAlbums({ limit: CATALOG_LIMIT });
-      });
+const debouncedSearchAlbums = debounce(async () => {
+  const term = albumSearch.value.trim();
+  albums.value = term
+    ? await albumService.searchAlbums(term, CATALOG_LIMIT)
+    : await albumService.getAlbums({ limit: CATALOG_LIMIT });
+});
 
-      const openForm = (entity?: CatalogEntity) => {
-        editing.value = entity ?? null;
+const openForm = (entity?: CatalogEntity) => {
+  editing.value = entity ?? null;
 
-        if (subTab.value === 'groups') {
-          groupForm.value = groupFormFrom(entity);
-          showGroupForm.value = true;
-          return;
-        }
+  if (subTab.value === 'groups') {
+    groupForm.value = groupFormFrom(entity);
+    showGroupForm.value = true;
+    return;
+  }
 
-        albumForm.value = albumFormFrom(entity);
-        showAlbumForm.value = true;
-      };
+  albumForm.value = albumFormFrom(entity);
+  showAlbumForm.value = true;
+};
 
-      const submitGroup = async () => {
-        if (submitting.value) return;
+const submitGroup = async () => {
+  if (submitting.value) return;
 
-        const payload = buildGroupPayload(groupForm.value);
+  const payload = buildGroupPayload(groupForm.value);
 
-        submitting.value = true;
-        try {
-          if (editing.value) {
-            await groupService.updateGroup(editing.value._id, payload);
-            func.showToastSuccess('Groupe modifié');
-          } else {
-            await groupService.createGroup(payload);
-            func.showToastSuccess('Groupe créé');
-          }
-          showGroupForm.value = false;
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'enregistrement a échoué'));
-        } finally {
-          submitting.value = false;
-        }
-      };
-
-      const submitAlbum = async () => {
-        if (submitting.value) return;
-
-        const payload = buildAlbumPayload(albumForm.value);
-        const { artistId } = payload;
-        if (!editing.value && !artistId) {
-          func.showToastError('Choisissez le groupe de l\'album');
-          return;
-        }
-
-        submitting.value = true;
-        try {
-          if (editing.value) {
-            await albumService.updateAlbum(editing.value._id, payload);
-            func.showToastSuccess('Album modifié');
-          } else if (artistId) {
-            await albumService.createAlbum({ ...payload, artistId });
-            func.showToastSuccess('Album créé');
-          }
-          showAlbumForm.value = false;
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'enregistrement a échoué'));
-        } finally {
-          submitting.value = false;
-        }
-      };
-
-      const removeGroup = async (group: KpopGroup) => {
-        if (!confirm(`Supprimer le groupe « ${group.name} » ?`)) return;
-
-        try {
-          await groupService.deleteGroup(group._id);
-          func.showToastSuccess('Groupe supprimé');
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
-
-      const removeAlbum = async (album: KpopAlbum) => {
-        if (!confirm(`Supprimer l'album « ${album.name} » ?`)) return;
-
-        try {
-          await albumService.deleteAlbum(album._id);
-          func.showToastSuccess('Album supprimé');
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
-
-      const viewFollowers = async (group: KpopGroup) => {
-        followersGroup.value = group;
-        followers.value = [];
-        try {
-          const { followers: loaded } = await groupService.getFollowers(group._id, 1, FOLLOWERS_PAGE_SIZE);
-          followers.value = loaded;
-        } catch {
-          followers.value = [];
-        }
-      };
-
-      onMounted(load);
-
-      return {
-        ALBUM_TYPE_LABELS,
-        subTab,
-        groups,
-        albums,
-        groupSearch,
-        albumSearch,
-        loading,
-        submitting,
-        showGroupForm,
-        showAlbumForm,
-        editing,
-        groupForm,
-        albumForm,
-        followersGroup,
-        followers,
-        thumbUrl,
-        onThumbError,
-        formatDate,
-        getInitial,
-        debouncedSearchGroups,
-        debouncedSearchAlbums,
-        openForm,
-        submitGroup,
-        submitAlbum,
-        removeGroup,
-        removeAlbum,
-        viewFollowers
-      };
+  submitting.value = true;
+  try {
+    if (editing.value) {
+      await groupService.updateGroup(editing.value._id, payload);
+      func.showToastSuccess('Groupe modifié');
+    } else {
+      await groupService.createGroup(payload);
+      func.showToastSuccess('Groupe créé');
     }
-  });
+    showGroupForm.value = false;
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'enregistrement a échoué'));
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const submitAlbum = async () => {
+  if (submitting.value) return;
+
+  const payload = buildAlbumPayload(albumForm.value);
+  const { artistId } = payload;
+  if (!editing.value && !artistId) {
+    func.showToastError('Choisissez le groupe de l\'album');
+    return;
+  }
+
+  submitting.value = true;
+  try {
+    if (editing.value) {
+      await albumService.updateAlbum(editing.value._id, payload);
+      func.showToastSuccess('Album modifié');
+    } else if (artistId) {
+      await albumService.createAlbum({ ...payload, artistId });
+      func.showToastSuccess('Album créé');
+    }
+    showAlbumForm.value = false;
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'enregistrement a échoué'));
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const removeGroup = async (group: KpopGroup) => {
+  if (!confirm(`Supprimer le groupe « ${group.name} » ?`)) return;
+
+  try {
+    await groupService.deleteGroup(group._id);
+    func.showToastSuccess('Groupe supprimé');
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
+
+const removeAlbum = async (album: KpopAlbum) => {
+  if (!confirm(`Supprimer l'album « ${album.name} » ?`)) return;
+
+  try {
+    await albumService.deleteAlbum(album._id);
+    func.showToastSuccess('Album supprimé');
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
+
+const viewFollowers = async (group: KpopGroup) => {
+  followersGroup.value = group;
+  followers.value = [];
+  try {
+    const { followers: loaded } = await groupService.getFollowers(group._id, 1, FOLLOWERS_PAGE_SIZE);
+    followers.value = loaded;
+  } catch {
+    followers.value = [];
+  }
+};
+
+onMounted(load);
 </script>

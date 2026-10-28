@@ -5,9 +5,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const client = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() }))
 
 vi.mock('@/services/http', () => ({ createApiClient: () => client }))
-vi.mock('@/services/authentification.service', () => ({ default: { verifSession: vi.fn() } }))
 
 import messagingService from '../messaging.service'
+import { toApiError } from '../apiError'
 
 describe('messaging.service — prix libre', () => {
   beforeEach(() => {
@@ -50,12 +50,21 @@ describe('messaging.service — prix libre', () => {
   })
 
   it('relaie le message de l\'API quand une proposition est refusée', async () => {
-    client.post.mockRejectedValue(Object.assign(new Error('400'), {
+    // Le client partagé rejette déjà en ApiError : le service la relaie sans la transformer.
+    client.post.mockRejectedValue(toApiError(Object.assign(new Error('400'), {
       isAxiosError: true,
       response: { status: 400, data: { message: 'Le prix proposé doit être au moins 5 EUR' } }
-    }))
+    })))
 
     await expect(messagingService.makePayWhatYouWantOffer('c1', { proposedPrice: 2 }))
       .rejects.toMatchObject({ message: 'Le prix proposé doit être au moins 5 EUR', status: 400 })
+  })
+
+  it('encode la recherche de membre dans les paramètres de la requête', async () => {
+    client.get.mockResolvedValue({ data: { users: [] } })
+
+    await messagingService.getUserByName('Jimin & co')
+
+    expect(client.get).toHaveBeenCalledWith('/search', { params: { query: 'Jimin & co' } })
   })
 })

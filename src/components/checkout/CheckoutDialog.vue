@@ -1,11 +1,20 @@
 <template>
-  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop>
-    <div class="checkout-modal" @click.stop @mousedown.stop>
-      <button class="close-btn" @click="cancel" aria-label="Fermer">
-        <i class="bi bi-x-lg"></i>
+  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop @keydown.esc.stop="cancel">
+    <div
+      ref="dialog"
+      class="checkout-modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      tabindex="-1"
+      @click.stop
+      @mousedown.stop
+    >
+      <button type="button" class="close-btn" aria-label="Fermer" @click="cancel">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
 
-      <h2>Finaliser votre achat</h2>
+      <h2 :id="titleId">Finaliser votre achat</h2>
 
       <div class="product-summary">
         <strong>{{ productTitle }}</strong>
@@ -13,67 +22,37 @@
       </div>
 
       <section class="checkout-section">
-        <h3>Méthode de livraison</h3>
+        <h3 :id="methodsTitleId">Méthode de livraison</h3>
         <p v-if="availableMethods.length === 0" class="empty">
           Le vendeur n'a configuré aucune méthode de livraison disponible. Contactez-le via la messagerie.
         </p>
-        <label
-          v-for="m in availableMethods"
-          :key="m.value"
-          class="method-option"
-          :class="{ selected: selectedMethod === m.value }"
-        >
-          <input type="radio" :value="m.value" v-model="selectedMethod" />
-          <span class="method-label">{{ m.label }}</span>
-          <span class="method-cost">{{ m.cost === 0 ? 'Gratuit' : formatAmount(m.cost) }}</span>
-        </label>
-      </section>
-
-      <section class="checkout-section" v-if="selectedMethod && selectedMethod !== 'localPickup'">
-        <h3>Adresse de livraison</h3>
-        <div class="form-grid">
-          <div class="full">
-            <label>Nom du destinataire</label>
-            <input type="text" v-model="address.recipientName" maxlength="100" />
-          </div>
-          <div class="full">
-            <label>Adresse</label>
-            <AddressAutocomplete
-              v-model="address.streetLine1"
-              @select="onAddressPicked"
-            />
-          </div>
-          <div class="full">
-            <label>Complément <span class="optional">(facultatif)</span></label>
-            <input type="text" v-model="address.streetLine2" maxlength="200" />
-          </div>
-          <div>
-            <label>Code postal</label>
-            <input type="text" v-model="address.postalCode" maxlength="16" />
-          </div>
-          <div>
-            <label>Ville</label>
-            <input type="text" v-model="address.city" maxlength="100" />
-          </div>
-          <div>
-            <label>Pays</label>
-            <input type="text" v-model="address.country" maxlength="2" placeholder="FR" />
-          </div>
-          <div>
-            <label>Téléphone <span class="optional">(facultatif)</span></label>
-            <input type="tel" v-model="address.phone" maxlength="32" />
-          </div>
+        <div v-else role="radiogroup" :aria-labelledby="methodsTitleId">
+          <label
+            v-for="m in availableMethods"
+            :key="m.value"
+            class="method-option"
+            :class="{ selected: selectedMethod === m.value }"
+          >
+            <input v-model="selectedMethod" type="radio" :value="m.value" />
+            <span class="method-label">{{ m.label }}</span>
+            <span class="method-cost">{{ formatCost(m.cost) }}</span>
+          </label>
         </div>
       </section>
 
-      <section class="totals" v-if="selectedMethod">
+      <section v-if="selectedMethod && selectedMethod !== 'localPickup'" class="checkout-section">
+        <h3>Adresse de livraison</h3>
+        <CheckoutAddressForm v-model="address" />
+      </section>
+
+      <section v-if="selectedMethod" class="totals">
         <div class="line">
           <span>Produit</span>
           <span>{{ formatAmount(productPrice) }}</span>
         </div>
         <div class="line">
           <span>Livraison</span>
-          <span>{{ shippingCost === 0 ? 'Gratuit' : formatAmount(shippingCost) }}</span>
+          <span>{{ formatCost(shippingCost) }}</span>
         </div>
         <div class="line total">
           <span>Total</span>
@@ -81,45 +60,40 @@
         </div>
       </section>
 
-      <div v-if="errorMessage" class="error">
-        <i class="bi bi-exclamation-triangle"></i> {{ errorMessage }}
+      <div v-if="errorMessage" class="error" role="alert">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> {{ errorMessage }}
       </div>
 
-      <div class="actions actions--column">
+      <div class="actions">
         <button
+          type="button"
           class="btn-pay btn-pay--paypal"
           :disabled="!canSubmit || submitting"
-          @click="submit('paypal')"
+          @click="submit"
         >
-          <span v-if="submitting && submittingMethod === 'paypal'">
-            <i class="bi bi-arrow-repeat spin"></i> Redirection…
+          <span v-if="submitting">
+            <i class="bi bi-arrow-repeat spin" aria-hidden="true"></i> Redirection…
           </span>
           <span v-else>
-            <i class="bi bi-paypal"></i> Payer avec PayPal
+            <i class="bi bi-paypal" aria-hidden="true"></i> Payer avec PayPal
           </span>
         </button>
-        <button class="btn-cancel" @click="cancel" :disabled="submitting">Annuler</button>
+        <button type="button" class="btn-cancel" :disabled="submitting" @click="cancel">Annuler</button>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, type PropType } from 'vue';
-import AddressAutocomplete from './AddressAutocomplete.vue';
+<script setup lang="ts">
+/** Achat direct d'une annonce : livraison, adresse, puis redirection PayPal (via l'émetteur de `confirm`). */
+import { computed, ref, useId } from 'vue';
 import { apiErrorMessage } from '@/services/apiError';
 import paymentService, { type ShippingMethod, type ShippingAddressPayload, type InitPayPalPayload } from '@/services/payment.service';
-import type { AddressResult } from '@/services/address.service';
-
-export interface ShippingOptionsLike {
-  worldwide?: boolean;
-  nationalOnly?: boolean;
-  localPickup?: boolean;
-  nationalCost?: number | null;
-  worldwideCost?: number | null;
-  /** legacy fallback */
-  shippingCost?: number | null;
-}
+import { formatPrice } from '@/utils/format';
+import CheckoutAddressForm from './CheckoutAddressForm.vue';
+import { availableShippingChoices, resolveShippingCost, type ShippingOptionsLike } from './checkoutShipping';
+import { sumAmounts } from '@/utils/money';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 
 interface PaypalLikeResult {
   success: boolean;
@@ -130,159 +104,103 @@ interface PaypalLikeResult {
   };
 }
 
-type PaymentProvider = 'paypal';
+const props = withDefaults(defineProps<{
+  productId: string | number;
+  productTitle: string;
+  /** Prix produit en unités (euros), tel que l'API le facture. */
+  productPrice: number;
+  currency?: string;
+  shippingOptions: ShippingOptionsLike;
+}>(), {
+  currency: 'EUR'
+});
 
-export default defineComponent({
-  name: 'CheckoutDialog',
-  components: { AddressAutocomplete },
-  props: {
-    productId: { type: [String, Number], required: true },
-    productTitle: { type: String, required: true },
-    productPrice: { type: Number, required: true },
-    currency: { type: String, default: 'EUR' },
-    shippingOptions: { type: Object as PropType<ShippingOptionsLike>, required: true }
-  },
-  emits: ['confirm', 'cancel'],
-  setup(props, { emit }) {
-    const submitting = ref(false);
-    const submittingMethod = ref<PaymentProvider | ''>('');
-    const errorMessage = ref('');
+const emit = defineEmits<{
+  confirm: [result: PaypalLikeResult];
+  cancel: [];
+}>();
 
-    const resolveCost = (method: ShippingMethod): number | null => {
-      const opts = props.shippingOptions ?? {};
-      if (method === 'localPickup') return 0;
-      if (method === 'national') return opts.nationalCost ?? opts.shippingCost ?? null;
-      if (method === 'worldwide') return opts.worldwideCost ?? opts.shippingCost ?? null;
-      return null;
-    };
+const dialog = ref<HTMLElement | null>(null);
+// Focus sur la boîte elle-même (tabindex="-1") : le lecteur d'écran lit son titre d'abord.
+useDialogFocus(dialog, dialog);
+const titleId = `checkout-title-${useId()}`;
+const methodsTitleId = `checkout-methods-${useId()}`;
 
-    const availableMethods = computed(() => {
-      const list: { value: ShippingMethod; label: string; cost: number }[] = [];
-      const opts = props.shippingOptions ?? {};
-      if (opts.nationalOnly) {
-        const c = resolveCost('national');
-        if (c !== null) list.push({ value: 'national', label: 'Livraison nationale', cost: c });
-      }
-      if (opts.worldwide) {
-        const c = resolveCost('worldwide');
-        if (c !== null) list.push({ value: 'worldwide', label: 'Livraison internationale', cost: c });
-      }
-      if (opts.localPickup) {
-        list.push({ value: 'localPickup', label: 'Remise en main propre', cost: 0 });
-      }
-      return list;
-    });
+const submitting = ref(false);
+const errorMessage = ref('');
 
-    const selectedMethod = ref<ShippingMethod | ''>(availableMethods.value[0]?.value ?? '');
+const options = computed(() => props.shippingOptions ?? {});
+const availableMethods = computed(() => availableShippingChoices(options.value));
+const selectedMethod = ref<ShippingMethod | ''>(availableMethods.value[0]?.value ?? '');
 
-    const address = ref<ShippingAddressPayload>({
-      recipientName: '',
-      streetLine1: '',
-      streetLine2: '',
-      postalCode: '',
-      city: '',
-      country: 'FR',
-      phone: ''
-    });
+const address = ref<ShippingAddressPayload>({
+  recipientName: '',
+  streetLine1: '',
+  streetLine2: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
+  phone: ''
+});
 
-    const onAddressPicked = (r: AddressResult) => {
-      address.value.streetLine1 = r.streetLine1;
-      address.value.postalCode = r.postalCode;
-      address.value.city = r.city;
-      address.value.country = r.country;
-    };
+const shippingCost = computed(() =>
+  selectedMethod.value ? resolveShippingCost(options.value, selectedMethod.value) ?? 0 : 0
+);
+// Additionné en centimes : 19.99 + 4.99 doit afficher 24,98, pas un flottant arrondi au hasard.
+const totalAmount = computed(() => sumAmounts([props.productPrice, shippingCost.value]));
 
-    const shippingCost = computed(() => {
-      if (!selectedMethod.value) return 0;
-      return resolveCost(selectedMethod.value as ShippingMethod) ?? 0;
-    });
+const formatAmount = (amount: number) => formatPrice(amount, props.currency);
+const formatCost = (cost: number) => (cost === 0 ? 'Gratuit' : formatAmount(cost));
 
-    const totalAmount = computed(() => {
-      const product = Number(props.productPrice) || 0;
-      return parseFloat((product + shippingCost.value).toFixed(2));
-    });
+const isAddressFilled = computed(() => {
+  const a = address.value;
+  return Boolean(a.recipientName?.trim() && a.streetLine1?.trim() && a.postalCode?.trim() && a.city?.trim() && a.country?.trim());
+});
 
-    const formatAmount = (n: number) => {
-      const formatter = new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: props.currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-      return formatter.format(n);
-    };
+const canSubmit = computed(() => {
+  if (!selectedMethod.value) return false;
+  return selectedMethod.value === 'localPickup' || isAddressFilled.value;
+});
 
-    const isAddressFilled = computed(() => {
-      const a = address.value;
-      return Boolean(
-        a.recipientName?.trim() &&
-        a.streetLine1?.trim() &&
-        a.postalCode?.trim() &&
-        a.city?.trim() &&
-        a.country?.trim()
-      );
-    });
-
-    const canSubmit = computed(() => {
-      if (!selectedMethod.value) return false;
-      if (selectedMethod.value === 'localPickup') return true;
-      return isAddressFilled.value;
-    });
-
-    const buildPayload = (): InitPayPalPayload => {
-      const payload: InitPayPalPayload = {
-        productId: props.productId,
-        shippingMethod: selectedMethod.value as ShippingMethod
-      };
-      if (selectedMethod.value !== 'localPickup') {
-        payload.shippingAddress = {
-          recipientName: address.value.recipientName.trim(),
-          streetLine1: address.value.streetLine1.trim(),
-          streetLine2: address.value.streetLine2?.trim() || undefined,
-          postalCode: address.value.postalCode.trim(),
-          city: address.value.city.trim(),
-          country: (address.value.country || 'FR').trim().toUpperCase(),
-          phone: address.value.phone?.trim() || undefined
-        };
-      }
-      return payload;
-    };
-
-    const submit = async (provider: PaymentProvider) => {
-      if (!canSubmit.value || submitting.value) return;
-      submitting.value = true;
-      submittingMethod.value = provider;
-      errorMessage.value = '';
-      try {
-        const result = (await paymentService.initPayPal(buildPayload())) as PaypalLikeResult;
-        if (!result.success || !result.payment) {
-          errorMessage.value = 'Le paiement n\'a pas pu être initialisé.';
-          return;
-        }
-        emit('confirm', result);
-      } catch (err) {
-        errorMessage.value = apiErrorMessage(
-          err,
-          'Une erreur est survenue lors de l\'initialisation du paiement.'
-        );
-      } finally {
-        submitting.value = false;
-        submittingMethod.value = '';
-      }
-    };
-
-    const cancel = () => {
-      if (submitting.value) return;
-      emit('cancel');
-    };
-
-    return {
-      submitting, submittingMethod, errorMessage, availableMethods, selectedMethod, address,
-      shippingCost, totalAmount, canSubmit, formatAmount,
-      onAddressPicked, submit, cancel
+function buildPayload(method: ShippingMethod): InitPayPalPayload {
+  const payload: InitPayPalPayload = { productId: props.productId, shippingMethod: method };
+  if (method !== 'localPickup') {
+    const a = address.value;
+    payload.shippingAddress = {
+      recipientName: a.recipientName.trim(),
+      streetLine1: a.streetLine1.trim(),
+      streetLine2: a.streetLine2?.trim() || undefined,
+      postalCode: a.postalCode.trim(),
+      city: a.city.trim(),
+      country: (a.country || 'FR').trim().toUpperCase(),
+      phone: a.phone?.trim() || undefined
     };
   }
-});
+  return payload;
+}
+
+async function submit() {
+  if (!canSubmit.value || submitting.value || !selectedMethod.value) return;
+  submitting.value = true;
+  errorMessage.value = '';
+  try {
+    const result = (await paymentService.initPayPal(buildPayload(selectedMethod.value))) as PaypalLikeResult;
+    if (!result.success || !result.payment) {
+      errorMessage.value = 'Le paiement n\'a pas pu être initialisé.';
+      return;
+    }
+    emit('confirm', result);
+  } catch (err) {
+    errorMessage.value = apiErrorMessage(err, 'Une erreur est survenue lors de l\'initialisation du paiement.');
+  } finally {
+    submitting.value = false;
+  }
+}
+
+function cancel() {
+  if (submitting.value) return;
+  emit('cancel');
+}
 </script>
 
 <style scoped lang="scss">
@@ -311,6 +229,8 @@ export default defineComponent({
   position: relative;
   box-shadow: var(--shadow-xl);
   animation: slideUp 0.25s ease;
+
+  &:focus { outline: none; }
 }
 
 .close-btn {
@@ -391,8 +311,8 @@ h3 {
 
   &.selected {
     border-color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.05);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   input[type="radio"] {
@@ -410,47 +330,6 @@ h3 {
     font-weight: 600;
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-  }
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm) var(--space-md);
-
-  .full { grid-column: 1 / -1; }
-
-  label {
-    display: block;
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    margin-bottom: 2px;
-    color: var(--text-secondary);
-
-    .optional {
-      color: var(--text-muted);
-      font-weight: 400;
-    }
-  }
-
-  input {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    box-sizing: border-box;
-
-    &::placeholder { color: var(--text-muted); }
-
-    &:focus {
-      outline: none;
-      border-color: var(--accent-pink);
-      box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
-    }
   }
 }
 
@@ -479,7 +358,7 @@ h3 {
 
 .error {
   background: var(--danger-light);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   color: var(--danger);
@@ -492,13 +371,8 @@ h3 {
 
 .actions {
   display: flex;
-  gap: var(--space-md);
-  justify-content: flex-end;
-
-  &--column {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .btn-cancel,
@@ -538,35 +412,14 @@ h3 {
     transform: none;
   }
 
-
   &--paypal {
-    background: #ffc439;
-    color: #003087;
+    background: var(--paypal-gold);
+    color: var(--paypal-blue);
   }
 }
 
 .spin {
   display: inline-block;
   animation: spin 1s linear infinite;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px) scale(0.95); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 576px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

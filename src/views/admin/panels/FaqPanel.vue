@@ -139,143 +139,125 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref } from 'vue';
-  import faqService, { type Faq } from '@/services/faq.service';
-  import { func } from '@/function';
-  import { apiErrorMessage } from '../adminFormat';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import faqService, { type Faq } from '@/services/faq.service';
+import { func } from '@/function';
+import { apiErrorMessage } from '../adminFormat';
 
-  export default defineComponent({
-    name: 'FaqPanel',
-    setup() {
-      const faqs = ref<Faq[]>([]);
-      const search = ref('');
-      const loading = ref(false);
-      const submitting = ref(false);
-      const formError = ref('');
+const DEFAULT_CATEGORY = 'general';
+const emptyForm = () => ({ question: '', answer: '', category: DEFAULT_CATEGORY, order: 0, isPublished: true });
 
-      const showForm = ref(false);
-      const editing = ref<Faq | null>(null);
-      const form = ref({ question: '', answer: '', category: 'general', order: 0, isPublished: true });
+const faqs = ref<Faq[]>([]);
+const search = ref('');
+const loading = ref(false);
+const submitting = ref(false);
+const formError = ref('');
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          faqs.value = await faqService.getAllFaqs();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les FAQ'));
-        } finally {
-          loading.value = false;
-        }
-      };
+const showForm = ref(false);
+const editing = ref<Faq | null>(null);
+const form = ref(emptyForm());
 
-      const existingCategories = computed(() => {
-        const categories = new Set(faqs.value.map((faq) => faq.category));
-        return Array.from(categories).sort();
-      });
+const load = async () => {
+  loading.value = true;
+  try {
+    faqs.value = await faqService.getAllFaqs();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les FAQ'));
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const filteredGroups = computed(() => {
-        const term = search.value.trim().toLowerCase();
-        const filtered = term
-          ? faqs.value.filter((faq) => faq.question.toLowerCase().includes(term))
-          : faqs.value;
+const existingCategories = computed(() => {
+  const categories = new Set(faqs.value.map((faq) => faq.category));
+  return Array.from(categories).sort();
+});
 
-        const byCategory = new Map<string, Faq[]>();
-        filtered.forEach((faq) => {
-          const list = byCategory.get(faq.category) || [];
-          list.push(faq);
-          byCategory.set(faq.category, list);
-        });
+const filteredGroups = computed(() => {
+  const term = search.value.trim().toLowerCase();
+  const filtered = term
+    ? faqs.value.filter((faq) => faq.question.toLowerCase().includes(term))
+    : faqs.value;
 
-        return Array.from(byCategory.entries())
-          .map(([category, list]) => ({
-            category,
-            faqs: [...list].sort((a, b) => a.order - b.order)
-          }))
-          .sort((a, b) => a.category.localeCompare(b.category));
-      });
-
-      const openForm = (faq?: Faq) => {
-        editing.value = faq ?? null;
-        formError.value = '';
-        form.value = faq
-          ? {
-              question: faq.question,
-              answer: faq.answer,
-              category: faq.category,
-              order: faq.order,
-              isPublished: faq.isPublished
-            }
-          : { question: '', answer: '', category: 'general', order: 0, isPublished: true };
-        showForm.value = true;
-      };
-
-      const submitFaq = async () => {
-        if (submitting.value) return;
-
-        const question = form.value.question.trim();
-        const answer = form.value.answer.trim();
-        if (!question || !answer) {
-          formError.value = 'La question et la réponse sont requises.';
-          return;
-        }
-
-        const payload = {
-          question,
-          answer,
-          category: form.value.category.trim() || 'general',
-          order: Number(form.value.order) || 0,
-          isPublished: form.value.isPublished
-        };
-
-        submitting.value = true;
-        formError.value = '';
-        try {
-          if (editing.value) {
-            await faqService.updateFaq(editing.value._id, payload);
-            func.showToastSuccess('FAQ modifiée');
-          } else {
-            await faqService.createFaq(payload);
-            func.showToastSuccess('FAQ créée');
-          }
-          showForm.value = false;
-          await load();
-        } catch (error) {
-          formError.value = apiErrorMessage(error, "L'enregistrement a échoué");
-        } finally {
-          submitting.value = false;
-        }
-      };
-
-      const removeFaq = async (faq: Faq) => {
-        if (!confirm(`Supprimer la FAQ « ${faq.question} » ?`)) return;
-
-        try {
-          await faqService.deleteFaq(faq._id);
-          func.showToastSuccess('FAQ supprimée');
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
-
-      onMounted(load);
-
-      return {
-        faqs,
-        search,
-        loading,
-        submitting,
-        formError,
-        showForm,
-        editing,
-        form,
-        existingCategories,
-        filteredGroups,
-        openForm,
-        submitFaq,
-        removeFaq
-      };
-    }
+  const byCategory = new Map<string, Faq[]>();
+  filtered.forEach((faq) => {
+    const list = byCategory.get(faq.category) || [];
+    list.push(faq);
+    byCategory.set(faq.category, list);
   });
+
+  return Array.from(byCategory.entries())
+    .map(([category, list]) => ({
+      category,
+      faqs: [...list].sort((a, b) => a.order - b.order)
+    }))
+    .sort((a, b) => a.category.localeCompare(b.category));
+});
+
+const openForm = (faq?: Faq) => {
+  editing.value = faq ?? null;
+  formError.value = '';
+  form.value = faq
+    ? {
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+        order: faq.order,
+        isPublished: faq.isPublished
+      }
+    : emptyForm();
+  showForm.value = true;
+};
+
+const submitFaq = async () => {
+  if (submitting.value) return;
+
+  const question = form.value.question.trim();
+  const answer = form.value.answer.trim();
+  if (!question || !answer) {
+    formError.value = 'La question et la réponse sont requises.';
+    return;
+  }
+
+  const payload = {
+    question,
+    answer,
+    category: form.value.category.trim() || DEFAULT_CATEGORY,
+    order: Number(form.value.order) || 0,
+    isPublished: form.value.isPublished
+  };
+
+  submitting.value = true;
+  formError.value = '';
+  try {
+    if (editing.value) {
+      await faqService.updateFaq(editing.value._id, payload);
+      func.showToastSuccess('FAQ modifiée');
+    } else {
+      await faqService.createFaq(payload);
+      func.showToastSuccess('FAQ créée');
+    }
+    showForm.value = false;
+    await load();
+  } catch (error) {
+    formError.value = apiErrorMessage(error, "L'enregistrement a échoué");
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const removeFaq = async (faq: Faq) => {
+  if (!confirm(`Supprimer la FAQ « ${faq.question} » ?`)) return;
+
+  try {
+    await faqService.deleteFaq(faq._id);
+    func.showToastSuccess('FAQ supprimée');
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
+
+onMounted(load);
 </script>

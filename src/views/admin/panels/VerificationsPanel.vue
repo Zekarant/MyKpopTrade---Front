@@ -103,120 +103,96 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onBeforeUnmount, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import ReasonPromptModal from '../components/ReasonPromptModal.vue';
-  import { VERIFICATION_REJECTION_REASONS } from '../adminPresets';
-  import { apiErrorMessage, formatAge, formatDate, getInitial } from '../adminFormat';
-  import type { AdminVerification } from '../types';
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import ReasonPromptModal from '../components/ReasonPromptModal.vue';
+import { VERIFICATION_REJECTION_REASONS } from '../adminPresets';
+import { apiErrorMessage, formatAge, formatDate, getInitial } from '../adminFormat';
+import type { AdminVerification } from '../types';
 
-  const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-    id_card: 'Carte d\'identité',
-    passport: 'Passeport',
-    driver_license: 'Permis de conduire'
-  };
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  id_card: 'Carte d\'identité',
+  passport: 'Passeport',
+  driver_license: 'Permis de conduire'
+};
 
-  export default defineComponent({
-    name: 'VerificationsPanel',
-    components: { ReasonPromptModal },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const verifications = ref<AdminVerification[]>([]);
-      const loading = ref(false);
-      const verificationToReject = ref<AdminVerification | null>(null);
-      // URL objet en mémoire uniquement : la pièce d'identité n'est jamais mise
-      // en cache ni écrite sur le disque du navigateur.
-      const documentUrl = ref<string | null>(null);
-      const documentOwner = ref('');
-      const documentLoadingId = ref<string | null>(null);
+const emit = defineEmits<{ changed: [] }>();
 
-      const closeDocument = () => {
-        if (documentUrl.value) URL.revokeObjectURL(documentUrl.value);
-        documentUrl.value = null;
-      };
+const verifications = ref<AdminVerification[]>([]);
+const loading = ref(false);
+const verificationToReject = ref<AdminVerification | null>(null);
+// URL objet en mémoire uniquement : la pièce d'identité n'est jamais mise
+// en cache ni écrite sur le disque du navigateur.
+const documentUrl = ref<string | null>(null);
+const documentOwner = ref('');
+const documentLoadingId = ref<string | null>(null);
 
-      const viewDocument = async (verification: AdminVerification) => {
-        documentLoadingId.value = verification._id;
-        try {
-          const blob = await adminService.getVerificationDocument(verification._id);
-          closeDocument();
-          documentUrl.value = URL.createObjectURL(blob);
-          documentOwner.value = verification.user?.username || 'Compte supprimé';
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible d\'afficher le document'));
-        } finally {
-          documentLoadingId.value = null;
-        }
-      };
+const closeDocument = () => {
+  if (documentUrl.value) URL.revokeObjectURL(documentUrl.value);
+  documentUrl.value = null;
+};
 
-      onBeforeUnmount(closeDocument);
+const viewDocument = async (verification: AdminVerification) => {
+  documentLoadingId.value = verification._id;
+  try {
+    const blob = await adminService.getVerificationDocument(verification._id);
+    closeDocument();
+    documentUrl.value = URL.createObjectURL(blob);
+    documentOwner.value = verification.user?.username || 'Compte supprimé';
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible d\'afficher le document'));
+  } finally {
+    documentLoadingId.value = null;
+  }
+};
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getPendingVerifications();
-          verifications.value = data.verifications || data || [];
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les vérifications'));
-          verifications.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+onBeforeUnmount(closeDocument);
 
-      const refresh = async () => {
-        await load();
-        emit('changed');
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getPendingVerifications();
+    verifications.value = data.verifications || data || [];
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les vérifications'));
+    verifications.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const approve = async (verification: AdminVerification) => {
-        try {
-          await adminService.approveVerification(verification._id);
-          func.showToastSuccess('Vérification approuvée');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'approbation a échoué'));
-        }
-      };
+const refresh = async () => {
+  await load();
+  emit('changed');
+};
 
-      const reject = async (reason: string) => {
-        const verification = verificationToReject.value;
-        if (!verification) return;
+const approve = async (verification: AdminVerification) => {
+  try {
+    await adminService.approveVerification(verification._id);
+    func.showToastSuccess('Vérification approuvée');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'approbation a échoué'));
+  }
+};
 
-        try {
-          await adminService.rejectVerification(verification._id, reason);
-          func.showToastSuccess('Vérification rejetée');
-          verificationToReject.value = null;
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Le rejet a échoué'));
-        }
-      };
+const reject = async (reason: string) => {
+  const verification = verificationToReject.value;
+  if (!verification) return;
 
-      onMounted(load);
+  try {
+    await adminService.rejectVerification(verification._id, reason);
+    func.showToastSuccess('Vérification rejetée');
+    verificationToReject.value = null;
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Le rejet a échoué'));
+  }
+};
 
-      return {
-        DOCUMENT_TYPE_LABELS,
-        VERIFICATION_REJECTION_REASONS,
-        verifications,
-        loading,
-        verificationToReject,
-        documentUrl,
-        documentOwner,
-        documentLoadingId,
-        viewDocument,
-        closeDocument,
-        formatAge,
-        formatDate,
-        getInitial,
-        load,
-        approve,
-        reject
-      };
-    }
-  });
+onMounted(load);
 </script>
 
 <style scoped>

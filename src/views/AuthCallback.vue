@@ -11,7 +11,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { setSessionCookies } from '@/services/session.cookies';
 import authentificationService from '@/services/authentification.service';
 
 export default defineComponent({
@@ -23,31 +22,23 @@ export default defineComponent({
     const welcome = ref<string>('');
 
     /**
-     * Ouvre la session à partir du code à usage unique ; les jetons en clair
-     * dans l'URL ne servent qu'à une API pas encore mise à jour.
+     * Ouvre la session à partir du code à usage unique, seul moyen accepté :
+     * des jetons lus dans l'URL permettraient à un lien piégé de connecter la
+     * victime au compte de l'attaquant (login CSRF).
      */
     async function openSession(): Promise<boolean> {
       const code = route.query.code as string | undefined;
-      if (code) {
-        try {
-          await authentificationService.exchangeOAuthCode(code);
-          return true;
-        } catch (e) {
-          error.value = (e as Error).message;
-          return false;
-        }
-      }
-
-      const accessToken = route.query.accessToken as string | undefined;
-      const refreshToken = route.query.refreshToken as string | undefined;
-      const userId = route.query.userId as string | undefined;
-      if (!accessToken || !refreshToken || !userId) {
-        error.value = 'Tokens manquants dans la réponse.';
+      if (!code) {
+        error.value = 'Code de connexion manquant.';
         return false;
       }
-      setSessionCookies({ accessToken, refreshToken, userId });
-      sessionStorage.removeItem('favorites');
-      return true;
+      try {
+        await authentificationService.exchangeOAuthCode(code);
+        return true;
+      } catch (e) {
+        error.value = (e as Error).message;
+        return false;
+      }
     }
 
     onMounted(async () => {
@@ -62,7 +53,8 @@ export default defineComponent({
         provider === 'discord' ? 'Discord' : provider === 'google' ? 'Google' : '';
 
       if (errParam) {
-        error.value = `Échec de connexion : ${errParam}`;
+        // Message fixe : le paramètre vient de l'URL, n'importe qui peut le forger.
+        error.value = 'Échec de connexion. Réessaie.';
         setTimeout(() => router.push('/login'), 2000);
         return;
       }

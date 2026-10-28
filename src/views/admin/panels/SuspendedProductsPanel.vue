@@ -1,7 +1,7 @@
 <template>
   <div class="admin__panel">
     <div class="admin__panel-header">
-      <h2>{{ pagination.totalItems }} annonce{{ pagination.totalItems > 1 ? 's' : '' }} suspendue{{ pagination.totalItems > 1 ? 's' : '' }}</h2>
+      <h2>{{ pagination.total }} annonce{{ pagination.total > 1 ? 's' : '' }} suspendue{{ pagination.total > 1 ? 's' : '' }}</h2>
       <button type="button" class="admin__btn" :disabled="loading" @click="load">
         <i class="bi bi-arrow-clockwise"></i> Actualiser
       </button>
@@ -93,7 +93,7 @@
       </table>
     </div>
 
-    <div v-if="pagination.totalPages > 1" class="admin__pagination">
+    <div v-if="pagination.pages > 1" class="admin__pagination">
       <button
         type="button"
         class="admin__icon-btn"
@@ -102,11 +102,11 @@
       >
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span>{{ page }} / {{ pagination.totalPages }} — {{ pagination.totalItems }} annonces</span>
+      <span>{{ page }} / {{ pagination.pages }} — {{ pagination.total }} annonces</span>
       <button
         type="button"
         class="admin__icon-btn"
-        :disabled="page >= pagination.totalPages"
+        :disabled="page >= pagination.pages"
         @click="changePage(page + 1)"
       >
         <i class="bi bi-chevron-right"></i>
@@ -128,115 +128,92 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import ReasonPromptModal from '../components/ReasonPromptModal.vue';
-  import { PRODUCT_DELETION_REASONS } from '../adminPresets';
-  import {
-    MODERATION_CATEGORY_LABELS,
-    MODERATION_CONFIDENCE_LABELS,
-    apiErrorMessage,
-    formatAge,
-    formatDate
-  } from '../adminFormat';
-  import type { AdminFlaggedProduct } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import ReasonPromptModal from '../components/ReasonPromptModal.vue';
+import { PRODUCT_DELETION_REASONS } from '../adminPresets';
+import {
+  MODERATION_CATEGORY_LABELS,
+  MODERATION_CONFIDENCE_LABELS,
+  apiErrorMessage,
+  formatAge,
+  formatDate
+} from '../adminFormat';
+import type { AdminFlaggedProduct } from '../types';
 
-  const PAGE_SIZE = 20;
+const PAGE_SIZE = 20;
 
-  export default defineComponent({
-    name: 'SuspendedProductsPanel',
-    components: { ReasonPromptModal },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const products = ref<AdminFlaggedProduct[]>([]);
-      const pagination = ref({ totalPages: 1, totalItems: 0 });
-      const loading = ref(false);
-      const page = ref(1);
-      const productToDelete = ref<AdminFlaggedProduct | null>(null);
+const emit = defineEmits<{ changed: [] }>();
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getProducts({
-            page: page.value,
-            limit: PAGE_SIZE,
-            status: 'suspended'
-          });
-          products.value = data.products || [];
-          pagination.value = data.pagination || { totalPages: 1, totalItems: 0 };
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les annonces suspendues'));
-          products.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const products = ref<AdminFlaggedProduct[]>([]);
+const pagination = ref({ pages: 1, total: 0 });
+const loading = ref(false);
+const page = ref(1);
+const productToDelete = ref<AdminFlaggedProduct | null>(null);
 
-      const changePage = (next: number) => {
-        page.value = next;
-        load();
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getProducts({
+      page: page.value,
+      limit: PAGE_SIZE,
+      status: 'suspended'
+    });
+    products.value = data.products || [];
+    pagination.value = data.pagination || { pages: 1, total: 0 };
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les annonces suspendues'));
+    products.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const refresh = async () => {
-        await load();
-        emit('changed');
-      };
+const changePage = (next: number) => {
+  page.value = next;
+  load();
+};
 
-      const approve = async (product: AdminFlaggedProduct) => {
-        try {
-          await adminService.reviewFlaggedProduct(product._id, true);
-          func.showToastSuccess('Annonce republiée');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La republication a échoué'));
-        }
-      };
+const refresh = async () => {
+  await load();
+  emit('changed');
+};
 
-      const reject = async (product: AdminFlaggedProduct) => {
-        try {
-          await adminService.reviewFlaggedProduct(product._id, false);
-          func.showToastSuccess('Signalement confirmé, annonce toujours en pause');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'action a échoué'));
-        }
-      };
+const approve = async (product: AdminFlaggedProduct) => {
+  try {
+    await adminService.reviewFlaggedProduct(product._id, true);
+    func.showToastSuccess('Annonce republiée');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La republication a échoué'));
+  }
+};
 
-      const remove = async (reason: string) => {
-        const product = productToDelete.value;
-        if (!product) return;
+const reject = async (product: AdminFlaggedProduct) => {
+  try {
+    await adminService.reviewFlaggedProduct(product._id, false);
+    func.showToastSuccess('Signalement confirmé, annonce toujours en pause');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'action a échoué'));
+  }
+};
 
-        try {
-          await adminService.deleteProduct(product._id, reason);
-          func.showToastSuccess('Produit supprimé');
-          productToDelete.value = null;
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
+const remove = async (reason: string) => {
+  const product = productToDelete.value;
+  if (!product) return;
 
-      onMounted(load);
+  try {
+    await adminService.deleteProduct(product._id, reason);
+    func.showToastSuccess('Produit supprimé');
+    productToDelete.value = null;
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
 
-      return {
-        MODERATION_CATEGORY_LABELS,
-        MODERATION_CONFIDENCE_LABELS,
-        PRODUCT_DELETION_REASONS,
-        products,
-        pagination,
-        loading,
-        page,
-        productToDelete,
-        formatDate,
-        formatAge,
-        load,
-        changePage,
-        approve,
-        reject,
-        remove
-      };
-    }
-  });
+onMounted(load);
 </script>

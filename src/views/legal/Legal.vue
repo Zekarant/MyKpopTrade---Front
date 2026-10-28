@@ -157,11 +157,11 @@ import { legal, isLegalMissing, legalApplies, publisherType } from '@/config/leg
 export default defineComponent({
   name: 'LegalPage',
   components: { LegalLayout },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  },
   setup() {
     return { legal, isLegalMissing, legalApplies, publisherType };
+  },
+  data() {
+    return { updatedAt: '3 septembre 2026' };
   }
 });
 </script>

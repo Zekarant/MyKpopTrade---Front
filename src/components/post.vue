@@ -1,531 +1,203 @@
 <template>
-   <div class="post-modal">
-        <div v-if="isLoading" class="post-modal__loading">
+    <div class="post-modal">
+        <div v-if="isLoading" class="post-modal__loading" role="status">
             <div class="post-modal__spinner"></div>
             <p>Chargement...</p>
         </div>
         <div v-else-if="dataInitialized" class="post-modal__card">
-            <!-- Image section -->
-            <div class="post-modal__gallery">
-                <div v-if="dataPost.isSold" class="post-modal__badge post-modal__badge--sold">
-                    <i class="bi bi-bag-check-fill"></i> Vendu
-                </div>
-                <div v-else-if="dataPost.isAvailable === false" class="post-modal__badge post-modal__badge--withdrawn">
-                    <i class="bi bi-eye-slash"></i> Retiré de la vente
-                </div>
-                <ImageCarousel :images="dataPost?.images || []" />
-                <button v-if="!myProfile && sellerId != myId && !isFav" @click="addFav(dataPost._id)" class="post-modal__fav-btn">
-                    <i class="bi bi-heart"></i>
-                </button>
-                <button v-if="!myProfile && sellerId != myId && isFav" @click="rmFav(dataPost._id)" class="post-modal__fav-btn post-modal__fav-btn--active">
-                    <i class="bi bi-heart-fill"></i>
-                </button>
-            </div>
+            <PostGallery v-model:favorite="isFav" :post="dataPost" :can-favorite="!isOwner" />
 
-            <!-- Content section -->
             <div class="post-modal__content">
-                <!-- Close button -->
-                <button class="post-modal__close" @click="closePost()">
-                    <i class="bi bi-x-lg"></i>
+                <button type="button" class="post-modal__close" aria-label="Fermer" @click="emit('closePost')">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
 
-                <!-- Seller header -->
-                <div class="post-modal__seller" @click="viewUser()">
-                    <div class="post-modal__avatar" v-html="profilePictureUrl"></div>
-                    <div class="post-modal__seller-info">
-                        <span class="post-modal__username">
-                            @{{ dataSeller.username }}
-                            <VerifiedBadge v-if="dataSeller.isIdentityVerified" :size="14" />
-                        </span>
-                    </div>
-                    <div class="post-modal__actions-menu" @click.stop="toggleMenu($event)">
-                        <i class="bi bi-three-dots-vertical"></i>
-                        <div v-if="isMenuVisible" class="post-modal__dropdown">
-                            <button v-if="!myProfile && !isRoot" @click="showPopupReport=true">
-                                <i class="bi bi-flag"></i> Signaler
-                            </button>
-                            <button v-if="(myProfile || isRoot) && !dataPost.isSold" @click="hidePopup()">
-                                <i class="bi bi-cart-check"></i> Vendu
-                            </button>
-                            <button v-if="(myProfile || isRoot) && dataPost.isAvailable === false" @click="showRelistPopup = true">
-                                <i class="bi bi-arrow-counterclockwise"></i> Remettre en vente
-                            </button>
-                            <button v-if="myProfile || isRoot" @click="showDeletePopup = !showDeletePopup">
-                                <i class="bi bi-trash"></i> Supprimer
-                            </button>
-                            <button v-if="myProfile || isRoot" @click="modifyPost">
-                                <i class="bi bi-pencil"></i> Modifier
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <PostSellerHeader
+                    :seller="dataSeller"
+                    :is-owner="isOwner"
+                    :is-sold="dataPost.isSold"
+                    :is-withdrawn="dataPost.isAvailable === false"
+                    @action="onMenuAction"
+                />
 
-                <!-- Title & Price -->
                 <div class="post-modal__header">
                     <h2 class="post-modal__title">{{ dataPost.title }}</h2>
-                    <div class="post-modal__price">{{ dataPost.price }} {{ currencySymbol }}</div>
+                    <div class="post-modal__price">{{ formatPrice(dataPost.price, dataPost.currency) }}</div>
                 </div>
                 <div v-if="dataPost.isPayWhatYouWant" class="post-modal__pwyw">
                     <span class="post-modal__tag">
-                        <i class="bi bi-cash-coin"></i> Prix libre : {{ pwywLabel }}
+                        <i class="bi bi-cash-coin" aria-hidden="true"></i> Prix libre : {{ pwywLabel }}
                     </span>
                 </div>
 
-                <!-- Description -->
                 <div class="post-modal__description">
                     <p>{{ dataPost.description }}</p>
                 </div>
 
-                <!-- Details -->
-                <div class="post-modal__details">
-                    <div v-if="dataPost.condition" class="post-modal__detail-item">
-                        <span class="post-modal__detail-label">État</span>
-                        <span class="post-modal__detail-value">{{ dataPost.condition.charAt(0).toUpperCase() + dataPost.condition.slice(1) }}</span>
-                    </div>
-                    <div v-if="dataPost.category" class="post-modal__detail-item">
-                        <span class="post-modal__detail-label">Catégorie</span>
-                        <span class="post-modal__detail-value">{{ dataPost.category }}</span>
-                    </div>
-                    <div v-if="dataPost.kpopGroupName" class="post-modal__detail-item">
-                        <span class="post-modal__detail-label">Groupe</span>
-                        <span class="post-modal__detail-value">{{ dataPost.kpopGroupName }}</span>
-                    </div>
-                    <div v-if="dataPost.kpopMember" class="post-modal__detail-item">
-                        <span class="post-modal__detail-label">Membre</span>
-                        <span class="post-modal__detail-value">{{ dataPost.kpopMember }}</span>
-                    </div>
-                    <div v-if="dataPost.albumNameStr" class="post-modal__detail-item">
-                        <span class="post-modal__detail-label">Album</span>
-                        <span class="post-modal__detail-value">{{ dataPost.albumNameStr }}</span>
-                    </div>
-                </div>
+                <PostDetailsList :post="dataPost" />
 
-                <!-- Shipping -->
-                <div v-if="dataPost.shippingOptions" :title="`${dataPost.shippingPrice} €`" class="post-modal__shipping">
-                    <span class="post-modal__detail-label">Livraison</span>
-                    <div class="post-modal__shipping-tags">
-                        <span v-if="dataPost.shippingOptions.worldwide" class="post-modal__tag">
-                            <i class="bi bi-globe"></i> Mondiale
-                        </span>
-                        <span v-if="dataPost.shippingOptions.nationalOnly" class="post-modal__tag">
-                            <i class="bi bi-geo-alt"></i> Nationale
-                        </span>
-                        <span v-if="dataPost.shippingOptions.localPickup" class="post-modal__tag">
-                            <i class="bi bi-hand-index"></i> Main propre
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Type badge -->
-                <div class="post-modal__type">
-                    <span class="post-modal__type-badge">
-                        {{ dataPost.type ? (dataPost.type.charAt(0).toUpperCase() + dataPost.type.slice(1)) : '' }}
-                    </span>
-                </div>
-
-                <!-- Action buttons -->
-                <div v-if="isPurchasable && !myProfile && !isRoot" class="post-modal__footer">
-                    <button v-if="canMakeOffer" class="post-modal__btn post-modal__btn--outline" @click="showOfferOption = true">
-                        <i class="bi bi-tag"></i> Faire une offre
-                    </button>
-                    <button class="post-modal__btn post-modal__btn--primary" @click="buyOption">
-                        <i class="bi bi-bag"></i> Acheter
-                    </button>
-                    <button class="post-modal__btn post-modal__btn--cart" :class="{ 'post-modal__btn--cart-added': addedToCart }" @click="addToCart" :disabled="addingToCart || addedToCart">
-                        <i :class="addedToCart ? 'bi bi-cart-check-fill' : 'bi bi-cart-plus'"></i> {{ addedToCart ? 'Ajouté ✓' : addingToCart ? '...' : 'Panier' }}
-                    </button>
-                    <button class="post-modal__btn post-modal__btn--ghost" @click="openMessagePopup">
-                        <i class="bi bi-chat-dots"></i> Message
-                    </button>
-                </div>
+                <PostActionsFooter
+                    v-if="isPurchasable && !isOwner"
+                    :product-id="dataPost._id"
+                    :can-make-offer="canMakeOffer"
+                    @offer="showOfferOption = true"
+                    @buy="showBuyOption = !showBuyOption"
+                    @message="popupMessage = true"
+                />
             </div>
         </div>
     </div>
 
-    <!-- Offer modal -->
-    <div v-if="showOfferOption">
-      <send_offer :product="dataPost" @offerSent="handleOfferSent" @close="showOfferOption = false"></send_offer>
-    </div>
+    <PostOfferDialog v-if="showOfferOption" :product="dataPost" @close="showOfferOption = false" />
 
-    <!-- Send message -->
-    <send_message :id_user="sellerId" :pseudo_user="dataSeller.username" :id_post="dataPost._id" @closeSendMessage="openMessagePopup" v-if="popupMessage"></send_message>
-
-    <!-- Sold confirmation -->
-    <div v-if="showSoldPopup" class="post-modal__confirm-overlay" @click.self="hidePopup">
-        <div class="post-modal__confirm">
-            <i class="bi bi-cart-check post-modal__confirm-icon"></i>
-            <p>Marquer cet article comme vendu ?</p>
-            <div class="post-modal__confirm-actions">
-                <button class="post-modal__btn post-modal__btn--outline" @click="hidePopup">Annuler</button>
-                <button class="post-modal__btn post-modal__btn--danger" @click="sold(dataPost._id, sellerId)">Confirmer</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Relist confirmation -->
-    <div v-if="showRelistPopup" class="post-modal__confirm-overlay" @click.self="showRelistPopup = false">
-        <div class="post-modal__confirm">
-            <i class="bi bi-arrow-counterclockwise post-modal__confirm-icon"></i>
-            <p>Remettre cet article en vente ?</p>
-            <p v-if="dataPost.isSold" class="post-modal__confirm-hint">La vente sera annulée et l'article de nouveau visible par les acheteurs.</p>
-            <div class="post-modal__confirm-actions">
-                <button class="post-modal__btn post-modal__btn--outline" @click="showRelistPopup = false">Annuler</button>
-                <button class="post-modal__btn post-modal__btn--primary" :disabled="relisting" @click="relist(dataPost._id)">Remettre en vente</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Checkout -->
-    <CheckoutDialog
-      v-if="showBuyOption && dataInitialized"
-      :product-id="dataPost._id"
-      :product-title="dataPost.title"
-      :product-price="dataPost.price"
-      :currency="dataPost.currency || 'EUR'"
-      :shipping-options="dataPost.shippingOptions || {}"
-      @confirm="onCheckoutConfirmed"
-      @cancel="showBuyOption = false"
+    <send_message
+        v-if="popupMessage"
+        :id-user="sellerId"
+        :pseudo-user="dataSeller.username"
+        :id-post="dataPost._id"
+        @close-send-message="popupMessage = false"
     />
 
-    <!-- Delete confirmation -->
-    <div v-if="showDeletePopup" class="post-modal__confirm-overlay" @click.self="closeDeletePopup">
-        <div class="post-modal__confirm">
-            <i class="bi bi-trash post-modal__confirm-icon post-modal__confirm-icon--danger"></i>
-            <p>Supprimer définitivement cet article ?</p>
-            <div class="post-modal__confirm-actions">
-                <button class="post-modal__btn post-modal__btn--outline" @click="closeDeletePopup">Annuler</button>
-                <button class="post-modal__btn post-modal__btn--danger" @click="deletePost(dataPost._id)">Supprimer</button>
-            </div>
-        </div>
-    </div>
+    <PostOwnerDialogs
+        v-if="ownerDialog"
+        :dialog="ownerDialog"
+        :product-id="dataPost._id"
+        :is-sold="dataPost.isSold"
+        @close="ownerDialog = null"
+        @changed="emit('sold')"
+    />
 
-    <!-- Report -->
-    <report_card @closeReport="showPopupReport = false" :type="'product'" :id="dataPost._id" v-if="showPopupReport"></report_card>
+    <CheckoutDialog
+        v-if="showBuyOption && dataInitialized"
+        :product-id="dataPost._id"
+        :product-title="dataPost.title"
+        :product-price="dataPost.price"
+        :currency="dataPost.currency || 'EUR'"
+        :shipping-options="dataPost.shippingOptions || {}"
+        @confirm="onCheckoutConfirmed"
+        @cancel="showBuyOption = false"
+    />
+
+    <report_card v-if="showPopupReport" :id="dataPost._id" :type="'product'" @close-report="showPopupReport = false" />
 </template>
 
+<script setup lang="ts">
+/** Fiche d'une annonce, en fenêtre (grilles) ou en page (/products/:id). */
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import report_card from '@/components/report_card.vue';
+import send_message from '@/components/adherents/send_message.vue';
+import CheckoutDialog from '@/components/checkout/CheckoutDialog.vue';
+import { followCheckoutResult, type CheckoutResult } from '@/components/checkout/followCheckoutResult';
+import PostGallery from './post/PostGallery.vue';
+import PostSellerHeader from './post/PostSellerHeader.vue';
+import PostDetailsList from './post/PostDetailsList.vue';
+import PostActionsFooter from './post/PostActionsFooter.vue';
+import PostOfferDialog from './post/PostOfferDialog.vue';
+import PostOwnerDialogs from './post/PostOwnerDialogs.vue';
+import { useRequireSession } from './post/useRequireSession';
+import type { OwnerDialog, PostMenuAction, PostSeller } from './post/types';
+import postService from '@/services/post.service';
+import { currentUserId } from '@/services/session.cookies';
+import { formatPrice } from '@/utils/format';
+import { func } from '@/function';
+import type { PostResponse, ProductDetail } from '@/types/post.types';
+import { acceptsOffers, pwywRangeLabel } from './offerRules';
+import { sellerIdOf } from './sellerId';
 
+defineOptions({ name: 'PostModal' });
 
-<script lang="ts">
-    import { defineComponent, ref, type PropType } from 'vue';
-    import report_card from '../components/report_card.vue';
-    import ImageCarousel from '../components/ImageCarousel.vue';
-    import send_message from '../components/adherents/send_message.vue';
-    import send_offer from '../components/send_offer.vue';
-    import CheckoutDialog from '../components/checkout/CheckoutDialog.vue';
-    import VerifiedBadge from '../components/VerifiedBadge.vue';
+const props = withDefaults(defineProps<{
+    /** Profil d'où la fiche est ouverte : remplace le vendeur peuplé de l'annonce. */
+    dataUser?: PostSeller;
+    idPost?: string;
+    /** Annonce déjà chargée par le parent : évite une seconde requête (et une seconde vue comptée). */
+    product?: PostResponse;
+    myProfile?: boolean;
+}>(), { dataUser: undefined, idPost: undefined, product: undefined, myProfile: false });
 
-    import postService from '@/services/post.service';
-    import { getRefreshToken } from '@/services/http';
-    import paymentService from '@/services/payment.service';
-    import cartService from '@/services/cart.service';
-    import eventBus from '@/eventBus';
-    import { func } from '@/function';
-    import { useRoute, useRouter } from "vue-router";
-    import Cookies from 'js-cookie';
-    import userService from "@/services/user.service";
-    import type { ImgUserProfile } from '@/types/user.types';
-    import type { ProductDetail, ProductSeller } from '@/types/post.types';
-    import messagingService from '@/services/messaging.service';
-    import { apiErrorMessage } from '@/services/apiError';
-    import { acceptsOffers, pwywRangeLabel } from './offerRules';
-    import { sellerIdOf } from './sellerId';
+/** `sold` : l'annonce a changé d'état (vendue, remise en vente, supprimée). */
+const emit = defineEmits<{ closePost: []; sold: [] }>();
 
-    /** Vendeur affiché : celui de l'annonce, ou le profil transmis par le parent. */
-    export type PostSeller = Partial<ProductSeller> & { id?: string };
+const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };
 
-    export interface CheckoutResult {
-        success?: boolean;
-        payment?: { approvalUrl?: string; paypalOrderId?: string };
+const myId = currentUserId();
+const router = useRouter();
+
+const dataPost = ref<ProductDetail>({} as ProductDetail);
+const dataSeller = ref<PostSeller>({});
+const isFav = ref(false);
+const isLoading = ref(true);
+const dataInitialized = ref(false);
+const ownerDialog = ref<OwnerDialog | null>(null);
+const showPopupReport = ref(false);
+const popupMessage = ref(false);
+const showOfferOption = ref(false);
+const showBuyOption = ref(false);
+
+const requireSession = useRequireSession(() => dataPost.value._id);
+
+const sellerId = computed(() => sellerIdOf(dataSeller.value));
+/** Le vendeur lui-même, ou sa fiche ouverte depuis son propre profil. */
+const isOwner = computed(() => props.myProfile || Boolean(sellerId.value && sellerId.value === myId));
+/** Ni vendu, ni retiré de la vente par son vendeur ou la modération. */
+const isPurchasable = computed(() => !dataPost.value.isSold && dataPost.value.isAvailable !== false);
+const canMakeOffer = computed(() => acceptsOffers(dataPost.value));
+const pwywLabel = computed(() =>
+    pwywRangeLabel(dataPost.value.pwywMinPrice, dataPost.value.pwywMaxPrice, CURRENCY_SYMBOLS[dataPost.value.currency] || '€')
+);
+
+onMounted(async () => {
+    try {
+        const response = props.product ?? await postService.getPost(props.idPost);
+        if (!response?.product || Object.keys(response.product).length === 0) {
+            throw new Error('Données du post non chargées');
+        }
+        dataPost.value = response.product;
+        isFav.value = response.isFavorite || false;
+        dataSeller.value = props.dataUser && Object.keys(props.dataUser).length > 0
+            ? { ...props.dataUser }
+            : { ...(response.product.seller ?? {}) };
+        dataInitialized.value = true;
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error);
+    } finally {
+        isLoading.value = false;
     }
+});
 
+function onMenuAction(action: PostMenuAction) {
+    if (action === 'copy') {
+        copyLink();
+    } else if (action === 'report') {
+        showPopupReport.value = requireSession();
+    } else if (action === 'edit') {
+        router.push({ name: 'modify_post', query: { postData: JSON.stringify(dataPost.value) } });
+    } else {
+        ownerDialog.value = action;
+    }
+}
 
-    export default defineComponent({
-        name: "PostModal",
-        components: {
-            ImageCarousel,
-            report_card,
-            send_message,
-            send_offer,
-            CheckoutDialog,
-            VerifiedBadge
-        },
-        props: {
-            dataUser: {
-                type: Object as PropType<PostSeller>,
-                required: false,
-            },
-            idPost:{
-                type: String
-            },
-            myProfile: {
-                type: Boolean,
-                required: false,
-                default: false,
-            }
+async function copyLink() {
+    try {
+        await navigator.clipboard.writeText(`${window.location.origin}/products/${dataPost.value._id}`);
+        func.showToastSuccess('Lien copié');
+    } catch {
+        func.showToastError('Impossible de copier le lien.');
+    }
+}
 
-
-        },
-        emits: ['closePost', 'sold'],
-        data() {
-            return {
-                dataPost: {} as ProductDetail,
-                dataSeller: {} as PostSeller,
-                isMenuVisible: false,
-                isRoot: false,
-                showSoldPopup: false,
-                showRelistPopup: false,
-                relisting: false,
-                showDeletePopup: false,
-                isFav: false,
-                showPopupReport: false,
-                popupMessage: false,
-                isLoading: true,
-                dataInitialized: false,
-                showOfferOption: false,
-                addingToCart: false,
-                addedToCart: false,
-            };
-        },
-        setup(){
-            const myId = Cookies.get('id_user');
-            const route = useRoute();
-            const router = useRouter();
-            const showBuyOption = ref(false);
-
-
-            const buyOption = () => {
-                showBuyOption.value = !showBuyOption.value;
-            };
-
-            const onCheckoutConfirmed = (result: CheckoutResult | null | undefined) => {
-                showBuyOption.value = false;
-
-                // L'URL d'approbation vient de PayPal via l'API : elle pointe donc
-                // toujours vers le bon environnement. Ne jamais la reconstruire en dur.
-                const approvalUrl = result?.payment?.approvalUrl ?? null;
-
-                if (!result?.success || !approvalUrl) {
-                    if (result?.payment?.paypalOrderId) {
-                        paymentService.cancelPayPal(result.payment.paypalOrderId).catch(() => {});
-                    }
-                    func.showToastError('Erreur lors de l\'initialisation du paiement. Veuillez réessayer.');
-                    return;
-                }
-
-                // Redirection complète vers PayPal — l'acheteur approuve puis revient sur /payment/success
-                window.location.href = approvalUrl;
-            };
-
-            const id = route.params.id;
-            return {
-                route,
-                router,
-                id,
-                myId,
-                showBuyOption,
-                buyOption,
-                onCheckoutConfirmed,
-            };
-        },
-        async mounted() {
-            await this.initializeComponent();
-        },
-
-
-        computed: {
-            profilePictureUrl() {
-                const profileImgInfo: ImgUserProfile = {
-                username: this.dataSeller.username,
-                profilePicture: this.dataSeller.profilePicture
-                };
-                return userService.renderUserAvatar(profileImgInfo);
-            },
-            currencySymbol() {
-                const symbols = {
-                    EUR: '€',
-                    USD: '$',
-                    KRW: '₩',
-                    JPY: '¥',
-                    GBP: '£',
-                };
-                return symbols[this.dataPost.currency as keyof typeof symbols] || '';
-            },
-            sellerId(): string | undefined {
-                return sellerIdOf(this.dataSeller);
-            },
-            /** Ni vendu, ni retiré de la vente par son vendeur ou la modération. */
-            isPurchasable(): boolean {
-                return !this.dataPost.isSold && this.dataPost.isAvailable !== false;
-            },
-            canMakeOffer(): boolean {
-                return acceptsOffers(this.dataPost);
-            },
-            pwywLabel(): string {
-                return pwywRangeLabel(this.dataPost.pwywMinPrice, this.dataPost.pwywMaxPrice, this.currencySymbol || '€');
-            },
-        },
-        methods: {
-
-            async initializeComponent() {
-                try {
-                    this.isLoading = true;
-                    await this.getData();
-                    if (!this.dataPost || Object.keys(this.dataPost).length === 0) {
-                        throw new Error('Données du post non chargées');
-                    }
-
-                    this.initializeUserData();
-                    this.dataInitialized = true;
-
-                } catch (error) {
-                    console.error('Erreur lors de l\'initialisation:', error);
-                } finally {
-                    this.isLoading = false;
-                }
-            },
-            initializeUserData() {
-                if (this.dataUser && Object.keys(this.dataUser).length > 0) {
-                    this.dataSeller = { ...this.dataUser };
-                } else {
-                    this.dataSeller = this.dataPost.seller ? { ...this.dataPost.seller } : {};
-                    this.isRoot = false;
-                }
-
-                const sellerId = sellerIdOf(this.dataSeller);
-                if (sellerId && sellerId === this.myId) {
-                    this.isRoot = true;
-                }
-            },
-            async getData() {
-                const response = await postService.getPost(this.idPost);
-                if (response && response.product) {
-                    this.dataPost = response.product;
-                    this.isFav = response.isFavorite || false;
-                }else{
-                }
-            },
-            toggleMenu(event: Event){
-                event.stopPropagation();
-                this.isMenuVisible = !this.isMenuVisible;
-            },
-            hidePopup(){
-                this.showSoldPopup = !this.showSoldPopup;
-            },
-            closeDeletePopup(){
-                this.showDeletePopup = false;
-            },
-            async sold(id: string,userId: string | undefined){
-                const response = await postService.sold(userId,id);
-                if (response) {
-                    this.showSoldPopup = false;
-                    this.$emit('sold');
-                }
-            },
-            async relist(id: string) {
-                this.relisting = true;
-                try {
-                    await postService.relist(id);
-                    this.showRelistPopup = false;
-                    this.$func.showToastSuccess('Article remis en vente');
-                    this.$emit('sold');
-                } catch (error) {
-                    this.$func.showToastError(apiErrorMessage(error, 'Impossible de remettre cet article en vente.'));
-                } finally {
-                    this.relisting = false;
-                }
-            },
-            async deletePost(id: string ){
-                const response = await postService.deletePost(id);
-                if (response) {
-                    this.showDeletePopup = false;
-                    this.$emit('sold');
-                }
-            },
-            modifyPost(){
-                this.router.push({
-                    name: 'modify_post',
-                    query: {
-                        postData: JSON.stringify(this.dataPost)
-                    }
-                });
-            },
-            // addFavorite bascule le favori (ajout comme retrait) et rend `false` en cas d'échec.
-            async addFav(id: string){
-                if (await postService.addFavorite(id)) {
-                    this.$func.showToastSuccess('Ajouter avec succès à mes favoris');
-                    this.isFav = true;
-                } else {
-                    this.reportFavoriteFailure();
-                }
-            },
-            async rmFav(id: string){
-                if (await postService.addFavorite(id)) {
-                    this.$func.showToastSuccess('Supprimé de mes favoris');
-                    this.isFav = false;
-                } else {
-                    this.reportFavoriteFailure();
-                }
-            },
-            /** Sans session, l'utilisateur est déjà renvoyé vers /login : rien à afficher. */
-            reportFavoriteFailure() {
-                if (getRefreshToken()) {
-                    this.$func.showToastError('Impossible de mettre à jour vos favoris. Réessayez.');
-                }
-            },
-
-            closePost() {
-                this.$emit('closePost');
-            },
-            viewUser(){
-                this.router.push({ name: 'profile' , params: { id: this.dataSeller.username }});
-            },
-            openMessagePopup(){
-                this.popupMessage = !this.popupMessage;
-            },
-            async handleOfferSent(offerInfo: { offerData: { productId: string; }; amount: number; message: string; }){
-                this.showOfferOption = false
-
-                const offerData = {
-                    productId: offerInfo.offerData.productId,
-                    initialOffer: offerInfo.amount,
-                    message:  offerInfo.message
-                };
-                messagingService.initiateNegotiation(
-                    offerData
-                ).then(() => {
-                    this.$func.showToastSuccess('Offre envoyée avec succès !');
-                }).catch((error: { message?: string }) => {
-                    console.error('Erreur lors de l\'envoi de l\'offre:', error);
-                    // Le message de l'API explique le refus (fourchette du prix libre, seuil minimal…).
-                    this.$func.showToastError(error?.message || 'Erreur lors de l\'envoi de l\'offre.');
-                })
-            },
-            async addToCart() {
-                if (this.addingToCart || this.addedToCart) return;
-                this.addingToCart = true;
-                try {
-                    await cartService.addItem(this.dataPost._id);
-                    this.addedToCart = true;
-                    this.$func.showToastSuccess('Article ajouté au panier !');
-                    eventBus.emit('cart:updated');
-                } catch (error) {
-                    const msg = apiErrorMessage(error, 'Erreur lors de l\'ajout au panier');
-                    this.$func.showToastError(msg);
-                } finally {
-                    this.addingToCart = false;
-                }
-            }
-
-        },
-    });
-
-
+function onCheckoutConfirmed(result: CheckoutResult | null | undefined) {
+    showBuyOption.value = false;
+    followCheckoutResult(result, (message) => func.showToastError(message));
+}
 </script>
 
-<style lang="scss" scoped>
+<!--
+    Non scopé : la fiche est découpée en sous-composants (./post/*) qui partagent
+    le bloc BEM `post-modal__*` ; scopée, la feuille serait dupliquée dans chacun.
+    Le préfixe suffit à éviter les fuites.
+-->
+<style lang="scss">
 @use '../css/post.scss';
-
-.post-modal__pwyw {
-    margin-top: var(--space-xs);
-}
 </style>

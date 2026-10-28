@@ -9,12 +9,12 @@
         <i class="bi bi-chevron-right"></i>
       </div>
       <div v-else class="password-form">
-        <input type="password" v-model="currentPassword" placeholder="Mot de passe actuel" autocomplete="current-password" class="settings-input" />
-        <input type="password" v-model="newPassword" placeholder="Nouveau mot de passe" autocomplete="new-password" class="settings-input" />
-        <input type="password" v-model="confirmPassword" placeholder="Confirmer le nouveau mot de passe" autocomplete="new-password" class="settings-input" />
+        <input v-model="currentPassword" type="password" placeholder="Mot de passe actuel" autocomplete="current-password" class="settings-input" />
+        <input v-model="newPassword" type="password" placeholder="Nouveau mot de passe" autocomplete="new-password" class="settings-input" />
+        <input v-model="confirmPassword" type="password" placeholder="Confirmer le nouveau mot de passe" autocomplete="new-password" class="settings-input" />
         <div class="password-form__actions">
-          <button @click="showPasswordForm = false" class="btn-settings btn-settings--ghost">Annuler</button>
-          <button @click="savePassword" class="btn-settings btn-settings--primary">Enregistrer</button>
+          <button class="btn-settings btn-settings--ghost" @click="showPasswordForm = false">Annuler</button>
+          <button class="btn-settings btn-settings--primary" @click="savePassword">Enregistrer</button>
         </div>
       </div>
     </div>
@@ -71,11 +71,17 @@ const confirmPassword = ref('');
 
 async function savePassword() {
   try {
-    const res = await api.put('/api/auth/update-password', {
-      currentPassword: currentPassword.value,
-      newPassword: newPassword.value,
-      confirmPassword: confirmPassword.value
-    });
+    // `withCredentials` : l'API lit le cookie de session pour garder celle-ci
+    // ouverte et fermer toutes les autres.
+    const res = await api.put(
+      '/api/auth/update-password',
+      {
+        currentPassword: currentPassword.value,
+        newPassword: newPassword.value,
+        confirmPassword: confirmPassword.value
+      },
+      { withCredentials: true }
+    );
     func.showToastSuccess(res.data.message);
     showPasswordForm.value = false;
     currentPassword.value = '';

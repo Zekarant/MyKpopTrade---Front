@@ -1,46 +1,73 @@
 <template>
-    <div class="product-card">
+    <!-- Pas de <button> : la carte contient déjà des boutons (carrousel, retrait du favori). -->
+    <div
+        class="product-card"
+        :class="{ 'product-card--unavailable': !openable }"
+        :role="openable ? 'button' : undefined"
+        :tabindex="openable ? 0 : undefined"
+        :aria-label="openable ? `Voir l'annonce ${data.title}` : undefined"
+        @click="open"
+        @keydown.enter.self.prevent="open"
+        @keydown.space.self.prevent="open"
+    >
         <div class="product-card__image">
             <!-- Brouillon : annonce du vendeur connecté, retirée de la vente sans avoir été vendue. -->
             <div v-if="admin && !data.isAvailable && !data.isSold" class="product-card__badge product-card__badge--draft">
                 Brouillon
             </div>
-            <ImageCarousel class="product-card__carousel" :images="data.images" />
+            <!-- Favori vendu ou retiré : la fiche ne s'ouvre plus, on propose de le retirer. -->
+            <div v-if="data.unavailableReason" class="product-card__badge product-card__badge--unavailable">
+                Plus disponible
+            </div>
+            <ImageCarousel class="product-card__carousel" :images="data.images" :alt="data.title" />
         </div>
         <div class="product-card__info">
             <h3 class="product-card__title">{{ data.title }}</h3>
-            <div v-if="data.seller" class="product-card__seller">
-              <span class="product-card__seller-name">@{{ data.seller.username || data.seller }}</span>
-              <VerifiedBadge v-if="data.seller.isIdentityVerified" :size="11" />
+            <div v-if="seller" class="product-card__seller">
+              <span class="product-card__seller-name">@{{ typeof seller === 'string' ? seller : seller.username }}</span>
+              <VerifiedBadge v-if="typeof seller !== 'string' && seller.isIdentityVerified" :size="11" />
             </div>
             <span class="product-card__condition">{{ data.condition.charAt(0).toUpperCase() + data.condition.slice(1) }}</span>
-            <span class="product-card__price">{{ data.price }} €</span>
+            <!-- L'annonce porte sa devise : « 20 € » en dur affichait aussi les prix en dollars en euros. -->
+            <span class="product-card__price">{{ formatPrice(data.price, data.currency || 'EUR') }}</span>
+            <button
+                v-if="data.unavailableReason"
+                type="button"
+                class="product-card__remove"
+                @click.stop="emit('removeFavorite', data)"
+            >
+                <i class="bi bi-heartbreak" aria-hidden="true"></i> Retirer des favoris
+            </button>
         </div>
     </div>
 </template>
 
-<script lang="ts">
-    import ImageCarousel from '@/components/ImageCarousel.vue';
-    import VerifiedBadge from '@/components/VerifiedBadge.vue';
+<script setup lang="ts">
+/** Vignette d'une annonce dans les grilles et carrousels. */
+import { computed } from 'vue';
+import ImageCarousel from '@/components/ImageCarousel.vue';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
+import { formatPrice } from '@/utils/format';
+import type { Post } from '@/types/post.types';
 
-    export default {
-        name: "post-card",
-        components: {
-            ImageCarousel,
-            VerifiedBadge,
-        },
-        props: {
-            data: {
-                type: Object,
-                required: true,
-            },
-            admin: {
-                type: Boolean,
-                required: false,
-                default: false,
-            },
-        },
-    };
+defineOptions({ name: 'PostCard' });
+
+const props = withDefaults(defineProps<{
+    data: Post;
+    /** Annonces du vendeur connecté : affiche « Brouillon » sur celles retirées de la vente. */
+    admin?: boolean;
+}>(), { admin: false });
+
+const emit = defineEmits<{ open: [post: Post]; removeFavorite: [post: Post] }>();
+
+// Favori vendu ou retiré : sa fiche ne regarde plus que son vendeur (404).
+const openable = computed(() => !props.data.unavailableReason);
+
+const seller = computed(() => props.data.seller);
+
+function open() {
+    if (openable.value) emit('open', props.data);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -53,9 +80,14 @@
       transition: all var(--transition-base);
 
       &:hover {
-        border-color: rgba(255, 45, 120, 0.3);
-        box-shadow: var(--shadow-md), 0 0 20px rgba(255, 45, 120, 0.1);
+        border-color: color-mix(in srgb, var(--accent-pink) 30%, transparent);
+        box-shadow: var(--shadow-md), var(--accent-glow);
         transform: translateY(-4px);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent-pink);
+        outline-offset: 2px;
       }
     }
 
@@ -104,6 +136,50 @@
       &--draft {
         background: var(--warning-light);
         color: var(--warning);
+      }
+
+      &--unavailable {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--surface-border);
+      }
+    }
+
+    .product-card--unavailable {
+      cursor: default;
+
+      .product-card__carousel,
+      .product-card__title,
+      .product-card__price {
+        filter: grayscale(1);
+        opacity: 0.55;
+      }
+
+      &:hover {
+        border-color: var(--surface-border);
+        box-shadow: none;
+        transform: none;
+      }
+    }
+
+    .product-card__remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-top: var(--space-xs);
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--accent-pink);
+        color: var(--accent-pink);
       }
     }
 

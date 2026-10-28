@@ -125,6 +125,8 @@ export interface AdminReport {
   details?: string;
   status: ReportStatus;
   adminNotes?: string;
+  /** Message signalé : son texte au moment du signalement, conservé même s'il est supprimé ensuite. */
+  reportedContent?: string;
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
@@ -140,7 +142,7 @@ export interface ReportTargetOwner {
 }
 
 export interface ReportTarget {
-  type: 'user' | 'post' | 'product' | 'rating';
+  type: 'user' | 'post' | 'product' | 'rating' | 'message';
   id: string;
   label: string;
   excerpt: string;
@@ -162,6 +164,9 @@ export interface ReportTarget {
     repliesCount?: number;
     location?: string;
     isSuspended?: boolean;
+    conversationId?: string;
+    attachmentsCount?: number;
+    isDeleted?: boolean;
   };
 }
 

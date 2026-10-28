@@ -1,12 +1,11 @@
 <template>
-   <div style="display: flex; align-items: center;">
-  <div class="container" ref="scrollContainer">
+  <div class="row-products">
+   <div class="container">
     <swiper
+        v-if="dataList.length > 0"
         class="custom-swiper-nav"
-        :navigation="{
-            nextEl: '.custom-swiper-next',
-            prevEl: '.custom-swiper-prev'
-        }"
+        :navigation="{ nextEl: '.custom-swiper-next', prevEl: '.custom-swiper-prev' }"
+        :a11y="{ prevSlideMessage: 'Annonces précédentes', nextSlideMessage: 'Annonces suivantes' }"
         :modules="modules"
         :slides-per-view="4"
         :space-between="20"
@@ -15,231 +14,150 @@
             720: { slidesPerView: 2 },
             980: { slidesPerView: 4 }
         }"
-                v-if="dataList && dataList.length > 0">
-        <swiper-slide v-for="(data, index) in dataList" :key="index">
-            <card
-                :data="data"
-                @click="openPostInfo(index)"
-                :key="index"
-            ></card>
+    >
+        <swiper-slide v-for="item in visibleList" :key="item._id">
+            <card :data="item" @open="openPost" @remove-favorite="removeFavorite" />
         </swiper-slide>
-        <div class="custom-swiper-prev">
-            <i class="bi bi-chevron-left chevron-bold"></i>
-        </div>
-        <div class="custom-swiper-next">
-            <i class="bi bi-chevron-right chevron-bold"></i>
-        </div>
-        <swiper-slide v-if="pagination.page < pagination.pages " class="voir-plus-slide">
-            <button class="voir-plus-btn" @click="onVoirPlus">Voir plus</button>
+        <button type="button" class="custom-swiper-prev">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="custom-swiper-next">
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <swiper-slide v-if="hasMorePages(pagination)" class="voir-plus-slide">
+            <button type="button" class="voir-plus-btn" @click="onVoirPlus">Voir plus</button>
         </swiper-slide>
     </swiper>
-
-
+   </div>
   </div>
-</div>
-    <Teleport to="body">
-      <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-          <post :key="dataCardPost?._id" @closePost="closePost" :idPost="dataCardPost?._id" />
-      </div>
-    </Teleport>
+  <Teleport to="body">
+    <div v-if="openedPost" class="post-overlay" @click.self="closePost">
+        <post :key="openedPost._id" :id-post="openedPost._id" @close-post="closePost" />
+    </div>
+  </Teleport>
 </template>
 
+<script setup lang="ts">
+/** Carrousel horizontal d'annonces (favoris du tableau de bord). */
+import { computed } from 'vue';
+import { Navigation, A11y } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import post from '@/components/post.vue';
+import card from '@/components/card.vue';
+import type { Post } from '@/types/post.types';
+import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
+import { usePostOverlay } from '@/components/post/usePostOverlay';
+import { hasMorePages, type ListPagination } from '@/components/post/types';
 
-<script lang="ts">
-    import { defineComponent, ref, nextTick, type PropType } from 'vue';
-    import post from '../components/post.vue';
-    import card from '../components/card.vue';
-    import { Navigation, A11y } from 'swiper/modules';
-    import type { Post } from '@/types/post.types';
+const props = withDefaults(defineProps<{
+    dataList?: Post[];
+    pagination?: ListPagination;
+    /** Inutilisé ici, mais déclaré pour ne pas finir en attribut HTML sur la racine. */
+    moreBtn?: boolean;
+}>(), {
+    dataList: () => [],
+    pagination: () => ({ limit: 1, page: 1, pages: 1, total: 10 }),
+    moreBtn: false,
+});
 
-    // Import Swiper Vue.js components
-    import { Swiper, SwiperSlide } from 'swiper/vue';
+const emit = defineEmits<{
+    voirPlus: [payload: { products: Post[]; pagination: ListPagination; type: 'PageFavorites' }];
+}>();
 
-    // Import Swiper styles
-    import 'swiper/css';
-    import 'swiper/css/navigation';
+const modules = [Navigation, A11y];
+const { isRemoved, removeFavorite } = useFavoriteRemoval();
+const { openedPost, openPost, closePost } = usePostOverlay();
 
-    export default defineComponent({
-        name: "row_products",
-        components: {
-            post,
-            card,
-            Swiper,
-            SwiperSlide,
-        },
+// Filtré plutôt que masqué : une diapositive cachée laisserait un trou dans le carrousel.
+const visibleList = computed(() => props.dataList.filter((item) => !isRemoved(item)));
 
-        props: {
-            dataList: {
-                type: Array as PropType<Post[]>,
-                required: true, // au lieu de true
-                default: () => []
-            },
-            pagination: {
-                type: Object,
-                required: false,
-                default: () => ({
-                    limit: 1,
-                    page: 1,
-                    pages: 1,
-                    total: 10,
-                }),
-            },
-            moreBtn: {
-                type: Boolean,
-                default: false
-            }
-        },
-        emits: ['voirPlus'],
+function onVoirPlus() {
+    emit('voirPlus', { products: props.dataList, pagination: props.pagination, type: 'PageFavorites' });
+}
+</script>
 
-        data() {
-          return {
+<!-- Scopé : les flèches sont dans ce gabarit (slot du carrousel), elles portent donc l'attribut de portée. -->
+<style lang="scss" scoped>
+.row-products {
+  display: flex;
+  align-items: center;
+}
 
-          };
-        },
-        setup() {
-            const dataCardPost = ref<Post | null>(null);
-            const stateCardPost = ref(false);
-            return {
-                dataCardPost,
-                stateCardPost,
-                modules: [Navigation, A11y],
+.container {
+  position: relative;
+  width: 100%;
+}
 
-            };
-        },
-        methods: {
-            async openPostInfo(index: number) {
-                if(this.stateCardPost){
-                    this.stateCardPost = false;
-                    await nextTick();
-                }
-                this.dataCardPost = this.dataList[index];
-                this.stateCardPost = true;
-            },
-            onVoirPlus() {
-                // Action à faire (navigation, popup, etc.)
-                this.$emit('voirPlus', { products: this.dataList, pagination: this.pagination, type: 'PageFavorites' });
-            },
-            closePost() {
-                this.stateCardPost = false;
-            },
+.swiper {
+  width: 100%;
+}
 
-
-
-
-        },
-
-        mounted() {
-
-        },
-    });
-
-  </script>
-
-  <style lang="scss" scoped>
-    .container {
-      position: relative;
-      width: 100%;
-    }
-
-    .swiper {
-      width: 100%;
-    }
-
-    .custom-swiper-prev,
-    .custom-swiper-next {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 10;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-secondary);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-full);
-      cursor: pointer;
-      color: var(--text-primary);
-      transition: all var(--transition-fast);
-
-      &:hover {
-        background: var(--accent-pink);
-        color: white;
-        border-color: var(--accent-pink);
-      }
-    }
-    .custom-swiper-prev { left: -8px; }
-    .custom-swiper-next { right: -8px; }
-
-    .voir-plus-slide {
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      min-width: 110px !important;
-      max-width: 110px !important;
-    }
-
-    .voir-plus-btn {
-      width: 100%;
-      min-height: 260px;
-      background: var(--bg-tertiary);
-      border: 1.5px dashed var(--surface-border);
-      border-radius: var(--radius-md);
-      color: var(--text-secondary);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all var(--transition-base);
-
-      &:hover {
-        border-color: var(--accent-pink);
-        color: var(--accent-pink);
-        background: rgba(255, 45, 120, 0.05);
-      }
-    }
-
-    .post-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-  </style>
-<style lang="scss">
-.custom-swiper-nav .custom-swiper-next,
-.custom-swiper-nav .custom-swiper-prev {
+.custom-swiper-prev,
+.custom-swiper-next {
   position: absolute;
   top: 40%;
+  transform: translateY(-50%);
   z-index: 10;
   width: 45px;
   height: 45px;
-  background: #ffffff;
-  color: var(--primary-color);
-  border-radius: 50%;
+  padding: 0;
   display: flex;
-  align-items:center;
+  align-items: center;
   justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
   font-size: 1.5em;
   font-weight: bold;
-  cursor: pointer;
-  transform: translateY(-50%);
-  opacity: 0.9;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  transition: background 0.2s;
-  user-select: none;
   line-height: 1;
+  opacity: 0.9;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-fast), color var(--transition-fast), opacity 0.2s;
+
+  &:hover {
+    background: var(--accent-pink);
+    color: var(--text-on-accent);
+    border-color: var(--accent-pink);
+  }
+
+  &.swiper-button-disabled {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
 }
-.custom-swiper-nav .custom-swiper-prev { left: 10px; text-align: center; vertical-align:sub}
-.custom-swiper-nav .custom-swiper-next { right: 10px; text-align: center; vertical-align: sub; }
-.custom-swiper-nav .custom-swiper-next.swiper-button-disabled,
-.custom-swiper-nav .custom-swiper-prev.swiper-button-disabled {
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  transition: opacity 0.2s;
+
+.custom-swiper-prev { left: 10px; }
+.custom-swiper-next { right: 10px; }
+
+.voir-plus-slide {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px !important;
+  max-width: 110px !important;
+}
+
+.voir-plus-btn {
+  width: 100%;
+  min-height: 260px;
+  background: var(--bg-tertiary);
+  border: 1.5px dashed var(--surface-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+
+  &:hover {
+    border-color: var(--accent-pink);
+    color: var(--accent-pink);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
+  }
 }
 </style>

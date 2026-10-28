@@ -1,6 +1,5 @@
 ﻿<template>
     <main class="page">
-        <Nav_bar></Nav_bar>
 
         <!-- Deletion scheduled banner -->
         <div v-if="deletionDate" class="deletion-banner">
@@ -42,7 +41,13 @@
               <i class="bi bi-chat-dots"></i>
               <span>Messages</span>
             </button>
+            <button class="quick-link" @click="$router.push({ name: 'followed_groups' })">
+              <i class="bi bi-stars"></i>
+              <span>Mes groupes suivis</span>
+            </button>
           </div>
+
+          <DashboardFeed />
 
           <!-- Favorites -->
           <section v-if="productFavorites.products && productFavorites.products.length > 0" class="dashboard-section stagger-children">
@@ -55,7 +60,7 @@
                 Voir tout <i class="bi bi-arrow-right"></i>
               </button>
             </div>
-            <row_products @voirPlus="loadMore" :moreBtn="false" :pagination="productFavorites.pagination" :dataList="productFavorites.products"></row_products>
+            <row_products :more-btn="false" :pagination="productFavorites.pagination" :data-list="productFavorites.products" @voir-plus="loadMore"></row_products>
           </section>
 
           <!-- Recommendations -->
@@ -66,7 +71,7 @@
                 Recommandé pour toi
               </h2>
             </div>
-            <Grid :moreBtn="true" :pagination="paginationTab" :dataList="productRecommendations"></Grid>
+            <Grid :more-btn="true" :pagination="paginationTab" :data-list="productRecommendations"></Grid>
           </section>
 
           <!-- Feed -->
@@ -77,7 +82,7 @@
                 Fil d'actu
               </h2>
             </div>
-            <Grid :moreBtn="true" :pagination="paginationTab" :dataList="dataCardList"></Grid>
+            <Grid :more-btn="true" :pagination="paginationTab" :data-list="dataCardList"></Grid>
           </section>
 
           <!-- Empty state -->
@@ -96,15 +101,17 @@
     import { defineComponent } from 'vue';
     import { useRouter } from "vue-router";
 
-    import Nav_bar from '@/components/adherents/nav_bar.vue';
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
     import Grid from '@/components/grid.vue';
+    import DashboardFeed from '@/components/DashboardFeed.vue';
     import postService from '@/services/post.service';
     import authentification from '@/services/authentification.service';
     import { API_URL } from '@/config/api';
     import { createApiClient } from '@/services/http';
     import type { Post, PostsResponse } from '@/types/post.types';
+    import { formatDate } from '@/utils/format';
+    import { searchRoute } from '@/router/searchRoute';
 
     type ListPagination = PostsResponse['pagination'];
 
@@ -114,20 +121,10 @@
   export default defineComponent({
     name: 'DashboardView',
     components: {
-      Nav_bar,
       search_bar,
       row_products,
-      Grid
-    },
-    mounted() {
-      authentification.verifSession().then(() => {
-        this.getFav();
-        this.getRecommendations();
-        this.getPosts(12);
-        this.loadDeletionStatus();
-      }).catch(() => {
-        // Session invalid - user will be redirected to login
-      });
+      Grid,
+      DashboardFeed
     },
     setup() {
       const router = useRouter();
@@ -147,6 +144,16 @@
         productFavorites: { pagination: {}, products: [] },
         deletionDate: null,
       };
+    },
+    mounted() {
+      authentification.verifSession().then(() => {
+        this.getFav();
+        this.getRecommendations();
+        this.getPosts(12);
+        this.loadDeletionStatus();
+      }).catch(() => {
+        // Session invalid - user will be redirected to login
+      });
     },
     methods: {
       async getRecommendations(){
@@ -171,11 +178,7 @@
       loadMore({ products, pagination, type }: { products: Post[]; pagination: Partial<ListPagination>, type: string }) {
         sessionStorage.setItem('posts_str', JSON.stringify(products));
         sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
-        const combined = this.$func.buildCombinedSlug('', 'more'+type);
-        this.router.push({
-            name: 'searchList',
-            params: { combined }
-        });
+        this.router.push(searchRoute({ event: 'more' + type }));
       },
       async loadDeletionStatus() {
         try {
@@ -187,7 +190,7 @@
         }
       },
       formatDate(iso: string) {
-        return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+        return formatDate(iso, 'long');
       },
       goToSettings() {
         this.router.push('/adherents/settings');

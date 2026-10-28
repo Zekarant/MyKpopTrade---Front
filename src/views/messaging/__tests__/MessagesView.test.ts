@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import Cookies from 'js-cookie'
 
 /** Test de montage de MessagesView : vérifie le comportement visible, pas l'implémentation. */
@@ -42,6 +43,16 @@ const defaultFetchConversation: FetchConversation = async (id) => ({
   media: []
 })
 
+type ActionListener = (context: { name: string; args: unknown[]; after: (callback: () => unknown) => void }) => void
+const actionListeners: ActionListener[] = []
+
+/** Rejoue une action du store (comme le ferait le flux temps réel) auprès des abonnés `$onAction`. */
+async function emitStoreAction(name: string, ...args: unknown[]) {
+  const callbacks: (() => unknown)[] = []
+  actionListeners.forEach((listener) => listener({ name, args, after: (callback) => callbacks.push(callback) }))
+  await Promise.all(callbacks.map((callback) => callback()))
+}
+
 const store = reactive({
   conversations: [] as typeof conversations,
   sortedConversations: [] as typeof conversations,
@@ -51,7 +62,11 @@ const store = reactive({
   }),
   fetchConversation: vi.fn(defaultFetchConversation),
   markAsRead: vi.fn(async () => undefined),
-  respondToNegotiation: vi.fn()
+  respondToNegotiation: vi.fn(),
+  $onAction: vi.fn((listener: ActionListener) => {
+    actionListeners.push(listener)
+    return () => {}
+  })
 })
 
 const route = { params: {} as Record<string, string> }
@@ -60,15 +75,13 @@ vi.mock('@/store/messaging.store', () => ({ useMessagingStore: () => store }))
 vi.mock('vue-router', () => ({ useRoute: () => route, useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/services/user.service', () => ({
   default: {
-    getMyInformation: vi.fn(async () => ({ user: { id: ME, username: 'Moi' } })),
-    renderUserAvatar: () => '<span></span>'
+    getMyInformation: vi.fn(async () => ({ user: { id: ME, username: 'Moi' } }))
   }
 }))
 vi.mock('@/services/payment.service', () => ({ default: {} }))
 vi.mock('@/services/messaging.service', () => ({ default: { getAttachmentUrl: () => '' } }))
 vi.mock('vue3-emoji-picker', () => ({ default: { template: '<div />' } }))
 vi.mock('vue3-emoji-picker/css', () => ({}))
-vi.mock('@/components/adherents/nav_bar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/components/ImageCarousel.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/adherents/send_message.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/send_offer.vue', () => ({ default: { template: '<div />' } }))
@@ -98,9 +111,51 @@ const tabCount = (wrapper: Awaited<ReturnType<typeof mountView>>, label: string)
 describe('MessagesView', () => {
   beforeEach(() => {
     Cookies.set('id_user', ME)
+    // Le profil vient du store utilisateur (le store de messagerie reste simulé).
+    setActivePinia(createPinia())
     route.params = {}
     store.fetchConversation.mockClear()
+    actionListeners.length = 0
     document.body.innerHTML = ''
+  })
+
+  it('affiche un message reçu en temps réel dans la conversation ouverte et le marque lu', async () => {
+    const wrapper = await mountView()
+    store.markAsRead.mockClear()
+
+    const incoming = {
+      _id: 'rt-1',
+      conversation: 'c-alice',
+      content: 'Elle est toujours dispo !',
+      contentType: 'text',
+      sender: { _id: 'alice', username: 'Alice' },
+      readBy: ['alice'],
+      createdAt: '2026-10-09T10:00:00Z'
+    }
+    await emitStoreAction('handleNewMessage', incoming)
+    await emitStoreAction('handleNewMessage', incoming)
+    await flushPromises()
+
+    expect(wrapper.findAll('.message').filter((m) => m.text().includes('Elle est toujours dispo !'))).toHaveLength(1)
+    expect(store.markAsRead).toHaveBeenCalledWith('c-alice')
+    wrapper.unmount()
+  })
+
+  it('ignore un message temps réel d\'une autre conversation', async () => {
+    const wrapper = await mountView()
+
+    await emitStoreAction('handleNewMessage', {
+      _id: 'rt-2',
+      conversation: 'c-bob',
+      content: 'Pour la conversation de Bob',
+      sender: { _id: 'bob' },
+      readBy: ['bob'],
+      createdAt: '2026-10-09T10:00:00Z'
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Pour la conversation de Bob')
+    wrapper.unmount()
   })
 
   it('liste les conversations non archivées et affiche les compteurs d\'onglets', async () => {

@@ -1,6 +1,4 @@
-import type { AxiosInstance } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 import type { Post } from '@/types/post.types';
 
 export interface AdvancedSearchPayload {
@@ -15,6 +13,12 @@ export interface AdvancedSearchPayload {
   era?: string;
   company?: string;
   currency?: string;
+  /** Métadonnées structurées : identifiants du catalogue, membre exact, version, officiel. */
+  group?: string;
+  member?: string;
+  album?: string;
+  version?: string;
+  isOfficial?: boolean;
   sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'popular';
   page?: number;
   limit?: number;
@@ -42,38 +46,30 @@ export interface SearchHistoryEntry {
 }
 
 class SearchService {
-  private apiClient: AxiosInstance;
-  private API_BASE_URL: string = `${API_URL}/api`;
-
-  constructor() {
-    this.apiClient = createApiClient({
-      baseURL: `${this.API_BASE_URL}/search`,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  private client = apiClient('/api/search');
 
   async advancedSearch(payload: AdvancedSearchPayload) {
-    const response = await this.apiClient.post<AdvancedSearchResponse>('/advanced', payload);
+    const response = await this.client.post<AdvancedSearchResponse>('/advanced', payload);
     return response.data;
   }
 
   async getSuggestions(query: string) {
-    const response = await this.apiClient.get<{ suggestions: SearchSuggestions }>('/suggestions', { params: { query } });
+    const response = await this.client.get<{ suggestions: SearchSuggestions }>('/suggestions', { params: { query } });
     return response.data;
   }
 
   async getHistory() {
-    const response = await this.apiClient.get<{ searchHistory: SearchHistoryEntry[] }>('/history');
+    const response = await this.client.get<{ searchHistory: SearchHistoryEntry[] }>('/history');
     return response.data;
   }
 
   async deleteHistoryItem(historyId: string) {
-    const response = await this.apiClient.delete(`/history/${historyId}`);
+    const response = await this.client.delete(`/history/${historyId}`);
     return response.data;
   }
 
   async clearHistory() {
-    const response = await this.apiClient.delete('/history');
+    const response = await this.client.delete('/history');
     return response.data;
   }
 }

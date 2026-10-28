@@ -5,8 +5,8 @@
       <select 
         id="rating-filter" 
         v-model="selectedRating" 
-        @change="applyFilters"
         class="filter-select"
+        @change="applyFilters"
       >
         <option value="">Toutes les notes</option>
         <option value="5">⭐⭐⭐⭐⭐ 5 étoiles</option>
@@ -22,8 +22,8 @@
       <select 
         id="sort-filter" 
         v-model="selectedSort" 
-        @change="applyFilters"
         class="filter-select"
+        @change="applyFilters"
       >
         <option value="recent">Plus récents</option>
         <option value="oldest">Plus anciens</option>
@@ -32,7 +32,7 @@
       </select>
     </div>
 
-    <button v-if="hasActiveFilters" @click="resetFilters" class="btn-reset">
+    <button v-if="hasActiveFilters" class="btn-reset" @click="resetFilters">
       <i class="bi bi-x-circle"></i> Réinitialiser
     </button>
   </div>

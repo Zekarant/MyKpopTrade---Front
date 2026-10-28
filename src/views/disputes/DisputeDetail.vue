@@ -1,8 +1,7 @@
 <template>
   <main class="page">
-    <Nav_bar />
     <div class="dispute-detail">
-      <div class="dispute-detail__container" v-if="dispute">
+      <div v-if="dispute" class="dispute-detail__container">
         <header class="dispute-detail__header">
           <button class="btn btn--ghost btn--sm" @click="$router.back()">
             <i class="bi bi-arrow-left"></i> Retour
@@ -60,14 +59,13 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Cookies from 'js-cookie';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
+import { currentUserId } from '@/services/session.cookies';
 import { apiErrorMessage } from '@/services/apiError';
 import disputeService, { type Dispute, type DisputeMessage, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
+import { formatDate, formatDateTime } from '@/utils/format';
 
 export default defineComponent({
   name: 'DisputeDetail',
-  components: { Nav_bar },
   props: { id: { type: String, required: true } },
   data() {
     return {
@@ -75,7 +73,7 @@ export default defineComponent({
       loading: false,
       reply: '',
       sending: false,
-      myId: Cookies.get('id_user') || ''
+      myId: currentUserId() || ''
     };
   },
   computed: {
@@ -94,10 +92,10 @@ export default defineComponent({
       return this.canReply && this.dispute.openedBy === this.myId;
     }
   },
-  async mounted() { await this.fetch(); },
   watch: {
     id() { this.fetch(); }
   },
+  async mounted() { await this.fetch(); },
   methods: {
     async fetch() {
       this.loading = true;
@@ -132,10 +130,10 @@ export default defineComponent({
       }
     },
     formatDate(iso: string) {
-      return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+      return formatDate(iso);
     },
     formatDateTime(iso: string) {
-      return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return formatDateTime(iso);
     },
     statusLabel(s: DisputeStatus) {
       return ({

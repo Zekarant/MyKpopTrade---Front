@@ -1,14 +1,5 @@
-// services/user.service.ts
-import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import { apiClient } from '@/services/apiClient';
 
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
-
-interface ApiError {
-  message: string;
-  status?: number;
-  code?: string;
-}
 export type ShippingMethod = 'national' | 'worldwide' | 'localPickup';
 
 export interface ShippingAddressPayload {
@@ -44,11 +35,10 @@ interface PaypalConfig {
   message: string;
 }
 
-interface PaypalSatus {
+interface PaypalStatus {
   success: boolean;
   status: string;
   payment: PaymentDetails;
-
 }
 
 /** Raison pour laquelle un vendeur ne peut pas encore encaisser via PayPal. */
@@ -76,62 +66,39 @@ export interface PayPalAccountStatus {
   blockMessage: string | null;
 }
 
-class paymentService {
-    private paymentsApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${API_URL}/api`;
+class PaymentService {
+  private client = apiClient('/api/payments');
 
-    constructor() {
-
-        this.paymentsApiClient = createApiClient({
-        baseURL: `${this.API_BASE_URL}/payments`,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        });
-    }
-
-    async checkPaymentStatus(payment_id: string): Promise<PaypalSatus> {
-      try {
-        const response: AxiosResponse<PaypalSatus> = await this.paymentsApiClient.get('/' + payment_id);
-        return response.data;
-      } catch (error) {
-        const axiosError = error as AxiosError<ApiError>;
-        console.error("Erreur lors de la vérification du paiement :", axiosError.response?.data);
-        throw error;
-      }
-    }
+  async checkPaymentStatus(paymentId: string): Promise<PaypalStatus> {
+    const { data } = await this.client.get<PaypalStatus>(`/${paymentId}`);
+    return data;
+  }
 
   async initPayPal(payload: InitPayPalPayload): Promise<PaypalConfig> {
-    try {
-      const response: AxiosResponse<PaypalConfig> = await this.paymentsApiClient.post('/paypal/create', payload);
-      return response.data;
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiError>;
-      console.error("Erreur lors de l'initialisation PayPal :", axiosError.response?.data);
-      throw error;
-    }
+    const { data } = await this.client.post<PaypalConfig>('/paypal/create', payload);
+    return data;
   }
 
   async capturePayPal(payload: { paymentId?: string; paypalOrderId?: string }) {
-    const response = await this.paymentsApiClient.post('/paypal/capture', {
+    const response = await this.client.post('/paypal/capture', {
       orderId: payload.paypalOrderId || payload.paymentId
     });
     return response.data;
   }
 
   async cancelPayPal(orderId: string) {
-    const response = await this.paymentsApiClient.post('/paypal/cancel', { orderId });
+    const response = await this.client.post('/paypal/cancel', { orderId });
     return response.data;
   }
 
   async confirmPayPal(params: { token?: string; PayerID?: string; paymentId?: string }) {
-    const response = await this.paymentsApiClient.get('/paypal/confirm', { params });
+    const response = await this.client.get('/paypal/confirm', { params });
     return response.data;
   }
 
   /** Génère le lien d'inscription PayPal (Partner Referrals) du vendeur. */
   async getPayPalOnboardingLink(): Promise<{ success: boolean; actionUrl: string; message?: string }> {
-    const response = await this.paymentsApiClient.post('/paypal/onboarding-link');
+    const response = await this.client.post('/paypal/onboarding-link');
     return response.data;
   }
 
@@ -141,52 +108,51 @@ class paymentService {
    * vendeur vient de corriger son compte (email confirmé, restriction levée).
    */
   async getPayPalAccountStatus(refresh = false): Promise<PayPalAccountStatus> {
-    const response = await this.paymentsApiClient.get('/paypal/account-status', {
+    const response = await this.client.get('/paypal/account-status', {
       params: refresh ? { refresh: 'true' } : undefined
     });
     return response.data;
   }
 
   async disconnectPayPal() {
-    const response = await this.paymentsApiClient.post('/paypal/disconnect');
+    const response = await this.client.post('/paypal/disconnect');
     return response.data;
   }
 
   async refundPayment(paymentId: string, payload: { reason?: string; amount?: number; password?: string }) {
-    const response = await this.paymentsApiClient.post(`/${paymentId}/refund`, payload);
+    const response = await this.client.post(`/${paymentId}/refund`, payload);
     return response.data;
   }
 
   async createShipment(paymentId: string, payload: { carrier: string; trackingNumber: string; estimatedDelivery?: string }) {
-    const response = await this.paymentsApiClient.post(`/${paymentId}/shipment`, payload);
+    const response = await this.client.post(`/${paymentId}/shipment`, payload);
     return response.data;
   }
 
   async getShipment(paymentId: string) {
-    const response = await this.paymentsApiClient.get(`/${paymentId}/shipment`);
+    const response = await this.client.get(`/${paymentId}/shipment`);
     return response.data;
   }
 
   async markShipmentDelivered(paymentId: string) {
-    const response = await this.paymentsApiClient.post(`/${paymentId}/shipment/delivered`);
+    const response = await this.client.post(`/${paymentId}/shipment/delivered`);
     return response.data;
   }
 
   async exportPaymentData() {
-    const response = await this.paymentsApiClient.get('/export');
+    const response = await this.client.get('/export');
     return response.data;
   }
 
   async anonymizeMyPaymentData(payload: { password: string }) {
-    const response = await this.paymentsApiClient.post('/gdpr/anonymize', payload);
+    const response = await this.client.post('/gdpr/anonymize', payload);
     return response.data;
   }
 
   async getMyPayments(params: { role?: 'buyer' | 'seller' | 'all'; status?: string; page?: number; limit?: number } = {}) {
-    const response = await this.paymentsApiClient.get('/my', { params });
+    const response = await this.client.get('/my', { params });
     return response.data;
   }
+}
 
-};
-
-export default new paymentService();
+export default new PaymentService();

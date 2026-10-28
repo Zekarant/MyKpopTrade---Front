@@ -1,5 +1,6 @@
 import type { CartItem } from '@/services/cart.service';
 import type { ShippingMethod } from '@/services/payment.service';
+import { sumAmounts } from '@/utils/money';
 
 type PricedCartItem = Pick<CartItem, 'priceSnapshot' | 'buyerPrice'> & { product: Pick<CartItem['product'], 'price'> };
 
@@ -17,7 +18,26 @@ export function isNegotiatedPrice(item: PricedCartItem): boolean {
 }
 
 export function sumCartItems(items: PricedCartItem[]): number {
-  return items.reduce((sum, item) => sum + cartItemPrice(item), 0);
+  return sumAmounts(items.map(cartItemPrice));
+}
+
+export interface SellerGroup<T> {
+  sellerId: string;
+  items: T[];
+}
+
+/** Articles regroupés par vendeur, dans l'ordre du panier. */
+export function groupCartItemsBySeller<T extends { product: Pick<CartItem['product'], 'seller'> }>(
+  items: T[]
+): SellerGroup<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const sellerId = item.product.seller || 'unknown';
+    const group = groups.get(sellerId);
+    if (group) group.push(item);
+    else groups.set(sellerId, [item]);
+  }
+  return [...groups].map(([sellerId, groupItems]) => ({ sellerId, items: groupItems }));
 }
 
 type ShippedCartItem = Pick<CartItem, 'shippingCosts'> & { product: Pick<CartItem['product'], 'title'> };
@@ -30,15 +50,15 @@ export interface CartShipping {
 }
 
 export function cartShipping(items: ShippedCartItem[], method: ShippingMethod): CartShipping {
-  let amount = 0;
+  const costs: number[] = [];
   const undeliverable: string[] = [];
   for (const item of items) {
     const cost = item.shippingCosts?.[method];
     if (cost === null || cost === undefined) {
       undeliverable.push(item.product.title);
     } else {
-      amount += cost;
+      costs.push(cost);
     }
   }
-  return { amount, undeliverable };
+  return { amount: sumAmounts(costs), undeliverable };
 }

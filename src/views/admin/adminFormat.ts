@@ -1,6 +1,7 @@
-import { isAxiosError } from 'axios';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { apiErrorBody } from '@/services/apiError';
 import { fr } from 'date-fns/locale';
+import { formatDate as sharedFormatDate, formatPrice as sharedFormatPrice } from '@/utils/format';
 
 export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   photocard: 'Photocard',
@@ -23,7 +24,8 @@ export const REPORT_TARGET_LABELS: Record<string, string> = {
   product: 'Produit',
   rating: 'Avis',
   user: 'Profil',
-  post: 'Publication'
+  post: 'Publication',
+  message: 'Message'
 };
 
 export const REPORT_STATUS_LABELS: Record<string, string> = {
@@ -79,14 +81,8 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin'
 };
 
-export const formatDate = (value?: string | Date | null): string => {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-};
+// Formatage partagé avec le reste du site ; l'admin affiche « — » pour une valeur absente.
+export const formatDate = (value?: string | Date | null): string => sharedFormatDate(value) || '—';
 
 export const formatDateTime = (value?: string | Date | null): string => {
   if (!value) return '—';
@@ -106,14 +102,12 @@ export const formatAge = (value?: string | Date | null): string => {
 export const getInitial = (username?: string | null): string =>
   username ? username.charAt(0).toUpperCase() : '?';
 
-export const formatPrice = (amount?: number, currency = 'EUR'): string => {
-  if (amount === undefined || amount === null) return '—';
-  return `${amount.toFixed(2)} ${currency === 'EUR' ? '€' : currency}`;
-};
+export const formatPrice = (amount?: number, currency = 'EUR'): string =>
+  sharedFormatPrice(amount, currency) || '—';
 
 type ApiErrorBody = { message?: string; error?: { message?: string } };
 
 export const apiErrorMessage = (error: unknown, fallback: string): string => {
-  const data = isAxiosError<ApiErrorBody>(error) ? error.response?.data : undefined;
+  const data = apiErrorBody<ApiErrorBody>(error);
   return data?.message || data?.error?.message || fallback;
 };

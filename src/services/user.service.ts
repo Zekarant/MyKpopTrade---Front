@@ -1,72 +1,30 @@
-// services/user.service.ts
-import type { AxiosInstance, AxiosResponse } from "axios";
+import type { UserResponse } from '@/types/user.types';
+import { apiClient } from '@/services/apiClient';
 
-import authentificationService  from '@/services/authentification.service';
-import type {
-    UserResponse,
-    ImgUserProfile
-} from "@/types/user.types";
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
-import { apiErrorResponse, type ApiErrorBody } from '@/services/apiError';
+/** Réponse de GET /api/profiles/verification-stats/:userId (preuves par statut). */
+export interface VerificationStats {
+  verified: number;
+  pending: number;
+  rejected: number;
+  total: number;
+  totalSales: number;
+  totalPurchases: number;
+}
 
-const HTML_ESCAPES: Record<string, string> = {
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-};
-const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
-
-
-
-class userService {
-    private userApiClient: AxiosInstance;
-    private rgpdApiClient: AxiosInstance;
-    private API_BASE_URL: string = `${API_URL}/api`;
-
-    constructor() {
-
-        this.userApiClient = createApiClient({
-        baseURL: `${this.API_BASE_URL}/profiles`,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        });
-
-        this.rgpdApiClient = createApiClient({
-        baseURL: `${this.API_BASE_URL}/users`,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        });
-    }
+/**
+ * Profil du membre connecté et droits RGPD sur son compte.
+ * Une session expirée est gérée par le client HTTP (renouvellement, puis
+ * retour à la connexion) : les méthodes n'ont pas à s'en occuper.
+ */
+class UserService {
+  private profilesClient = apiClient('/api/profiles');
+  private usersClient = apiClient('/api/users');
 
   async getMyInformation(): Promise<UserResponse> {
-    try {
-      const response: AxiosResponse<UserResponse & ApiErrorBody> = await this.userApiClient.get(
-        `/me`
-      );
-
-      if (
-        response.data.message === "Token invalide" ||
-        response.data.code === "TOKEN_EXPIRED" ||
-        response.status === 401
-      ) {
-        await authentificationService.verifSession().catch(() => {});
-      }
-
-      return response.data;
-    } catch (error) {
-      const errorResponse = apiErrorResponse(error);
-      if (
-        errorResponse?.data?.message === "Token invalide" ||
-        errorResponse?.data?.code === "TOKEN_EXPIRED" ||
-        errorResponse?.status === 401
-      ) {
-        await authentificationService.verifSession().catch(() => {});
-      }
-      console.error("Erreur lors de la récupération :", error);
-      throw error;
-    }
+    const { data } = await this.profilesClient.get<UserResponse>('/me');
+    return data;
   }
+
   /**
    * Met à jour les consentements RGPD stockés sur le compte.
    *
@@ -79,68 +37,37 @@ class userService {
     dataProcessing?: boolean;
     marketing?: boolean;
   }) {
-    const response = await this.rgpdApiClient.put('/me/consents', payload);
-    return response.data;
+    const { data } = await this.usersClient.put('/me/consents', payload);
+    return data;
+  }
+
+  /** Indicateurs de confiance publics d'un membre (preuves de transaction, ventes, achats). */
+  async getVerificationStats(userId: string): Promise<VerificationStats> {
+    const { data } = await this.profilesClient.get<{ statistics: VerificationStats }>(
+      `/verification-stats/${encodeURIComponent(userId)}`
+    );
+    return data.statistics;
   }
 
   async exportMyData() {
-    const response = await this.rgpdApiClient.get('/me/data-export');
-    return response.data;
+    const { data } = await this.usersClient.get('/me/data-export');
+    return data;
   }
 
   async requestAccountDeletion(payload: { confirmation: boolean }) {
-    const response = await this.rgpdApiClient.post('/me/deletion-request', payload);
-    return response.data;
+    const { data } = await this.usersClient.post('/me/deletion-request', payload);
+    return data;
   }
 
   async cancelAccountDeletion() {
-    const response = await this.rgpdApiClient.delete('/me/deletion-request');
-    return response.data;
+    const { data } = await this.usersClient.delete('/me/deletion-request');
+    return data;
   }
 
-  async anonymizeMyAccount(payload: { confirmation: boolean }) {
-    const response = await this.rgpdApiClient.post('/me/anonymize', payload);
-    return response.data;
+  async anonymizeMyAccount(payload: { confirmation: boolean; currentPassword: string }) {
+    const { data } = await this.usersClient.post('/me/anonymize', payload);
+    return data;
   }
+}
 
-  // Le HTML rendu ici part dans des v-html : toute donnée utilisateur doit être
-  // échappée, sinon un pseudo ou une URL d'avatar piégés injectent du script.
-  renderUserAvatar(dataUser: ImgUserProfile): string {
-    const { username, profilePicture } = dataUser;
-    // Initiale limitée à [A-Z0-9] : elle est aussi insérée dans le JS de onerror.
-    const initial = username?.charAt(0).toUpperCase() ?? '';
-    const firstLetter = /^[A-Z0-9]$/.test(initial) ? initial : '?';
-
-    if (
-      profilePicture &&
-      profilePicture.trim() !== "" &&
-      profilePicture.trim() !==
-        "https://mykpoptrade.com/images/avatar-default.png"
-    ) {
-      // Les avatars Google / Discord sont des URL absolues, pas des chemins de l'API.
-      const src = /^https?:\/\//.test(profilePicture) ? profilePicture : `${API_URL}${profilePicture}`;
-      return `
-        <img src="${escapeHtml(src)}" alt="${escapeHtml(username ?? '')}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#ff2d78,#7c3aed);border-radius:3px;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;\\'>${firstLetter}</div>'" />
-      `;
-    } else {
-      return `
-        <div style="
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          background-color: var(--primary-color);
-          border-radius: 3px;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 20px;
-        ">
-          ${firstLetter}
-        </div>
-      `;
-    }
-  }
-};
-export default new userService();
+export default new UserService();

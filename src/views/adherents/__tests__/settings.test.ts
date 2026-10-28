@@ -11,6 +11,7 @@ const http = vi.hoisted(() => ({
   delete: vi.fn()
 }))
 const toast = vi.hoisted(() => ({ showToastSuccess: vi.fn(), showToastError: vi.fn() }))
+const users = vi.hoisted(() => ({ anonymizeMyAccount: vi.fn() }))
 
 vi.mock('@/services/http', () => ({
   createApiClient: () => http,
@@ -20,7 +21,7 @@ vi.mock('@/function', () => ({ func: toast }))
 vi.mock('@/services/payment.service', () => ({
   default: { getPayPalAccountStatus: vi.fn(async () => ({ connected: false, scopes: [] })) }
 }))
-vi.mock('@/services/user.service', () => ({ default: {} }))
+vi.mock('@/services/user.service', () => ({ default: users }))
 vi.mock('@/components/adherents/nav_bar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/components/adherents/TwoFactorCard.vue', () => ({ default: { template: '<div />' } }))
 
@@ -29,6 +30,8 @@ import SettingsPage from '../settings.vue'
 const savedProfile = () => ({
   _id: 'me',
   username: 'MoiMeme',
+  email: 'moi@example.com',
+  isEmailVerified: false,
   bio: 'Bio enregistrée',
   phoneNumber: '+33612345678',
   isPhoneVerified: true,
@@ -67,6 +70,11 @@ describe('page Paramètres', () => {
     vi.clearAllMocks()
     http.get.mockImplementation(async (url: string) => {
       if (url === '/api/auth/profile') return { data: { user: savedProfile() } }
+      if (url === '/api/users/me/notification-preferences') {
+        const on = { email: true, push: true }
+        return { data: { preferences: { orders: on, offers: on, messages: on, disputes: on, reviews: on, social: on } } }
+      }
+      if (url === '/me/blocked') return { data: { blockedUsers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } } }
       throw new Error(`GET inattendu : ${url}`)
     })
     http.put.mockImplementation(async (_url: string, body: Record<string, unknown>) => ({
@@ -135,6 +143,54 @@ describe('page Paramètres', () => {
     expect((wrapper.find('input[type="tel"]').element as HTMLInputElement).value).toBe('+33612345678')
   })
 
+  it('redemande l\'email de vérification pour l\'adresse du compte', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Vérifier')!.trigger('click')
+    await flushPromises()
+
+    expect(http.post).toHaveBeenCalledWith('/api/auth/resend-verification', { email: 'moi@example.com' })
+  })
+
+  it('changer d\'email exige le mot de passe actuel', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+    expect(wrapper.find('#settings-current-password').exists()).toBe(false)
+
+    await wrapper.find('#settings-email').setValue('nouveau@example.com')
+    expect(wrapper.find('#settings-current-password').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Compte créé avec Google ou Discord')
+
+    await wrapper.find('#settings-current-password').setValue('Secret1!')
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Changer l\'adresse')!.trigger('click')
+    await flushPromises()
+
+    expect(http.put).toHaveBeenCalledWith('/api/auth/profile', {
+      email: 'nouveau@example.com',
+      currentPassword: 'Secret1!'
+    })
+    // L'adresse enregistrée devient la référence : le champ mot de passe disparaît.
+    expect(wrapper.find('#settings-current-password').exists()).toBe(false)
+    expect(wrapper.text()).toContain('nouveau@example.com')
+  })
+
+  it('un mot de passe actuel refusé s\'affiche sous le champ, sans fermer la session', async () => {
+    const wrapper = await mountPage()
+    await openSection(wrapper, 'Compte')
+    await wrapper.find('#settings-email').setValue('nouveau@example.com')
+    await wrapper.find('#settings-current-password').setValue('mauvais')
+    http.put.mockRejectedValueOnce({
+      response: { status: 401, data: { message: 'Mot de passe actuel incorrect', code: 'CURRENT_PASSWORD_INVALID' } }
+    })
+
+    await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Changer l\'adresse')!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.field__error').text()).toBe('Mot de passe actuel incorrect')
+    expect(toast.showToastError).not.toHaveBeenCalled()
+  })
+
   it('lie un compte avec un ticket à usage unique, jamais avec le jeton d\'accès', async () => {
     const wrapper = await mountPage()
     await openSection(wrapper, 'Sécurité')
@@ -144,6 +200,46 @@ describe('page Paramètres', () => {
     await flushPromises()
 
     expect(http.post).toHaveBeenCalledWith('/api/auth/link/google')
+  })
+
+  describe('anonymisation', () => {
+    const anonymizeButton = (wrapper: Awaited<ReturnType<typeof mountPage>>) =>
+      wrapper.findAll('.btn-settings').find((b) => b.text() === 'Anonymiser définitivement')!
+
+    async function openAnonymize() {
+      const wrapper = await mountPage()
+      await openSection(wrapper, 'Confidentialité')
+      await wrapper.findAll('.btn-settings').find((b) => b.text() === 'Anonymiser mes données')!.trigger('click')
+      return wrapper
+    }
+
+    it('exige le mot de passe actuel puis recharge le profil', async () => {
+      const wrapper = await openAnonymize()
+      expect(anonymizeButton(wrapper).attributes('disabled')).toBeDefined()
+      users.anonymizeMyAccount.mockResolvedValueOnce({ message: 'Données anonymisées' })
+
+      await wrapper.find('#settings-anonymize-password').setValue('Secret1!')
+      await anonymizeButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(users.anonymizeMyAccount).toHaveBeenCalledWith({ confirmation: true, currentPassword: 'Secret1!' })
+      expect(toast.showToastSuccess).toHaveBeenCalledWith('Données anonymisées')
+      expect(http.get.mock.calls.filter(([url]) => url === '/api/auth/profile')).toHaveLength(2)
+    })
+
+    it('un mot de passe refusé s\'affiche sous le champ, sans fermer la session', async () => {
+      const wrapper = await openAnonymize()
+      await wrapper.find('#settings-anonymize-password').setValue('mauvais')
+      users.anonymizeMyAccount.mockRejectedValueOnce({
+        response: { status: 401, data: { message: 'Mot de passe actuel incorrect', code: 'CURRENT_PASSWORD_INVALID' } }
+      })
+
+      await anonymizeButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.field__error').text()).toBe('Mot de passe actuel incorrect')
+      expect(toast.showToastError).not.toHaveBeenCalled()
+    })
   })
 
   it('l\'interrupteur des messages directs revient en arrière si l\'API échoue', async () => {

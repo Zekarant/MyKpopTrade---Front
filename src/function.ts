@@ -102,8 +102,5 @@ export const func = {
   },
   showToastInfo(message: unknown) {
     pushToast(message, 'info')
-  },
-  buildCombinedSlug(query: string, event: string) {
-    return [query, event].filter(Boolean).join('-')
   }
 }

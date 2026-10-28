@@ -4,12 +4,12 @@
       <i class="bi bi-search search-icon"></i>
       <input
         v-model="searchQuery"
-        @keyup.enter="onSearch"
         type="text"
         class="search-input"
         placeholder="Rechercher un article, un groupe, un membre..."
+        @keyup.enter="onSearch"
       />
-      <button class="search-submit" @click="onSearch" aria-label="Rechercher">
+      <button class="search-submit" aria-label="Rechercher" @click="onSearch">
         <i class="bi bi-arrow-right"></i>
       </button>
     </div>
@@ -18,27 +18,24 @@
 
   <script lang="ts">
     import { useRoute, useRouter } from "vue-router";
+    import { searchRoute } from '@/router/searchRoute';
 
     export default {
-        name: "search_bar",
+        name: "SearchBar",
         props: {},
-        data() {
-            return {
-                searchQuery: '',
-            };
-        },
         setup() {
             const route = useRoute();
             const router = useRouter();
             return { route, router };
         },
+        data() {
+            return {
+                searchQuery: '',
+            };
+        },
         methods: {
             onSearch() {
-                const combined = this.$func.buildCombinedSlug(this.searchQuery, 'search');
-                this.router.push({
-                    name: 'searchList',
-                    params: { combined }
-                });
+                this.router.push(searchRoute({ q: this.searchQuery }));
             },
         }
     }

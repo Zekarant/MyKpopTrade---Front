@@ -1,21 +1,21 @@
 <template>
   <div class="payment-cancel-container">
     <div class="cancel-card">
-      <div class="icon-container">
+      <div class="icon-container" aria-hidden="true">
         <i class="bi bi-x-circle"></i>
       </div>
       <h1>Paiement annulé</h1>
       <p class="message">
         Votre paiement a été annulé et aucun montant n'a été débité.
       </p>
-      <div class="details" v-if="paymentToken">
+      <div v-if="paymentToken" class="details">
         <p class="token-info">Référence : {{ paymentToken }}</p>
       </div>
-      <div class="info-box" v-if="source">
+      <div v-if="source" class="info-box">
         <p>Source : <strong>{{ source }}</strong></p>
       </div>
       <div class="actions">
-        <button @click="goToHome" class="btn btn-secondary">
+        <button type="button" class="btn btn-secondary" @click="goToHome">
           Retour à l'accueil
         </button>
       </div>
@@ -23,53 +23,41 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+<script setup lang="ts">
+/** Retour de PayPal après abandon : annule l'ordre et ceux restant d'un checkout panier. */
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import paymentService from '@/services/payment.service';
 import { cancelPendingPayments } from './pendingPayments';
 
-export default defineComponent({
-  name: 'PaymentCancel',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
+defineOptions({ name: 'PaymentCancel' });
 
-    const paymentToken = ref<string>('');
-    const source = ref<string>('');
+const route = useRoute();
+const router = useRouter();
 
-    onMounted(async () => {
-      // Récupérer les paramètres de query
-      paymentToken.value = (route.query.token as string) || '';
-      source.value = (route.query.source as string) || '';
+const paymentToken = ref('');
+const source = ref('');
 
-      // Annuler le paiement
-      if (paymentToken.value) {
-        try {
-          await paymentService.cancelPayPal(paymentToken.value);
-        } catch {
-          // Ignorer les erreurs (paiement déjà annulé, etc.)
-        }
-      }
+onMounted(async () => {
+  paymentToken.value = (route.query.token as string) || '';
+  source.value = (route.query.source as string) || '';
 
-      // Annuler les paiements suivants d'un checkout panier
-      await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
-    });
-
-
-    const goToHome = () => {
-      // Nettoyer le localStorage
-      localStorage.removeItem('lastProductId');
-      router.push({ name: 'dashboard' });
-    };
-
-    return {
-      paymentToken,
-      source,
-      goToHome
-    };
+  if (paymentToken.value) {
+    try {
+      await paymentService.cancelPayPal(paymentToken.value);
+    } catch {
+      // Ignorer les erreurs (paiement déjà annulé, etc.)
+    }
   }
+
+  // Annuler les paiements suivants d'un checkout panier
+  await cancelPendingPayments((orderId) => paymentService.cancelPayPal(orderId));
 });
+
+function goToHome() {
+  localStorage.removeItem('lastProductId');
+  router.push({ name: 'dashboard' });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -79,17 +67,17 @@ export default defineComponent({
   align-items: center;
   min-height: 80vh;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 .cancel-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 40px;
   max-width: 500px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .icon-container {
@@ -97,26 +85,26 @@ export default defineComponent({
 
   i {
     font-size: 80px;
-    color: #dc3545;
+    color: var(--danger);
   }
 }
 
 h1 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
   font-size: 28px;
   font-weight: 600;
 }
 
 .message {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 16px;
   margin-bottom: 20px;
   line-height: 1.5;
 }
 
 .details {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 15px;
@@ -124,15 +112,15 @@ h1 {
 
 .token-info {
   font-size: 14px;
-  color: #6c757d;
+  color: var(--text-secondary);
   margin: 0;
   word-break: break-all;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .info-box {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
+  background: var(--warning-light);
+  border: 1px solid var(--warning);
   padding: 10px;
   border-radius: 6px;
   margin-bottom: 20px;
@@ -140,7 +128,7 @@ h1 {
   p {
     margin: 0;
     font-size: 14px;
-    color: #856404;
+    color: var(--text-primary);
   }
 }
 
@@ -162,22 +150,12 @@ h1 {
   width: 100%;
 }
 
-.btn-primary {
-  background: var(--blue, #007bff);
-  color: white;
-
-  &:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-  }
-}
-
 .btn-secondary {
-  background: #6c757d;
-  color: white;
+  background: var(--secondary-color);
+  color: var(--text-on-accent);
 
   &:hover {
-    background: #5a6268;
+    background: var(--secondary-color-shade);
     transform: translateY(-2px);
   }
 }

@@ -1,45 +1,54 @@
 <template>
   <div class="filter_mobile">
-    <button @click="showFilterList" class="filter-toggle-btn">
-      <i class="bi bi-sliders"></i>
+    <button type="button" class="filter-toggle-btn" :aria-expanded="filterMobileOpen" @click="toggleMobilePanel">
+      <i class="bi bi-sliders" aria-hidden="true"></i>
       <span>Filtres</span>
     </button>
   </div>
-  <div class="filter-panel" ref="filterMobile">
+  <div class="filter-panel" :class="{ show: filterMobileOpen }" @keydown.esc="closeMobilePanel">
     <div class="filter-panel__header">
       <h3 class="filter-panel__title">
-        <i class="bi bi-sliders"></i> Filtres
+        <i class="bi bi-sliders" aria-hidden="true"></i> Filtres
       </h3>
-      <button @click="showFilterList" class="filter-panel__close">
-        <i class="bi bi-x-lg"></i>
+      <button type="button" class="filter-panel__close" aria-label="Fermer les filtres" @click="toggleMobilePanel">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
 
     <div class="filter-panel__section">
-      <label class="filter-panel__label">Groupe K-pop</label>
+      <label class="filter-panel__label" for="filter-group">Groupe K-pop</label>
       <div class="filter-panel__autocomplete">
         <input
+          id="filter-group"
           v-model="groupSearchInput"
-          @input="searchGroupsDebounced"
           type="text"
           class="filter-panel__input"
           placeholder="Rechercher un groupe..."
+          @input="searchGroupsDebounced"
         />
         <ul v-if="groupSuggestions.length" class="filter-panel__suggestions">
-          <li v-for="g in groupSuggestions" :key="g._id" @click="selectGroup(g)">{{ g.name }}</li>
+          <li v-for="g in groupSuggestions" :key="g._id">
+            <button type="button" @click="selectGroup(g)">{{ g.name }}</button>
+          </li>
         </ul>
       </div>
       <div v-if="tabFilter.group" class="filter-panel__tag">
         {{ tabFilter.group }}
-        <button @click="tabFilter.group = null; groupSearchInput = ''" class="filter-panel__tag-remove">
-          <i class="bi bi-x"></i>
+        <button type="button" class="filter-panel__tag-remove" aria-label="Retirer le groupe" @click="clearGroup">
+          <i class="bi bi-x" aria-hidden="true"></i>
         </button>
       </div>
     </div>
 
     <div class="filter-panel__section">
-      <label class="filter-panel__label">Membre</label>
+      <label class="filter-panel__label" for="filter-member">Membre</label>
+      <select v-if="groupMembers.length" id="filter-member" v-model="tabFilter.member" class="filter-panel__select">
+        <option :value="null">Tous les membres</option>
+        <option v-for="member in groupMembers" :key="member" :value="member">{{ member }}</option>
+      </select>
       <input
+        v-else
+        id="filter-member"
         v-model="tabFilter.member"
         type="text"
         class="filter-panel__input"
@@ -47,10 +56,26 @@
       />
     </div>
 
+    <div v-if="groupAlbums.length" class="filter-panel__section">
+      <label class="filter-panel__label" for="filter-album">Album</label>
+      <select id="filter-album" v-model="tabFilter.albumId" class="filter-panel__select">
+        <option :value="null">Tous les albums</option>
+        <option v-for="album in groupAlbums" :key="album._id" :value="album._id">{{ album.name }}</option>
+      </select>
+    </div>
+
     <div class="filter-panel__section">
-      <label class="filter-panel__label">État</label>
-      <select v-model="tabFilter.conditions" class="filter-panel__select">
-        <option value="null">Tous les états</option>
+      <label class="filter-panel__check">
+        <input v-model="tabFilter.isOfficial" type="checkbox" />
+        <span>Articles officiels uniquement</span>
+      </label>
+    </div>
+
+    <div class="filter-panel__section">
+      <label class="filter-panel__label" for="filter-condition">État</label>
+      <!-- `:value="null"` : `value="null"` envoyait la chaîne « null » comme critère. -->
+      <select id="filter-condition" v-model="tabFilter.conditions" class="filter-panel__select" data-test="filter-condition">
+        <option :value="null">Tous les états</option>
         <option value="new">Neuf</option>
         <option value="likeNew">Comme neuf</option>
         <option value="good">Bon état</option>
@@ -60,9 +85,9 @@
     </div>
 
     <div class="filter-panel__section">
-      <label class="filter-panel__label">Type</label>
-      <select v-model="tabFilter.type" class="filter-panel__select">
-        <option value="null">Tous les types</option>
+      <label class="filter-panel__label" for="filter-type">Type</label>
+      <select id="filter-type" v-model="tabFilter.type" class="filter-panel__select" data-test="filter-type">
+        <option :value="null">Tous les types</option>
         <option value="photocard">Photocard</option>
         <option value="album">Album</option>
         <option value="merch">Merch</option>
@@ -71,111 +96,181 @@
     </div>
 
     <div class="filter-panel__section">
-      <label class="filter-panel__label">Prix</label>
-      <slider_price @changeMinPrice="onChangeMinPrice" @changeMaxPrice="onChangeMaxPrice"></slider_price>
+      <!-- Pas de <label> : le curseur porte ses propres libellés (min / max). -->
+      <span class="filter-panel__label">Prix</span>
+      <slider_price
+        :key="sliderKey"
+        :initial-min="tabFilter.min"
+        :initial-max="tabFilter.max"
+        @change-min-price="onChangeMinPrice"
+        @change-max-price="onChangeMaxPrice"
+      ></slider_price>
     </div>
 
     <div class="filter-panel__actions">
-      <button @click="resetFilters" class="filter-panel__btn filter-panel__btn--ghost">
-        <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+      <button type="button" class="filter-panel__btn filter-panel__btn--ghost" @click="resetFilters">
+        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Réinitialiser
       </button>
-      <button @click="saveFilter" class="filter-panel__btn filter-panel__btn--primary">
-        <i class="bi bi-check-lg"></i> Appliquer
+      <button type="button" class="filter-panel__btn filter-panel__btn--primary" @click="saveFilter">
+        <i class="bi bi-check-lg" aria-hidden="true"></i> Appliquer
       </button>
     </div>
   </div>
 </template>
 
-<script lang="ts">
- import { ref } from "vue";
-  import slider_price from "../components/slider_price.vue";
-  import groupService, { type KpopGroup } from '@/services/group.service';
+<script setup lang="ts">
+import { onBeforeUnmount, ref, watch } from "vue";
+import slider_price from "../components/slider_price.vue";
+import groupService, { type KpopGroup } from '@/services/group.service';
+import type { KpopAlbum } from '@/services/album.service';
+import type { UrlSearchCriteria } from '@/utils/savedSearch';
 
-export default {
+/** Filtres vides : `group` garde le nom affiché, `groupId` / `albumId` filtrent côté API. */
+const emptyFilters = () => ({
+  min: 0,
+  // `null` : pas de prix maximum (le curseur est en bout de piste).
+  max: null as number | null,
+  conditions: null as string | null,
+  type: null as string | null,
+  group: null as string | null,
+  groupId: null as string | null,
+  member: null as string | null,
+  albumId: null as string | null,
+  isOfficial: false,
+});
 
-  name: "filter_list",
-  emits: ['saveFilter'],
+export type PanelFilters = ReturnType<typeof emptyFilters>;
 
-  setup(){
-    const tabFilter = ref({
-      min: 0,
-      max: 100,
-      conditions: null as string | null,
-      type: null as string | null,
-      group: null as string | null,
-      member: null as string | null,
-    });
-    const filterMobileOpen = ref(false);
-    const groupSearchInput = ref('');
-    const groupSuggestions = ref<KpopGroup[]>([]);
-    let groupTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+/** Largeur sous laquelle le panneau s'ouvre en plein écran (cf. media query du style). */
+const MOBILE_MAX_WIDTH = 769;
+const GROUP_SEARCH_MIN_LENGTH = 2;
+const GROUP_SEARCH_DEBOUNCE_MS = 250;
 
-    function onChangeMinPrice(val: number) {
-      tabFilter.value.min = val;
-    }
-    function onChangeMaxPrice(val: number) {
-      tabFilter.value.max = val;
-    }
-    function resetFilters() {
-      tabFilter.value = { min: 0, max: 100, conditions: null, type: null, group: null, member: null };
-      groupSearchInput.value = '';
-      groupSuggestions.value = [];
-    }
-    function searchGroupsDebounced() {
-      clearTimeout(groupTimer);
-      groupTimer = setTimeout(async () => {
-        if (groupSearchInput.value.trim().length >= 2) {
-          try {
-            groupSuggestions.value = await groupService.searchGroups(groupSearchInput.value);
-          } catch { groupSuggestions.value = []; }
-        } else {
-          groupSuggestions.value = [];
-        }
-      }, 250);
-    }
-    function selectGroup(group: KpopGroup) {
-      tabFilter.value.group = group.name;
-      groupSearchInput.value = group.name;
-      groupSuggestions.value = [];
-    }
-    return {
-      tabFilter,
-      onChangeMinPrice,
-      onChangeMaxPrice,
-      filterMobileOpen,
-      resetFilters,
-      groupSearchInput,
-      groupSuggestions,
-      searchGroupsDebounced,
-      selectGroup
-    }
-  },
-  methods: {
-    saveFilter() {
-      this.$emit('saveFilter', this.tabFilter);
-      // Close on mobile after apply
-      if (window.innerWidth <= 769) {
-        this.showFilterList();
-      }
-    },
-    showFilterList(){
-      const el = this.$refs.filterMobile as HTMLElement;
-      if (el && !el.classList.contains('show')) {
-        el.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        this.filterMobileOpen = true;
-      }else{
-        el.classList.remove('show');
-        document.body.style.overflow = '';
-        this.filterMobileOpen = false;
-      }
-    }
-  },
-  components:{
-    slider_price
+const props = withDefaults(defineProps<{
+  /** Critères déjà appliqués par la page (rejoués depuis l'URL) : le panneau les affiche. */
+  initialFilters?: UrlSearchCriteria['filters'] | null
+}>(), { initialFilters: null });
+
+const emit = defineEmits<{ saveFilter: [filters: PanelFilters] }>();
+
+const tabFilter = ref(emptyFilters());
+const filterMobileOpen = ref(false);
+const groupSearchInput = ref('');
+const groupSuggestions = ref<KpopGroup[]>([]);
+const groupMembers = ref<string[]>([]);
+const groupAlbums = ref<KpopAlbum[]>([]);
+/** Remonte le curseur de prix, qui ne lit sa fourchette qu'au montage. */
+const sliderKey = ref(0);
+let groupTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
+/** Membres et albums du groupe choisi ; rend son nom, ou `null` si le détail est indisponible. */
+async function loadGroupCatalog(groupId: string): Promise<string | null> {
+  try {
+    const detail = await groupService.getGroupDetail(groupId);
+    groupMembers.value = detail.group.members ?? [];
+    groupAlbums.value = detail.albums;
+    return detail.group.name;
+  } catch {
+    // Sans le détail, le membre reste en saisie libre et l'album non filtrable.
+    groupMembers.value = [];
+    groupAlbums.value = [];
+    return null;
   }
+}
 
-};
+async function applyInitialFilters(initial: UrlSearchCriteria['filters'] | null) {
+  if (!initial) return;
+  tabFilter.value = {
+    min: initial.min ?? 0,
+    max: initial.max ?? null,
+    // Le sélecteur d'état n'affiche qu'une valeur.
+    conditions: initial.conditions?.[0] ?? null,
+    type: initial.type,
+    group: initial.group,
+    groupId: initial.groupId,
+    member: initial.member,
+    albumId: initial.albumId,
+    isOfficial: initial.isOfficial,
+  };
+  groupSearchInput.value = initial.group ?? '';
+  sliderKey.value++;
+  if (initial.groupId) {
+    // L'URL ne porte que l'identifiant : le nom affiché vient du catalogue.
+    const name = await loadGroupCatalog(initial.groupId);
+    if (name && !tabFilter.value.group) {
+      tabFilter.value.group = name;
+      groupSearchInput.value = name;
+    }
+  }
+}
+watch(() => props.initialFilters, applyInitialFilters, { immediate: true });
+
+function onChangeMinPrice(val: number) {
+  tabFilter.value.min = val;
+}
+function onChangeMaxPrice(val: number | null) {
+  tabFilter.value.max = val;
+}
+function clearGroup() {
+  tabFilter.value = { ...tabFilter.value, group: null, groupId: null, member: null, albumId: null };
+  groupSearchInput.value = '';
+  groupMembers.value = [];
+  groupAlbums.value = [];
+}
+function resetFilters() {
+  clearGroup();
+  tabFilter.value = emptyFilters();
+  groupSuggestions.value = [];
+  sliderKey.value++;
+}
+function searchGroupsDebounced() {
+  clearTimeout(groupTimer);
+  groupTimer = setTimeout(async () => {
+    if (groupSearchInput.value.trim().length >= GROUP_SEARCH_MIN_LENGTH) {
+      try {
+        groupSuggestions.value = await groupService.searchGroups(groupSearchInput.value);
+      } catch { groupSuggestions.value = []; }
+    } else {
+      groupSuggestions.value = [];
+    }
+  }, GROUP_SEARCH_DEBOUNCE_MS);
+}
+/** Le groupe choisi propose ses membres et albums du catalogue. */
+async function selectGroup(group: KpopGroup) {
+  tabFilter.value = { ...tabFilter.value, group: group.name, groupId: group._id, member: null, albumId: null };
+  groupSearchInput.value = group.name;
+  groupSuggestions.value = [];
+  await loadGroupCatalog(group._id);
+}
+
+/** En plein écran sur mobile : la page derrière ne doit plus défiler. */
+function setMobilePanelOpen(open: boolean) {
+  filterMobileOpen.value = open;
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+function toggleMobilePanel() {
+  setMobilePanelOpen(!filterMobileOpen.value);
+}
+
+function closeMobilePanel() {
+  if (filterMobileOpen.value) setMobilePanelOpen(false);
+}
+
+function saveFilter() {
+  // Une copie : la page garderait sinon une référence que le panneau modifie
+  // avant même que l'utilisateur clique de nouveau sur « Appliquer ».
+  emit('saveFilter', { ...tabFilter.value });
+  if (window.innerWidth <= MOBILE_MAX_WIDTH) {
+    toggleMobilePanel();
+  }
+}
+
+// Quitter la page panneau ouvert ne doit pas laisser le défilement bloqué.
+onBeforeUnmount(() => {
+  clearTimeout(groupTimer);
+  closeMobilePanel();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -257,7 +352,7 @@ export default {
   &:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -281,12 +376,21 @@ export default {
   &:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: var(--focus-ring);
   }
 }
 
 .filter-panel__autocomplete {
   position: relative;
+}
+
+.filter-panel__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .filter-panel__suggestions {
@@ -304,13 +408,19 @@ export default {
   padding: 0;
   margin: 4px 0 0;
 
-  li {
+  button {
+    display: block;
+    width: 100%;
     padding: 8px 14px;
+    background: none;
+    border: none;
+    text-align: left;
     cursor: pointer;
     font-size: var(--font-size-sm);
     color: var(--text-primary);
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: var(--surface-hover);
     }
   }
@@ -323,7 +433,7 @@ export default {
   margin-top: var(--space-xs);
   padding: 4px 10px;
   background: var(--accent-pink);
-  color: white;
+  color: var(--text-on-accent);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
 }
@@ -331,7 +441,7 @@ export default {
 .filter-panel__tag-remove {
   background: none;
   border: none;
-  color: white;
+  color: var(--text-on-accent);
   cursor: pointer;
   padding: 0;
   font-size: 14px;
@@ -356,11 +466,11 @@ export default {
 
   &--primary {
     background: var(--accent-gradient);
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 45, 120, 0.2);
+    color: var(--text-on-accent);
+    box-shadow: var(--shadow-accent-sm);
 
     &:hover {
-      box-shadow: 0 4px 16px rgba(255, 45, 120, 0.3);
+      box-shadow: var(--shadow-accent-md);
       transform: translateY(-1px);
     }
   }

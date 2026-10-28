@@ -89,7 +89,7 @@
         </table>
       </div>
 
-      <div v-if="pagination.totalPages > 1" class="admin__pagination">
+      <div v-if="pagination.pages > 1" class="admin__pagination">
         <button
           type="button"
           class="admin__icon-btn"
@@ -98,11 +98,11 @@
         >
           <i class="bi bi-chevron-left"></i>
         </button>
-        <span>{{ state.page }} / {{ pagination.totalPages }}</span>
+        <span>{{ state.page }} / {{ pagination.pages }}</span>
         <button
           type="button"
           class="admin__icon-btn"
-          :disabled="state.page >= pagination.totalPages"
+          :disabled="state.page >= pagination.pages"
           @click="commit({ page: state.page + 1 })"
         >
           <i class="bi bi-chevron-right"></i>
@@ -125,91 +125,71 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import VerifiedBadge from '@/components/VerifiedBadge.vue';
-  import { func } from '@/function';
-  import ReasonPromptModal from '../components/ReasonPromptModal.vue';
-  import { POST_DELETION_REASONS } from '../adminPresets';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
-  import type { AdminPost } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
+import { func } from '@/function';
+import ReasonPromptModal from '../components/ReasonPromptModal.vue';
+import { POST_DELETION_REASONS } from '../adminPresets';
+import { useAdminQueryState } from '../useAdminQueryState';
+import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
+import type { AdminPost } from '../types';
 
-  const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_DEBOUNCE_MS = 300;
 
-  export default defineComponent({
-    name: 'ModerationPanel',
-    components: { ReasonPromptModal, VerifiedBadge },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const posts = ref<AdminPost[]>([]);
-      const stats = ref({ totalPosts: 0, totalReplies: 0, todayPosts: 0 });
-      const pagination = ref({ totalPages: 1 });
-      const loading = ref(false);
-      const postToDelete = ref<AdminPost | null>(null);
+const emit = defineEmits<{ changed: [] }>();
 
-      const { state, commit } = useAdminQueryState({ search: '', type: '', page: 1 }, () => load());
+const posts = ref<AdminPost[]>([]);
+const stats = ref({ totalPosts: 0, totalReplies: 0, todayPosts: 0 });
+const pagination = ref({ pages: 1 });
+const loading = ref(false);
+const postToDelete = ref<AdminPost | null>(null);
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const [postsData, statsData] = await Promise.all([
-            adminService.getAdminPosts({
-              page: state.page,
-              search: state.search.trim() || undefined,
-              type: state.type || undefined
-            }),
-            adminService.getPostStats()
-          ]);
-          posts.value = postsData.posts || [];
-          pagination.value = postsData.pagination || { totalPages: 1 };
-          stats.value = statsData;
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les posts'));
-          posts.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const { state, commit } = useAdminQueryState({ search: '', type: '', page: 1 }, () => load());
 
-      let searchTimer: ReturnType<typeof setTimeout> | null = null;
-      const debouncedSearch = () => {
-        if (searchTimer) clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const [postsData, statsData] = await Promise.all([
+      adminService.getAdminPosts({
+        page: state.page,
+        search: state.search.trim() || undefined,
+        type: state.type || undefined
+      }),
+      adminService.getPostStats()
+    ]);
+    posts.value = postsData.posts || [];
+    pagination.value = postsData.pagination || { pages: 1 };
+    stats.value = statsData;
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les posts'));
+    posts.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const remove = async (reason: string) => {
-        const post = postToDelete.value;
-        if (!post) return;
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+const debouncedSearch = () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
+};
 
-        try {
-          await adminService.adminDeletePost(post._id, reason);
-          func.showToastSuccess(post.isReply ? 'Réponse supprimée' : 'Post supprimé');
-          postToDelete.value = null;
-          await load();
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
+const remove = async (reason: string) => {
+  const post = postToDelete.value;
+  if (!post) return;
 
-      onMounted(load);
+  try {
+    await adminService.adminDeletePost(post._id, reason);
+    func.showToastSuccess(post.isReply ? 'Réponse supprimée' : 'Post supprimé');
+    postToDelete.value = null;
+    await load();
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
 
-      return {
-        POST_DELETION_REASONS,
-        state,
-        commit,
-        posts,
-        stats,
-        pagination,
-        loading,
-        postToDelete,
-        formatDateTime,
-        getInitial,
-        debouncedSearch,
-        remove
-      };
-    }
-  });
+onMounted(load);
 </script>

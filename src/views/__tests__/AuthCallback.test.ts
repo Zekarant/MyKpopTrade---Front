@@ -51,13 +51,15 @@ describe('AuthCallback', () => {
     expect(router.replace).not.toHaveBeenCalled()
   })
 
-  it('accepte encore les jetons d\'une API pas encore mise à jour', async () => {
+  it('refuse des jetons passés dans l\'URL (login CSRF)', async () => {
     route.query = { accessToken: 'a', refreshToken: 'r', userId: 'u' }
 
-    mount(AuthCallback)
+    const wrapper = mount(AuthCallback)
     await flushPromises()
 
-    expect(session.setSessionCookies).toHaveBeenCalledWith({ accessToken: 'a', refreshToken: 'r', userId: 'u' })
+    expect(session.setSessionCookies).not.toHaveBeenCalled()
     expect(auth.exchangeOAuthCode).not.toHaveBeenCalled()
+    expect(router.replace).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Code de connexion manquant.')
   })
 })

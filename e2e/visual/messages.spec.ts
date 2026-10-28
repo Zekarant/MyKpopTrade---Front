@@ -73,7 +73,7 @@ test.describe('messagerie — rendu de référence', () => {
   test('options de vente', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile', 'Bouton réservé à l\'affichage ordinateur')
     await openMessaging(page)
-    await page.locator('.chat-actions .action-btn[title="sold"]').click()
+    await page.locator('.chat-actions .action-btn[title="Options de vente"]').click()
     await expect(page.locator('.chat-actions .dropdown-menu')).toBeVisible()
     await expect(page).toHaveScreenshot('sales-options.png', { fullPage: true })
   })
@@ -121,7 +121,7 @@ test.describe('messagerie — rendu de référence', () => {
       await page.locator('.chat-actions .action-btn[title="Options"]').click()
       await page.locator('.dropdown-item.btn_mobile', { hasText: 'Faire une offre' }).click()
     } else {
-      await page.locator('.chat-actions .action-btn[title="sold"]').click()
+      await page.locator('.chat-actions .action-btn[title="Options de vente"]').click()
       await page.locator('.dropdown-item', { hasText: 'Faire une offre' }).click()
     }
     await expect(page.locator('.counter-popup-content')).toBeVisible()

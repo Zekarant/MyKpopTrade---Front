@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory, type RouteLocationGeneric } from 'vue-router'
-import Cookies from 'js-cookie'
+import { hasSession } from '@/services/session.cookies'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
+import { legacySearchRedirect, searchPageProps } from './searchRoute';
 
 
 const routes = [
@@ -22,14 +23,85 @@ const routes = [
     path: '/vendre',
     redirect: '/adherents/new'
   },
+  // Chemins portés par les notifications et emails de l'API : ces liens
+  // restent valables dans les emails déjà envoyés, d'où des redirections.
+  {
+    path: '/conversations/:id',
+    redirect: (to: RouteLocationGeneric) => `/adherents/messages/${to.params.id}`
+  },
+  {
+    path: '/account/settings',
+    redirect: '/adherents/settings'
+  },
+  {
+    path: '/account/purchases/:id',
+    redirect: (to: RouteLocationGeneric) => ({
+      path: '/adherents/payments',
+      query: { role: 'buyer', payment: to.params.id }
+    })
+  },
+  {
+    path: '/account/sales/:id',
+    redirect: (to: RouteLocationGeneric) => ({
+      path: '/adherents/payments',
+      query: { role: 'seller', payment: to.params.id }
+    })
+  },
+  {
+    path: '/profile',
+    redirect: '/adherents/profile/me'
+  },
+  {
+    path: '/verification',
+    redirect: { path: '/adherents/settings', query: { section: 'compte' } }
+  },
+  {
+    path: '/reset-password/:token',
+    name: 'reset_password',
+    component: () => import('@/views/ResetPassword.vue'),
+    meta: { title: 'Nouveau mot de passe' }
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'verify_email',
+    component: () => import('@/views/VerifyEmail.vue'),
+    meta: { title: 'Vérification de l\'email' }
+  },
+  {
+    path: '/products/:id',
+    name: 'product',
+    component: () => import('@/views/ProductView.vue'),
+    meta: { title: 'Annonce' }
+  },
+  // Pages catalogue publiques, listées dans le sitemap de l'API.
+  {
+    path: '/groups/:id',
+    name: 'group',
+    component: () => import('@/views/catalog/GroupView.vue'),
+    meta: { title: 'Groupe' }
+  },
+  {
+    path: '/albums/:id',
+    name: 'album',
+    component: () => import('@/views/catalog/AlbumView.vue'),
+    meta: { title: 'Album' }
+  },
+  {
+    path: '/adherents/groups',
+    name: 'followed_groups',
+    component: () => import('@p_v/followed_groups.vue'),
+    meta: { requiresAuth: true, title: 'Mes groupes suivis' }
+  },
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/HomeView.vue')
+    component: () => import('../views/HomeView.vue'),
+    meta: { title: 'Accueil' }
   },
   { path: '/login',
     name: 'login',
-    component: Login
+    component: Login,
+    meta: { title: 'Connexion' }
   },
   {
     path: '/auth/callback',
@@ -39,7 +111,8 @@ const routes = [
   },
   { path: '/register',
     name: 'register',
-    component: Register
+    component: Register,
+    meta: { title: 'Inscription' }
   },
   {
     path: '/profile-completion',
@@ -50,12 +123,14 @@ const routes = [
   {
     path: '/adherents/dashboard',
     name: 'dashboard',
-    component: () => import('@p_v/dashboard.vue')
+    component: () => import('@p_v/dashboard.vue'),
+    meta: { requiresAuth: true, title: 'Accueil' }
   },
   {
     path: '/adherents/admin',
     name: 'admin',
-    component: () => import('@/views/admin/admin.vue')
+    component: () => import('@/views/admin/admin.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Administration' }
   },
 {
     path: '/payment/cancel',
@@ -76,23 +151,38 @@ const routes = [
     {
     path: '/adherents/',
     name: 'adherents',
-    component: () => import('@p_v/dashboard.vue')
+    component: () => import('@p_v/dashboard.vue'),
+    meta: { requiresAuth: true, title: 'Accueil' }
   },
   {
     path: '/adherents/collection',
     name: 'collection',
-    component: () => import('@p_v/collection.vue')
+    component: () => import('@p_v/collection.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/adherents/saved-searches',
+    name: 'saved_searches',
+    component: () => import('@p_v/savedSearches.vue'),
+    meta: { requiresAuth: true, title: 'Recherches sauvegardées' }
   },
   {
     path: '/adherents/profile/:id',
     name: 'profile',
-    component: () => import('@p_v/profile.vue')
+    component: () => import('@p_v/profile.vue'),
+    meta: { requiresAuth: true, title: 'Profil' }
   },
   {
     path: '/adherents/settings',
     name: 'settings',
     component: () => import('@p_v/settings.vue'),
     meta: { requiresAuth: true, title: 'Paramètres' }
+  },
+  {
+    path: '/adherents/reports',
+    name: 'my_reports',
+    component: () => import('@p_v/MyReports.vue'),
+    meta: { requiresAuth: true, title: 'Mes signalements' }
   },
   {
     path: '/adherents/payments',
@@ -105,43 +195,19 @@ const routes = [
     name: 'forgot_psw',
     component: forgot_psw
   },
-{
-  path: '/search-:combined?',
-  name: 'searchList',
-  component: () => import('../views/adherents/searchList.vue'),
-  props: (route: RouteLocationGeneric) => {
-    const combined = (route.params.combined as string | undefined) || '';
-    const parts = combined.split('-');
-
-
-    let query = '';
-    let event = '';
-
-
-    if (combined === '') {
-      query = '';
-      event = '';
-    } else if (parts.length === 1) {
-      // Une seule partie => soit query soit event
-      // Tu peux définir une liste des events connus pour distinguer
-      const knownEvents = ['morePage', 'search', 'morePageFavorites', 'moreFavorites'];
-      if (knownEvents.includes(parts[0])) {
-        query = '';
-        event = parts[0];
-      } else {
-        query = parts[0];
-        event = '';
-      }
-    } else {
-      // 2 parties ou plus
-      query = parts[0] || '';
-      event = parts[parts.length - 1] || '';
-    }
-
-
-    return { query, event };
-  }
-},
+  {
+    path: '/search',
+    name: 'searchList',
+    component: () => import('../views/adherents/searchList.vue'),
+    meta: { title: 'Recherche' },
+    props: searchPageProps
+  },
+  // Ancien format `/search-<texte>-<événement>`, encore présent dans des
+  // favoris et des historiques de navigation.
+  {
+    path: '/search-:combined?',
+    redirect: legacySearchRedirect
+  },
   {
     path: '/adherents/messages',
     name: 'messages',
@@ -256,30 +322,72 @@ const routes = [
     name: 'faq',
     component: () => import('@/views/legal/Faq.vue'),
     meta: { title: 'FAQ' }
+  },
+  // Toujours en dernier : toute URL inconnue affiche la page 404.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not_found',
+    component: () => import('@/views/NotFound.vue'),
+    meta: { title: 'Page introuvable' }
   }
-
-
 ];
 
 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routes
+  routes: routes,
+  scrollBehavior(to, from, savedPosition) {
+    // Précédent / suivant : on retrouve la position quittée.
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    // Même page, seule la query change (onglet admin, filtre…) : on ne bouge pas,
+    // sinon chaque frappe dans un champ synchronisé avec l'URL remonterait en haut.
+    if (to.path === from.path) return false
+    // Nouvelle page : en haut, comme une navigation classique.
+    return { top: 0 }
+  }
 })
 
 /**
- * Pages réservées aux visiteurs non connectés. Le refresh token (cookie de
- * 7 jours) fait foi : tant qu'il est présent, la session peut être rétablie,
- * donc on renvoie l'utilisateur vers son tableau de bord plutôt que de lui
+ * Pages réservées aux visiteurs non connectés. Tant qu'une session peut être
+ * rétablie, on renvoie l'utilisateur vers son tableau de bord plutôt que de lui
  * réafficher l'accueil ou l'écran de connexion.
  */
 const GUEST_ONLY_ROUTES = new Set(['home', 'login', 'register'])
 
-router.beforeEach((to) => {
-  const hasSession = Boolean(Cookies.get('refreshToken'))
+/**
+ * Rôle lu auprès de l'API, jamais déduit côté client — via le store, qui ne
+ * charge le profil qu'une fois par session. Import différé : le store importe
+ * le service utilisateur, qui importe des modules qui importent ce routeur.
+ */
+async function isAdmin(): Promise<boolean> {
+  try {
+    const { useUserStore } = await import('@/store/user.store')
+    const userStore = useUserStore()
+    await userStore.fetchProfile()
+    return userStore.isAdmin
+  } catch {
+    return false
+  }
+}
 
-  if (hasSession && typeof to.name === 'string' && GUEST_ONLY_ROUTES.has(to.name)) {
+/**
+ * Ces gardes évitent d'afficher une page cassée ; la seule vraie barrière
+ * reste le contrôle d'accès de l'API.
+ */
+router.beforeEach(async (to) => {
+  const loggedIn = hasSession()
+
+  if (loggedIn && typeof to.name === 'string' && GUEST_ONLY_ROUTES.has(to.name)) {
+    return { name: 'dashboard' }
+  }
+
+  if (to.meta.requiresAuth && !loggedIn) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !(await isAdmin())) {
     return { name: 'dashboard' }
   }
 

@@ -260,11 +260,11 @@ import { legal, isLegalMissing, dataProcessors } from '@/config/legal';
 export default defineComponent({
   name: 'PrivacyPage',
   components: { LegalLayout },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  },
   setup() {
     return { legal, isLegalMissing, dataProcessors };
+  },
+  data() {
+    return { updatedAt: '3 septembre 2026' };
   }
 });
 </script>

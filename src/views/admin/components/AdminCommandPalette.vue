@@ -1,5 +1,5 @@
 <template>
-  <div class="admin__palette-overlay" @click.self="$emit('close')">
+  <div class="admin__palette-overlay" @click.self="emit('close')">
     <div class="admin__palette" role="dialog" aria-modal="true" aria-label="Recherche globale">
       <div class="admin__palette-input">
         <i class="bi bi-search"></i>
@@ -12,7 +12,7 @@
           @keydown.down.prevent="move(1)"
           @keydown.up.prevent="move(-1)"
           @keydown.enter.prevent="activate(entries[cursor])"
-          @keydown.esc="$emit('close')"
+          @keydown.esc="emit('close')"
         />
         <kbd class="admin__kbd">Échap</kbd>
       </div>
@@ -43,120 +43,117 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref, watch } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { ADMIN_NAV } from '../adminSections';
-  import type { AdminSearchResult } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
+import adminService from '@/services/admin.service';
+import { ADMIN_NAV } from '../adminSections';
+import type { AdminSearchResult } from '../types';
 
-  const SEARCH_DEBOUNCE_MS = 250;
-  const MIN_QUERY_LENGTH = 2;
+const SEARCH_DEBOUNCE_MS = 250;
+const MIN_QUERY_LENGTH = 2;
 
-  const KIND_ICONS: Record<string, string> = {
-    user: 'bi bi-person',
-    product: 'bi bi-box-seam',
-    post: 'bi bi-chat-left-text'
-  };
+const KIND_ICONS: Record<string, string> = {
+  user: 'bi bi-person',
+  product: 'bi bi-box-seam',
+  post: 'bi bi-chat-left-text'
+};
 
-  const KIND_GROUPS: Record<string, string> = {
-    user: 'Membre',
-    product: 'Annonce',
-    post: 'Publication'
-  };
+const KIND_GROUPS: Record<string, string> = {
+  user: 'Membre',
+  product: 'Annonce',
+  post: 'Publication'
+};
 
-  export interface PaletteEntry {
-    group: string;
-    id: string;
-    icon: string;
-    label: string;
-    detail: string;
-    tab: string;
-    search?: string;
+interface PaletteEntry {
+  group: string;
+  id: string;
+  icon: string;
+  label: string;
+  detail: string;
+  tab: string;
+  search?: string;
+}
+
+const emit = defineEmits<{
+  close: [];
+  navigate: [target: { tab: string; search?: string }];
+}>();
+
+const query = ref('');
+const input = ref<HTMLInputElement | null>(null);
+const results = ref<PaletteEntry[]>([]);
+const cursor = ref(0);
+const searching = ref(false);
+
+const sectionEntries = computed<PaletteEntry[]>(() =>
+  ADMIN_NAV.flatMap((group) => group.items).map((item) => ({
+    group: 'Section',
+    id: item.id,
+    icon: item.icon,
+    label: item.label,
+    detail: item.subtitle,
+    tab: item.id
+  }))
+);
+
+const entries = computed<PaletteEntry[]>(() => {
+  const term = query.value.trim().toLowerCase();
+  if (term.length < MIN_QUERY_LENGTH) return sectionEntries.value;
+
+  const matchingSections = sectionEntries.value.filter(
+    (entry) => entry.label.toLowerCase().includes(term) || entry.tab.includes(term)
+  );
+  return [...matchingSections, ...results.value];
+});
+
+const emptyMessage = computed(() => {
+  if (query.value.trim().length < MIN_QUERY_LENGTH) return 'Saisissez au moins deux caractères.';
+  return searching.value ? 'Recherche…' : 'Aucun résultat.';
+});
+
+const move = (delta: number) => {
+  const total = entries.value.length;
+  if (total === 0) return;
+  cursor.value = (cursor.value + delta + total) % total;
+};
+
+const activate = (entry?: PaletteEntry) => {
+  if (!entry) return;
+  emit('navigate', { tab: entry.tab, search: entry.search });
+  emit('close');
+};
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+watch(query, (value) => {
+  cursor.value = 0;
+  if (debounceTimer) clearTimeout(debounceTimer);
+
+  if (value.trim().length < MIN_QUERY_LENGTH) {
+    results.value = [];
+    searching.value = false;
+    return;
   }
 
-  export default defineComponent({
-    name: 'AdminCommandPalette',
-    emits: ['close', 'navigate'],
-    setup(_props, { emit }) {
-      const query = ref('');
-      const input = ref<HTMLInputElement | null>(null);
-      const results = ref<PaletteEntry[]>([]);
-      const cursor = ref(0);
-      const searching = ref(false);
-
-      const sectionEntries = computed<PaletteEntry[]>(() =>
-        ADMIN_NAV.flatMap((group) => group.items).map((item) => ({
-          group: 'Section',
-          id: item.id,
-          icon: item.icon,
-          label: item.label,
-          detail: item.subtitle,
-          tab: item.id
-        }))
-      );
-
-      const entries = computed<PaletteEntry[]>(() => {
-        const term = query.value.trim().toLowerCase();
-        if (term.length < MIN_QUERY_LENGTH) return sectionEntries.value;
-
-        const matchingSections = sectionEntries.value.filter(
-          (entry) => entry.label.toLowerCase().includes(term) || entry.tab.includes(term)
-        );
-        return [...matchingSections, ...results.value];
-      });
-
-      const emptyMessage = computed(() => {
-        if (query.value.trim().length < MIN_QUERY_LENGTH) return 'Saisissez au moins deux caractères.';
-        return searching.value ? 'Recherche…' : 'Aucun résultat.';
-      });
-
-      const move = (delta: number) => {
-        const total = entries.value.length;
-        if (total === 0) return;
-        cursor.value = (cursor.value + delta + total) % total;
-      };
-
-      const activate = (entry?: PaletteEntry) => {
-        if (!entry) return;
-        emit('navigate', { tab: entry.tab, search: entry.search });
-        emit('close');
-      };
-
-      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-      watch(query, (value) => {
-        cursor.value = 0;
-        if (debounceTimer) clearTimeout(debounceTimer);
-
-        if (value.trim().length < MIN_QUERY_LENGTH) {
-          results.value = [];
-          searching.value = false;
-          return;
-        }
-
-        searching.value = true;
-        debounceTimer = setTimeout(async () => {
-          try {
-            const data: { results?: AdminSearchResult[] } = await adminService.globalSearch(value.trim());
-            results.value = (data.results || []).map((result) => ({
-              group: KIND_GROUPS[result.kind] || result.kind,
-              id: result.id,
-              icon: KIND_ICONS[result.kind] || 'bi bi-dot',
-              label: result.label,
-              detail: result.detail,
-              tab: result.tab,
-              search: result.search
-            }));
-          } catch {
-            results.value = [];
-          } finally {
-            searching.value = false;
-          }
-        }, SEARCH_DEBOUNCE_MS);
-      });
-
-      onMounted(() => input.value?.focus());
-
-      return { query, input, entries, cursor, emptyMessage, move, activate };
+  searching.value = true;
+  debounceTimer = setTimeout(async () => {
+    try {
+      const data: { results?: AdminSearchResult[] } = await adminService.globalSearch(value.trim());
+      results.value = (data.results || []).map((result) => ({
+        group: KIND_GROUPS[result.kind] || result.kind,
+        id: result.id,
+        icon: KIND_ICONS[result.kind] || 'bi bi-dot',
+        label: result.label,
+        detail: result.detail,
+        tab: result.tab,
+        search: result.search
+      }));
+    } catch {
+      results.value = [];
+    } finally {
+      searching.value = false;
     }
-  });
+  }, SEARCH_DEBOUNCE_MS);
+});
+
+onMounted(() => input.value?.focus());
 </script>

@@ -52,8 +52,8 @@
         </label>
         <input
           id="settings-username"
-          type="text"
           v-model.trim="form.username"
+          type="text"
           class="settings-input"
           maxlength="30"
           autocomplete="username"
@@ -71,8 +71,8 @@
           <label class="field__label" for="settings-firstname">Prénom</label>
           <input
             id="settings-firstname"
-            type="text"
             v-model.trim="form.firstName"
+            type="text"
             class="settings-input"
             maxlength="100"
             autocomplete="given-name"
@@ -82,8 +82,8 @@
           <label class="field__label" for="settings-lastname">Nom</label>
           <input
             id="settings-lastname"
-            type="text"
             v-model.trim="form.lastName"
+            type="text"
             class="settings-input"
             maxlength="100"
             autocomplete="family-name"
@@ -120,8 +120,8 @@
         <label class="field__label" for="settings-location">Localisation</label>
         <input
           id="settings-location"
-          type="text"
           v-model.trim="form.location"
+          type="text"
           class="settings-input"
           maxlength="100"
           placeholder="Ville, pays"
@@ -142,8 +142,8 @@
         </label>
         <input
           id="settings-instagram"
-          type="text"
           v-model.trim="form.socialLinks.instagram"
+          type="text"
           class="settings-input"
           maxlength="100"
           placeholder="@votre_compte"
@@ -155,8 +155,8 @@
         </label>
         <input
           id="settings-twitter"
-          type="text"
           v-model.trim="form.socialLinks.twitter"
+          type="text"
           class="settings-input"
           maxlength="100"
           placeholder="@votre_compte"
@@ -168,8 +168,8 @@
         </label>
         <input
           id="settings-discord"
-          type="text"
           v-model.trim="form.socialLinks.discord"
+          type="text"
           class="settings-input"
           maxlength="100"
           placeholder="votre_pseudo"
@@ -188,10 +188,10 @@
         <i class="bi bi-pencil"></i> Modifications non enregistrées
       </span>
       <div class="save-bar__actions">
-        <button type="button" class="btn-settings btn-settings--ghost" @click="resetProfileForm" :disabled="savingProfile">
+        <button type="button" class="btn-settings btn-settings--ghost" :disabled="savingProfile" @click="resetProfileForm">
           Annuler
         </button>
-        <button type="button" class="btn-settings btn-settings--primary" @click="saveProfileIdentity" :disabled="savingProfile">
+        <button type="button" class="btn-settings btn-settings--primary" :disabled="savingProfile" @click="saveProfileIdentity">
           <i class="bi bi-check-lg"></i>
           {{ savingProfile ? 'Enregistrement…' : 'Enregistrer' }}
         </button>

@@ -22,7 +22,7 @@
           class="admin__kpi"
           :class="`admin__kpi--${source.tone}`"
           style="cursor: pointer; text-align: left"
-          @click="$emit('navigate', source.tab)"
+          @click="emit('navigate', source.tab)"
         >
           <i :class="source.icon"></i>
           <span class="admin__kpi-body">
@@ -51,8 +51,8 @@
         :class="`admin__queue-item--${item.kind}`"
         role="button"
         tabindex="0"
-        @click="$emit('navigate', item.tab)"
-        @keydown.enter="$emit('navigate', item.tab)"
+        @click="emit('navigate', item.tab)"
+        @keydown.enter="emit('navigate', item.tab)"
       >
         <span class="admin__queue-icon">
           <i :class="SOURCE_BY_KIND[item.kind]?.icon || 'bi bi-dot'"></i>
@@ -70,54 +70,50 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import { apiErrorMessage, formatAge } from '../adminFormat';
-  import type { AdminQueue } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import { apiErrorMessage, formatAge } from '../adminFormat';
+import type { AdminQueue } from '../types';
 
-  const STALE_QUEUE_DAYS = 3;
+// `changed` reste déclaré : admin.vue l'écoute sur tous les panneaux.
+const emit = defineEmits<{ navigate: [tab: string]; changed: [] }>();
 
-  const SOURCES = [
-    { kind: 'report', label: 'Signalements', icon: 'bi bi-flag', tone: 'warning', tab: 'reports' },
-    { kind: 'dispute', label: 'Litiges', icon: 'bi bi-shield-exclamation', tone: 'danger', tab: 'disputes' },
-    { kind: 'verification', label: 'Vérifications', icon: 'bi bi-patch-check', tone: 'info', tab: 'verifications' },
-    { kind: 'deletion', label: 'Suppressions', icon: 'bi bi-person-dash', tone: 'accent', tab: 'rgpd' }
-  ] as const;
+const STALE_QUEUE_DAYS = 3;
+const MS_PER_DAY = 86400000;
 
-  const SOURCE_BY_KIND = SOURCES.reduce(
-    (acc, source) => ({ ...acc, [source.kind]: source }),
-    {} as Record<string, (typeof SOURCES)[number]>
-  );
+const SOURCES = [
+  { kind: 'report', label: 'Signalements', icon: 'bi bi-flag', tone: 'warning', tab: 'reports' },
+  { kind: 'dispute', label: 'Litiges', icon: 'bi bi-shield-exclamation', tone: 'danger', tab: 'disputes' },
+  { kind: 'verification', label: 'Vérifications', icon: 'bi bi-patch-check', tone: 'info', tab: 'verifications' },
+  { kind: 'deletion', label: 'Suppressions', icon: 'bi bi-person-dash', tone: 'accent', tab: 'rgpd' }
+] as const;
 
-  export default defineComponent({
-    name: 'QueuePanel',
-    emits: ['navigate', 'changed'],
-    setup() {
-      const queue = ref<AdminQueue>({ items: [], counts: {}, total: 0, oldestWaitingSince: null });
-      const loading = ref(false);
+const SOURCE_BY_KIND = SOURCES.reduce(
+  (acc, source) => ({ ...acc, [source.kind]: source }),
+  {} as Record<string, (typeof SOURCES)[number]>
+);
 
-      const oldestBadgeClass = computed(() => {
-        if (!queue.value.oldestWaitingSince) return 'admin__badge--success';
-        const ageDays = (Date.now() - new Date(queue.value.oldestWaitingSince).getTime()) / 86400000;
-        return ageDays > STALE_QUEUE_DAYS ? 'admin__badge--danger' : 'admin__badge--warning';
-      });
+const queue = ref<AdminQueue>({ items: [], counts: {}, total: 0, oldestWaitingSince: null });
+const loading = ref(false);
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          queue.value = await adminService.getQueue();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger la file d\'attente'));
-        } finally {
-          loading.value = false;
-        }
-      };
+const oldestBadgeClass = computed(() => {
+  if (!queue.value.oldestWaitingSince) return 'admin__badge--success';
+  const ageDays = (Date.now() - new Date(queue.value.oldestWaitingSince).getTime()) / MS_PER_DAY;
+  return ageDays > STALE_QUEUE_DAYS ? 'admin__badge--danger' : 'admin__badge--warning';
+});
 
-      onMounted(load);
+const load = async () => {
+  loading.value = true;
+  try {
+    queue.value = await adminService.getQueue();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger la file d\'attente'));
+  } finally {
+    loading.value = false;
+  }
+};
 
-      return { SOURCES, SOURCE_BY_KIND, queue, loading, oldestBadgeClass, formatAge, load };
-    }
-  });
+onMounted(load);
 </script>

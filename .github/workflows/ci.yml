@@ -1,0 +1,45 @@
+# Mêmes vérifications que le hook husky pre-commit, mais impossibles à
+# contourner (`--no-verify`), plus le build et l'audit des dépendances de
+# production. Les tests visuels Playwright restent locaux : leurs captures de
+# référence sont propres à Windows (suffixe -win32).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Tests unitaires
+        run: npx vitest run
+
+      - name: Build
+        run: npx vite build
+        env:
+          VITE_API_URL: https://api.example.invalid
+
+      - name: Audit (dépendances de production)
+        run: npm audit --omit=dev --audit-level=high

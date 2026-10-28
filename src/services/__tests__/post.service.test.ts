@@ -1,30 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-/** Session perdue : verifSession ne masque pas l'erreur d'origine et ne rejette jamais la promesse. */
+/** Erreurs : relayées telles quelles (la session est l'affaire du client HTTP), sauf pour les agréments. */
 
 const client = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() }))
-const auth = vi.hoisted(() => ({ verifSession: vi.fn() }))
 
 vi.mock('@/services/http', () => ({ createApiClient: () => client }))
-vi.mock('@/services/authentification.service', () => ({ default: auth }))
 
 import postService from '../post.service'
+import { ApiError } from '../apiError'
 
-const unauthorized = { response: { status: 401, data: { message: 'Token invalide' } } }
+const unauthorized = new ApiError({ message: 'Token invalide', status: 401, body: { message: 'Token invalide' } })
 
-describe('post.service — session perdue', () => {
+describe('post.service — erreurs', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    auth.verifSession.mockRejectedValue(new Error('No session token'))
   })
 
-  it('met fin à la session et relaie l\'erreur d\'origine, sans nouvelle tentative', async () => {
+  it('relaie l\'erreur d\'origine, sans nouvelle tentative ni déconnexion maison', async () => {
     client.get.mockRejectedValue(unauthorized)
 
     await expect(postService.getFavorites()).rejects.toBe(unauthorized)
 
-    expect(auth.verifSession).toHaveBeenCalledTimes(1)
     expect(client.get).toHaveBeenCalledTimes(1)
   })
 
@@ -40,12 +37,16 @@ describe('post.service — session perdue', () => {
     await expect(postService.addFavorite('p1')).resolves.toBe(false)
   })
 
-  it('ne touche pas à la session pour une autre erreur', async () => {
-    client.get.mockRejectedValue({ response: { status: 500 } })
+  it('rend le corps d\'erreur de l\'API à l\'enregistrement d\'une annonce', async () => {
+    client.put.mockRejectedValue(new ApiError({ message: 'Prix invalide', status: 400, body: { message: 'Prix invalide', code: 'VALIDATION_ERROR' } }))
 
-    await expect(postService.getFavorites()).rejects.toBeTruthy()
+    const result = await postService.updatePost('p1', {
+      title: 't', description: 'd', price: 1, currency: 'EUR', condition: 'new', category: 'c', type: 'photocard',
+      kpopGroup: 'g', kpopMember: 'm', albumName: 'a', allowOffers: false, images: [],
+      shippingOptions: { worldwide: false, nationalOnly: false, localPickup: true }
+    })
 
-    expect(auth.verifSession).not.toHaveBeenCalled()
+    expect(result).toEqual({ ok: false, error: { message: 'Prix invalide', code: 'VALIDATION_ERROR' } })
   })
 
   it('ne plante pas quand l\'envoi d\'une annonce échoue sans réponse (réseau coupé)', async () => {

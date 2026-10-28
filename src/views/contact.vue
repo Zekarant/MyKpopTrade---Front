@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <Nav_bar></Nav_bar>
     <div class="contact-container">
       <div class="contact-card">
         <div class="contact-header">
@@ -12,15 +11,15 @@
           <p class="contact-subtitle">Une question ? Un problème ? Notre équipe support Discord vous répond rapidement.</p>
         </div>
 
-        <form @submit.prevent="submitForm" class="contact-form">
+        <form class="contact-form" @submit.prevent="submitForm">
           <div class="form-row">
             <div class="input-group mb-3">
               <span class="input-group-text">
                 <i class="bi bi-person"></i>
               </span>
               <input
-                type="text"
                 v-model="form.name"
+                type="text"
                 class="form-control"
                 :class="{ 'is-invalid': errors.name }"
                 placeholder="Votre nom"
@@ -32,8 +31,8 @@
                 <i class="bi bi-envelope"></i>
               </span>
               <input
-                type="email"
                 v-model="form.email"
+                type="email"
                 class="form-control"
                 :class="{ 'is-invalid': errors.email }"
                 placeholder="Votre email"
@@ -92,12 +91,10 @@
 <script lang="ts">
 import { defineComponent, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import Nav_bar from '@/components/adherents/nav_bar.vue';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
 export default defineComponent({
   name: 'ContactView',
-  components: { Nav_bar },
   setup() {
     const router = useRouter();
     const loading = ref(false);

@@ -1,117 +1,69 @@
 <template>
-    <div class="product-grid">
-        <card :data="data" :admin="admin" @click="openPostInfo(index)" v-for="(data, index) in dataList" :key="index"></card>
+    <!-- Racines multiples : les attributs du parent (ex. style) vont sur la grille elle-même. -->
+    <div class="product-grid" v-bind="$attrs">
+        <card
+            v-for="item in dataList"
+            v-show="!isRemoved(item)"
+            :key="item._id"
+            :data="item"
+            :admin="admin"
+            @open="openPost"
+            @remove-favorite="removeFavorite"
+        />
     </div>
-    <div v-if="dataList && dataList.length > 0 && pagination.page < pagination.pages && moreBtn" class="load-more">
-        <button type="button" class="load-more-btn" @click="loadMore()">
-          <i class="bi bi-arrow-down-circle"></i>
+    <div v-if="dataList.length > 0 && hasMorePages(pagination) && moreBtn" class="load-more">
+        <button type="button" class="load-more-btn" @click="loadMore">
+          <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
           Charger plus
         </button>
     </div>
     <Teleport to="body">
-      <div v-if="stateCardPost" class="post-overlay" @click.self="closePost" >
-          <post :key="dataCardPost?._id" @closePost="closePost" @sold="onsold" :myProfile="admin" :dataUser="dataUser" :idPost="dataCardPost?._id" />
+      <div v-if="openedPost" class="post-overlay" @click.self="closePost">
+          <post :key="openedPost._id" :id-post="openedPost._id" :my-profile="admin" :data-user="dataUser" @close-post="closePost" @sold="closePost" />
       </div>
     </Teleport>
 </template>
 
+<script setup lang="ts">
+/** Grille d'annonces ; un clic ouvre la fiche en surimpression. */
+import { useRouter } from 'vue-router';
+import post from '@/components/post.vue';
+import card from '@/components/card.vue';
+import type { Post } from '@/types/post.types';
+import { hasMorePages, type ListPagination, type PostSeller } from '@/components/post/types';
+import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
+import { usePostOverlay } from '@/components/post/usePostOverlay';
 
-<script lang="ts">
-    import { defineComponent, ref, nextTick, type PropType } from 'vue';
-    import { useRouter } from "vue-router";
-    import post from '@/components/post.vue';
-    import card from '@/components/card.vue';
-    import type { Post } from '@/types/post.types';
+defineOptions({ name: 'ProductGrid', inheritAttrs: false });
 
+const props = withDefaults(defineProps<{
+    dataList: Post[];
+    /** Profil d'où la grille est affichée : transmis à la fiche comme vendeur. */
+    dataUser?: PostSeller;
+    /** Annonces du membre connecté : la fiche propose les actions du vendeur. */
+    admin?: boolean;
+    pagination?: ListPagination;
+    moreBtn?: boolean;
+}>(), {
+    dataUser: undefined,
+    admin: false,
+    pagination: () => ({ limit: 1, page: 1, pages: 1, total: 10 }),
+    moreBtn: false,
+});
 
+const router = useRouter();
+const { isRemoved, removeFavorite } = useFavoriteRemoval();
+const { openedPost, openPost, closePost } = usePostOverlay();
 
-    export default defineComponent({
-        name: "ProductGrid",
-        components: {
-            post,
-            card
-        },
-        props: {
-            dataList: {
-                type: Array as PropType<Post[]>,
-                required: true,
-            },
-            dataUser: {
-                type: Object,
-                required: false,
-            },
-            admin: {
-                type: Boolean,
-                required: false,
-                default: false,
-            },
-            pagination: {
-                type: Object,
-                required: false,
-                default: () => ({
-                    limit: 1,
-                    page: 1,
-                    pages: 1,
-                    total: 10,
-                }),
-            },
-            moreBtn:{
-                type: Boolean,
-                required: false,
-            },
-            style: {
-                required: false,
-                type: Object,
-            }
+/** La page de recherche reprend la liste déjà chargée et poursuit la pagination. */
+function loadMore() {
+    sessionStorage.setItem('posts_str', JSON.stringify(props.dataList));
+    sessionStorage.setItem('pagination_str', JSON.stringify(props.pagination));
+    router.push({ name: 'searchList', query: { event: 'morePage' } });
+}
+</script>
 
-        },
-        setup() {
-            const router = useRouter();
-            const dataCardPost = ref<Post | null>(null);
-            const stateCardPost = ref(false);
-            return {
-                dataCardPost,
-                stateCardPost,
-                router
-            };
-        },
-        data() {
-            return {
-
-            };
-        },
-        methods: {
-            async openPostInfo(index: number) {
-                if(this.stateCardPost){
-                    this.stateCardPost = false;
-                    await nextTick();
-                }
-                this.dataCardPost = this.dataList[index];
-                this.stateCardPost = true;
-            },
-            onsold() {
-                this.stateCardPost = false;
-            },
-            closePost() {
-                this.stateCardPost = false;
-            },
-            loadMore(){
-                sessionStorage.setItem('posts_str', JSON.stringify(this.dataList));
-                sessionStorage.setItem('pagination_str', JSON.stringify(this.pagination));
-                const combined = this.$func.buildCombinedSlug('', 'morePage');
-
-                this.router.push({
-                    name: 'searchList',
-                    params: { combined }
-                });
-            }
-
-        },
-    });
-
-  </script>
-
-  <style lang="scss" scoped>
+<style lang="scss" scoped>
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -149,7 +101,7 @@
       &:hover {
         border-color: var(--accent-pink);
         color: var(--accent-pink);
-        background: rgba(255, 45, 120, 0.05);
+        background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
         transform: translateY(-2px);
       }
 
@@ -164,4 +116,4 @@
         gap: var(--space-sm);
       }
     }
-  </style>
+</style>
