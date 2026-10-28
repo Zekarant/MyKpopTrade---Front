@@ -80,12 +80,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import accountService from '@/services/account.service';
 import { apiErrorMessage } from '@/services/apiError';
 import { PASSWORD_SPECIAL_CHARS, passwordRuleError } from '@/composables/useRegisterForm';
-
-const api = createApiClient({ baseURL: API_URL });
 
 const route = useRoute();
 const password = ref('');
@@ -104,11 +101,8 @@ async function submit() {
 
   loading.value = true;
   try {
-    const { data } = await api.post(
-      `/api/auth/reset-password/${encodeURIComponent(String(route.params.token))}`,
-      { password: password.value, confirmPassword: confirmPassword.value }
-    );
-    successMessage.value = data?.message || 'Mot de passe modifié. Tu peux te connecter.';
+    const message = await accountService.resetPassword(String(route.params.token), password.value, confirmPassword.value);
+    successMessage.value = message || 'Mot de passe modifié. Tu peux te connecter.';
   } catch (error) {
     // Lien expiré ou déjà utilisé : l'API le dit, et « Demander un nouveau lien » reste affiché.
     errorMessage.value = apiErrorMessage(error, 'Une erreur est survenue. Réessaie plus tard.');

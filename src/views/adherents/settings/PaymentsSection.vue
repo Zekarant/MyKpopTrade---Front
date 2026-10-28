@@ -177,7 +177,8 @@
 import { computed, ref, watch } from 'vue';
 import { func } from '@/function';
 import paymentService from '@/services/payment.service';
-import { api, apiMessage } from './shared';
+import accountService from '@/services/account.service';
+import { apiMessage } from './shared';
 import type { BillingAddress, SectionProps, SettingsProfile } from './shared';
 import type { PaypalAccount } from './usePaypalAccount';
 
@@ -235,7 +236,7 @@ function addressPayload(): BillingAddress {
 
 async function saveLegalName() {
   try {
-    await api.put('/api/auth/profile', { legalName: legalName.value });
+    await accountService.updateProfile({ legalName: legalName.value });
     func.showToastSuccess('Nom légal enregistré');
     emit('patch', { legalName: legalName.value });
   } catch (error) {
@@ -253,7 +254,7 @@ async function saveAddress() {
   }
   const payload = hasRequired ? addressPayload() : null;
   try {
-    await api.put('/api/auth/profile', { address: payload });
+    await accountService.updateProfile({ address: payload });
     func.showToastSuccess('Adresse enregistrée');
     emit('patch', { address: payload });
   } catch (error) {
@@ -327,7 +328,7 @@ async function submitPaypalInfoAndConnect() {
 
   const payload = addressPayload();
   try {
-    await api.put('/api/auth/profile', { legalName: legalName.value, address: payload });
+    await accountService.updateProfile({ legalName: legalName.value, address: payload });
     emit('patch', { legalName: legalName.value, address: payload });
   } catch (error) {
     paypalConnecting.value = false;

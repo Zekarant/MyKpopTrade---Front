@@ -7,7 +7,9 @@ const route = vi.hoisted(() => ({ params: { token: 'jeton-recu' } as Record<stri
 const http = vi.hoisted(() => ({ post: vi.fn() }))
 
 vi.mock('vue-router', () => ({ useRoute: () => route }))
-vi.mock('@/services/http', () => ({ createApiClient: () => http }))
+vi.mock('@/services/http', async () => ({
+  createApiClient: (await import('@/test-utils/routedApiClient')).routedApiClient(http)
+}))
 
 import ResetPassword from '../ResetPassword.vue'
 

@@ -20,14 +20,12 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Grid from '@/components/grid.vue'
-import { API_URL } from '@/config/api'
-import { createApiClient } from '@/services/http'
+import postService from '@/services/post.service'
 import type { ProfileInfo } from './types'
 
 const props = defineProps<{ profile: ProfileInfo; profileUserId: string; isOwnProfile: boolean }>()
 
 const router = useRouter()
-const api = createApiClient({ baseURL: API_URL })
 
 /** Annonce telle que la grille l'affiche, plus son statut éventuel. */
 type Product = InstanceType<typeof Grid>['$props']['dataList'][number] & { status?: string }
@@ -40,15 +38,12 @@ const activeProducts = computed(() =>
 
 /** Mes annonces n'attendent pas le chargement du profil ; celles d'un membre demandent son identifiant. */
 async function loadProducts() {
-  const url = props.isOwnProfile
-    ? '/api/products/inventory/me'
-    : props.profileUserId
-      ? `/api/products/inventory/user/${encodeURIComponent(props.profileUserId)}`
-      : null
-  if (!url) return
+  if (!props.isOwnProfile && !props.profileUserId) return
   try {
-    const response = await api.get(url)
-    products.value = response.data.products
+    const page = props.isOwnProfile
+      ? await postService.getInventory()
+      : await postService.getUserInventory(props.profileUserId)
+    products.value = page.products as Product[]
   } catch (error) {
     console.error('Erreur lors du chargement de l\'inventaire:', error)
   }

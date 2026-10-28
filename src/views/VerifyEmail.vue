@@ -69,12 +69,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import accountService from '@/services/account.service';
 import { hasSession } from '@/services/session.cookies';
 import { apiErrorMessage } from '@/services/apiError';
-
-const api = createApiClient({ baseURL: API_URL });
 
 const route = useRoute();
 const status = ref<'loading' | 'success' | 'error'>('loading');
@@ -89,10 +86,7 @@ const resendFailed = ref(false);
 
 onMounted(async () => {
   try {
-    const { data } = await api.get(
-      `/api/auth/verify-email/${encodeURIComponent(String(route.params.token))}`
-    );
-    message.value = data?.message || 'Adresse email vérifiée.';
+    message.value = (await accountService.verifyEmail(String(route.params.token))) || 'Adresse email vérifiée.';
     status.value = 'success';
   } catch (error) {
     message.value = apiErrorMessage(error, 'Impossible de vérifier ton adresse email.');
@@ -104,9 +98,9 @@ async function resend() {
   resending.value = true;
   resendMessage.value = '';
   try {
-    const { data } = await api.post('/api/auth/resend-verification', { email: email.value });
+    const sent = await accountService.resendVerificationEmail(email.value);
     resendFailed.value = false;
-    resendMessage.value = data?.message || 'Un nouveau lien t\'a été envoyé.';
+    resendMessage.value = sent || 'Un nouveau lien t\'a été envoyé.';
   } catch (error) {
     resendFailed.value = true;
     resendMessage.value = apiErrorMessage(error, 'Envoi impossible. Réessaie plus tard.');

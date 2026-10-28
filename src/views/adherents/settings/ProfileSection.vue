@@ -204,7 +204,9 @@
 import { computed, ref, watch } from 'vue';
 import { func } from '@/function';
 import { API_URL } from '@/config/api';
-import { api, apiMessage, isSessionLost } from './shared';
+import accountService from '@/services/account.service';
+import userService from '@/services/user.service';
+import { apiMessage, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
 const props = defineProps<SectionProps>();
@@ -305,7 +307,7 @@ async function saveProfileIdentity() {
 
   savingProfile.value = true;
   try {
-    const { data } = await api.put('/api/auth/profile', {
+    const data = await accountService.updateProfile<SettingsProfile>({
       ...form.value,
       socialLinks: { ...form.value.socialLinks }
     });
@@ -334,10 +336,8 @@ async function onAvatarChange(event: Event) {
   }
 
   avatarUploading.value = true;
-  const formData = new FormData();
-  formData.append('profilePicture', file);
   try {
-    await api.post('/api/profiles/me/picture', formData);
+    await userService.uploadProfileMedia('picture', file);
     await props.reloadProfile();
     func.showToastSuccess('Photo de profil mise à jour.');
   } catch (error) {
@@ -350,7 +350,7 @@ async function onAvatarChange(event: Event) {
 async function removeAvatar() {
   avatarUploading.value = true;
   try {
-    await api.delete('/api/profiles/me/picture');
+    await userService.deleteProfileMedia('picture');
     await props.reloadProfile();
     func.showToastSuccess('Photo de profil retirée.');
   } catch (error) {

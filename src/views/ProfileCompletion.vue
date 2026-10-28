@@ -108,124 +108,120 @@
   </main>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { API_URL } from '@/config/api';
 import { func } from '@/function';
-import { createApiClient, hasSession } from '@/services/http';
+import { hasSession } from '@/services/http';
+import accountService from '@/services/account.service';
 import { apiErrorMessage } from '@/services/apiError';
 
-/** Client partagé : renouvelle la session expirée et rejoue la requête. */
-const api = createApiClient({ baseURL: API_URL });
+defineOptions({ name: 'ProfileCompletion' });
 
-export default defineComponent({
-  name: 'ProfileCompletion',
-  setup() {
-    const router = useRouter();
-    const loading = ref(false);
-    const errorMessage = ref('');
-    const defaultUsername = ref('');
-    const errors = reactive<{ phoneNumber?: string }>({});
+interface CompletionProfile {
+  profileCompleted?: boolean;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+}
 
-    const form = reactive({
-      username: '',
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      bio: '',
-      location: '',
-      privacyPolicyAccepted: false,
-      marketingConsent: false,
-    });
+const router = useRouter();
+const loading = ref(false);
+const errorMessage = ref('');
+const defaultUsername = ref('');
+const errors = reactive<{ phoneNumber?: string }>({});
 
-    /** Validation locale du pseudo, alignée sur `validateUsername` côté API. */
-    const usernameError = computed(() => {
-      const username = form.username;
-      if (!username) return 'Le pseudo est obligatoire.';
-      if (username.length < 3) return 'Au moins 3 caractères.';
-      if (username.length > 30) return '30 caractères maximum.';
-      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-        return 'Lettres, chiffres, tiret et underscore uniquement.';
-      }
-      return '';
-    });
-
-    onMounted(async () => {
-      // Le refresh token fait foi : le jeton d'accès (15 min) peut avoir
-      // expiré sans que la session le soit ; le client le renouvelle.
-      if (!hasSession()) {
-        router.replace('/login');
-        return;
-      }
-      try {
-        const { data } = await api.get('/api/auth/profile');
-        if (data.user?.profileCompleted) {
-          // Déjà rempli — on n'est pas censé être ici.
-          router.replace('/adherents/dashboard');
-          return;
-        }
-        // Pré-remplissage depuis le fournisseur OAuth : le pseudo est déjà
-        // dérivé du nom du compte, l'utilisateur n'a qu'à le valider ou
-        // l'ajuster. Le champ est rempli, pas seulement suggéré en placeholder,
-        // pour que « Terminer » fonctionne sans saisie supplémentaire.
-        defaultUsername.value = data.user?.username || '';
-        form.username = defaultUsername.value;
-        form.firstName = data.user?.firstName || '';
-        form.lastName = data.user?.lastName || '';
-      } catch {
-        router.replace('/login');
-      }
-    });
-
-    const submit = async () => {
-      errorMessage.value = '';
-      errors.phoneNumber = undefined;
-      if (usernameError.value) {
-        errorMessage.value = usernameError.value;
-        return;
-      }
-      if (!form.phoneNumber || form.phoneNumber.replace(/\D/g, '').length < 6) {
-        errors.phoneNumber = 'Numéro requis';
-        errorMessage.value = 'Le téléphone est requis pour finaliser.';
-        return;
-      }
-      if (!form.privacyPolicyAccepted) {
-        errorMessage.value = 'Vous devez accepter la politique de confidentialité.';
-        return;
-      }
-      loading.value = true;
-      try {
-        await api.post(
-          '/api/auth/profile/complete',
-          {
-            username: form.username,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phoneNumber: form.phoneNumber,
-            bio: form.bio || undefined,
-            location: form.location || undefined,
-            privacyPolicyAccepted: form.privacyPolicyAccepted,
-            dataProcessingConsent: form.privacyPolicyAccepted,
-            marketingConsent: form.marketingConsent,
-          }
-        );
-        func.showToastSuccess('Profil finalisé, bienvenue !');
-        router.replace('/adherents/dashboard');
-      } catch (e) {
-        errorMessage.value = apiErrorMessage(e, 'Erreur lors de l\'enregistrement.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const skip = () => {
-      router.replace('/adherents/dashboard');
-    };
-
-    return { form, errors, errorMessage, loading, defaultUsername, usernameError, submit, skip };
-  },
+const form = reactive({
+  username: '',
+  firstName: '',
+  lastName: '',
+  phoneNumber: '',
+  bio: '',
+  location: '',
+  privacyPolicyAccepted: false,
+  marketingConsent: false,
 });
+
+/** Validation locale du pseudo, alignée sur `validateUsername` côté API. */
+const usernameError = computed(() => {
+  const username = form.username;
+  if (!username) return 'Le pseudo est obligatoire.';
+  if (username.length < 3) return 'Au moins 3 caractères.';
+  if (username.length > 30) return '30 caractères maximum.';
+  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+    return 'Lettres, chiffres, tiret et underscore uniquement.';
+  }
+  return '';
+});
+
+onMounted(async () => {
+  // Le refresh token fait foi : le jeton d'accès (15 min) peut avoir
+  // expiré sans que la session le soit ; le client le renouvelle.
+  if (!hasSession()) {
+    router.replace('/login');
+    return;
+  }
+  try {
+    const user = await accountService.getProfile<CompletionProfile>();
+    if (user?.profileCompleted) {
+      // Déjà rempli — on n'est pas censé être ici.
+      router.replace('/adherents/dashboard');
+      return;
+    }
+    // Pré-remplissage depuis le fournisseur OAuth : le pseudo est déjà
+    // dérivé du nom du compte, l'utilisateur n'a qu'à le valider ou
+    // l'ajuster. Le champ est rempli, pas seulement suggéré en placeholder,
+    // pour que « Terminer » fonctionne sans saisie supplémentaire.
+    defaultUsername.value = user?.username || '';
+    form.username = defaultUsername.value;
+    form.firstName = user?.firstName || '';
+    form.lastName = user?.lastName || '';
+  } catch {
+    router.replace('/login');
+  }
+});
+
+async function submit() {
+  errorMessage.value = '';
+  errors.phoneNumber = undefined;
+  if (usernameError.value) {
+    errorMessage.value = usernameError.value;
+    return;
+  }
+  if (!form.phoneNumber || form.phoneNumber.replace(/\D/g, '').length < 6) {
+    errors.phoneNumber = 'Numéro requis';
+    errorMessage.value = 'Le téléphone est requis pour finaliser.';
+    return;
+  }
+  if (!form.privacyPolicyAccepted) {
+    errorMessage.value = 'Vous devez accepter la politique de confidentialité.';
+    return;
+  }
+  loading.value = true;
+  try {
+    await accountService.completeProfile({
+      username: form.username,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      phoneNumber: form.phoneNumber,
+      bio: form.bio || undefined,
+      location: form.location || undefined,
+      privacyPolicyAccepted: form.privacyPolicyAccepted,
+      dataProcessingConsent: form.privacyPolicyAccepted,
+      marketingConsent: form.marketingConsent,
+    });
+    func.showToastSuccess('Profil finalisé, bienvenue !');
+    router.replace('/adherents/dashboard');
+  } catch (e) {
+    errorMessage.value = apiErrorMessage(e, 'Erreur lors de l\'enregistrement.');
+  } finally {
+    loading.value = false;
+  }
+}
+
+function skip() {
+  router.replace('/adherents/dashboard');
+}
 </script>
 
 <style lang="scss" scoped>

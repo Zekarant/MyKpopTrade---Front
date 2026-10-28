@@ -5,12 +5,10 @@ import { flushPromises, mount } from '@vue/test-utils'
 
 const route = vi.hoisted(() => ({ query: {} as Record<string, string> }))
 const postService = vi.hoisted(() => ({ createPost: vi.fn(), updatePost: vi.fn(), syncProductImages: vi.fn() }))
-const groupService = vi.hoisted(() => ({ getGroupDetail: vi.fn() }))
-const axiosGet = vi.hoisted(() => vi.fn())
+const groupService = vi.hoisted(() => ({ getGroupDetail: vi.fn(), getGroups: vi.fn(), searchGroups: vi.fn() }))
 const func = vi.hoisted(() => ({ showToastError: vi.fn(), showToastSuccess: vi.fn() }))
 
 vi.mock('vue-router', () => ({ useRoute: () => route, useRouter: () => ({ push: vi.fn() }) }))
-vi.mock('axios', () => ({ default: { get: axiosGet } }))
 vi.mock('@/services/post.service', () => ({ default: postService }))
 vi.mock('@/services/group.service', () => ({ default: groupService }))
 vi.mock('@/services/messaging.service', () => ({ default: {} }))
@@ -44,7 +42,8 @@ describe('add_post — métadonnées K-pop', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     route.query = {}
-    axiosGet.mockResolvedValue({ data: { groups: [{ _id: 'g1', name: 'BTS' }] } })
+    groupService.getGroups.mockResolvedValue([{ _id: 'g1', name: 'BTS' }])
+    groupService.searchGroups.mockResolvedValue([{ _id: 'g1', name: 'BTS' }])
     groupService.getGroupDetail.mockResolvedValue(groupDetail)
     postService.createPost.mockResolvedValue({ ok: false, error: { message: 'arrêt du test' } })
   })

@@ -78,8 +78,8 @@
     import report_card from '@/components/report_card.vue';
     import BlockUserButton from '@/components/adherents/BlockUserButton.vue';
     import authentificationService from '@/services/authentification.service';
-    import { API_URL } from '@/config/api';
-    import { createApiClient } from '@/services/http';
+    import accountService from '@/services/account.service';
+    import userService from '@/services/user.service';
     import ProfilePostsTab from './profile/ProfilePostsTab.vue';
     import ProfileListingsTab from './profile/ProfileListingsTab.vue';
     import ProfileAboutTab from './profile/ProfileAboutTab.vue';
@@ -90,9 +90,6 @@
     /** Page profil : bandeau, navigation et chargement du profil ; chaque onglet gère ses propres données. */
 
     defineOptions({ name: 'ProfilePage' });
-
-    /** Client partagé : renouvelle la session expirée et rejoue la requête. */
-    const api = createApiClient({ baseURL: API_URL });
 
     const route = useRoute();
     const partView = ref('post');
@@ -111,14 +108,13 @@
       if (!id) return;
       try {
         if (id === 'me') {
-          const response = await api.get('/api/auth/profile');
+          const me = await accountService.getProfile<ProfileInfo>();
           profile.value = {
-            ...response.data.user,
-            socialLinks: response.data.user.socialLinks ?? { instagram: '', twitter: '', discord: '' }
+            ...me,
+            socialLinks: me.socialLinks ?? { instagram: '', twitter: '', discord: '' }
           };
         } else {
-          const response = await api.get(`/api/profiles/user/${encodeURIComponent(id)}`);
-          profile.value = response.data.profile;
+          profile.value = await userService.getPublicProfile<ProfileInfo>(id);
         }
       } catch (error) {
         console.error('Erreur lors du chargement du profil:', error);

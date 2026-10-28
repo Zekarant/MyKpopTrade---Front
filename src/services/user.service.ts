@@ -11,6 +11,18 @@ export interface VerificationStats {
   totalPurchases: number;
 }
 
+export type NotificationCategory = 'orders' | 'offers' | 'messages' | 'disputes' | 'reviews' | 'social';
+export type NotificationChannel = 'email' | 'push';
+export type NotificationPreferences = Record<NotificationCategory, Record<NotificationChannel, boolean>>;
+
+export type ProfileMediaKind = 'banner' | 'picture';
+
+/** Champ d'upload, qui est aussi la clé du chemin dans la réponse de l'API. */
+const PROFILE_MEDIA_FIELDS: Record<ProfileMediaKind, 'profileBanner' | 'profilePicture'> = {
+  banner: 'profileBanner',
+  picture: 'profilePicture'
+};
+
 /**
  * Profil du membre connecté et droits RGPD sur son compte.
  * Une session expirée est gérée par le client HTTP (renouvellement, puis
@@ -23,6 +35,42 @@ class UserService {
   async getMyInformation(): Promise<UserResponse> {
     const { data } = await this.profilesClient.get<UserResponse>('/me');
     return data;
+  }
+
+  /** Profil public d'un autre membre. Le type dépend des champs lus par l'appelant. */
+  async getPublicProfile<T>(userId: string): Promise<T> {
+    const { data } = await this.profilesClient.get<{ profile: T }>(`/user/${encodeURIComponent(userId)}`);
+    return data.profile;
+  }
+
+  /**
+   * Envoie la photo ou la bannière de mon profil.
+   * Pas d'en-tête Content-Type manuel : axios pose celui d'un FormData, avec son boundary.
+   * @returns le chemin de l'image enregistrée
+   */
+  async uploadProfileMedia(kind: ProfileMediaKind, file: File): Promise<string> {
+    const field = PROFILE_MEDIA_FIELDS[kind];
+    const body = new FormData();
+    body.append(field, file);
+    const { data } = await this.profilesClient.post<Record<string, string>>(`/me/${kind}`, body);
+    return data[field];
+  }
+
+  async deleteProfileMedia(kind: ProfileMediaKind): Promise<void> {
+    await this.profilesClient.delete(`/me/${kind}`);
+  }
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const { data } = await this.usersClient.get<{ preferences: NotificationPreferences }>('/me/notification-preferences');
+    return data.preferences;
+  }
+
+  /** Envoie seulement les réglages changés : l'API fusionne et rend l'ensemble à jour. */
+  async updateNotificationPreferences(
+    changes: Partial<Record<NotificationCategory, Partial<Record<NotificationChannel, boolean>>>>
+  ): Promise<NotificationPreferences> {
+    const { data } = await this.usersClient.put<{ preferences: NotificationPreferences }>('/me/notification-preferences', changes);
+    return data.preferences;
   }
 
   /**
