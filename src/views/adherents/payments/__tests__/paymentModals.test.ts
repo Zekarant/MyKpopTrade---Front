@@ -9,7 +9,7 @@ let wrapper: VueWrapper
 
 afterEach(() => wrapper?.unmount())
 
-const confirmButton = () => wrapper.find('.btn--primary, .btn--danger')
+const confirmButton = () => wrapper.find('.btn-primary, .btn-danger')
 
 describe('ShipmentModal', () => {
   it('n\'autorise l\'envoi qu\'avec transporteur et numéro de suivi', async () => {

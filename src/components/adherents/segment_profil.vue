@@ -3,13 +3,13 @@
         <div class="row h-100">
             <div class="col-0 col-md-2"></div>
             <div class="col-12 col-md-8">
-                <div class="btn-group w-100" role="group" aria-label="Navigation profile">
-                    <button type="button" :class="{ clicked: part === 'post' }" class="btn" @click="btnClick('post')">Posts</button>
-                    <button type="button" :class="{ clicked: part === 'annoucement' }" class="btn" @click="btnClick('annoucement')">Annonces</button>
-                    <button type="button" :class="{ clicked: part === 'about' }" class="btn" @click="btnClick('about')">À propos</button>
-                    <button type="button" :class="{ clicked: part === 'review' }" class="btn" @click="btnClick('review')">Avis</button>
-                    <button type="button" :class="{ clicked: part === 'followers' }" class="btn" @click="btnClick('followers')">Abonnés</button>
-                    <button type="button" :class="{ clicked: part === 'wishlist' }" class="btn" @click="btnClick('wishlist')">Wishlist</button>
+                <div class="segment-tabs w-100" role="group" aria-label="Navigation profile">
+                    <button type="button" :class="{ clicked: part === 'post' }" class="segment-tab" @click="btnClick('post')">Posts</button>
+                    <button type="button" :class="{ clicked: part === 'annoucement' }" class="segment-tab" @click="btnClick('annoucement')">Annonces</button>
+                    <button type="button" :class="{ clicked: part === 'about' }" class="segment-tab" @click="btnClick('about')">À propos</button>
+                    <button type="button" :class="{ clicked: part === 'review' }" class="segment-tab" @click="btnClick('review')">Avis</button>
+                    <button type="button" :class="{ clicked: part === 'followers' }" class="segment-tab" @click="btnClick('followers')">Abonnés</button>
+                    <button type="button" :class="{ clicked: part === 'wishlist' }" class="segment-tab" @click="btnClick('wishlist')">Wishlist</button>
                 </div>
             </div>
             <div class="col-0 col-md-2"></div>
@@ -33,29 +33,40 @@
 </script>
 
 <style lang="scss" scoped>
-.btn{
+// Onglets du profil : pas des boutons d'action, donc ni `.btn` ni `.btn-group`.
+.segment-tabs{
+    display: inline-flex;
+}
+.segment-tab{
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background: transparent;
+    color: var(--bs-body-color);
     border: none;
     border-radius: 0px;
+    cursor: pointer;
     font-family: "Sora", serif;
     font-size: small;
     font-weight: 400;
     line-height: 12.6px;
     text-align: center;
+    white-space: nowrap;
+    transition: all var(--transition-base);
 }
-.btn-group{
-    border-radius: 0px;
-}
-.btn:hover{
+.segment-tab:hover{
     border-bottom: 2px solid;
     border-color: var(--blue);
 }
-.btn.clicked{
+.segment-tab.clicked{
     border-bottom: 2px solid;
     border-color: var(--blue);
 }
 
 @media (max-width: 768px) {
-    .btn-group{
+    .segment-tabs{
         display: flex;
         flex-wrap: nowrap;
         overflow-x: auto;
@@ -64,22 +75,21 @@
         scrollbar-width: thin;
         scrollbar-color: var(--accent-pink) var(--secondary-color-tint);
     }
-    .btn-group::-webkit-scrollbar{
+    .segment-tabs::-webkit-scrollbar{
         height: 4px;
     }
-    .btn-group::-webkit-scrollbar-track{
+    .segment-tabs::-webkit-scrollbar-track{
         background: var(--secondary-color-tint);
         border-radius: 4px;
     }
-    .btn-group::-webkit-scrollbar-thumb{
+    .segment-tabs::-webkit-scrollbar-thumb{
         background: var(--accent-pink);
         border-radius: 4px;
     }
-    .btn-group .btn{
+    .segment-tab{
         flex: 0 0 auto;
-        white-space: nowrap;
     }
-    .btn.clicked{
+    .segment-tab.clicked{
         border-bottom: none;
         color: var(--accent-pink);
         font-weight: 600;

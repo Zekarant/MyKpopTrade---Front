@@ -406,47 +406,6 @@ const submitOffer = async () => {
   border-top: 1px solid #e9ecef;
 }
 
-.btn-secondary {
-  padding: 12px 24px;
-  border: 1px solid #e9ecef;
-  background: white;
-  color: #6c757d;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #495057;
-}
-
-.btn-primary {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  transform: none;
-}
-
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -491,7 +450,6 @@ const submitOffer = async () => {
   .btn-primary,
   .btn-secondary {
     width: 100%;
-    justify-content: center;
   }
 }
 </style>

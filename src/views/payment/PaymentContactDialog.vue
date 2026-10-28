@@ -84,25 +84,8 @@ async function sendMessage() {
 </script>
 
 <style lang="scss" scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 20px;
-}
-
 .modal-card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
   position: relative;
-  animation: slideUp 0.3s ease-out;
 
   &:focus { outline: none; }
 
@@ -190,22 +173,6 @@ async function sendMessage() {
 }
 
 .btn {
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--success);
-  color: var(--text-on-accent);
-
-  &:hover:not(:disabled) { transform: translateY(-3px); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 </style>

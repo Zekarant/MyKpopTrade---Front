@@ -40,9 +40,9 @@
           />
 
           <div v-if="pagination && pagination.pages > 1" class="pager">
-            <button type="button" class="btn btn--ghost btn--sm" :disabled="page <= 1" @click="changePage(page - 1)">Précédent</button>
+            <button type="button" class="btn btn-ghost btn-sm" :disabled="page <= 1" @click="changePage(page - 1)">Précédent</button>
             <span>Page {{ page }} / {{ pagination.pages }}</span>
-            <button type="button" class="btn btn--ghost btn--sm" :disabled="page >= pagination.pages" @click="changePage(page + 1)">Suivant</button>
+            <button type="button" class="btn btn-ghost btn-sm" :disabled="page >= pagination.pages" @click="changePage(page + 1)">Suivant</button>
           </div>
         </div>
       </div>

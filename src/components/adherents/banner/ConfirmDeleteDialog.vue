@@ -34,7 +34,6 @@ useDialogFocus(dialog, cancelButton);
 
 <style lang="scss" scoped>
 .btn {
-  border-radius: 2px;
   width: 100%;
 }
 </style>

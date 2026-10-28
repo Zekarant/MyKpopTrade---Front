@@ -3,7 +3,7 @@
     <div class="dispute-detail">
       <div v-if="dispute" class="dispute-detail__container">
         <header class="dispute-detail__header">
-          <button class="btn btn--ghost btn--sm" @click="$router.back()">
+          <button class="btn btn-ghost btn-sm" @click="$router.back()">
             <i class="bi bi-arrow-left"></i> Retour
           </button>
           <h1>Litige #{{ dispute._id.substring(0, 8) }}</h1>
@@ -42,10 +42,10 @@
           <h3>Répondre</h3>
           <textarea v-model="reply" rows="4" placeholder="Apportez des précisions ou des preuves..." aria-label="Votre réponse" maxlength="2000"></textarea>
           <div class="reply-actions">
-            <button class="btn btn--primary" :disabled="!reply.trim() || sending" @click="send">
+            <button class="btn btn-primary" :disabled="!reply.trim() || sending" @click="send">
               <i class="bi bi-send"></i> Envoyer
             </button>
-            <button v-if="canCancel" class="btn btn--ghost" @click="cancelDispute">
+            <button v-if="canCancel" class="btn btn-ghost" @click="cancelDispute">
               <i class="bi bi-x-circle"></i> Retirer le litige
             </button>
           </div>
@@ -182,13 +182,4 @@ onMounted(fetchDispute);
   }
 }
 .reply-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-sm); }
-.btn {
-  display: inline-flex; align-items: center; gap: var(--space-xs);
-  padding: 8px 16px; border-radius: var(--radius-md); border: none;
-  font-size: var(--font-size-sm); font-weight: 600; cursor: pointer;
-  &--sm { padding: 6px 12px; font-size: var(--font-size-xs); }
-  &--primary { background: var(--accent-gradient); color: white; }
-  &--ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--surface-border); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
 </style>
