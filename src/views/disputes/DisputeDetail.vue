@@ -163,7 +163,7 @@ onMounted(fetchDispute);
   flex-shrink: 0; color: var(--text-secondary);
 }
 .msg--admin .msg__avatar { background: var(--accent-pink); color: white; }
-.msg--seller .msg__avatar { background: rgba(33,150,243,.2); color: #2196f3; }
+.msg--seller .msg__avatar { background: rgba(33,150,243,.2); color: var(--info-text); }
 .msg__body {
   flex: 1; background: var(--bg-card); border: 1px solid var(--surface-border);
   border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md);

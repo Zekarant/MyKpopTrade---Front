@@ -71,7 +71,7 @@ function dismiss() {
   font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: var(--warning);
+  color: var(--warning-text);
   background: var(--warning-light);
   border: 1px solid var(--warning);
   border-radius: var(--radius-full);

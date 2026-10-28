@@ -101,8 +101,8 @@ const missingCount = missingLegalKeys().length;
 .legal-page__updated { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-sm); }
 .legal-page__draft {
   background: rgba(255, 193, 7, .15);
-  border-left: 3px solid #ffc107;
-  color: #b8860b;
+  border-left: 3px solid var(--warning);
+  color: var(--warning-text);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
@@ -198,7 +198,7 @@ const missingCount = missingLegalKeys().length;
   &:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
 
   &--active {
-    color: #fff;
+    color: var(--text-on-accent);
     background: var(--accent-pink);
     border-color: var(--accent-pink);
   }

@@ -199,12 +199,12 @@ const submitOffer = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 24px 24px 16px 24px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--surface-border);
 }
 
 .popup-header h3 {
   margin: 0;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 20px;
   font-weight: 600;
 }
@@ -213,27 +213,27 @@ const submitOffer = async () => {
   width: 32px;
   height: 32px;
   border: none;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6c757d;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .product-summary {
   display: flex;
   gap: 16px;
   padding: 24px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--surface-border);
 }
 
 .product-image {
@@ -259,7 +259,7 @@ const submitOffer = async () => {
 
 .product-details h4 {
   margin: 0 0 8px 0;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
@@ -267,12 +267,12 @@ const submitOffer = async () => {
 
 .original-price {
   font-size: 14px;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .price-value {
   font-weight: 600;
-  color: #28a745;
+  color: var(--success-text);
   font-size: 16px;
 }
 
@@ -288,7 +288,7 @@ const submitOffer = async () => {
   display: inline-block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #495057;
+  color: var(--text-primary);
   font-size: 14px;
   margin-left: 10px;
 }
@@ -296,7 +296,7 @@ const submitOffer = async () => {
 .form-group input[type="number"] {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--surface-border);
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
@@ -306,7 +306,7 @@ const submitOffer = async () => {
 }
 
 .form-group input[type="number"]:focus {
-  border-color: #0d6efd;
+  border-color: var(--info);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
   outline: none;
 }
@@ -314,7 +314,7 @@ const submitOffer = async () => {
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--surface-border);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
@@ -325,7 +325,7 @@ const submitOffer = async () => {
 }
 
 .form-group textarea:focus {
-  border-color: #0d6efd;
+  border-color: var(--info);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
   outline: none;
 }
@@ -336,13 +336,13 @@ const submitOffer = async () => {
   gap: 6px;
   margin-top: 8px;
   font-size: 13px;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .offer-error {
   margin-top: 6px;
   font-size: 13px;
-  color: var(--danger-color, #dc3545);
+  color: var(--danger-text);
 }
 
 .price-info {
@@ -351,7 +351,7 @@ const submitOffer = async () => {
 }
 
 .savings {
-  color: #28a745;
+  color: var(--success-text);
   font-weight: 600;
   font-size: 14px;
 }
@@ -359,7 +359,7 @@ const submitOffer = async () => {
 .character-count {
   text-align: right;
   font-size: 12px;
-  color: #6c757d;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
@@ -403,7 +403,7 @@ const submitOffer = async () => {
   justify-content: flex-end;
   margin-top: 32px;
   padding-top: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--surface-border);
 }
 
 .popup-content {

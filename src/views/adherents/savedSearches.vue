@@ -281,7 +281,7 @@ async function remove(search: SavedSearch) {
 }
 
 .saved-search__delete:hover {
-  color: var(--danger, #dc3545);
+  color: var(--danger-text);
 }
 
 .saved-searches__empty {

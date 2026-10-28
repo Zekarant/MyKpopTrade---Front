@@ -19,7 +19,7 @@
 }
 
 .counter-popup-content {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 18px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.19);
   padding: 38px 28px 26px 28px;
@@ -40,36 +40,36 @@
   right: 18px;
   background: none;
   border: none;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 23px;
   cursor: pointer;
   transition: color 0.18s, background 0.18s;
 }
 
 .counter-close-btn:hover {
-  color: #0b5ed7;
-  background: #f8f9fa;
+  color: var(--info-text);
+  background: var(--bg-secondary);
   border-radius: 50%;
 }
 
 .counter-popup-title {
   font-size: 20px;
   font-weight: 700;
-  color: #212529;
+  color: var(--text-primary);
   margin-bottom: 10px;
   letter-spacing: -0.5px;
 }
 
 .counter-popup-message {
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 15px;
   margin-bottom: 21px;
 }
 
 .counter-input {
   width: 100%;
-  background: #f6f7fb;
-  border: 1.5px solid #dee2e6;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--surface-border);
   border-radius: 10px;
   outline: none;
   font-size: 16px;
@@ -80,8 +80,8 @@
 }
 
 .counter-input:focus {
-  border: 1.5px solid #0b5ed7;
-  background: #fff;
+  border: 1.5px solid var(--info);
+  background: var(--bg-card);
   box-shadow: 0 0 0 3px rgba(13,110,253,0.08);
 }
 
@@ -102,19 +102,19 @@
 }
 
 .btn-outline.btn-wide:hover {
-  background: #e7f3ff;
-  color: #0b5ed7;
-  border-color: #0b5ed7;
+  background: var(--info-light);
+  color: var(--info-text);
+  border-color: var(--info);
 }
 
 .btn-danger.btn-wide {
-  background: #eb5252;
+  background: var(--danger);
   border: none;
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .btn-danger.btn-wide:hover {
-  background: #b92929;
+  filter: brightness(0.9);
 }
 
 @media (max-width: 480px) {

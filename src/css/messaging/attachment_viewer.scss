@@ -1,7 +1,7 @@
 /* Visionneuse des pièces jointes (AttachmentViewer.vue).
    Le cadre .popup-overlay / .popup-content vient de css/_components.scss. */
 .popup-content:hover {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 /* Boîte agrandie à toute la hauteur ; repère de la croix de fermeture. */
@@ -18,7 +18,7 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #6c757d;
+  color: var(--text-secondary);
   padding: 0;
   width: 32px;
   height: 32px;
@@ -30,8 +30,8 @@
 }
 
 .close-btn:hover {
-  background: #f8f9fa;
-  color: #495057;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .popup-content .close-btn {

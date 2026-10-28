@@ -194,7 +194,7 @@
     align-items: center;
     gap: var(--space-sm);
 
-    i { color: #dc3545; font-size: 1.25rem; flex-shrink: 0; }
+    i { color: var(--danger-text); font-size: 1.25rem; flex-shrink: 0; }
   }
 
   &__btn {
@@ -202,7 +202,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    background: #dc3545;
+    background: var(--danger);
     color: white;
     border: none;
     border-radius: var(--radius-full);
@@ -211,7 +211,7 @@
     white-space: nowrap;
     flex-shrink: 0;
 
-    &:hover { background: #c82333; }
+    &:hover { filter: brightness(0.9); }
   }
 }
 

@@ -119,7 +119,7 @@ const resetFilters = () => {
   background-color: transparent;
   border: 1px solid var(--danger-color);
   border-radius: 6px;
-  color: var(--danger-color);
+  color: var(--danger-text);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;

@@ -122,7 +122,7 @@
   color: white;
 
   &:hover {
-    background: #dc2626;
+    filter: brightness(0.9);
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   }
 }
@@ -132,7 +132,7 @@
   color: white;
 
   &:hover {
-    background: #059669;
+    filter: brightness(0.9);
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
   }
 }
@@ -295,17 +295,17 @@
 
 .badge-success {
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .badge-warning {
   background: var(--warning-light);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .badge-danger {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 // === ALERTS ===
@@ -322,25 +322,25 @@
 
 .alert-success {
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
   border: 1px solid var(--success-border);
 }
 
 .alert-danger {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
   border: 1px solid var(--danger-border);
 }
 
 .alert-warning {
   background: var(--warning-light);
-  color: var(--warning);
+  color: var(--warning-text);
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .alert-info {
   background: var(--info-light);
-  color: var(--info);
+  color: var(--info-text);
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 

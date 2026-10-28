@@ -286,7 +286,7 @@
         color: white;
 
         &:hover:not(:disabled) {
-            background: #dc2626;
+            background: var(--danger);
             transform: translateY(-1px);
         }
 
