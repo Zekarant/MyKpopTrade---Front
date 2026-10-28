@@ -90,7 +90,7 @@
           Votre compte sera <strong>supprimé dans 30 jours</strong>. Pendant ce délai, vous pouvez toujours annuler.
           Tapez <strong>SUPPRIMER</strong> pour confirmer.
         </p>
-        <input v-model="deleteConfirmText" type="text" class="settings-input" placeholder="SUPPRIMER" autocomplete="off" />
+        <input v-model="deleteConfirmText" type="text" class="settings-input" placeholder="SUPPRIMER" aria-label="Tapez SUPPRIMER pour confirmer" autocomplete="off" />
         <div class="password-form__actions">
           <button class="btn-settings btn-settings--ghost" @click="showDeleteConfirm = false; deleteConfirmText = ''">Annuler</button>
           <button :disabled="deleteConfirmText !== 'SUPPRIMER'" class="btn-settings btn-settings--danger" @click="requestAccountDeletion">

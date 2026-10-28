@@ -3,19 +3,20 @@
     <div class="admin__panel-header">
       <div class="admin__toolbar">
         <input
-          v-model="state.search"
+v-model="state.search"
+          aria-label="Rechercher un membre (pseudo ou email)"
           type="search"
           class="admin__input admin__input--search"
           placeholder="Pseudo ou email…"
           @input="debouncedSearch"
         />
-        <select v-model="state.role" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.role" aria-label="Filtrer par rôle" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Tous les rôles</option>
           <option value="user">Utilisateurs</option>
           <option value="moderator">Modérateurs</option>
           <option value="admin">Admins</option>
         </select>
-        <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.status" aria-label="Filtrer par statut" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Tous les statuts</option>
           <option value="active">Actifs</option>
           <option value="suspended">Suspendus</option>
@@ -45,7 +46,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user._id" @click="detailUserId = user._id">
+          <tr v-for="user in users" :key="user._id" v-keyboard-click role="row" @click="detailUserId = user._id">
             <td>
               <div class="admin__user-cell">
                 <img
@@ -63,6 +64,7 @@
             <td class="admin__muted">{{ user.email }}</td>
             <td @click.stop>
               <select
+                :aria-label="`Rôle de ${user.username}`"
                 class="admin__select"
                 :value="user.role"
                 :disabled="user.role === 'admin'"
@@ -117,25 +119,9 @@
       </table>
     </div>
 
-    <div v-if="pagination.pages > 1" class="admin__pagination">
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page <= 1"
-        @click="commit({ page: state.page - 1 })"
-      >
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} comptes</span>
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page >= pagination.pages"
-        @click="commit({ page: state.page + 1 })"
-      >
-        <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+    <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })">
+      {{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} comptes
+    </AdminPagination>
 
     <UserDetailModal
       v-if="detailUserId"
@@ -156,6 +142,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { vKeyboardClick } from '@/composables/vKeyboardClick';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
 import { API_URL } from '@/config/api';

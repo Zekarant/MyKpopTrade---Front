@@ -11,6 +11,10 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Au-delà, les navigateurs et le serveur Vite (qui compile chaque page à sa
+  // première visite) saturent un poste de développement : captures « instables »
+  // et attentes dépassées au hasard des tests.
+  workers: 4,
   reporter: [['list']],
   expect: {
     toHaveScreenshot: {
@@ -24,7 +28,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5199',
     locale: 'fr-FR',
-    timezoneId: 'Europe/Paris'
+    timezoneId: 'Europe/Paris',
+    // Sans défilement doux : une capture prise pendant le défilement serait décalée.
+    reducedMotion: 'reduce'
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

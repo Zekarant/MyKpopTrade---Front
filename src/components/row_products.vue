@@ -18,10 +18,10 @@
         <swiper-slide v-for="item in visibleList" :key="item._id">
             <card :data="item" @open="openPost" @remove-favorite="removeFavorite" />
         </swiper-slide>
-        <button type="button" class="custom-swiper-prev">
+        <button type="button" class="custom-swiper-prev" aria-label="Annonces précédentes">
             <i class="bi bi-chevron-left" aria-hidden="true"></i>
         </button>
-        <button type="button" class="custom-swiper-next">
+        <button type="button" class="custom-swiper-next" aria-label="Annonces suivantes">
             <i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>
         <swiper-slide v-if="hasMorePages(pagination)" class="voir-plus-slide">
@@ -31,9 +31,9 @@
    </div>
   </div>
   <Teleport to="body">
-    <div v-if="openedPost" class="post-overlay" @click.self="closePost">
+    <DialogFrame v-if="openedPost" class="post-overlay" :aria-label="openedPost.title" @close="closePost" @click.self="closePost">
         <post :key="openedPost._id" :id-post="openedPost._id" @close-post="closePost" />
-    </div>
+    </DialogFrame>
   </Teleport>
 </template>
 
@@ -46,6 +46,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import post from '@/components/post.vue';
 import card from '@/components/card.vue';
+import DialogFrame from '@/components/DialogFrame.vue';
 import type { Post } from '@/types/post.types';
 import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 import { usePostOverlay } from '@/components/post/usePostOverlay';

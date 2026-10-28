@@ -39,7 +39,13 @@
                         <i class="bi bi-clock"></i> En attente
                       </span>
                     </div>
-                    <div v-if="offerStatus === 'pending'" class="cancel-offer" @click="emit('cancel-offer', message)">
+                    <div
+                      v-if="offerStatus === 'pending'"
+                      v-keyboard-click
+                      class="cancel-offer"
+                      aria-label="Annuler l'offre"
+                      @click="emit('cancel-offer', message)"
+                    >
                       Annuler
                     </div>
                   </div>
@@ -95,6 +101,7 @@
 <script setup lang="ts">
 /** Un message du fil : texte, pièces jointes et, pour une offre, son statut et ses actions. */
 import { computed, ref } from 'vue'
+import { vKeyboardClick } from '@/composables/vKeyboardClick'
 import { formatMessageTimestamp, messageStatusIcon } from '../conversationHelpers'
 import UserAvatar from '@/components/UserAvatar.vue'
 import report_card from '@/components/report_card.vue'

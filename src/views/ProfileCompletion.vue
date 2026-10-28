@@ -18,10 +18,10 @@
 
           <form class="auth-form" @submit.prevent="submit">
             <div class="form-group">
-              <label class="form-label">Pseudo <span class="required">*</span></label>
+              <label class="form-label" for="completion-username">Pseudo <span class="required">*</span></label>
               <div class="input-group--custom" :class="{ 'input-group--error': usernameError }">
                 <span class="input-icon"><i class="bi bi-person"></i></span>
-                <input v-model.trim="form.username" type="text" maxlength="30" autocomplete="username" />
+                <input id="completion-username" v-model.trim="form.username" type="text" maxlength="30" autocomplete="username" />
               </div>
               <small v-if="usernameError" class="hint hint--error">{{ usernameError }}</small>
               <small v-else class="hint">
@@ -32,16 +32,16 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Prénom</label>
+                <label class="form-label" for="completion-first-name">Prénom</label>
                 <div class="input-group--custom">
                   <span class="input-icon"><i class="bi bi-person-vcard"></i></span>
-                  <input v-model.trim="form.firstName" type="text" maxlength="100" autocomplete="given-name" />
+                  <input id="completion-first-name" v-model.trim="form.firstName" type="text" maxlength="100" autocomplete="given-name" />
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Nom</label>
+                <label class="form-label" for="completion-last-name">Nom</label>
                 <div class="input-group--custom">
-                  <input v-model.trim="form.lastName" type="text" maxlength="100" autocomplete="family-name" />
+                  <input id="completion-last-name" v-model.trim="form.lastName" type="text" maxlength="100" autocomplete="family-name" />
                 </div>
               </div>
             </div>
@@ -50,23 +50,23 @@
             </small>
 
             <div class="form-group">
-              <label class="form-label">Téléphone <span class="required">*</span></label>
+              <label class="form-label" for="completion-phone">Téléphone <span class="required">*</span></label>
               <div class="input-group--custom" :class="{ 'input-group--error': errors.phoneNumber }">
                 <span class="input-icon"><i class="bi bi-phone"></i></span>
-                <input v-model="form.phoneNumber" type="tel" placeholder="+33 6 12 34 56 78" required />
+                <input id="completion-phone" v-model="form.phoneNumber" type="tel" placeholder="+33 6 12 34 56 78" required />
               </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Bio (optionnel)</label>
-              <textarea v-model="form.bio" rows="3" maxlength="500" placeholder="Présente-toi en quelques mots…"></textarea>
+              <label class="form-label" for="completion-bio">Bio (optionnel)</label>
+              <textarea id="completion-bio" v-model="form.bio" rows="3" maxlength="500" placeholder="Présente-toi en quelques mots…"></textarea>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Localisation (optionnel)</label>
+              <label class="form-label" for="completion-location">Localisation (optionnel)</label>
               <div class="input-group--custom">
                 <span class="input-icon"><i class="bi bi-geo-alt"></i></span>
-                <input v-model="form.location" type="text" maxlength="100" placeholder="Ville, pays" />
+                <input id="completion-location" v-model="form.location" type="text" maxlength="100" placeholder="Ville, pays" />
               </div>
             </div>
 
@@ -277,7 +277,7 @@ function skip() {
 @media (max-width: 480px) {
   .form-row { grid-template-columns: 1fr; }
 }
-.input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; }
+.input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px var(--danger-light) !important; }
 
 textarea {
   background: var(--bg-tertiary);
@@ -299,7 +299,7 @@ textarea {
 .auth-message {
   display: flex; align-items: center; gap: var(--space-sm);
   padding: var(--space-md); border-radius: var(--radius-md); font-size: var(--font-size-sm);
-  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
 }
 
 .auth-skip {

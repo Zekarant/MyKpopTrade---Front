@@ -1,7 +1,7 @@
 <template>
   <div class="admin__panel">
     <div class="admin__panel-header">
-      <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
+      <select v-model="state.status" aria-label="Filtrer par statut" class="admin__select" @change="commit({ page: 1 })">
         <option value="opened">Ouverts</option>
         <option value="under_review">En arbitrage</option>
         <option value="">Tous</option>
@@ -71,30 +71,12 @@
       </table>
     </div>
 
-    <div v-if="pagination.pages > 1" class="admin__pagination">
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page <= 1"
-        @click="commit({ page: state.page - 1 })"
-      >
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <span>{{ state.page }} / {{ pagination.pages }}</span>
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page >= pagination.pages"
-        @click="commit({ page: state.page + 1 })"
-      >
-        <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+    <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })" />
 
     <div v-if="activeDispute" class="admin__modal-overlay" @click.self="activeDispute = null">
-      <div class="admin__modal" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal" aria-labelledby="dispute-resolution-title" @close="activeDispute = null">
         <div class="admin__modal-header">
-          <h3>Trancher le litige</h3>
+          <h3 id="dispute-resolution-title">Trancher le litige</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="activeDispute = null">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -147,13 +129,14 @@
             {{ submitting ? 'Enregistrement…' : 'Confirmer' }}
           </button>
         </div>
-      </div>
+      </DialogFrame>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import disputeService, {
   type DisputeResolutionPayload,
   type DisputeStatus,
@@ -168,6 +151,7 @@ import {
   formatAge,
   formatDate
 } from '../adminFormat';
+import DialogFrame from '@/components/DialogFrame.vue';
 
 const PAGE_SIZE = 20;
 const PENDING_STATUSES = ['opened', 'under_review'];

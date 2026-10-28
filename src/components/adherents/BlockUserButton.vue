@@ -132,17 +132,17 @@ async function confirmAction() {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border: 1px solid var(--danger, #ef4444);
+  border: 1px solid var(--danger);
   border-radius: var(--radius-md, 8px);
   background: transparent;
-  color: var(--danger, #ef4444);
+  color: var(--danger);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 
   &:hover:not(:disabled),
   &--active {
-    background: var(--danger, #ef4444);
+    background: var(--danger);
     color: white;
   }
 
@@ -200,7 +200,7 @@ async function confirmAction() {
   cursor: pointer;
 
   &--confirm {
-    background: var(--danger, #ef4444);
+    background: var(--danger);
     color: white;
   }
 

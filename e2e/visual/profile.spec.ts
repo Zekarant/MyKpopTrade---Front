@@ -19,8 +19,6 @@ async function openProfile(page: Page, who: 'me' | typeof OTHER) {
   })
   await page.goto(`/adherents/profile/${who}`)
   await expect(page.locator('.feed-post')).toHaveCount(2)
-  // Le bandeau bêta, fixé en bas, masquerait une partie du contenu capturé.
-  await page.locator('.beta-banner__close').click()
   await page.waitForLoadState('networkidle')
 }
 

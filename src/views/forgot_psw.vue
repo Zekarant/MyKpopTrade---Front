@@ -20,10 +20,10 @@
 
           <form class="auth-form" @submit.prevent="reset">
             <div class="form-group">
-              <label class="form-label">Email</label>
+              <label class="form-label" for="forgot-email">Email</label>
               <div class="input-group--custom" :class="{ 'input-group--error': errorBase }">
                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                <input v-model="email" type="email" placeholder="Votre adresse email" required />
+                <input id="forgot-email" v-model="email" type="email" placeholder="Votre adresse email" autocomplete="email" required />
               </div>
             </div>
 
@@ -199,7 +199,7 @@ const reset = async () => {
 
 .input-group--error {
   border-color: var(--danger) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  box-shadow: 0 0 0 3px var(--danger-light) !important;
 }
 
 .auth-message {
@@ -213,13 +213,13 @@ const reset = async () => {
   &--success {
     background: var(--success-light);
     color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    border: 1px solid var(--success-border);
   }
 
   &--error {
     background: var(--danger-light);
     color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--danger-border);
   }
 }
 

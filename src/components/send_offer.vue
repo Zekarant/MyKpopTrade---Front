@@ -1,10 +1,10 @@
 <template>
 <div class="popup-overlay" @click.self="$emit('close')">
-  <div class="popup-content offer-modal" @click.stop>
+  <div ref="dialogEl" class="popup-content offer-modal" role="dialog" aria-modal="true" aria-labelledby="offer-modal-title" @click.stop>
     <div class="popup-header">
-      <h3>Faire une offre</h3>
-      <button class="close-btn" @click="$emit('close')">
-        <i class="bi bi-x"></i>
+      <h3 id="offer-modal-title">Faire une offre</h3>
+      <button type="button" class="close-btn" aria-label="Fermer" @click="$emit('close')">
+        <i class="bi bi-x" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -58,10 +58,10 @@
       </div>
 
       <div class="form-group">
-           <input v-model="offerTermsAccepted" class="form-check-input" type="checkbox" required>
+           <input id="offerTerms" v-model="offerTermsAccepted" class="form-check-input" type="checkbox" required>
 
-            <label class="checkbox-label">
-            J'accepte les <a href="#" class="terms-link">conditions d'utilisation</a> pour les offres
+            <label for="offerTerms" class="checkbox-label">
+            J'accepte les <a href="/cgu" target="_blank" rel="noopener" class="terms-link">conditions d'utilisation</a> pour les offres
             </label>
       </div>
 
@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { API_URL } from '@/config/api';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 import {
   formatAmount,
   offerBounds,
@@ -101,6 +102,9 @@ defineOptions({ name: 'SendOffer' });
 
 const props = defineProps<{ conversation?: OfferConversation; product?: OfferProduct }>();
 const emit = defineEmits<{ close: []; offerSent: [payload: OfferSentPayload] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('close'));
 
 const offerAmount = ref<number | ''>('')
 const offerMessage = ref('')

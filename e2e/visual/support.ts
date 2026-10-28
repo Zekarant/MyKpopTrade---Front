@@ -18,11 +18,13 @@ export type ApiHandler = (path: string, method: string, url: URL) => unknown | P
 
 /**
  * Horloge qui avance depuis `now` : figée, elle casse la garde anti double-traitement
- * de Vue et les `@click.stop` imbriqués. Session ouverte, cookies acceptés.
+ * de Vue et les `@click.stop` imbriqués. Session ouverte, cookies acceptés, bandeau
+ * bêta déjà fermé : collé en bas de l'écran, il masquerait le contenu des captures pleine page.
  */
 export async function setupSession(page: Page, { now, userId }: { now: Date; userId: string }) {
   await page.clock.install({ time: now })
   await page.clock.resume()
+  await page.addInitScript(() => localStorage.setItem('mkt_beta_banner_dismissed_v1', '1'))
   await page.context().addCookies([
     { name: 'id_user', value: userId, domain: 'localhost', path: '/' },
     { name: 'sessionToken', value: 'test-access', domain: 'localhost', path: '/' },

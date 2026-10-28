@@ -14,8 +14,14 @@
                             <span class="review-card__rating-num">{{ review.rating }}/5</span>
                         </div>
                     </div>
-                    <button class="review-card__menu-btn" @click="toggleMenu($event)">
-                        <i class="bi bi-three-dots-vertical"></i>
+                    <button
+                        class="review-card__menu-btn"
+                        aria-label="Options de l'avis"
+                        aria-haspopup="menu"
+                        :aria-expanded="isMenuVisible"
+                        @click="toggleMenu($event)"
+                    >
+                        <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                     </button>
                     <div v-if="isMenuVisible" class="review-card__dropdown">
                         <button class="review-card__dropdown-item" @click="showPopupReport = true">

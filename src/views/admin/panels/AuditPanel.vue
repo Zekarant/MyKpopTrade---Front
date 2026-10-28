@@ -19,7 +19,7 @@
 
     <div class="admin__panel">
       <div class="admin__panel-header">
-        <select v-model="state.targetType" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.targetType" aria-label="Filtrer par cible" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Toutes les cibles</option>
           <option v-for="(label, value) in TARGET_TYPE_LABELS" :key="value" :value="value">{{ label }}</option>
         </select>
@@ -62,31 +62,14 @@
         </table>
       </div>
 
-      <div v-if="pagination.pages > 1" class="admin__pagination">
-        <button
-          type="button"
-          class="admin__icon-btn"
-          :disabled="state.page <= 1"
-          @click="commit({ page: state.page - 1 })"
-        >
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <span>{{ state.page }} / {{ pagination.pages }}</span>
-        <button
-          type="button"
-          class="admin__icon-btn"
-          :disabled="state.page >= pagination.pages"
-          @click="commit({ page: state.page + 1 })"
-        >
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
+      <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import { func } from '@/function';
 import { useAdminQueryState } from '../useAdminQueryState';

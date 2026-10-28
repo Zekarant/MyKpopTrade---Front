@@ -1,6 +1,6 @@
 <template>
   <div class="counter-popup-overlay" @click.self="emit('cancel')">
-    <div class="counter-popup-content" role="dialog" aria-modal="true" aria-labelledby="counter-offer-title">
+    <div ref="dialogEl" class="counter-popup-content" role="dialog" aria-modal="true" aria-labelledby="counter-offer-title">
       <button type="button" class="counter-close-btn" aria-label="Fermer" @click="emit('cancel')">
         <i class="bi bi-x-lg"></i>
       </button>
@@ -37,6 +37,7 @@
 <script setup lang="ts">
 /** Contre-offre du vendeur : montant obligatoire, message facultatif. */
 import { ref } from 'vue'
+import { useDialogFocus } from '@/composables/useDialogFocus'
 
 defineProps<{
   submitting: boolean
@@ -48,6 +49,9 @@ const emit = defineEmits<{
   submit: [amount: number, message: string]
   cancel: []
 }>()
+
+const dialogEl = ref<HTMLElement | null>(null)
+useDialogFocus(dialogEl, undefined, () => emit('cancel'))
 
 const amount = ref<number | null>(null)
 const message = ref('')

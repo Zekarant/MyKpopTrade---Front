@@ -2,7 +2,8 @@
   <div class="admin__panel">
     <div class="admin__panel-header">
       <input
-        v-model="search"
+v-model="search"
+        aria-label="Rechercher une question"
         type="search"
         class="admin__input admin__input--search"
         placeholder="Rechercher une question…"
@@ -69,9 +70,9 @@
     </template>
 
     <div v-if="showForm" class="admin__modal-overlay" @click.self="showForm = false">
-      <div class="admin__modal admin__modal--wide" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal admin__modal--wide" aria-labelledby="faq-form-title" @close="showForm = false">
         <div class="admin__modal-header">
-          <h3>{{ editing ? 'Modifier la FAQ' : 'Nouvelle FAQ' }}</h3>
+          <h3 id="faq-form-title">{{ editing ? 'Modifier la FAQ' : 'Nouvelle FAQ' }}</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="showForm = false">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -134,7 +135,7 @@
             {{ editing ? 'Enregistrer' : 'Créer' }}
           </button>
         </div>
-      </div>
+      </DialogFrame>
     </div>
   </div>
 </template>
@@ -144,6 +145,7 @@ import { computed, onMounted, ref } from 'vue';
 import faqService, { type Faq } from '@/services/faq.service';
 import { func } from '@/function';
 import { apiErrorMessage } from '../adminFormat';
+import DialogFrame from '@/components/DialogFrame.vue';
 
 const DEFAULT_CATEGORY = 'general';
 const emptyForm = () => ({ question: '', answer: '', category: DEFAULT_CATEGORY, order: 0, isPublished: true });

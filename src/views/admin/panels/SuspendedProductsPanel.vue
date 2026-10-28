@@ -93,25 +93,9 @@
       </table>
     </div>
 
-    <div v-if="pagination.pages > 1" class="admin__pagination">
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="page <= 1"
-        @click="changePage(page - 1)"
-      >
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <span>{{ page }} / {{ pagination.pages }} — {{ pagination.total }} annonces</span>
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="page >= pagination.pages"
-        @click="changePage(page + 1)"
-      >
-        <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+    <AdminPagination :page="page" :pages="pagination.pages" @change="changePage">
+      {{ page }} / {{ pagination.pages }} — {{ pagination.total }} annonces
+    </AdminPagination>
 
     <ReasonPromptModal
       v-if="productToDelete"
@@ -130,6 +114,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import { func } from '@/function';
 import ReasonPromptModal from '../components/ReasonPromptModal.vue';

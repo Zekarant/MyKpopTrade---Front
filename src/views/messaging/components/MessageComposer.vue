@@ -5,7 +5,13 @@
         <button type="button" class="btn-delete-attachment" aria-label="Retirer la pièce jointe" @click="removeAttachment(index)">
           <i class="bi bi-x-lg"></i>
         </button>
-        <img :src="preview" alt="Pièce jointe" class="attachment-image" @click="emit('preview', [...previews], index)">
+        <img
+          v-keyboard-click
+          :src="preview"
+          :alt="`Agrandir la pièce jointe ${index + 1}`"
+          class="attachment-image"
+          @click="emit('preview', [...previews], index)"
+        >
       </div>
     </div>
     <p v-if="blocked" class="composer-blocked-notice" role="status">
@@ -61,6 +67,7 @@
 <script setup lang="ts">
 /** Zone de saisie : texte, images jointes et emojis ; envoie le message via le store. */
 import { defineAsyncComponent, ref, useTemplateRef } from 'vue'
+import { vKeyboardClick } from '@/composables/vKeyboardClick'
 import { useEventListener } from '@vueuse/core'
 import { useMessagingStore } from '@/store/messaging.store'
 import { BLOCKED_ERROR_CODE } from '@/services/block.service'

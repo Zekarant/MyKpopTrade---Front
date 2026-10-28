@@ -63,7 +63,7 @@
           </span>
         </div>
         <div class="setting-row__inline">
-          <input v-model="phoneNumber" type="tel" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" />
+          <input v-model="phoneNumber" type="tel" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" aria-label="Numéro de téléphone" />
           <button v-if="phoneNumber && phoneNumber !== profile.phoneNumber" class="btn-settings btn-settings--sm" @click="saveTel">Enregistrer</button>
           <button v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest" class="btn-settings btn-settings--sm" @click="verifTel">Vérifier</button>
         </div>
@@ -73,6 +73,7 @@
             type="text"
             class="settings-input settings-input--sm"
             placeholder="Code à 6 chiffres"
+            aria-label="Code reçu par SMS"
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
@@ -90,7 +91,12 @@
   <section class="settings-card">
     <h3 class="settings-card__title"><i class="bi bi-patch-check"></i> Vérification d'identité</h3>
     <div class="settings-card__body">
-      <div class="setting-row" :class="{ 'setting-row--clickable': !profile.isIdentityVerified }" @click="!profile.isIdentityVerified && openIdentityVerification()">
+      <div
+        v-keyboard-click="!profile.isIdentityVerified"
+        class="setting-row"
+        :class="{ 'setting-row--clickable': !profile.isIdentityVerified }"
+        @click="!profile.isIdentityVerified && openIdentityVerification()"
+      >
         <div class="setting-row__left">
           <i class="bi bi-person-badge"></i>
           <div class="setting-row__label-group">
@@ -140,13 +146,18 @@
 
         <!-- Nouveau formulaire -->
         <template v-else>
-          <select v-model="identityDocumentType" class="settings-input">
+          <select v-model="identityDocumentType" class="settings-input" aria-label="Type de document">
             <option value="id_card">Carte d'identité</option>
             <option value="passport">Passeport</option>
             <option value="driver_license">Permis de conduire</option>
           </select>
-          <div class="identity-upload" @click="identityFileInput?.click()">
-            <img v-if="identityDocumentPreview" :src="identityDocumentPreview" class="identity-upload__preview" />
+          <div
+            v-keyboard-click
+            class="identity-upload"
+            aria-label="Importer votre document d'identité"
+            @click="identityFileInput?.click()"
+          >
+            <img v-if="identityDocumentPreview" :src="identityDocumentPreview" alt="Aperçu du document importé" class="identity-upload__preview" />
             <template v-else>
               <i class="bi bi-cloud-upload"></i>
               <span>Cliquez pour importer votre document</span>
@@ -178,6 +189,7 @@
 import { computed, ref, watch } from 'vue';
 import { func } from '@/function';
 import accountService, { type IdentityVerificationStatus } from '@/services/account.service';
+import { vKeyboardClick } from '@/composables/vKeyboardClick';
 import { apiCode, apiMessage, apiStatus, formatDate, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 

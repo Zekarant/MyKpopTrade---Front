@@ -93,7 +93,7 @@ const sizeStyle = computed(() =>
   justify-content: center;
   width: 100%;
   height: 100%;
-  background: var(--accent-gradient, linear-gradient(135deg, #ff2d78, #a855f7));
+  background: var(--accent-gradient);
   color: #fff;
   font-weight: 700;
   line-height: 1;

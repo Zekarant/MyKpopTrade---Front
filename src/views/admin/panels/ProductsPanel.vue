@@ -3,18 +3,19 @@
     <div class="admin__panel-header">
       <div class="admin__toolbar">
         <input
-          v-model="state.search"
+v-model="state.search"
+          aria-label="Rechercher par titre ou description"
           type="search"
           class="admin__input admin__input--search"
           placeholder="Titre ou description…"
           @input="debouncedSearch"
         />
-        <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.status" aria-label="Filtrer par statut" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Tous les statuts</option>
           <option value="available">Disponibles</option>
           <option value="sold">Vendus</option>
         </select>
-        <select v-model="state.type" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.type" aria-label="Filtrer par type" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Tous les types</option>
           <option v-for="(label, value) in PRODUCT_TYPE_LABELS" :key="value" :value="value">{{ label }}</option>
         </select>
@@ -83,25 +84,9 @@
       </table>
     </div>
 
-    <div v-if="pagination.pages > 1" class="admin__pagination">
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page <= 1"
-        @click="commit({ page: state.page - 1 })"
-      >
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} annonces</span>
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page >= pagination.pages"
-        @click="commit({ page: state.page + 1 })"
-      >
-        <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+    <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })">
+      {{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} annonces
+    </AdminPagination>
 
     <ReasonPromptModal
       v-if="productToDelete"
@@ -120,6 +105,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import { API_URL } from '@/config/api';
 import { func } from '@/function';
