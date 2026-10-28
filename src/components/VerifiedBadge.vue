@@ -23,60 +23,46 @@
     </span>
 </template>
 
-<script lang="ts">
-    export default {
-        name: "VerifiedBadge",
-        props: {
-            /** Texte affiché dans l'infobulle. */
-            label: {
-                type: String,
-                required: false,
-                default: "Identité vérifiée",
-            },
-            /** Taille de l'icône en pixels. */
-            size: {
-                type: [Number, String],
-                required: false,
-                default: 14,
-            },
-        },
-        data() {
-            return {
-                isVisible: false,
-                tooltipStyle: {} as Record<string, string>,
-            };
-        },
-        computed: {
-            iconSize(): string {
-                return typeof this.size === "number" ? `${this.size}px` : this.size;
-            },
-        },
-        beforeUnmount() {
-            this.hideTooltip();
-        },
-        methods: {
-            showTooltip() {
-                const anchor = this.$refs.anchor as HTMLElement | undefined;
-                if (!anchor) return;
+<script setup lang="ts">
+    import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 
-                const rect = anchor.getBoundingClientRect();
-                this.tooltipStyle = {
-                    top: `${rect.top - 8}px`,
-                    left: `${rect.left + rect.width / 2}px`,
-                };
-                this.isVisible = true;
+    defineOptions({ name: 'VerifiedBadge' });
 
-                // L'infobulle est en position fixe : on la masque si la page défile
-                // pour éviter qu'elle se décale de son badge.
-                window.addEventListener("scroll", this.hideTooltip, { capture: true, passive: true });
-            },
-            hideTooltip() {
-                if (!this.isVisible) return;
-                this.isVisible = false;
-                window.removeEventListener("scroll", this.hideTooltip, { capture: true });
-            },
-        },
-    };
+    const props = withDefaults(defineProps<{
+        /** Texte affiché dans l'infobulle. */
+        label?: string;
+        /** Taille de l'icône en pixels. */
+        size?: number | string;
+    }>(), { label: 'Identité vérifiée', size: 14 });
+
+    const anchor = useTemplateRef<HTMLElement>('anchor');
+    const isVisible = ref(false);
+    const tooltipStyle = ref<Record<string, string>>({});
+
+    const iconSize = computed(() => typeof props.size === 'number' ? `${props.size}px` : props.size);
+
+    function showTooltip() {
+        if (!anchor.value) return;
+
+        const rect = anchor.value.getBoundingClientRect();
+        tooltipStyle.value = {
+            top: `${rect.top - 8}px`,
+            left: `${rect.left + rect.width / 2}px`,
+        };
+        isVisible.value = true;
+
+        // L'infobulle est en position fixe : on la masque si la page défile
+        // pour éviter qu'elle se décale de son badge.
+        window.addEventListener('scroll', hideTooltip, { capture: true, passive: true });
+    }
+
+    function hideTooltip() {
+        if (!isVisible.value) return;
+        isVisible.value = false;
+        window.removeEventListener('scroll', hideTooltip, { capture: true });
+    }
+
+    onBeforeUnmount(hideTooltip);
 </script>
 
 <style lang="scss" scoped>

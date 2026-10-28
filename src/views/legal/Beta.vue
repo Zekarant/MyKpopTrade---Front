@@ -105,92 +105,84 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { hasSession } from '@/services/session.cookies';
 
-export default defineComponent({
-  name: 'BetaPage',
-  data() {
-    return {
-      updatedAt: '3 septembre 2026',
-      // Fonctionnalités livrées avec la version 0.1 (lancement de la bêta).
-      // Les versions suivantes viendront s'ajouter ici.
-      features: [
-        {
-          title: 'Compte & connexion',
-          icon: 'bi-shield-lock',
-          items: [
-            'Inscription, connexion et mot de passe oublié classiques',
-            'Inscription et connexion via Discord et Google',
-            'Double authentification via Google Authenticator',
-            "Vérification d'identité (conforme RGPD)",
-            'Complétion du profil'
-          ]
-        },
-        {
-          title: 'Profil & communauté',
-          icon: 'bi-people',
-          items: [
-            'Profil façon Twitter : bannière, avatar, posts, abonnements',
-            'Messages déposés sur les profils, avec réponses',
-            "Abonnement à d'autres membres",
-            'Wishlist personnelle',
-            'Dépôt d\'avis'
-          ]
-        },
-        {
-          title: 'Annonces & recherche',
-          icon: 'bi-search',
-          items: [
-            'Import quotidien des groupes, albums et membres (source : API Spotify)',
-            "Dashboard regroupant l'ensemble des annonces",
-            "Favoris affichés sur l'accueil",
-            'Articles recommandés',
-            'Consultation détaillée des annonces',
-            'Filtres de recherche sur les annonces',
-            'Publication d\'annonces avec cohérence groupes / albums'
-          ]
-        },
-        {
-          title: 'Transactions & paiements',
-          icon: 'bi-bag-check',
-          items: [
-            'Commande, échange et négociation entre membres',
-            'Paiements via PayPal (compte business requis pour les vendeurs)',
-            'Suivi des paiements, remboursements et demandes de remboursement',
-            'Suivi des litiges'
-          ]
-        },
-        {
-          title: 'Communication',
-          icon: 'bi-chat-dots',
-          items: [
-            'Messagerie privée en direct',
-            "Notifications intégrées à l'application",
-            'Formulaire de contact'
-          ]
-        },
-        {
-          title: 'Données & conformité RGPD',
-          icon: 'bi-file-earmark-lock',
-          items: [
-            'Gestion des consentements : communications, messages privés, suppression de compte, export des données',
-            'Gestion des cookies',
-            'Pages de confidentialité et de réglementation'
-          ]
-        }
-      ]
-    };
+defineOptions({ name: 'BetaPage' });
+
+const updatedAt = '3 septembre 2026';
+
+// Session rétablissable : App.vue affiche la barre de navigation, la page
+// retire donc son lien de retour et sa réserve d'espace « invité ».
+const isAuthenticated = hasSession();
+
+// Fonctionnalités livrées avec la version 0.1 (lancement de la bêta).
+// Les versions suivantes viendront s'ajouter ici.
+const features = [
+  {
+    title: 'Compte & connexion',
+    icon: 'bi-shield-lock',
+    items: [
+      'Inscription, connexion et mot de passe oublié classiques',
+      'Inscription et connexion via Discord et Google',
+      'Double authentification via Google Authenticator',
+      "Vérification d'identité (conforme RGPD)",
+      'Complétion du profil'
+    ]
   },
-  computed: {
-    // Session rétablissable : App.vue affiche la barre de navigation, la page
-    // retire donc son lien de retour et sa réserve d'espace « invité ».
-    isAuthenticated(): boolean {
-      return hasSession();
-    }
+  {
+    title: 'Profil & communauté',
+    icon: 'bi-people',
+    items: [
+      'Profil façon Twitter : bannière, avatar, posts, abonnements',
+      'Messages déposés sur les profils, avec réponses',
+      "Abonnement à d'autres membres",
+      'Wishlist personnelle',
+      'Dépôt d\'avis'
+    ]
+  },
+  {
+    title: 'Annonces & recherche',
+    icon: 'bi-search',
+    items: [
+      'Import quotidien des groupes, albums et membres (source : API Spotify)',
+      "Dashboard regroupant l'ensemble des annonces",
+      "Favoris affichés sur l'accueil",
+      'Articles recommandés',
+      'Consultation détaillée des annonces',
+      'Filtres de recherche sur les annonces',
+      'Publication d\'annonces avec cohérence groupes / albums'
+    ]
+  },
+  {
+    title: 'Transactions & paiements',
+    icon: 'bi-bag-check',
+    items: [
+      'Commande, échange et négociation entre membres',
+      'Paiements via PayPal (compte business requis pour les vendeurs)',
+      'Suivi des paiements, remboursements et demandes de remboursement',
+      'Suivi des litiges'
+    ]
+  },
+  {
+    title: 'Communication',
+    icon: 'bi-chat-dots',
+    items: [
+      'Messagerie privée en direct',
+      "Notifications intégrées à l'application",
+      'Formulaire de contact'
+    ]
+  },
+  {
+    title: 'Données & conformité RGPD',
+    icon: 'bi-file-earmark-lock',
+    items: [
+      'Gestion des consentements : communications, messages privés, suppression de compte, export des données',
+      'Gestion des cookies',
+      'Pages de confidentialité et de réglementation'
+    ]
   }
-});
+];
 </script>
 
 <style lang="scss" scoped>

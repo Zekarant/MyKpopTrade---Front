@@ -17,24 +17,19 @@
     </div>
 </template>
 
-<script lang="ts">
-    export default {
-        name: "SegmentProfil",
-        emits: ['partDisplayed'],
-        data() {
-            return {
-                part: 'post'
-            };
-        },
-        mounted() {
-        },
-        methods: {
-            btnClick(key: string) {
-                this.part = key;
-                this.$emit('partDisplayed', key);
-            }
-        }
-    };
+<script setup lang="ts">
+    import { ref } from 'vue';
+
+    defineOptions({ name: 'SegmentProfil' });
+
+    const emit = defineEmits<{ partDisplayed: [part: string] }>();
+
+    const part = ref('post');
+
+    function btnClick(key: string) {
+        part.value = key;
+        emit('partDisplayed', key);
+    }
 </script>
 
 <style lang="scss" scoped>

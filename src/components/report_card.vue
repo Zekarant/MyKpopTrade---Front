@@ -52,10 +52,13 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+    import { computed, ref } from 'vue';
     import { func } from '@/function';
     import reportService, { type ReportTargetType } from '@/services/report.service';
     import { apiErrorMessage } from '@/services/apiError';
+
+    defineOptions({ name: 'ReportCard' });
 
     const TITLES: Record<ReportTargetType, string> = {
         product: 'Signaler cet article',
@@ -65,54 +68,43 @@
         message: 'Signaler ce message'
     };
 
-    export default {
-        name: "ReportCard",
-        props: {
-            type: { type: String, required: true },
-            id: { type: String, required: true }
-        },
-        emits: ['closeReport'],
-        data() {
-            return {
-                signalReason: '',
-                signalReasonTxt: '',
-                reasons: [
-                    { value: 'inappropriate_content', label: 'Contenu inapproprié', icon: 'bi bi-eye-slash' },
-                    { value: 'offensive_language', label: 'Langage offensant', icon: 'bi bi-chat-left-dots' },
-                    { value: 'false_information', label: 'Fausses informations', icon: 'bi bi-info-circle' },
-                    { value: 'spam', label: 'Spam', icon: 'bi bi-envelope-exclamation' },
-                    { value: 'fraud', label: 'Fraude / Arnaque', icon: 'bi bi-shield-exclamation' },
-                    { value: 'copyright_violation', label: 'Violation du droit d\'auteur', icon: 'bi bi-c-circle' },
-                    { value: 'other', label: 'Autre raison', icon: 'bi bi-three-dots' },
-                ]
-            };
-        },
-        computed: {
-            title(): string {
-                return TITLES[this.type as ReportTargetType] || 'Signaler ce contenu';
-            }
-        },
-        methods: {
-            close() {
-                this.$emit('closeReport');
-            },
-            async report() {
-                if (!this.signalReason) return;
-                try {
-                    await reportService.createReport({
-                        targetType: this.type as ReportTargetType,
-                        targetId: this.id,
-                        reason: this.signalReason,
-                        details: this.signalReasonTxt
-                    });
-                    func.showToastSuccess('Signalement envoyé avec succès');
-                    this.close();
-                } catch (error) {
-                    func.showToastError(apiErrorMessage(error, 'Erreur lors du signalement'));
-                }
-            }
-        },
-    };
+    const reasons = [
+        { value: 'inappropriate_content', label: 'Contenu inapproprié', icon: 'bi bi-eye-slash' },
+        { value: 'offensive_language', label: 'Langage offensant', icon: 'bi bi-chat-left-dots' },
+        { value: 'false_information', label: 'Fausses informations', icon: 'bi bi-info-circle' },
+        { value: 'spam', label: 'Spam', icon: 'bi bi-envelope-exclamation' },
+        { value: 'fraud', label: 'Fraude / Arnaque', icon: 'bi bi-shield-exclamation' },
+        { value: 'copyright_violation', label: 'Violation du droit d\'auteur', icon: 'bi bi-c-circle' },
+        { value: 'other', label: 'Autre raison', icon: 'bi bi-three-dots' },
+    ];
+
+    const props = defineProps<{ type: ReportTargetType; id: string }>();
+    const emit = defineEmits<{ closeReport: [] }>();
+
+    const signalReason = ref('');
+    const signalReasonTxt = ref('');
+
+    const title = computed(() => TITLES[props.type] || 'Signaler ce contenu');
+
+    function close() {
+        emit('closeReport');
+    }
+
+    async function report() {
+        if (!signalReason.value) return;
+        try {
+            await reportService.createReport({
+                targetType: props.type,
+                targetId: props.id,
+                reason: signalReason.value,
+                details: signalReasonTxt.value
+            });
+            func.showToastSuccess('Signalement envoyé avec succès');
+            close();
+        } catch (error) {
+            func.showToastError(apiErrorMessage(error, 'Erreur lors du signalement'));
+        }
+    }
 </script>
 
 <style lang="scss" scoped>

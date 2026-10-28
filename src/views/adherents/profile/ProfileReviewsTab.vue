@@ -79,9 +79,12 @@ const props = defineProps<{ profileUserId: string; isOwnProfile: boolean }>()
 interface Rating {
   _id: string
   rating: number
+  review: string
+  reviewer: { username: string; profilePicture?: string }
+  images?: string[]
+  isHidden?: boolean
   createdAt: string
   response?: { content?: string }
-  [key: string]: unknown
 }
 
 const stats = ref({ averageRating: 0, totalRatings: 0 })

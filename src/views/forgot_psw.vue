@@ -68,41 +68,37 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import authentificationService from '@/services/authentification.service';
 
-export default defineComponent({
-  name: 'ForgotPassword',
-  setup() {
-    const email = ref('');
-    const errorBase = ref('');
-    const successMessage = ref('');
-    const router = useRouter();
+defineOptions({ name: 'ForgotPassword' });
 
-    const reset = async () => {
-      errorBase.value = '';
-      successMessage.value = '';
+const email = ref('');
+const errorBase = ref('');
+const successMessage = ref('');
+const router = useRouter();
 
-      if (!email.value || email.value.length < 5) {
-        errorBase.value = "L'email est invalide";
-        return;
-      }
+const reset = async () => {
+  errorBase.value = '';
+  successMessage.value = '';
 
-      try {
-        // Client d'authentification partagé : même URL d'API (config/api.ts)
-        // que le reste de l'application, au lieu de VITE_API_URL lue en direct.
-        successMessage.value = await authentificationService.forgotPassword(email.value.trim());
-        setTimeout(() => router.push('/login'), 2000);
-      } catch (error) {
-        errorBase.value = error instanceof Error ? error.message : 'Une erreur est survenue.';
-      }
-    };
-
-    return { email, errorBase, successMessage, reset };
+  if (!email.value || email.value.length < 5) {
+    errorBase.value = "L'email est invalide";
+    return;
   }
-});
+
+  try {
+    // Client d'authentification partagé : même URL d'API (config/api.ts)
+    // que le reste de l'application, au lieu de VITE_API_URL lue en direct.
+    successMessage.value = await authentificationService.forgotPassword(email.value.trim());
+    setTimeout(() => router.push('/login'), 2000);
+  } catch (error) {
+    errorBase.value = error instanceof Error ? error.message : 'Une erreur est survenue.';
+  }
+};
+
 </script>
 
 <style lang="scss" scoped>

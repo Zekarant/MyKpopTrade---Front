@@ -39,56 +39,46 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import { hasSession } from '@/services/session.cookies';
 import faqService, { type Faq } from '@/services/faq.service';
+
+defineOptions({ name: 'FaqPage' });
 
 interface FaqGroup {
   category: string;
   faqs: Faq[];
 }
 
-export default defineComponent({
-  name: 'FaqPage',
-  data() {
-    return {
-      groups: [] as FaqGroup[],
-      openIds: new Set<string>(),
-      loading: true,
-      error: ''
-    };
-  },
-  computed: {
-    isAuthenticated(): boolean {
-      return hasSession();
-    }
-  },
-  async mounted() {
-    try {
-      const faqs = await faqService.getFaqs();
-      const byCategory = new Map<string, Faq[]>();
-      faqs.forEach((faq) => {
-        const list = byCategory.get(faq.category) || [];
-        list.push(faq);
-        byCategory.set(faq.category, list);
-      });
-      this.groups = Array.from(byCategory.entries()).map(([category, list]) => ({ category, faqs: list }));
-    } catch {
-      this.error = 'Impossible de charger la FAQ pour le moment.';
-    } finally {
-      this.loading = false;
-    }
-  },
-  methods: {
-    toggle(id: string) {
-      if (this.openIds.has(id)) {
-        this.openIds.delete(id);
-      } else {
-        this.openIds.add(id);
-      }
-      this.openIds = new Set(this.openIds);
-    }
+const groups = ref<FaqGroup[]>([]);
+const openIds = ref(new Set<string>());
+const loading = ref(true);
+const error = ref('');
+const isAuthenticated = hasSession();
+
+function toggle(id: string) {
+  if (openIds.value.has(id)) {
+    openIds.value.delete(id);
+  } else {
+    openIds.value.add(id);
+  }
+}
+
+onMounted(async () => {
+  try {
+    const faqs = await faqService.getFaqs();
+    const byCategory = new Map<string, Faq[]>();
+    faqs.forEach((faq) => {
+      const list = byCategory.get(faq.category) || [];
+      list.push(faq);
+      byCategory.set(faq.category, list);
+    });
+    groups.value = Array.from(byCategory.entries()).map(([category, list]) => ({ category, faqs: list }));
+  } catch {
+    error.value = 'Impossible de charger la FAQ pour le moment.';
+  } finally {
+    loading.value = false;
   }
 });
 </script>

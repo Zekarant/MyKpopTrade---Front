@@ -18,11 +18,11 @@
         <div v-else class="disputes-list">
           <article v-for="d in disputes" :key="d._id" class="dispute-card" @click="open(d._id)">
             <div class="dispute-card__head">
-              <span :class="['status-badge', `status-badge--${d.status}`]">{{ statusLabel(d.status) }}</span>
+              <span :class="['status-badge', `status-badge--${d.status}`]">{{ DISPUTE_STATUS_LABELS[d.status] }}</span>
               <small>{{ formatDate(d.createdAt) }}</small>
             </div>
             <div class="dispute-card__body">
-              <strong>{{ reasonLabel(d.reason) }}</strong>
+              <strong>{{ DISPUTE_REASON_LABELS[d.reason] }}</strong>
               <p>{{ truncate(d.description, 140) }}</p>
             </div>
             <div class="dispute-card__foot">
@@ -38,51 +38,42 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { func } from '@/function';
 import { apiErrorMessage } from '@/services/apiError';
-import disputeService, { type Dispute, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
+import disputeService, { type Dispute } from '@/services/dispute.service';
 import { formatDate } from '@/utils/format';
+import { DISPUTE_REASON_LABELS, DISPUTE_STATUS_LABELS } from './disputeLabels';
 
-export default defineComponent({
-  name: 'DisputesList',
-  data() {
-    return { disputes: [] as Dispute[], loading: false };
-  },
-  async mounted() { await this.fetch(); },
-  methods: {
-    async fetch() {
-      this.loading = true;
-      try {
-        const res = await disputeService.listMine({ page: 1, limit: 50 });
-        this.disputes = res.disputes;
-      } catch (e) {
-        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
-      } finally { this.loading = false; }
-    },
-    open(id: string) { this.$router.push(`/disputes/${id}`); },
-    formatDate(iso: string) {
-      return formatDate(iso);
-    },
-    truncate(s: string, n: number) { return s.length > n ? s.substring(0, n) + '…' : s; },
-    statusLabel(s: DisputeStatus) {
-      return ({
-        opened: 'Ouvert', under_review: 'En cours d\'examen',
-        resolved: 'Résolu (vendeur)', refunded: 'Remboursé',
-        rejected: 'Rejeté', cancelled: 'Retiré'
-      } as Record<DisputeStatus, string>)[s];
-    },
-    reasonLabel(r: DisputeReason) {
-      return ({
-        not_received: 'Colis non reçu', damaged: 'Colis endommagé',
-        not_as_described: 'Produit non conforme', counterfeit: 'Contrefaçon',
-        wrong_item: 'Mauvais article', partial_delivery: 'Livraison partielle',
-        seller_unresponsive: 'Vendeur ne répond pas',
-        buyer_abuse: 'Abus acheteur', other: 'Autre'
-      } as Record<DisputeReason, string>)[r];
-    }
+defineOptions({ name: 'DisputesList' });
+
+const router = useRouter();
+const disputes = ref<Dispute[]>([]);
+const loading = ref(false);
+
+async function fetchDisputes() {
+  loading.value = true;
+  try {
+    const res = await disputeService.listMine({ page: 1, limit: 50 });
+    disputes.value = res.disputes;
+  } catch (e) {
+    func.showToastError(apiErrorMessage(e, 'Erreur'));
+  } finally {
+    loading.value = false;
   }
-});
+}
+
+function open(id: string) {
+  router.push(`/disputes/${id}`);
+}
+
+function truncate(s: string, n: number) {
+  return s.length > n ? s.substring(0, n) + '…' : s;
+}
+
+onMounted(fetchDisputes);
 </script>
 
 <style lang="scss" scoped>

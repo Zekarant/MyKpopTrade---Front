@@ -83,143 +83,88 @@
 </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref, type PropType } from 'vue';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import { API_URL } from '@/config/api';
 import {
   formatAmount,
   offerBounds,
   pwywRangeLabel,
   validateOfferAmount,
-  type OfferPricing
+  type OfferConversation,
+  type OfferPricing,
+  type OfferProduct,
+  type OfferSentPayload
 } from './offerRules';
 
-/** Annonce visée par l'offre : fiche produit, ou produit peuplé d'une conversation. */
-export type OfferProduct = Partial<Omit<OfferPricing, 'price'>> & {
-  _id: string;
-  title: string;
-  price?: number;
-  images?: string[];
-};
+defineOptions({ name: 'SendOffer' });
 
-export interface OfferConversation {
-  _id?: string;
-  id?: string;
-  productId?: OfferProduct | null;
-}
+const props = defineProps<{ conversation?: OfferConversation; product?: OfferProduct }>();
+const emit = defineEmits<{ close: []; offerSent: [payload: OfferSentPayload] }>();
 
-export interface OfferSentPayload {
-  amount: number;
-  message: string;
-  offerData: {
-    productId: string;
-    amount: number;
-    message: string;
-    conversationId: string | null;
-  };
-}
+const offerAmount = ref<number | ''>('')
+const offerMessage = ref('')
+const offerTermsAccepted = ref(false)
+const sendingOffer = ref(false)
+const domain_api = API_URL;
 
-export default defineComponent({
-    name: 'SendOffer',
-    props: {
-        conversation: {
-          type: Object as PropType<OfferConversation>,
-          required: false,
-          default: undefined,
-        },
-        product: {
-          type: Object as PropType<OfferProduct>,
-          required: false,
-          default: undefined,
-        },
-    },
-    emits: {
-        close: () => true,
-        offerSent: (payload: OfferSentPayload) => Boolean(payload),
-    },
-    setup(props, { emit }) {
-        const offerAmount = ref<number | ''>('')
-        const offerMessage = ref('')
-        const offerTermsAccepted = ref(false)
-        const sendingOffer = ref(false)
-        const domain_api = API_URL;
+const target = computed<OfferProduct | null>(() => props.product ?? props.conversation?.productId ?? null)
+const price = computed(() => target.value?.price ?? 0)
+const title = computed(() => target.value?.title ?? '')
+const images = computed(() => target.value?.images ?? [])
 
-        const target = computed<OfferProduct | null>(() => props.product ?? props.conversation?.productId ?? null)
-        const price = computed(() => target.value?.price ?? 0)
-        const title = computed(() => target.value?.title ?? '')
-        const images = computed(() => target.value?.images ?? [])
+const pricing = computed<OfferPricing>(() => ({ ...target.value, price: price.value }))
+const bounds = computed(() => offerBounds(pricing.value))
 
-        const pricing = computed<OfferPricing>(() => ({ ...target.value, price: price.value }))
-        const bounds = computed(() => offerBounds(pricing.value))
+/** Règle affichée sous le montant : fourchette du prix libre, ou seuil minimal. */
+const ruleLabel = computed(() => {
+  const current = bounds.value
+  if (current.mode === 'pwyw') {
+    return `Prix libre : ${pwywRangeLabel(current.min, current.max)}`
+  }
+  return `Offre minimum : ${formatAmount(current.min)} (${current.minPercentage} % du prix)`
+})
 
-        /** Règle affichée sous le montant : fourchette du prix libre, ou seuil minimal. */
-        const ruleLabel = computed(() => {
-          const current = bounds.value
-          if (current.mode === 'pwyw') {
-            return `Prix libre : ${pwywRangeLabel(current.min, current.max)}`
-          }
-          return `Offre minimum : ${formatAmount(current.min)} (${current.minPercentage} % du prix)`
+const inputMin = computed(() => Math.max(bounds.value.min, 0.01))
+const inputMax = computed(() => bounds.value.mode === 'pwyw' ? bounds.value.max ?? undefined : undefined)
+
+// Rien à signaler tant que le champ est vide : le bouton reste simplement désactivé.
+const offerError = computed(() =>
+  offerAmount.value === '' ? null : validateOfferAmount(offerAmount.value, pricing.value)
+)
+
+const submitOffer = async () => {
+    const amount = offerAmount.value
+    const productId = target.value?._id
+    if (amount === '' || offerError.value || !offerTermsAccepted.value || !productId) return
+    try {
+        sendingOffer.value = true
+
+        const conversationId = props.conversation
+          ? props.conversation._id || props.conversation.id || null
+          : null
+
+        emit('offerSent', {
+            amount,
+            message: offerMessage.value,
+            offerData: {
+              productId,
+              amount,
+              message: offerMessage.value,
+              conversationId
+            }
         })
 
-        const inputMin = computed(() => Math.max(bounds.value.min, 0.01))
-        const inputMax = computed(() => bounds.value.mode === 'pwyw' ? bounds.value.max ?? undefined : undefined)
+        offerAmount.value = ''
+        offerMessage.value = ''
+        offerTermsAccepted.value = false
 
-        // Rien à signaler tant que le champ est vide : le bouton reste simplement désactivé.
-        const offerError = computed(() =>
-          offerAmount.value === '' ? null : validateOfferAmount(offerAmount.value, pricing.value)
-        )
-
-        const submitOffer = async () => {
-            const amount = offerAmount.value
-            const productId = target.value?._id
-            if (amount === '' || offerError.value || !offerTermsAccepted.value || !productId) return
-            try {
-                sendingOffer.value = true
-
-                const conversationId = props.conversation
-                  ? props.conversation._id || props.conversation.id || null
-                  : null
-
-                emit('offerSent', {
-                    amount,
-                    message: offerMessage.value,
-                    offerData: {
-                      productId,
-                      amount,
-                      message: offerMessage.value,
-                      conversationId
-                    }
-                })
-
-                offerAmount.value = ''
-                offerMessage.value = ''
-                offerTermsAccepted.value = false
-
-            } catch (error) {
-                console.error('Erreur lors de l\'envoi de l\'offre:', error)
-            } finally {
-                sendingOffer.value = false
-            }
-        }
-
-        return {
-            offerAmount,
-            offerTermsAccepted,
-            sendingOffer,
-            offerMessage,
-            domain_api,
-            submitOffer,
-            price,
-            title,
-            images,
-            bounds,
-            ruleLabel,
-            inputMin,
-            inputMax,
-            offerError
-        }
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi de l\'offre:', error)
+    } finally {
+        sendingOffer.value = false
     }
-})
+}
 </script>
 
 <style lang="scss" scoped>

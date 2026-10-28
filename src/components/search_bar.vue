@@ -16,28 +16,18 @@
   </div>
 </template>
 
-  <script lang="ts">
-    import { useRoute, useRouter } from "vue-router";
+  <script setup lang="ts">
+    import { ref } from 'vue';
+    import { useRouter } from 'vue-router';
     import { searchRoute } from '@/router/searchRoute';
 
-    export default {
-        name: "SearchBar",
-        props: {},
-        setup() {
-            const route = useRoute();
-            const router = useRouter();
-            return { route, router };
-        },
-        data() {
-            return {
-                searchQuery: '',
-            };
-        },
-        methods: {
-            onSearch() {
-                this.router.push(searchRoute({ q: this.searchQuery }));
-            },
-        }
+    defineOptions({ name: 'SearchBar' });
+
+    const router = useRouter();
+    const searchQuery = ref('');
+
+    function onSearch() {
+        router.push(searchRoute({ q: searchQuery.value }));
     }
   </script>
 

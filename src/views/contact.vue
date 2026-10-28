@@ -88,94 +88,90 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, reactive } from 'vue';
+<script setup lang="ts">
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 
-export default defineComponent({
-  name: 'ContactView',
-  setup() {
-    const router = useRouter();
-    const loading = ref(false);
-    const form = reactive({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    });
-    const errors = reactive({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    });
-    const alert = reactive({
-      type: '',
-      message: ''
-    });
+defineOptions({ name: 'ContactView' });
 
-    const validate = () => {
-      let valid = true;
-      errors.name = '';
-      errors.email = '';
-      errors.subject = '';
-      errors.message = '';
-
-      if (!form.name.trim()) {
-        errors.name = 'Le nom est requis';
-        valid = false;
-      }
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        errors.email = 'Email invalide';
-        valid = false;
-      }
-      if (!form.subject) {
-        errors.subject = 'Veuillez choisir un sujet';
-        valid = false;
-      }
-      if (!form.message.trim() || form.message.trim().length < 10) {
-        errors.message = 'Le message doit contenir au moins 10 caractères';
-        valid = false;
-      }
-      return valid;
-    };
-
-    const submitForm = async () => {
-      if (!validate()) return;
-
-      loading.value = true;
-      alert.message = '';
-
-      try {
-        await sendContactMessage({
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-          source: 'contact'
-        });
-
-        alert.type = 'success';
-        alert.message = 'Votre message a bien été envoyé ! Notre équipe vous contactera à l\'adresse indiquée.';
-        form.name = '';
-        form.email = '';
-        form.subject = '';
-        form.message = '';
-        setTimeout(() => router.back(), 2000);
-      } catch (error) {
-        alert.type = 'error';
-        alert.message = contactErrorMessage(error, 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const goBack = () => router.back();
-
-    return { form, errors, alert, loading, submitForm, goBack };
-  }
+const router = useRouter();
+const loading = ref(false);
+const form = reactive({
+  name: '',
+  email: '',
+  subject: '',
+  message: ''
 });
+const errors = reactive({
+  name: '',
+  email: '',
+  subject: '',
+  message: ''
+});
+const alert = reactive({
+  type: '',
+  message: ''
+});
+
+const validate = () => {
+  let valid = true;
+  errors.name = '';
+  errors.email = '';
+  errors.subject = '';
+  errors.message = '';
+
+  if (!form.name.trim()) {
+    errors.name = 'Le nom est requis';
+    valid = false;
+  }
+  if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    errors.email = 'Email invalide';
+    valid = false;
+  }
+  if (!form.subject) {
+    errors.subject = 'Veuillez choisir un sujet';
+    valid = false;
+  }
+  if (!form.message.trim() || form.message.trim().length < 10) {
+    errors.message = 'Le message doit contenir au moins 10 caractères';
+    valid = false;
+  }
+  return valid;
+};
+
+const submitForm = async () => {
+  if (!validate()) return;
+
+  loading.value = true;
+  alert.message = '';
+
+  try {
+    await sendContactMessage({
+      name: form.name,
+      email: form.email,
+      subject: form.subject,
+      message: form.message,
+      source: 'contact'
+    });
+
+    alert.type = 'success';
+    alert.message = 'Votre message a bien été envoyé ! Notre équipe vous contactera à l\'adresse indiquée.';
+    form.name = '';
+    form.email = '';
+    form.subject = '';
+    form.message = '';
+    setTimeout(() => router.back(), 2000);
+  } catch (error) {
+    alert.type = 'error';
+    alert.message = contactErrorMessage(error, 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const goBack = () => router.back();
+
 </script>
 
 <style lang="scss" scoped>

@@ -8,80 +8,76 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import authentificationService from '@/services/authentification.service';
 
-export default defineComponent({
-  name: 'AuthCallback',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const error = ref<string>('');
-    const welcome = ref<string>('');
+defineOptions({ name: 'AuthCallback' });
 
-    /**
-     * Ouvre la session à partir du code à usage unique, seul moyen accepté :
-     * des jetons lus dans l'URL permettraient à un lien piégé de connecter la
-     * victime au compte de l'attaquant (login CSRF).
-     */
-    async function openSession(): Promise<boolean> {
-      const code = route.query.code as string | undefined;
-      if (!code) {
-        error.value = 'Code de connexion manquant.';
-        return false;
-      }
-      try {
-        await authentificationService.exchangeOAuthCode(code);
-        return true;
-      } catch (e) {
-        error.value = (e as Error).message;
-        return false;
-      }
-    }
+const route = useRoute();
+const router = useRouter();
+const error = ref<string>('');
+const welcome = ref<string>('');
 
-    onMounted(async () => {
-      // Retirer tout de suite le code (ou les jetons) de l'URL : historique, captures, partage.
-      window.history.replaceState(window.history.state, '', window.location.pathname);
+/**
+ * Ouvre la session à partir du code à usage unique, seul moyen accepté :
+ * des jetons lus dans l'URL permettraient à un lien piégé de connecter la
+ * victime au compte de l'attaquant (login CSRF).
+ */
+async function openSession(): Promise<boolean> {
+  const code = route.query.code as string | undefined;
+  if (!code) {
+    error.value = 'Code de connexion manquant.';
+    return false;
+  }
+  try {
+    await authentificationService.exchangeOAuthCode(code);
+    return true;
+  } catch (e) {
+    error.value = (e as Error).message;
+    return false;
+  }
+}
 
-      const errParam = route.query.error as string | undefined;
-      const isNewAccount = route.query.newAccount === '1';
-      const requiresProfileCompletion = route.query.completeProfile === '1';
-      const provider = (route.query.provider as string | undefined) || '';
-      const providerLabel =
-        provider === 'discord' ? 'Discord' : provider === 'google' ? 'Google' : '';
+onMounted(async () => {
+  // Retirer tout de suite le code (ou les jetons) de l'URL : historique, captures, partage.
+  window.history.replaceState(window.history.state, '', window.location.pathname);
 
-      if (errParam) {
-        // Message fixe : le paramètre vient de l'URL, n'importe qui peut le forger.
-        error.value = 'Échec de connexion. Réessaie.';
-        setTimeout(() => router.push('/login'), 2000);
-        return;
-      }
+  const errParam = route.query.error as string | undefined;
+  const isNewAccount = route.query.newAccount === '1';
+  const requiresProfileCompletion = route.query.completeProfile === '1';
+  const provider = (route.query.provider as string | undefined) || '';
+  const providerLabel =
+    provider === 'discord' ? 'Discord' : provider === 'google' ? 'Google' : '';
 
-      if (!(await openSession())) {
-        setTimeout(() => router.push('/login'), 2000);
-        return;
-      }
+  if (errParam) {
+    // Message fixe : le paramètre vient de l'URL, n'importe qui peut le forger.
+    error.value = 'Échec de connexion. Réessaie.';
+    setTimeout(() => router.push('/login'), 2000);
+    return;
+  }
 
-      if (requiresProfileCompletion) {
-        welcome.value = providerLabel
-          ? `Bienvenue ! Quelques infos à compléter pour finaliser ton compte ${providerLabel}.`
-          : 'Bienvenue ! Quelques infos à compléter pour finaliser ton compte.';
-        setTimeout(() => router.replace('/profile-completion'), 800);
-      } else if (isNewAccount) {
-        welcome.value = providerLabel
-          ? `Bienvenue ! Votre compte a été créé via ${providerLabel}.`
-          : 'Bienvenue ! Votre compte a été créé.';
-        setTimeout(() => router.replace('/adherents/dashboard'), 1200);
-      } else {
-        router.replace('/adherents/dashboard');
-      }
-    });
+  if (!(await openSession())) {
+    setTimeout(() => router.push('/login'), 2000);
+    return;
+  }
 
-    return { error, welcome };
-  },
+  if (requiresProfileCompletion) {
+    welcome.value = providerLabel
+      ? `Bienvenue ! Quelques infos à compléter pour finaliser ton compte ${providerLabel}.`
+      : 'Bienvenue ! Quelques infos à compléter pour finaliser ton compte.';
+    setTimeout(() => router.replace('/profile-completion'), 800);
+  } else if (isNewAccount) {
+    welcome.value = providerLabel
+      ? `Bienvenue ! Votre compte a été créé via ${providerLabel}.`
+      : 'Bienvenue ! Votre compte a été créé.';
+    setTimeout(() => router.replace('/adherents/dashboard'), 1200);
+  } else {
+    router.replace('/adherents/dashboard');
+  }
 });
+
 </script>
 
 <style scoped>

@@ -13,6 +13,32 @@ export interface OfferPricing {
   pwywMaxPrice?: number | null;
 }
 
+/** Annonce visée par une offre : fiche produit, ou produit peuplé d'une conversation. */
+export type OfferProduct = Partial<Omit<OfferPricing, 'price'>> & {
+  _id: string;
+  title: string;
+  price?: number;
+  images?: string[];
+};
+
+export interface OfferConversation {
+  _id?: string;
+  id?: string;
+  productId?: OfferProduct | null;
+}
+
+/** Offre saisie dans send_offer.vue, que le parent ouvre en négociation. */
+export interface OfferSentPayload {
+  amount: number;
+  message: string;
+  offerData: {
+    productId: string;
+    amount: number;
+    message: string;
+    conversationId: string | null;
+  };
+}
+
 /** Valeur appliquée par le back quand l'annonce n'en précise pas. */
 export const DEFAULT_MIN_OFFER_PERCENTAGE = 50;
 
