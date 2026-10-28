@@ -53,7 +53,7 @@
           <section v-if="productFavorites.products && productFavorites.products.length > 0" class="dashboard-section stagger-children">
             <div class="section-header">
               <h2 class="section-header__title">
-                <i class="bi bi-heart-fill" style="color: var(--accent-pink)"></i>
+                <i class="bi bi-heart-fill section-header__icon--fav"></i>
                 Tes favoris
               </h2>
               <button class="btn btn-ghost btn-sm" @click="loadMore({ products: productFavorites.products, pagination: productFavorites.pagination, type: 'Favorites' })">
@@ -325,6 +325,10 @@
 
   i {
     font-size: 1.2em;
+  }
+
+  .section-header__icon--fav {
+    color: var(--accent-pink);
   }
 }
 

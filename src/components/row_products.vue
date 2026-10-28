@@ -137,11 +137,11 @@ function onVoirPlus() {
 .custom-swiper-next { right: 10px; }
 
 .voir-plus-slide {
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px !important;
-  max-width: 110px !important;
+  min-width: 110px;
+  max-width: 110px;
 }
 
 .voir-plus-btn {

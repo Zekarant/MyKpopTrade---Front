@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div v-if="queue.total > 0" class="admin__panel-body" style="padding-bottom: 0">
+    <div v-if="queue.total > 0" class="admin__panel-body pb-0">
       <div class="admin__kpis">
         <button
           v-for="source in SOURCES"
@@ -21,7 +21,6 @@
           type="button"
           class="admin__kpi"
           :class="`admin__kpi--${source.tone}`"
-          style="cursor: pointer; text-align: left"
           @click="emit('navigate', source.tab)"
         >
           <i :class="source.icon"></i>
@@ -43,7 +42,7 @@
       <p>Rien à traiter. Tout est à jour.</p>
     </div>
 
-    <div v-else class="admin__queue" style="margin-top: var(--space-md)">
+    <div v-else class="admin__queue mt-3">
       <div
         v-for="item in queue.items"
         :key="`${item.kind}-${item.id}`"

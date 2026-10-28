@@ -80,7 +80,7 @@
           <div class="admin__panel-grid">
             <div v-if="detail.target?.owner" class="admin__card">
               <h3><i class="bi bi-person-badge"></i> Auteur du contenu</h3>
-              <div class="admin__user-cell" style="margin-bottom: var(--space-sm)">
+              <div class="admin__user-cell mb-2">
                 <img
                   v-if="ownerAvatar"
                   :src="ownerAvatar"
@@ -108,7 +108,7 @@
 
             <div class="admin__card">
               <h3><i class="bi bi-megaphone"></i> Signaleur</h3>
-              <div class="admin__user-cell" style="margin-bottom: var(--space-sm)">
+              <div class="admin__user-cell mb-2">
                 <span class="admin__avatar-letter">{{ getInitial(detail.report.reporter?.username) }}</span>
                 <span>{{ detail.report.reporter?.username || 'Compte supprimé' }}</span>
               </div>
@@ -128,24 +128,24 @@
                   </dd>
                 </div>
               </dl>
-              <p v-if="isNoisyReporter" class="admin__hint" style="margin-top: var(--space-sm)">
+              <p v-if="isNoisyReporter" class="admin__hint mt-2">
                 La majorité des signalements de ce compte ont été rejetés.
               </p>
             </div>
           </div>
 
           <!-- Copie prise au signalement : l'auteur a pu supprimer son message depuis. -->
-          <div v-if="detail.report.reportedContent" class="admin__field" style="margin-top: var(--space-md)">
+          <div v-if="detail.report.reportedContent" class="admin__field mt-3">
             <label>Message au moment du signalement</label>
-            <p style="margin: 0; white-space: pre-wrap">{{ detail.report.reportedContent }}</p>
+            <p class="admin__pre-wrap">{{ detail.report.reportedContent }}</p>
           </div>
 
-          <div v-if="detail.report.details" class="admin__field" style="margin-top: var(--space-md)">
+          <div v-if="detail.report.details" class="admin__field mt-3">
             <label>Précisions du signaleur</label>
-            <p class="admin__muted" style="margin: 0; white-space: pre-wrap">{{ detail.report.details }}</p>
+            <p class="admin__muted admin__pre-wrap">{{ detail.report.details }}</p>
           </div>
 
-          <div class="admin__field" style="margin-top: var(--space-md)">
+          <div class="admin__field mt-3">
             <label for="report-notes">Notes internes</label>
             <textarea
               id="report-notes"

@@ -456,12 +456,15 @@
     }
   }
 
-  &--cart-added {
-    background: var(--accent-purple) !important;
-    color: var(--text-on-accent) !important;
-    border-color: var(--accent-purple) !important;
-    opacity: 1 !important;
-    cursor: default !important;
+  // Déjà au panier : le bouton est désactivé mais ne doit pas en avoir l'air.
+  &--cart-added,
+  &--cart-added:hover,
+  &--cart-added:disabled {
+    background: var(--accent-purple);
+    color: var(--text-on-accent);
+    border-color: var(--accent-purple);
+    opacity: 1;
+    cursor: default;
   }
 
   &--danger {

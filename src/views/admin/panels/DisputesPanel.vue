@@ -83,9 +83,9 @@
         </div>
 
         <div class="admin__modal-body">
-          <div class="admin__card" style="margin-bottom: var(--space-md)">
+          <div class="admin__card mb-3">
             <h3><i class="bi bi-info-circle"></i> {{ DISPUTE_REASON_LABELS[activeDispute.reason] || activeDispute.reason }}</h3>
-            <p style="margin: 0">{{ activeDispute.description }}</p>
+            <p class="m-0">{{ activeDispute.description }}</p>
           </div>
 
           <div class="admin__field">

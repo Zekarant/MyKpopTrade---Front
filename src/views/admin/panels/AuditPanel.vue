@@ -1,5 +1,5 @@
 <template>
-  <div style="display: flex; flex-direction: column; gap: var(--space-md)">
+  <div class="d-flex flex-column gap-3">
     <div class="admin__kpis">
       <div class="admin__kpi">
         <i class="bi bi-lightning-charge"></i>

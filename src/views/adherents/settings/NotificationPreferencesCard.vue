@@ -164,9 +164,11 @@ onMounted(load);
   small { font-size: var(--font-size-xs); }
 }
 
-.notif-prefs__channel {
+// `th.`/`td.` : au moins aussi spécifique que le `th, td` aligné à gauche du tableau.
+th.notif-prefs__channel,
+td.notif-prefs__channel {
   width: 64px;
-  text-align: center !important;
+  text-align: center;
 }
 
 .notif-prefs__status {

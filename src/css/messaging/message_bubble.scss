@@ -119,9 +119,12 @@
   flex-direction: row;
   justify-content: space-around;
 }
-.btn-offer{
+// Composé : l'emporte sur le `display: flex` de `.btn-outline` / `.btn-success` plus bas.
+.btn-offer,
+.btn-outline.btn-offer,
+.btn-success.btn-offer {
   width: 100%;
-  display: inline-block !important;
+  display: inline-block;
 }
 .cancel-offer{
   color: var(--danger-text);

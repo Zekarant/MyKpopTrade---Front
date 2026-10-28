@@ -1102,3 +1102,21 @@ $sidebar-breakpoint: 1024px;
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
+
+// Titre d'un groupe (FAQ par catégorie).
+.admin__group-title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+}
+
+// Message d'erreur d'un formulaire : doublé pour l'emporter sur les `.x .admin__hint`.
+.admin__hint.admin__hint--error {
+  color: var(--danger-text);
+}
+
+// Texte libre saisi par un membre (signalement, litige) : ses retours à la ligne comptent.
+.admin__pre-wrap {
+  margin: 0;
+  white-space: pre-wrap;
+}

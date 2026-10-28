@@ -136,17 +136,18 @@
   strong { color: var(--text-primary); }
   span { color: var(--text-secondary); font-size: var(--font-size-sm); }
 }
-.beta-report__btn {
+// `a.` : plus spécifique que le lien souligné de `.beta-page__content a`.
+a.beta-report__btn {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: var(--space-sm) var(--space-lg);
   background: var(--accent-pink);
-  color: var(--text-on-accent) !important;
+  color: var(--text-on-accent);
   font-weight: 600;
   border-radius: var(--radius-full);
-  text-decoration: none !important;
+  text-decoration: none;
   transition: opacity var(--transition-fast);
 
   &:hover { opacity: 0.9; }

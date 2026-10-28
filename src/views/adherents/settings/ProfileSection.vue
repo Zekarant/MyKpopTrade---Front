@@ -35,7 +35,7 @@
             ref="avatarInput"
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            style="display: none"
+            class="d-none"
             @change="onAvatarChange"
           />
         </div>

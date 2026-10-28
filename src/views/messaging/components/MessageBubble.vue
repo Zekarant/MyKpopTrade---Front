@@ -59,7 +59,7 @@
                       <span v-else-if="offerStatus === 'rejected'" class="status-rejected">
                         <i class="bi bi-x-circle-fill"></i> Vous avez refusé
                       </span>
-                      <div v-else-if="offerStatus === 'pending'" style="display: flex;">
+                      <div v-else-if="offerStatus === 'pending'" class="d-flex">
                         <button class="btn-outline btn-offer" @click="emit('decline-offer', message)">
                           <i class="bi bi-x-circle"></i>
                           Refuser

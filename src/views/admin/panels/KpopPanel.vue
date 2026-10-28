@@ -252,7 +252,7 @@ v-else
           </button>
         </div>
         <div class="admin__modal-body">
-          <p v-if="followers.length === 0" class="admin__muted" style="margin: 0">Aucun follower.</p>
+          <p v-if="followers.length === 0" class="admin__muted m-0">Aucun follower.</p>
           <dl v-else class="admin__definition-list">
             <div v-for="follower in followers" :key="follower._id" class="admin__definition">
               <dt>

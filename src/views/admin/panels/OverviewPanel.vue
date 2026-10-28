@@ -1,5 +1,5 @@
 <template>
-  <div style="display: flex; flex-direction: column; gap: var(--space-md)">
+  <div class="d-flex flex-column gap-3">
     <div class="admin__panel">
       <div class="admin__panel-header">
         <h2>Activité sur {{ days }} jours</h2>

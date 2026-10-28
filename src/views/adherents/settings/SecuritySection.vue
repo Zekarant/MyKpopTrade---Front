@@ -33,7 +33,7 @@
         @click="linkProvider('google')"
       >
         <div class="setting-row__left">
-          <i class="bi bi-google" style="color: #4285F4;"></i>
+          <i class="bi bi-google oauth-icon--google"></i>
           <span>Google</span>
         </div>
         <span v-if="profile.socialAuth?.google?.id" class="setting-badge setting-badge--success">
@@ -48,7 +48,7 @@
         @click="linkProvider('discord')"
       >
         <div class="setting-row__left">
-          <i class="bi bi-discord" style="color: #5865F2;"></i>
+          <i class="bi bi-discord oauth-icon--discord"></i>
           <span>Discord</span>
         </div>
         <span v-if="profile.socialAuth?.discord?.id" class="setting-badge setting-badge--success">

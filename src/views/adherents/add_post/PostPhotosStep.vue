@@ -56,7 +56,7 @@
           </div>
         </swiper-slide>
         <swiper-slide v-if="images.length < maxImages" class="add-image-slide">
-          <button style="height: 100%; margin-left: 10px;" class="btn-primary" type="button" aria-label="Ajouter des photos">+</button>
+          <button class="btn-primary" type="button" aria-label="Ajouter des photos">+</button>
         </swiper-slide>
       </swiper>
     </div>

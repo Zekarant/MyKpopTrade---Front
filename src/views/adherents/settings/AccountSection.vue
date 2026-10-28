@@ -67,7 +67,7 @@
           <button v-if="phoneNumber && phoneNumber !== profile.phoneNumber" class="btn-settings btn-settings--sm" @click="saveTel">Enregistrer</button>
           <button v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest" class="btn-settings btn-settings--sm" @click="verifTel">Vérifier</button>
         </div>
-        <div v-if="telRequest && !codeVerified" class="setting-row__inline" style="margin-top: 8px;">
+        <div v-if="telRequest && !codeVerified" class="setting-row__inline mt-2">
           <input
             v-model="phoneCode"
             type="text"
@@ -162,7 +162,7 @@
               <i class="bi bi-cloud-upload"></i>
               <span>Cliquez pour importer votre document</span>
             </template>
-            <input ref="identityFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onIdentityFileChange" />
+            <input ref="identityFileInput" type="file" accept="image/jpeg,image/png,image/webp" class="d-none" @change="onIdentityFileChange" />
           </div>
           <label class="identity-consent">
             <input v-model="identityConsentGiven" type="checkbox" />

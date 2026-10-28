@@ -15,7 +15,7 @@
         </div>
 
         <template v-else-if="detail">
-          <div class="admin__meta-row" style="margin-bottom: var(--space-md)">
+          <div class="admin__meta-row mb-3">
             <span class="admin__badge" :class="statusBadgeClass">
               {{ ACCOUNT_STATUS_LABELS[detail.user.accountStatus] || detail.user.accountStatus }}
             </span>
@@ -31,9 +31,9 @@
             <span class="admin__muted">inscrit le {{ formatDate(detail.user.createdAt) }}</span>
           </div>
 
-          <div v-if="detail.user.suspension" class="admin__card" style="margin-bottom: var(--space-md)">
+          <div v-if="detail.user.suspension" class="admin__card mb-3">
             <h3><i class="bi bi-slash-circle"></i> Suspension en cours</h3>
-            <p style="margin: 0">
+            <p class="m-0">
               {{ detail.user.suspension.reason }}
               —
               {{
@@ -75,7 +75,7 @@
 
             <div class="admin__card">
               <h3><i class="bi bi-clock-history"></i> Sanctions</h3>
-              <p v-if="!detail.user.sanctions?.length" class="admin__muted" style="margin: 0">
+              <p v-if="!detail.user.sanctions?.length" class="admin__muted m-0">
                 Aucune sanction enregistrée.
               </p>
               <dl v-else class="admin__definition-list">
@@ -98,7 +98,7 @@
             </div>
           </div>
 
-          <div class="admin__card" style="margin-top: var(--space-md)">
+          <div class="admin__card mt-3">
             <h3><i class="bi bi-journal-bookmark"></i> Notes internes</h3>
             <p>Visibles des seuls administrateurs, jamais de l'utilisateur ni de son export RGPD.</p>
 
@@ -119,7 +119,7 @@
               </div>
             </div>
 
-            <div class="admin__field" style="margin: var(--space-md) 0 0">
+            <div class="admin__field mt-3 mb-0">
               <label for="new-note">Ajouter une note</label>
               <textarea
                 id="new-note"

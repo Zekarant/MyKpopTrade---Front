@@ -33,9 +33,9 @@
         </div>
 
         <div v-if="loading" class="collection__loading">
-          <div class="skeleton" style="width: 200px; height: 200px;"></div>
-          <div class="skeleton" style="width: 200px; height: 200px;"></div>
-          <div class="skeleton" style="width: 200px; height: 200px;"></div>
+          <div class="skeleton skeleton--tile"></div>
+          <div class="skeleton skeleton--tile"></div>
+          <div class="skeleton skeleton--tile"></div>
         </div>
 
         <Grid v-else-if="products.length > 0" :admin="activeTab !== 'favorites'" :data-list="products" :pagination="pagination" :more-btn="pagination.page < pagination.pages"></Grid>
@@ -194,5 +194,10 @@
   .btn {
     margin-top: var(--space-lg);
   }
+}
+
+.skeleton--tile {
+  width: 200px;
+  height: 200px;
 }
 </style>

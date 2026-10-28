@@ -131,7 +131,12 @@
     }
 
     .add-image-slide {
-      height: 100% !important;
+      height: 100%;
+
+      .btn-primary {
+        height: 100%;
+        margin-left: 10px;
+      }
     }
 
     .image-preview img {
@@ -212,13 +217,13 @@
       }
 
       input {
-        border: none !important;
-        border-radius: 0 !important;
+        border: none;
+        border-radius: 0;
         flex: 1;
-        box-shadow: none !important;
+        box-shadow: none;
 
         &:focus {
-          box-shadow: none !important;
+          box-shadow: none;
         }
       }
 
@@ -262,8 +267,8 @@
       cursor: pointer;
       transition: all var(--transition-fast);
       text-align: center;
-      font-weight: 500 !important;
-      font-size: var(--font-size-sm) !important;
+      font-weight: 500;
+      font-size: var(--font-size-sm);
 
       input[type="checkbox"] {
         display: none;
@@ -303,7 +308,7 @@
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-weight: 500 !important;
+      font-weight: 500;
       transition: border-color var(--transition-fast);
 
       &:hover {
@@ -385,19 +390,19 @@
     .select-searchable {
       position: relative;
       width: 100%;
-      overflow: visible !important;
+      overflow: visible;
     }
 
     .searchable-input {
-      width: 100% !important;
-      padding: 12px 14px !important;
-      border: 1px solid var(--surface-border) !important;
-      border-radius: var(--radius-md) !important;
-      font-size: var(--font-size-sm) !important;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
 
       &:focus {
-        border-color: var(--accent-pink) !important;
-        box-shadow: var(--focus-ring) !important;
+        border-color: var(--accent-pink);
+        box-shadow: var(--focus-ring);
       }
     }
 
