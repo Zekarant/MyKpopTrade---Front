@@ -19,7 +19,9 @@ const Dialog = defineComponent({
     return () => h('div', { ref: container, role: 'dialog' }, [
       h('button', { class: 'first' }, 'Premier'),
       h('button', { class: 'second', ref: second }, 'Second'),
-      props.text === undefined ? null : h('textarea', { value: props.text }),
+      ...(props.text === undefined
+        ? []
+        : [h('textarea', { value: props.text }), h('input', { type: 'text', class: 'search', 'data-no-draft': '' })]),
     ])
   },
 })
@@ -33,6 +35,12 @@ function openDialog(preferSecond = false, onEscape?: () => void) {
   opener.focus()
   wrapper = mount(Dialog, { props: { preferSecond, onEscape }, attachTo: document.body })
   return flushPromises()
+}
+
+/** Saisie au clavier : la valeur change et le champ émet `input`, contrairement à un pré-remplissage. */
+const typeInto = (field: HTMLInputElement | HTMLTextAreaElement, value: string) => {
+  field.value = value
+  field.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
 const press = (key: string, shiftKey = false) =>
@@ -76,7 +84,7 @@ describe('useDialogFocus', () => {
       const onEscape = vi.fn()
       const field = await openWithText('', onEscape)
 
-      field.value = 'Annonce frauduleuse'
+      typeInto(field, 'Annonce frauduleuse')
       press('Escape')
 
       expect(confirmSpy).toHaveBeenCalledWith(DISCARD_TEXT_QUESTION)
@@ -88,23 +96,35 @@ describe('useDialogFocus', () => {
       const onEscape = vi.fn()
       const field = await openWithText('', onEscape)
 
-      field.value = 'Merci pour votre avis'
+      typeInto(field, 'Merci pour votre avis')
       press('Escape')
 
       expect(onEscape).toHaveBeenCalledOnce()
     })
 
-    it('ne demande rien pour un champ vide, effacé ou laissé à sa valeur d\'ouverture', async () => {
+    it('ne demande rien pour un champ pré-rempli, ni pour un champ vidé', async () => {
       const confirmSpy = vi.spyOn(window, 'confirm')
       const onEscape = vi.fn()
       const field = await openWithText('25', onEscape)
 
       press('Escape')
-      field.value = '   '
+      typeInto(field, '   ')
       press('Escape')
 
       expect(confirmSpy).not.toHaveBeenCalled()
       expect(onEscape).toHaveBeenCalledTimes(2)
+    })
+
+    it('ignore les champs marqués data-no-draft (recherche)', async () => {
+      const confirmSpy = vi.spyOn(window, 'confirm')
+      const onEscape = vi.fn()
+      await openWithText('', onEscape)
+
+      typeInto(wrapper!.find('.search').element as HTMLInputElement, 'min')
+      press('Escape')
+
+      expect(confirmSpy).not.toHaveBeenCalled()
+      expect(onEscape).toHaveBeenCalledOnce()
     })
   })
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="cart-shipping__overlay" @click.self="emit('cancel')" @keydown.esc="emit('cancel')">
+  <div class="cart-shipping__overlay" @click.self="emit('cancel')">
     <div
       ref="dialog"
       class="cart-shipping"
@@ -91,7 +91,7 @@ const SHIPPING_CHOICES: { value: ShippingMethod; label: string; icon: string }[]
 
 const dialog = ref<HTMLElement | null>(null);
 // Focus sur la boîte elle-même (tabindex="-1") : le lecteur d'écran lit son titre d'abord.
-useDialogFocus(dialog, dialog);
+useDialogFocus(dialog, dialog, () => emit('cancel'));
 const titleId = `cart-shipping-title-${useId()}`;
 
 const shippingMethod = ref<ShippingMethod>('national');

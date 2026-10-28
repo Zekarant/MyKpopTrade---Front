@@ -1,5 +1,5 @@
 <template>
-  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop @keydown.esc.stop="cancel">
+  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop>
     <div
       ref="dialog"
       class="checkout-modal"
@@ -122,7 +122,7 @@ const emit = defineEmits<{
 
 const dialog = ref<HTMLElement | null>(null);
 // Focus sur la boîte elle-même (tabindex="-1") : le lecteur d'écran lit son titre d'abord.
-useDialogFocus(dialog, dialog);
+useDialogFocus(dialog, dialog, cancel);
 const titleId = `checkout-title-${useId()}`;
 const methodsTitleId = `checkout-methods-${useId()}`;
 

@@ -1,7 +1,14 @@
 import { nextTick, onBeforeUnmount, onMounted, type Ref } from 'vue';
 
 const FOCUSABLE = 'input, select, textarea, button, [href], [tabindex]:not([tabindex="-1"])';
-const TEXT_FIELDS = 'textarea, input:not([type]), input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], input[type="search"]';
+/** Champs dont le texte serait perdu ; `data-no-draft` écarte ceux qui n'en portent pas (recherche...). */
+const DRAFT_FIELDS = [
+  'textarea',
+  'input:not([type])',
+  ...['text', 'number', 'email', 'tel', 'url', 'search'].map((type) => `input[type="${type}"]`),
+]
+  .map((selector) => `${selector}:not([data-no-draft])`)
+  .join(', ');
 export const DISCARD_TEXT_QUESTION = 'Abandonner le texte saisi ?';
 
 /** Boîtes ouvertes, la plus récente en dernier : seule elle réagit au clavier. */
@@ -9,10 +16,6 @@ const openDialogs: symbol[] = [];
 
 function focusableIn(dialog: HTMLElement): HTMLElement[] {
   return [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.hasAttribute('disabled'));
-}
-
-function textFieldsIn(dialog: HTMLElement): (HTMLInputElement | HTMLTextAreaElement)[] {
-  return [...dialog.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(TEXT_FIELDS)];
 }
 
 /**
@@ -23,8 +26,8 @@ function textFieldsIn(dialog: HTMLElement): (HTMLInputElement | HTMLTextAreaElem
  * ne reparte pas du haut de la page. Quand des boîtes s'empilent, seule la
  * dernière ouverte réagit.
  *
- * Escape est vite pressé par mégarde : si un champ texte a été rempli depuis
- * l'ouverture, on demande confirmation avant de perdre la saisie.
+ * Escape est vite pressé par mégarde : si l'utilisateur a tapé du texte dans
+ * un champ de la boîte, on demande confirmation avant de le perdre.
  */
 export function useDialogFocus(
   dialog: Readonly<Ref<HTMLElement | null>>,
@@ -33,13 +36,19 @@ export function useDialogFocus(
 ): void {
   const id = Symbol('dialog');
   let opener: HTMLElement | null = null;
-  // Valeurs des champs à l'ouverture : un montant pré-rempli n'est pas une saisie.
-  const initialValues = new WeakMap<Element, string>();
+  // Champs modifiés au clavier : un pré-remplissage par le code (montant, adresse
+  // du profil chargée après l'ouverture) n'émet pas d'`input` et n'est pas une saisie.
+  const typedFields = new Set<HTMLInputElement | HTMLTextAreaElement>();
+
+  function onInput(event: Event) {
+    const field = event.target;
+    if (field instanceof HTMLElement && field.matches(DRAFT_FIELDS) && dialog.value?.contains(field)) {
+      typedFields.add(field as HTMLInputElement | HTMLTextAreaElement);
+    }
+  }
 
   function hasUnsentText(container: HTMLElement): boolean {
-    return textFieldsIn(container).some(
-      (field) => field.value.trim() !== '' && field.value !== (initialValues.get(field) ?? '')
-    );
+    return [...typedFields].some((field) => container.contains(field) && field.value.trim() !== '');
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -75,16 +84,15 @@ export function useDialogFocus(
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     openDialogs.push(id);
     document.addEventListener('keydown', onKeydown);
+    document.addEventListener('input', onInput, true);
     await nextTick();
-    if (dialog.value) {
-      for (const field of textFieldsIn(dialog.value)) initialValues.set(field, field.value);
-    }
     const target = initialFocus?.value ?? dialog.value?.querySelector<HTMLElement>(FOCUSABLE) ?? dialog.value;
     target?.focus();
   });
 
   onBeforeUnmount(() => {
     document.removeEventListener('keydown', onKeydown);
+    document.removeEventListener('input', onInput, true);
     openDialogs.splice(openDialogs.indexOf(id), 1);
     opener?.focus();
   });

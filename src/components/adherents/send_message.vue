@@ -17,6 +17,7 @@
                             :id="searchId"
                             ref="searchInput"
                             v-model="memberSearch"
+                            data-no-draft
                             type="text"
                             placeholder="Nom d'utilisateur..."
                             @input="searchMembers"
