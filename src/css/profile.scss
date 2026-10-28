@@ -522,6 +522,13 @@
   align-items: flex-start;
 }
 
+// Le champ n'a ni bordure ni contour : sans cela, le focus y est invisible.
+.post-create__textarea:focus-visible {
+  outline: 2px solid var(--accent-pink);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .post-create__avatar {
   width: 36px;
   height: 36px;

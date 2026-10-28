@@ -34,6 +34,15 @@ html {
   }
 }
 
+// Focus clavier toujours visible sur les commandes, même quand un composant
+// retire leur contour : sans lui, on ne sait plus où l'on est au clavier.
+// Les champs de saisie gardent leur propre indicateur (bordure, ombre) ; un
+// cadre focalisé par programme (tabindex="-1") n'en a pas besoin.
+:is(a, button, summary, [tabindex]:not([tabindex="-1"]), input[type="checkbox"], input[type="radio"], input[type="range"]):focus-visible {
+  outline: 2px solid var(--accent-pink) !important;
+  outline-offset: 2px;
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--text-primary);

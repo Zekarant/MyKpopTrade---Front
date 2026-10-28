@@ -236,6 +236,12 @@ onBeforeUnmount(() => {
   margin-top: 20px;
   margin-bottom: 20px;
   position: relative;
+
+  // Le champ n'a ni bordure ni contour : c'est le cadre qui montre le focus.
+  &:focus-within {
+    outline: 2px solid var(--accent-pink);
+    outline-offset: 2px;
+  }
 }
 
 .search-icon {
