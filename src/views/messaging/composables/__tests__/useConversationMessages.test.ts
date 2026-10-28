@@ -67,6 +67,37 @@ describe('useConversationMessages', () => {
     expect(messages.value).toHaveLength(1)
   })
 
+  it('ignore la réponse d\'une conversation quittée avant son arrivée', async () => {
+    const { messages, load, fetchConversation } = setup()
+    let answerFirst!: (value: ReturnType<typeof pageOf>) => void
+    fetchConversation
+      .mockReturnValueOnce(new Promise((resolve) => { answerFirst = resolve }))
+      .mockResolvedValueOnce(pageOf(['b1'], 1, 1))
+
+    const first = load('a')
+    await load('b')
+    answerFirst(pageOf(['a1'], 1, 1))
+
+    await expect(first).resolves.toBeNull()
+    expect(messages.value.map((m) => m._id)).toEqual(['b1'])
+  })
+
+  it('n\'ajoute pas une page ancienne arrivée après un changement de conversation', async () => {
+    const { messages, load, loadOlder, fetchConversation } = setup(pageOf(['a3'], 1, 2))
+    await load('a')
+    let answerOlder!: (value: ReturnType<typeof pageOf>) => void
+    fetchConversation
+      .mockReturnValueOnce(new Promise((resolve) => { answerOlder = resolve }))
+      .mockResolvedValueOnce(pageOf(['b1'], 1, 1))
+
+    const older = loadOlder('a')
+    await load('b')
+    answerOlder(pageOf(['a1', 'a2'], 2, 2))
+    await older
+
+    expect(messages.value.map((m) => m._id)).toEqual(['b1'])
+  })
+
   it('repart de la première page quand on change de conversation', async () => {
     const { pagination, load, clear } = setup(pageOf(['m1'], 1, 1))
     await load('c1')

@@ -6,7 +6,7 @@ type MessagingStore = ReturnType<typeof useMessagingStore>
 
 const PAGE_SIZE = 20
 
-interface MessagePagination {
+export interface MessagePagination {
   page: number
   limit: number
   total: number
@@ -22,21 +22,35 @@ const firstPage = (): MessagePagination => ({ page: 1, limit: PAGE_SIZE, total: 
  * La vue garde sa propre liste plutôt que `store.messages` : les pages
  * anciennes s'y ajoutent au-dessus, et le flux temps réel y ajoute les
  * nouveaux messages sans recharger la conversation.
+ *
+ * En changeant vite de conversation, une réponse peut arriver après celle de
+ * la conversation suivante : elle est alors ignorée, pour ne jamais afficher
+ * les messages d'une conversation dans une autre.
  */
 export function useConversationMessages(store: MessagingStore) {
   const messages = ref<ViewMessage[]>([])
   const pagination = ref<MessagePagination>(firstPage())
   const loadingOlder = ref(false)
+  /** Conversation dont les messages sont affichés (ou en cours de chargement). */
+  let activeId: string | null = null
+  /** Numéro du dernier `load` : seul le plus récent applique sa réponse. */
+  let latestLoad = 0
 
   function applyPagination(received?: { page: number; pages: number; total?: number; limit?: number }): void {
     if (!received) return
     pagination.value = { ...pagination.value, ...received, hasMore: received.page < received.pages }
   }
 
-  /** Charge la première page d'une conversation ; `fallback` sert si l'API ne renvoie aucun message. */
+  /**
+   * Charge la première page d'une conversation ; `fallback` sert si l'API ne renvoie aucun message.
+   * @returns la réponse de l'API, ou `null` si une autre conversation a été demandée entre-temps
+   */
   async function load(conversationId: string, fallback: ViewMessage[] = []) {
+    const request = ++latestLoad
+    activeId = conversationId
     pagination.value = firstPage()
     const response = await store.fetchConversation(conversationId)
+    if (request !== latestLoad) return null
     messages.value = response.messages || fallback
     applyPagination(response.pagination)
     return response
@@ -52,6 +66,7 @@ export function useConversationMessages(store: MessagingStore) {
         page: pagination.value.page + 1,
         limit: pagination.value.limit
       })
+      if (conversationId !== activeId) return
       if (response.messages?.length) {
         messages.value = [...response.messages, ...messages.value]
         applyPagination(response.pagination)
@@ -77,6 +92,8 @@ export function useConversationMessages(store: MessagingStore) {
   }
 
   function clear(): void {
+    activeId = null
+    latestLoad++
     messages.value = []
     pagination.value = firstPage()
   }

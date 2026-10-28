@@ -81,7 +81,7 @@
         :open="infoOpen"
         @close="infoOpen = false"
         @open-media="openViewer"
-        @block-change="onBlockChange"
+        @block-change="applyBlockStatus"
       />
 
       <send_message
@@ -129,13 +129,12 @@
  * (en-tête, fil, saisie), le panneau d'informations et les fenêtres d'offre.
  * La logique vit dans les composables, l'affichage dans les composants.
  */
-import { computed, getCurrentInstance, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { getCurrentInstance, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEventListener } from '@vueuse/core'
-import { useMessagingStore, applyReadReceipt, type ReadReceipt } from '@/store/messaging.store'
+import { useMessagingStore } from '@/store/messaging.store'
 import { useUserStore } from '@/store/user.store'
 import { currentUserId as sessionUserId } from '@/services/session.cookies'
-import type { BlockStatus } from '@/services/block.service'
 import send_message from '@/components/adherents/send_message.vue'
 import send_offer from '@/components/send_offer.vue'
 import CheckoutDialog from '@/components/checkout/CheckoutDialog.vue'
@@ -147,21 +146,13 @@ import MessageComposer from './components/MessageComposer.vue'
 import AttachmentViewer from './components/AttachmentViewer.vue'
 import CounterOfferDialog from './components/CounterOfferDialog.vue'
 import DeclineOfferDialog from './components/DeclineOfferDialog.vue'
-import { useConversationMessages } from './composables/useConversationMessages'
+import { useOpenConversation } from './composables/useOpenConversation'
+import { useConversationList } from './composables/useConversationList'
 import { useConversationActions } from './composables/useConversationActions'
 import { useOfferActions, type OfferInfo } from './composables/useOfferActions'
 import { useCheckout } from './composables/useCheckout'
-import type { ViewConversation, ViewMessage } from './types'
-import {
-  countConversationsByTab,
-  entityId,
-  filterConversations,
-  findMatchingConversation,
-  isArchivedConversation,
-  isFavoriteConversation,
-  isOwnMessage,
-  type ConversationLike
-} from './conversationHelpers'
+import type { ViewConversation } from './types'
+import { entityId, isArchivedConversation, isFavoriteConversation } from './conversationHelpers'
 
 const messagingStore = useMessagingStore()
 // Profil partagé avec la barre de navigation : chargé une fois par session.
@@ -169,10 +160,6 @@ const userStore = useUserStore()
 const route = useRoute()
 const toast = getCurrentInstance()!.proxy!.$func
 
-const activeTab = ref('all')
-const searchQuery = ref('')
-const loading = ref(false)
-const selectedConversation = ref<ViewConversation | null>(null)
 /** Conversation dont le menu « ... » est ouvert dans la colonne de gauche. */
 const openMenuId = ref<string | null | undefined>(null)
 const newConversationOpen = ref(false)
@@ -186,14 +173,31 @@ const currentUserId = (): string | null =>
   sessionUserId() || userStore.profile?.id || userStore.profile?._id || null
 
 const {
+  activeTab,
+  searchQuery,
+  filtered: filteredConversations,
+  counts: tabCounts,
+  initialConversation,
+  addCreated: addCreatedConversation
+} = useConversationList(messagingStore, currentUserId)
+
+async function scrollToBottom(): Promise<void> {
+  await nextTick()
+  threadView.value?.scrollToBottom()
+}
+
+const {
+  selected: selectedConversation,
+  loading,
   messages,
   pagination,
   loadingOlder,
-  load: loadMessages,
   loadOlder,
-  append: appendMessage,
-  clear: clearMessages
-} = useConversationMessages(messagingStore)
+  select: openConversation,
+  close: closeOpenConversation,
+  show: showMessage,
+  applyBlockStatus
+} = useOpenConversation({ store: messagingStore, userId: currentUserId, scrollToBottom })
 
 const {
   checkoutOpen,
@@ -206,6 +210,7 @@ const { toggleFavorite, toggleRead, toggleArchive, remove: removeConversation } 
   selected: selectedConversation,
   userId: currentUserId,
   reload: (conversation) => void selectConversation(conversation),
+  close: closeConversation,
   closeMenus: () => {
     openMenuId.value = null
   }
@@ -231,74 +236,24 @@ const {
   onOfferPosted: showMessage
 })
 
-const filteredConversations = computed(() =>
-  filterConversations((messagingStore.sortedConversations || []) as ConversationLike[], {
-    tab: activeTab.value,
-    query: searchQuery.value,
-    userId: currentUserId()
-  }) as ViewConversation[]
-)
-
-const tabCounts = computed(() =>
-  countConversationsByTab((messagingStore.conversations || []) as ConversationLike[], currentUserId())
-)
-
-async function scrollToBottom(): Promise<void> {
-  await nextTick()
-  threadView.value?.scrollToBottom()
-}
-
-async function selectConversation(conversation: ViewConversation): Promise<void> {
-  selectedConversation.value = conversation
+function selectConversation(conversation: ViewConversation): Promise<void> {
   openMenuId.value = null
-
-  try {
-    loading.value = true
-    if ((conversation.unreadCount ?? 0) > 0) {
-      await messagingStore.markAsRead(entityId(conversation))
-    }
-
-    const response = await loadMessages(entityId(conversation), conversation.messages)
-    const detail: ViewConversation = response.conversation
-    // Le détail fournit l'interlocuteur complet (badges, statistiques) : la liste ne sert que de repli.
-    detail.otherParticipant = detail.otherParticipant ?? conversation.otherParticipant
-    detail.media = response.media || []
-    selectedConversation.value = detail
-    await scrollToBottom()
-  } catch (error) {
-    console.error('Erreur lors de la sélection de la conversation:', error)
-  } finally {
-    loading.value = false
-  }
+  return openConversation(conversation)
 }
 
 function closeConversation(): void {
-  selectedConversation.value = null
   viewer.value = null
-  clearMessages()
+  closeOpenConversation()
 }
 
 function toggleConversationMenu(conversationId: string | undefined): void {
   openMenuId.value = openMenuId.value === conversationId ? null : conversationId
 }
 
-/** Message envoyé depuis cet onglet (réponse HTTP) ou offre tout juste créée. */
-function showMessage(message: ViewMessage): void {
-  if (appendMessage(message)) void scrollToBottom()
-}
-
 /** Blocage posé par l'interlocuteur depuis l'ouverture : la saisie se désactive. */
 function onSendBlocked(): void {
-  if (!selectedConversation.value) return
-  selectedConversation.value.isBlocked = true
+  applyBlockStatus({ isBlocked: true })
   toast.showToastError('Vous ne pouvez plus envoyer de messages dans cette conversation.')
-}
-
-/** Le blocage se gère depuis le panneau d'informations ; la saisie suit son état. */
-function onBlockChange(status: BlockStatus): void {
-  if (!selectedConversation.value) return
-  selectedConversation.value.isBlocked = status.isBlocked
-  selectedConversation.value.blockedByMe = status.blockedByMe
 }
 
 /** Une offre envoyée part avec le texte en cours de saisie, s'il y en a un. */
@@ -311,39 +266,10 @@ function openViewer(images: string[], index: number): void {
   viewer.value = { images: [...images], index }
 }
 
-/** Conversation créée depuis la fenêtre « Nouvelle conversation » : jamais de doublon dans la liste. */
 function onNewConversationCreated(created: ViewConversation): void {
-  const existing = findMatchingConversation(messagingStore.conversations as ViewConversation[], created, currentUserId())
-  if (!existing) messagingStore.conversations.unshift(created)
-  void selectConversation(existing ?? created)
+  void selectConversation(addCreatedConversation(created))
   newConversationOpen.value = false
 }
-
-const isOpenConversation = (id: string) =>
-  selectedConversation.value !== null && entityId(selectedConversation.value) === id
-
-async function onRealtimeMessage(message: ViewMessage): Promise<void> {
-  // Déjà affiché : envoyé depuis cet onglet, ou reçu avant la réponse de l'envoi.
-  if (!isOpenConversation(message.conversation) || !appendMessage(message)) return
-
-  await scrollToBottom()
-  // Conversation sous les yeux : le message est lu, l'expéditeur en est averti.
-  if (!isOwnMessage(message, currentUserId()) && document.visibilityState === 'visible') {
-    await messagingStore.markAsRead(message.conversation)
-  }
-}
-
-function onRealtimeReadReceipt(receipt: ReadReceipt): void {
-  if (isOpenConversation(receipt.conversationId)) applyReadReceipt(messages.value, receipt)
-}
-
-// La vue garde sa propre liste de messages affichés : elle suit les actions
-// du store déclenchées par le flux temps réel (cf. store/realtimeSync.ts).
-// Abonnement lié au composant, retiré à son démontage.
-messagingStore.$onAction(({ name, args, after }) => {
-  if (name === 'handleNewMessage') after(() => onRealtimeMessage(args[0] as ViewMessage))
-  else if (name === 'handleConversationRead') after(() => onRealtimeReadReceipt(args[0] as ReadReceipt))
-})
 
 // Les menus de la colonne de gauche arrêtent leurs clics (@click.stop) : tout
 // autre clic dans la page les ferme. Écouteur retiré au démontage.
@@ -359,14 +285,8 @@ onMounted(async () => {
     await userStore.fetchProfile().catch(() => null)
     await messagingStore.fetchConversations()
 
-    if (messagingStore.conversations.length > 0) {
-      // /adherents/messages/:id ouvre cette conversation ; sinon, la plus récente.
-      const requestedId = route.params.id
-      const requested = requestedId
-        ? messagingStore.conversations.find((c: ViewConversation) => entityId(c) === requestedId)
-        : null
-      await selectConversation(requested || messagingStore.conversations[0])
-    }
+    const initial = initialConversation(route.params.id)
+    if (initial) await selectConversation(initial)
   } catch (error) {
     console.error('Erreur lors du chargement:', error)
   } finally {
