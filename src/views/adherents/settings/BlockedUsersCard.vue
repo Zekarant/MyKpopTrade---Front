@@ -63,7 +63,7 @@ async function loadPage(target: number) {
     const result = await blockService.listBlocked(target);
     blockedUsers.value = target === 1 ? result.blockedUsers : [...blockedUsers.value, ...result.blockedUsers];
     page.value = result.pagination.page;
-    totalPages.value = result.pagination.totalPages;
+    totalPages.value = result.pagination.pages;
   } catch (error) {
     if (!isSessionLost(error)) func.showToastError(apiMessage(error, 'Impossible de charger les membres bloqués.'));
   } finally {

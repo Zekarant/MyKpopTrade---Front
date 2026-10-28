@@ -29,7 +29,7 @@ describe('shouldShowNavbar', () => {
 describe('navbarModeFor', () => {
   it.each([
     '/adherents/dashboard', '/adherents/messages', '/adherents/messages/c1', '/cart',
-    '/adherents/settings', '/adherents/profile/me', '/products/p1', '/contact', '/search-',
+    '/adherents/settings', '/adherents/profile/me', '/products/p1', '/contact', '/search',
     '/adherents/admin'
   ])('%s : toujours', (path) => {
     expect(modeOf(path)).toBe('always')

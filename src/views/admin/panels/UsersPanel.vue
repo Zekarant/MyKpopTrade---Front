@@ -117,7 +117,7 @@
       </table>
     </div>
 
-    <div v-if="pagination.totalPages > 1" class="admin__pagination">
+    <div v-if="pagination.pages > 1" class="admin__pagination">
       <button
         type="button"
         class="admin__icon-btn"
@@ -126,11 +126,11 @@
       >
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span>{{ state.page }} / {{ pagination.totalPages }} — {{ pagination.totalItems }} comptes</span>
+      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} comptes</span>
       <button
         type="button"
         class="admin__icon-btn"
-        :disabled="state.page >= pagination.totalPages"
+        :disabled="state.page >= pagination.pages"
         @click="commit({ page: state.page + 1 })"
       >
         <i class="bi bi-chevron-right"></i>
@@ -154,181 +154,150 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import VerifiedBadge from '@/components/VerifiedBadge.vue';
-  import { API_URL } from '@/config/api';
-  import { func } from '@/function';
-  import SuspendUserModal from '../components/SuspendUserModal.vue';
-  import UserDetailModal from '../components/UserDetailModal.vue';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import {
-    ACCOUNT_STATUS_LABELS,
-    ROLE_LABELS,
-    apiErrorMessage,
-    formatDate,
-    getInitial
-  } from '../adminFormat';
-  import type { AdminRole, AdminUser } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import VerifiedBadge from '@/components/VerifiedBadge.vue';
+import { API_URL } from '@/config/api';
+import { func } from '@/function';
+import SuspendUserModal from '../components/SuspendUserModal.vue';
+import UserDetailModal from '../components/UserDetailModal.vue';
+import { useAdminQueryState } from '../useAdminQueryState';
+import {
+  ACCOUNT_STATUS_LABELS,
+  ROLE_LABELS,
+  apiErrorMessage,
+  formatDate,
+  getInitial
+} from '../adminFormat';
+import type { AdminRole, AdminUser } from '../types';
 
-  const PAGE_SIZE = 20;
-  const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
 
-  export default defineComponent({
-    name: 'UsersPanel',
-    components: { SuspendUserModal, UserDetailModal, VerifiedBadge },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const users = ref<AdminUser[]>([]);
-      const pagination = ref({ totalPages: 1, totalItems: 0 });
-      const loading = ref(false);
-      const exporting = ref(false);
-      const userToSuspend = ref<AdminUser | null>(null);
-      const detailUserId = ref<string | null>(null);
-      const brokenAvatars = ref<Set<string>>(new Set());
+const emit = defineEmits<{ changed: [] }>();
 
-      const { state, commit } = useAdminQueryState(
-        { search: '', role: '', status: '', page: 1 },
-        () => load()
-      );
+const users = ref<AdminUser[]>([]);
+const pagination = ref({ pages: 1, total: 0 });
+const loading = ref(false);
+const exporting = ref(false);
+const userToSuspend = ref<AdminUser | null>(null);
+const detailUserId = ref<string | null>(null);
+const brokenAvatars = ref<Set<string>>(new Set());
 
-      const statusBadgeClass = (status: string) =>
-        ({
-          active: 'admin__badge--success',
-          suspended: 'admin__badge--warning',
-          deleted: 'admin__badge--danger'
-        })[status] || 'admin__badge';
+const { state, commit } = useAdminQueryState(
+  { search: '', role: '', status: '', page: 1 },
+  () => load()
+);
 
-      const avatarUrl = (user: AdminUser): string | null => {
-        if (
-          !user.profilePicture ||
-          user.profilePicture.includes('avatar-default') ||
-          brokenAvatars.value.has(user._id)
-        ) {
-          return null;
-        }
-        return user.profilePicture.startsWith('http')
-          ? user.profilePicture
-          : `${API_URL}${user.profilePicture}`;
-      };
+const statusBadgeClass = (status: string) =>
+  ({
+    active: 'admin__badge--success',
+    suspended: 'admin__badge--warning',
+    deleted: 'admin__badge--danger'
+  })[status] || 'admin__badge';
 
-      const onAvatarError = (user: AdminUser) => {
-        brokenAvatars.value = new Set(brokenAvatars.value).add(user._id);
-      };
+const avatarUrl = (user: AdminUser): string | null => {
+  if (
+    !user.profilePicture ||
+    user.profilePicture.includes('avatar-default') ||
+    brokenAvatars.value.has(user._id)
+  ) {
+    return null;
+  }
+  return user.profilePicture.startsWith('http')
+    ? user.profilePicture
+    : `${API_URL}${user.profilePicture}`;
+};
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getUsers({
-            page: state.page,
-            limit: PAGE_SIZE,
-            search: state.search.trim() || undefined,
-            role: state.role || undefined,
-            status: state.status || undefined
-          });
-          users.value = data.users || [];
-          pagination.value = data.pagination || { totalPages: 1, totalItems: 0 };
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les utilisateurs'));
-          users.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const onAvatarError = (user: AdminUser) => {
+  brokenAvatars.value = new Set(brokenAvatars.value).add(user._id);
+};
 
-      let searchTimer: ReturnType<typeof setTimeout> | null = null;
-      const debouncedSearch = () => {
-        if (searchTimer) clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getUsers({
+      page: state.page,
+      limit: PAGE_SIZE,
+      search: state.search.trim() || undefined,
+      role: state.role || undefined,
+      status: state.status || undefined
+    });
+    users.value = data.users || [];
+    pagination.value = data.pagination || { pages: 1, total: 0 };
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les utilisateurs'));
+    users.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const changeRole = async (user: AdminUser, role: string) => {
-        if (role === user.role) return;
-        if (!confirm(`Donner le rôle « ${ROLE_LABELS[role] || role} » à ${user.username} ?`)) {
-          await load();
-          return;
-        }
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+const debouncedSearch = () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
+};
 
-        try {
-          await adminService.updateUserRole(user._id, role as AdminRole);
-          func.showToastSuccess('Rôle modifié');
-          await load();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Le changement de rôle a échoué'));
-          await load();
-        }
-      };
+const changeRole = async (user: AdminUser, role: string) => {
+  if (role === user.role) return;
+  if (!confirm(`Donner le rôle « ${ROLE_LABELS[role] || role} » à ${user.username} ?`)) {
+    await load();
+    return;
+  }
 
-      const reactivate = async (user: AdminUser) => {
-        try {
-          await adminService.updateUserStatus(user._id, 'active');
-          func.showToastSuccess(`${user.username} a été réactivé`);
-          await load();
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La réactivation a échoué'));
-        }
-      };
+  try {
+    await adminService.updateUserRole(user._id, role as AdminRole);
+    func.showToastSuccess('Rôle modifié');
+    await load();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Le changement de rôle a échoué'));
+    await load();
+  }
+};
 
-      const onSuspended = async () => {
-        userToSuspend.value = null;
-        await load();
-        emit('changed');
-      };
+const reactivate = async (user: AdminUser) => {
+  try {
+    await adminService.updateUserStatus(user._id, 'active');
+    func.showToastSuccess(`${user.username} a été réactivé`);
+    await load();
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La réactivation a échoué'));
+  }
+};
 
-      const onSuspendFromDetail = (user: AdminUser) => {
-        detailUserId.value = null;
-        userToSuspend.value = user;
-      };
+const onSuspended = async () => {
+  userToSuspend.value = null;
+  await load();
+  emit('changed');
+};
 
-      const onReactivateFromDetail = async (user: AdminUser) => {
-        detailUserId.value = null;
-        await reactivate(user);
-      };
+const onSuspendFromDetail = (user: AdminUser) => {
+  detailUserId.value = null;
+  userToSuspend.value = user;
+};
 
-      const exportCsv = async () => {
-        exporting.value = true;
-        try {
-          await adminService.exportUsersCsv({
-            search: state.search.trim() || undefined,
-            role: state.role || undefined,
-            status: state.status || undefined
-          });
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
-        } finally {
-          exporting.value = false;
-        }
-      };
+const onReactivateFromDetail = async (user: AdminUser) => {
+  detailUserId.value = null;
+  await reactivate(user);
+};
 
-      onMounted(load);
+const exportCsv = async () => {
+  exporting.value = true;
+  try {
+    await adminService.exportUsersCsv({
+      search: state.search.trim() || undefined,
+      role: state.role || undefined,
+      status: state.status || undefined
+    });
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
+  } finally {
+    exporting.value = false;
+  }
+};
 
-      return {
-        ACCOUNT_STATUS_LABELS,
-        ROLE_LABELS,
-        state,
-        commit,
-        users,
-        pagination,
-        loading,
-        exporting,
-        userToSuspend,
-        detailUserId,
-        statusBadgeClass,
-        avatarUrl,
-        onAvatarError,
-        formatDate,
-        getInitial,
-        load,
-        debouncedSearch,
-        changeRole,
-        reactivate,
-        onSuspended,
-        onSuspendFromDetail,
-        onReactivateFromDetail,
-        exportCsv
-      };
-    }
-  });
+onMounted(load);
 </script>

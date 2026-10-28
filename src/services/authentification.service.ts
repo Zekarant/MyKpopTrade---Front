@@ -1,16 +1,8 @@
-import { type AxiosInstance, AxiosError, type AxiosResponse } from "axios";
-import Cookies from "js-cookie";
-import router from "@/router";
-import { API_URL } from '@/config/api';
 import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/session.cookies';
-import { createApiClient, refreshAccessToken } from '@/services/http';
-import { apiErrorMessage } from '@/services/apiError';
-
-interface ApiError {
-  message: string;
-  status?: number;
-  code?: string;
-}
+import { getAccessToken, refreshAccessToken } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
+import { toApiError } from '@/services/apiError';
+import { notifySessionEnded } from '@/services/sessionEvents';
 
 /**
  * Résultat d'une tentative de connexion.
@@ -38,66 +30,61 @@ export interface RegisterPayload {
   marketing: boolean;
 }
 
-class authentificationService {
-  private authApiClient: AxiosInstance;
-  private API_BASE_URL: string = `${API_URL}/api`;
+/** Réponse des routes qui ouvrent une session (connexion, OAuth, 2FA). */
+interface SessionResponse {
+  accessToken: string;
+  user: { id: string };
+}
 
-  constructor() {
-    // Les routes d'authentification (/login, /refresh-token, /logout, /2fa/)
-    // sont exclues du renouvellement automatique côté `http.ts` : un 401 y
-    // signifie « identifiants refusés », pas « session expirée ».
-    // `withCredentials` : l'API y pose et y lit le refresh token, dans un
-    // cookie HttpOnly qu'un appel cross-origin n'enverrait pas sinon.
-    this.authApiClient = createApiClient({
-      baseURL: `${this.API_BASE_URL}/auth`,
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
+/**
+ * Connexion, inscription et fin de session.
+ *
+ * Les erreurs sont des `ApiError` dont le message est celui de l'API, sinon un
+ * repli propre à l'action. La redirection après déconnexion n'est pas faite
+ * ici : la fin de session est annoncée (sessionEvents.ts) et l'application y
+ * réagit, ce qui évite à ce service d'importer le routeur.
+ */
+class AuthentificationService {
+  // Les routes d'authentification (/login, /refresh-token, /logout, /2fa/)
+  // sont exclues du renouvellement automatique côté `http.ts` : un 401 y
+  // signifie « identifiants refusés », pas « session expirée ».
+  // `withCredentials` : l'API y pose et y lit le refresh token, dans un
+  // cookie HttpOnly qu'un appel cross-origin n'enverrait pas sinon.
+  private client = apiClient('/api/auth', { withCredentials: true });
+
+  /** Ouvre la session côté front ; les favoris en cache appartenaient au compte précédent. */
+  private openSession(session: SessionResponse): void {
+    setSessionCookies({ accessToken: session.accessToken, userId: session.user.id });
+    sessionStorage.removeItem('favorites');
   }
 
   async login(identifier: string, password: string): Promise<LoginResult> {
     try {
-      const response: AxiosResponse = await this.authApiClient.post("/login", {
-        identifier,
-        password,
-      });
-
-      if (response.status !== 200) {
-        throw new Error(response.data.message);
-      }
+      type LoginResponse = SessionResponse & { requiresTwoFactor?: boolean; twoFactorToken: string };
+      const { data } = await this.client.post<LoginResponse>('/login', { identifier, password });
 
       // Second facteur requis : pas de session ouverte à ce stade.
-      if (response.data.requiresTwoFactor) {
-        return { requiresTwoFactor: true, twoFactorToken: response.data.twoFactorToken };
+      if (data.requiresTwoFactor) {
+        return { requiresTwoFactor: true, twoFactorToken: data.twoFactorToken };
       }
 
-      setSessionCookies({
-        accessToken: response.data.accessToken,
-        userId: response.data.user.id
-      });
-      sessionStorage.removeItem("favorites");
-
+      this.openSession(data);
       return { requiresTwoFactor: false };
     } catch (error) {
-      const axiosError = error as AxiosError<ApiError>;
-      throw new Error(axiosError.response?.data.message || "Erreur lors de la connexion");
+      throw toApiError(error, 'Erreur lors de la connexion');
     }
   }
 
   /**
    * Création de compte. Aucune session n'est ouverte : l'API envoie un email de
    * vérification et rend un message à afficher tel quel.
-   * Une erreur réseau (sans `response`) donne le message générique au lieu de
-   * planter sur `error.response.data`.
    */
   async register(payload: RegisterPayload): Promise<string> {
     try {
-      const response: AxiosResponse = await this.authApiClient.post("/register", payload);
-      return response.data?.message || "Inscription réussie !";
+      const { data } = await this.client.post<{ message?: string }>('/register', payload);
+      return data?.message || 'Inscription réussie !';
     } catch (error) {
-      throw new Error(apiErrorMessage(error, "Une erreur est survenue. Veuillez réessayer."));
+      throw toApiError(error, 'Une erreur est survenue. Veuillez réessayer.');
     }
   }
 
@@ -107,10 +94,10 @@ class authentificationService {
    */
   async forgotPassword(email: string): Promise<string> {
     try {
-      const response: AxiosResponse = await this.authApiClient.post("/forgot-password", { email });
-      return response.data?.message || "Si un compte existe pour cet email, un lien vient d'être envoyé.";
+      const { data } = await this.client.post<{ message?: string }>('/forgot-password', { email });
+      return data?.message || "Si un compte existe pour cet email, un lien vient d'être envoyé.";
     } catch (error) {
-      throw new Error(apiErrorMessage(error, "Une erreur est survenue."));
+      throw toApiError(error, 'Une erreur est survenue.');
     }
   }
 
@@ -120,16 +107,10 @@ class authentificationService {
    */
   async exchangeOAuthCode(code: string): Promise<void> {
     try {
-      const response: AxiosResponse = await this.authApiClient.post("/oauth/exchange", { code });
-
-      setSessionCookies({
-        accessToken: response.data.accessToken,
-        userId: response.data.user.id
-      });
-      sessionStorage.removeItem("favorites");
+      const { data } = await this.client.post<SessionResponse>('/oauth/exchange', { code });
+      this.openSession(data);
     } catch (error) {
-      const axiosError = error as AxiosError<ApiError>;
-      throw new Error(axiosError.response?.data?.message || "Connexion impossible.");
+      throw toApiError(error, 'Connexion impossible.');
     }
   }
 
@@ -139,55 +120,39 @@ class authentificationService {
    */
   async verifyTwoFactor(twoFactorToken: string, code: string): Promise<void> {
     try {
-      const response: AxiosResponse = await this.authApiClient.post("/2fa/verify", {
-        twoFactorToken,
-        code,
-      });
-
-      setSessionCookies({
-        accessToken: response.data.accessToken,
-        userId: response.data.user.id
-      });
-      sessionStorage.removeItem("favorites");
+      const { data } = await this.client.post<SessionResponse>('/2fa/verify', { twoFactorToken, code });
+      this.openSession(data);
     } catch (error) {
-      const axiosError = error as AxiosError<ApiError>;
-      throw new Error(
-        axiosError.response?.data.message || "Impossible de vérifier le code."
-      );
+      throw toApiError(error, 'Impossible de vérifier le code.');
     }
   }
 
   async logout(): Promise<void> {
     try {
       // Le refresh token part dans son cookie HttpOnly, que l'API efface.
-      await this.authApiClient.post("/logout");
+      await this.client.post('/logout');
     } catch {
-      // Ignore errors on logout request
+      // Déconnexion locale quoi qu'il arrive : un refus de l'API ne doit pas garder l'utilisateur connecté.
     } finally {
       this.clearCookies();
-      // Profil, panier, notifications et conversations appartiennent au compte
-      // qui se déconnecte. Import différé : les stores importent des services
-      // qui importent celui-ci.
-      const { resetSessionStores } = await import('@/store/resetSessionStores');
-      resetSessionStores();
-      router.push("/login");
+      notifySessionEnded('logout');
     }
   }
+
   async verifSession(): Promise<void> {
     // Sans session (durée de vie 7 jours), rien ne peut être rétabli : c'est la
     // seule trace qui survit à la fermeture de l'onglet et à l'expiration du
     // token d'accès.
     if (!hasSession()) {
       await this.logout();
-      throw new Error("No session token");
+      throw new Error('No session token');
     }
 
     // Le token d'accès (15 min) est encore là : la session est valide, inutile
     // de solliciter l'API. Sans ce court-circuit, un simple retour sur le site
     // après expiration du token d'accès déconnectait l'utilisateur alors que le
     // refresh token restait valable.
-    const sessionToken = Cookies.get("sessionToken");
-    if (sessionToken) {
+    if (getAccessToken()) {
       return;
     }
 
@@ -197,12 +162,13 @@ class authentificationService {
 
     if (!accessToken) {
       await this.logout();
-      throw new Error("Session refresh failed");
+      throw new Error('Session refresh failed');
     }
   }
+
   clearCookies(): void {
     clearSessionCookies();
   }
 }
 
-export default new authentificationService();
+export default new AuthentificationService();

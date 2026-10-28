@@ -42,7 +42,7 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostDetail from '@/components/post.vue'
 import postService from '@/services/post.service'
-import { apiErrorResponse } from '@/services/apiError'
+import { apiErrorStatus } from '@/services/apiError'
 import type { PostResponse } from '@/types/post.types'
 
 /** Fiche produit partageable (/products/:id), consultable sans compte. */
@@ -66,7 +66,7 @@ async function load() {
     state.value = 'loaded'
     document.title = `${detail.value.product.title} · ${SITE_NAME}`
   } catch (error) {
-    const status = apiErrorResponse(error)?.status
+    const status = apiErrorStatus(error)
     state.value = status !== undefined && NOT_FOUND_STATUSES.includes(status) ? 'not-found' : 'error'
     if (state.value === 'not-found') {
       document.title = `Annonce introuvable · ${SITE_NAME}`
@@ -127,9 +127,5 @@ watch(() => route.params.id, load, { immediate: true })
   border-top-color: var(--accent-pink);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

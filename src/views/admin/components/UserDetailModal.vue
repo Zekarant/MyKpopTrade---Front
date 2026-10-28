@@ -1,9 +1,9 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="$emit('close')">
+  <div class="admin__modal-overlay" @click.self="emit('close')">
     <div class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="user-detail-title">
       <div class="admin__modal-header">
         <h3 id="user-detail-title">{{ detail?.user?.username || 'Fiche de modération' }}</h3>
-        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="$emit('close')">
+        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('close')">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -153,7 +153,7 @@
           v-if="canSanction && detail.user.accountStatus === 'active'"
           type="button"
           class="admin__btn admin__btn--danger"
-          @click="$emit('suspend', detail.user)"
+          @click="emit('suspend', detail.user)"
         >
           <i class="bi bi-person-x"></i> Suspendre
         </button>
@@ -161,122 +161,96 @@
           v-if="canSanction && detail.user.accountStatus === 'suspended'"
           type="button"
           class="admin__btn admin__btn--primary"
-          @click="$emit('reactivate', detail.user)"
+          @click="emit('reactivate', detail.user)"
         >
           <i class="bi bi-person-check"></i> Réactiver
         </button>
-        <button type="button" class="admin__btn admin__btn--ghost" @click="$emit('close')">Fermer</button>
+        <button type="button" class="admin__btn admin__btn--ghost" @click="emit('close')">Fermer</button>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import {
-    ACCOUNT_STATUS_LABELS,
-    ROLE_LABELS,
-    apiErrorMessage,
-    formatDate,
-    formatDateTime
-  } from '../adminFormat';
-  import type { AdminNote, AdminUserDetail } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import {
+  ACCOUNT_STATUS_LABELS,
+  ROLE_LABELS,
+  apiErrorMessage,
+  formatDate,
+  formatDateTime
+} from '../adminFormat';
+import type { AdminNote, AdminUser, AdminUserDetail } from '../types';
 
-  const NOTE_MAX_LENGTH = 2000;
+const NOTE_MAX_LENGTH = 2000;
 
-  export default defineComponent({
-    name: 'UserDetailModal',
-    props: {
-      userId: { type: String, required: true }
-    },
-    emits: ['close', 'suspend', 'reactivate', 'changed'],
-    setup(props, { emit }) {
-      const detail = ref<AdminUserDetail | null>(null);
-      const notes = ref<AdminNote[]>([]);
-      const newNote = ref('');
-      const loading = ref(true);
-      const savingNote = ref(false);
+const props = defineProps<{ userId: string }>();
+const emit = defineEmits<{ close: []; suspend: [user: AdminUser]; reactivate: [user: AdminUser]; changed: [] }>();
 
-      const reversedSanctions = computed(() => [...(detail.value?.user?.sanctions ?? [])].reverse());
-      const reversedNotes = computed(() => [...notes.value].reverse());
+const detail = ref<AdminUserDetail | null>(null);
+const notes = ref<AdminNote[]>([]);
+const newNote = ref('');
+const loading = ref(true);
+const savingNote = ref(false);
 
-      const canSanction = computed(() => detail.value?.user?.role !== 'admin');
+const reversedSanctions = computed(() => [...(detail.value?.user?.sanctions ?? [])].reverse());
+const reversedNotes = computed(() => [...notes.value].reverse());
 
-      const statusBadgeClass = computed(
-        () =>
-          ({
-            active: 'admin__badge--success',
-            suspended: 'admin__badge--warning',
-            deleted: 'admin__badge--danger'
-          })[detail.value?.user?.accountStatus as string] || 'admin__badge'
-      );
+const canSanction = computed(() => detail.value?.user?.role !== 'admin');
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          detail.value = await adminService.getUserDetail(props.userId);
-          notes.value = detail.value?.user?.adminNotes ?? [];
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger la fiche'));
-          detail.value = null;
-        } finally {
-          loading.value = false;
-        }
-      };
+const statusBadgeClass = computed(
+  () =>
+    ({
+      active: 'admin__badge--success',
+      suspended: 'admin__badge--warning',
+      deleted: 'admin__badge--danger'
+    })[detail.value?.user?.accountStatus as string] || 'admin__badge'
+);
 
-      const addNote = async () => {
-        const content = newNote.value.trim();
-        if (!content || savingNote.value) return;
+const load = async () => {
+  loading.value = true;
+  try {
+    detail.value = await adminService.getUserDetail(props.userId);
+    notes.value = detail.value?.user?.adminNotes ?? [];
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger la fiche'));
+    detail.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
 
-        savingNote.value = true;
-        try {
-          const data = await adminService.addUserNote(props.userId, content);
-          notes.value = data.adminNotes ?? [];
-          newNote.value = '';
-          func.showToastSuccess('Note ajoutée');
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'ajout de la note a échoué'));
-        } finally {
-          savingNote.value = false;
-        }
-      };
+const addNote = async () => {
+  const content = newNote.value.trim();
+  if (!content || savingNote.value) return;
 
-      const removeNote = async (note: AdminNote) => {
-        if (!confirm('Supprimer cette note ?')) return;
+  savingNote.value = true;
+  try {
+    const data = await adminService.addUserNote(props.userId, content);
+    notes.value = data.adminNotes ?? [];
+    newNote.value = '';
+    func.showToastSuccess('Note ajoutée');
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'ajout de la note a échoué'));
+  } finally {
+    savingNote.value = false;
+  }
+};
 
-        try {
-          const data = await adminService.deleteUserNote(props.userId, note._id);
-          notes.value = data.adminNotes ?? [];
-          func.showToastSuccess('Note supprimée');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
+const removeNote = async (note: AdminNote) => {
+  if (!confirm('Supprimer cette note ?')) return;
 
-      onMounted(load);
+  try {
+    const data = await adminService.deleteUserNote(props.userId, note._id);
+    notes.value = data.adminNotes ?? [];
+    func.showToastSuccess('Note supprimée');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
 
-      return {
-        ACCOUNT_STATUS_LABELS,
-        ROLE_LABELS,
-        NOTE_MAX_LENGTH,
-        detail,
-        notes,
-        newNote,
-        loading,
-        savingNote,
-        reversedSanctions,
-        reversedNotes,
-        canSanction,
-        statusBadgeClass,
-        formatDate,
-        formatDateTime,
-        load,
-        addNote,
-        removeNote
-      };
-    }
-  });
+onMounted(load);
 </script>

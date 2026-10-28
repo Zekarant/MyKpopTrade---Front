@@ -1,7 +1,6 @@
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
-const client = createApiClient({ baseURL: `${API_URL}/api/notifications/push` });
+const client = apiClient('/api/notifications/push');
 
 /**
  * Convertit la clé VAPID base64-url en Uint8Array — format requis par

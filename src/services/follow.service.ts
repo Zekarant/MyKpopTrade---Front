@@ -1,7 +1,6 @@
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
-const client = createApiClient({ baseURL: `${API_URL}/api/follows` });
+const client = apiClient('/api/follows');
 
 class FollowService {
   async toggleFollow(targetUserId: string) {

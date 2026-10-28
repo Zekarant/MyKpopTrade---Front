@@ -3,6 +3,7 @@ import { hasSession } from '@/services/session.cookies'
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import forgot_psw from '../views/forgot_psw.vue';
+import { legacySearchRedirect, searchPageProps } from './searchRoute';
 
 
 const routes = [
@@ -194,44 +195,19 @@ const routes = [
     name: 'forgot_psw',
     component: forgot_psw
   },
-{
-  path: '/search-:combined?',
-  name: 'searchList',
-  component: () => import('../views/adherents/searchList.vue'),
-  meta: { title: 'Recherche' },
-  props: (route: RouteLocationGeneric) => {
-    const combined = (route.params.combined as string | undefined) || '';
-    const parts = combined.split('-');
-
-
-    let query = '';
-    let event = '';
-
-
-    if (combined === '') {
-      query = '';
-      event = '';
-    } else if (parts.length === 1) {
-      // Une seule partie => soit query soit event
-      // Tu peux définir une liste des events connus pour distinguer
-      const knownEvents = ['morePage', 'search', 'morePageFavorites', 'moreFavorites'];
-      if (knownEvents.includes(parts[0])) {
-        query = '';
-        event = parts[0];
-      } else {
-        query = parts[0];
-        event = '';
-      }
-    } else {
-      // 2 parties ou plus
-      query = parts[0] || '';
-      event = parts[parts.length - 1] || '';
-    }
-
-
-    return { query, event };
-  }
-},
+  {
+    path: '/search',
+    name: 'searchList',
+    component: () => import('../views/adherents/searchList.vue'),
+    meta: { title: 'Recherche' },
+    props: searchPageProps
+  },
+  // Ancien format `/search-<texte>-<événement>`, encore présent dans des
+  // favoris et des historiques de navigation.
+  {
+    path: '/search-:combined?',
+    redirect: legacySearchRedirect
+  },
   {
     path: '/adherents/messages',
     name: 'messages',

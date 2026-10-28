@@ -1,6 +1,5 @@
-import { type AxiosInstance, type AxiosResponse } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import type { AxiosResponse } from 'axios';
+import { apiClient } from '@/services/apiClient';
 
 export interface Faq {
   _id: string;
@@ -22,39 +21,31 @@ export interface FaqPayload {
 }
 
 class FaqService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    const baseURL = `${API_URL}/api/faqs`;
-    this.apiClient = createApiClient({
-      baseURL,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  private client = apiClient('/api/faqs');
 
   async getFaqs(): Promise<Faq[]> {
-    const response: AxiosResponse<{ faqs: Faq[] }> = await this.apiClient.get('/');
+    const response: AxiosResponse<{ faqs: Faq[] }> = await this.client.get('/');
     return response.data.faqs;
   }
 
   // Admin
   async getAllFaqs(): Promise<Faq[]> {
-    const response: AxiosResponse<{ faqs: Faq[] }> = await this.apiClient.get('/admin/list');
+    const response: AxiosResponse<{ faqs: Faq[] }> = await this.client.get('/admin/list');
     return response.data.faqs;
   }
 
   async createFaq(payload: FaqPayload & { question: string; answer: string }): Promise<Faq> {
-    const response: AxiosResponse<{ faq: Faq }> = await this.apiClient.post('/admin', payload);
+    const response: AxiosResponse<{ faq: Faq }> = await this.client.post('/admin', payload);
     return response.data.faq;
   }
 
   async updateFaq(faqId: string, payload: FaqPayload): Promise<Faq> {
-    const response: AxiosResponse<{ faq: Faq }> = await this.apiClient.put(`/admin/${faqId}`, payload);
+    const response: AxiosResponse<{ faq: Faq }> = await this.client.put(`/admin/${faqId}`, payload);
     return response.data.faq;
   }
 
   async deleteFaq(faqId: string): Promise<void> {
-    await this.apiClient.delete(`/admin/${faqId}`);
+    await this.client.delete(`/admin/${faqId}`);
   }
 }
 

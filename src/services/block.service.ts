@@ -1,7 +1,7 @@
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
+import type { Pagination } from '@/types/pagination.types';
 
-const client = createApiClient({ baseURL: `${API_URL}/api/users` });
+const client = apiClient('/api/users');
 
 /** Code d'erreur de l'API quand une interaction est refusée pour cause de blocage. */
 export const BLOCKED_ERROR_CODE = 'BLOCKED';
@@ -23,7 +23,7 @@ export interface BlockedUser {
 
 export interface BlockedUsersPage {
   blockedUsers: BlockedUser[];
-  pagination: { page: number; limit: number; totalItems: number; totalPages: number };
+  pagination: Pagination;
 }
 
 class BlockService {

@@ -5,7 +5,7 @@
         <h3 class="followers-section__title"><i class="bi bi-people"></i> Abonnés ({{ total }})</h3>
       </div>
       <div v-if="followers.length" class="followers-section__list">
-        <div class="follower-card" v-for="follower in followers" :key="follower._id">
+        <div v-for="follower in followers" :key="follower._id" class="follower-card">
           <router-link :to="`/adherents/profile/${follower._id}`" class="follower-card__link">
             <span class="follower-card__avatar">{{ initialOf(follower.username) }}</span>
             <div class="follower-card__info">
@@ -13,7 +13,7 @@
               <span v-if="follower.bio" class="follower-card__bio">{{ follower.bio }}</span>
             </div>
           </router-link>
-          <button v-if="isOwnProfile" class="follower-card__remove" @click="removeFollower(follower._id)" title="Retirer cet abonné">
+          <button v-if="isOwnProfile" class="follower-card__remove" title="Retirer cet abonné" @click="removeFollower(follower._id)">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
@@ -53,9 +53,9 @@ async function loadFollowers(pageToLoad = 1) {
     const data = await followService.getFollowers(props.profileUserId, pageToLoad)
     const received: Follower[] = data.followers || []
     followers.value = pageToLoad === 1 ? received : [...followers.value, ...received]
-    total.value = data.total || 0
-    page.value = data.page || 1
-    totalPages.value = data.totalPages || 1
+    total.value = data.pagination?.total ?? 0
+    page.value = data.pagination?.page ?? 1
+    totalPages.value = data.pagination?.pages ?? 1
   } catch {
     followers.value = []
   }

@@ -21,7 +21,7 @@
       <article v-else class="faq-page__content">
         <section v-for="group in groups" :key="group.category" class="faq-category">
           <h2 class="faq-category__title">{{ group.category }}</h2>
-          <div class="faq-item" v-for="faq in group.faqs" :key="faq._id">
+          <div v-for="faq in group.faqs" :key="faq._id" class="faq-item">
             <button
               type="button"
               class="faq-item__question"

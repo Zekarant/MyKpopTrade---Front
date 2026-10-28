@@ -9,8 +9,8 @@
       </div>
     </div>
 
-    <div class="review-section__list" v-if="filteredReviews.length">
-      <div class="review-item" v-for="rating in filteredReviews" :key="rating._id">
+    <div v-if="filteredReviews.length" class="review-section__list">
+      <div v-for="rating in filteredReviews" :key="rating._id" class="review-item">
         <Review_card class="review-item__card" :review="rating"></Review_card>
 
         <!-- Réponse existante -->
@@ -20,7 +20,7 @@
             <span>Réponse du vendeur</span>
           </div>
           <p class="review-item__response-text">{{ rating.response.content }}</p>
-          <button v-if="isOwnProfile" @click="openResponsePopup(rating)" class="review-item__edit-btn">
+          <button v-if="isOwnProfile" class="review-item__edit-btn" @click="openResponsePopup(rating)">
             <i class="bi bi-pencil"></i> Modifier
           </button>
         </div>
@@ -28,8 +28,8 @@
         <!-- Bouton répondre -->
         <button
           v-if="isOwnProfile && !rating.response?.content && !isRespondingTo(rating)"
-          @click="openResponsePopup(rating)"
           class="review-item__respond-btn"
+          @click="openResponsePopup(rating)"
         >
           <i class="bi bi-reply"></i> Répondre à cet avis
         </button>
@@ -46,7 +46,7 @@
         <div class="response-popup">
           <div class="response-popup__header">
             <h3><i class="bi bi-reply"></i> Répondre à l'avis</h3>
-            <button @click="closeResponsePopup" class="response-popup__close"><i class="bi bi-x-lg"></i></button>
+            <button class="response-popup__close" @click="closeResponsePopup"><i class="bi bi-x-lg"></i></button>
           </div>
           <div class="response-popup__body">
             <textarea
@@ -57,8 +57,8 @@
             ></textarea>
           </div>
           <div class="response-popup__footer">
-            <button @click="closeResponsePopup" class="response-popup__btn response-popup__btn--ghost">Annuler</button>
-            <button @click="submitResponse" class="response-popup__btn response-popup__btn--primary" :disabled="!responseText.trim()">
+            <button class="response-popup__btn response-popup__btn--ghost" @click="closeResponsePopup">Annuler</button>
+            <button class="response-popup__btn response-popup__btn--primary" :disabled="!responseText.trim()" @click="submitResponse">
               <i class="bi bi-send"></i> {{ responding.response?.content ? 'Modifier' : 'Envoyer' }}
             </button>
           </div>

@@ -1,36 +1,37 @@
 <template>
-    <div @click="closePopup" class="msg-modal-overlay">
-        <div @click.stop class="msg-modal">
+    <div class="msg-modal-overlay" @click.self="closePopup" @keydown.esc="closePopup">
+        <div ref="dialog" class="msg-modal" role="dialog" aria-modal="true" :aria-labelledby="titleId">
             <div class="msg-modal__header">
-                <h2 class="msg-modal__title"><i class="bi bi-chat-dots"></i> Nouvelle conversation</h2>
-                <button type="button" class="msg-modal__close" @click="closePopup" aria-label="Close">
-                    <i class="bi bi-x-lg"></i>
+                <h2 :id="titleId" class="msg-modal__title"><i class="bi bi-chat-dots" aria-hidden="true"></i> Nouvelle conversation</h2>
+                <button type="button" class="msg-modal__close" aria-label="Fermer" @click="closePopup">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="msg-modal__body">
                 <!-- Recherche membre (si pas de destinataire prédéfini) -->
-                <div v-if="!id_user && !id_post" class="msg-modal__field">
-                    <label class="msg-modal__label">Rechercher un membre</label>
+                <div v-if="!idUser && !idPost" class="msg-modal__field">
+                    <label :for="searchId" class="msg-modal__label">Rechercher un membre</label>
                     <div class="msg-modal__input-wrap">
-                        <i class="bi bi-search"></i>
+                        <i class="bi bi-search" aria-hidden="true"></i>
                         <input
-                            type="text"
+                            :id="searchId"
+                            ref="searchInput"
                             v-model="memberSearch"
-                            @input="searchMembers"
+                            type="text"
                             placeholder="Nom d'utilisateur..."
+                            @input="searchMembers"
                         />
                     </div>
 
                     <div v-if="memberSearchResults.length" class="msg-modal__results">
                         <button
-                            type="button"
                             v-for="member in memberSearchResults"
                             :key="member._id || member.id"
+                            type="button"
                             class="msg-modal__result-item"
                             @click="selectMember(member)"
                         >
-                            <img v-if="member.profilePicture" :src="getImageUrl(member.profilePicture)" :alt="member.username" class="msg-modal__avatar" loading="lazy" decoding="async" />
-                            <span v-else class="msg-modal__avatar msg-modal__avatar--letter">{{ member.username?.charAt(0).toUpperCase() }}</span>
+                            <span class="msg-modal__avatar"><UserAvatar :user="member" /></span>
                             <div class="msg-modal__result-info">
                                 <span class="msg-modal__result-name">
                                   {{ member.username }}
@@ -43,20 +44,21 @@
                 </div>
 
                 <!-- Destinataire sélectionné -->
-                <div v-if="id_user || pseudo_user" class="msg-modal__field">
-                    <label class="msg-modal__label">Destinataire</label>
+                <div v-if="idUser || pseudoUser" class="msg-modal__field">
+                    <span class="msg-modal__label">Destinataire</span>
                     <div class="msg-modal__recipient">
-                        <img v-if="selectedMember?.avatar || selectedMember?.profilePicture" :src="getImageUrl(selectedMember?.profilePicture || selectedMember?.avatar)" :alt="pseudo_user" class="msg-modal__avatar" />
-                        <span v-else class="msg-modal__avatar msg-modal__avatar--letter">{{ pseudo_user?.charAt(0).toUpperCase() }}</span>
-                        <span class="msg-modal__recipient-name">{{ pseudo_user }}</span>
+                        <span class="msg-modal__avatar"><UserAvatar :user="recipient" /></span>
+                        <span class="msg-modal__recipient-name">{{ pseudoUser }}</span>
                     </div>
                 </div>
 
                 <div class="msg-modal__field">
-                    <label class="msg-modal__label">Message</label>
+                    <label :for="messageId" class="msg-modal__label">Message</label>
                     <textarea
-                        class="msg-modal__textarea"
+                        :id="messageId"
+                        ref="messageInput"
                         v-model="textMessage"
+                        class="msg-modal__textarea"
                         rows="4"
                         placeholder="Écrivez votre message..."
                     ></textarea>
@@ -69,8 +71,8 @@
                 <button
                     type="button"
                     class="msg-modal__btn msg-modal__btn--primary"
-                    @click="sendMessage"
                     :disabled="isButtonDisabled()"
+                    @click="sendMessage"
                 >
                     <i class="bi bi-send"></i> Envoyer
                 </button>
@@ -79,14 +81,17 @@
     </div>
 </template>
 
-<script lang="ts">
-import mssagingService from '@/services/messaging.service';
-import { useRoute, useRouter } from "vue-router";
-import { ref, getCurrentInstance } from 'vue';
-import { mediaUrl } from '@/utils/format';
+<script setup lang="ts">
+/** Nouvelle conversation : vers un membre donné (profil, annonce) ou cherché par son pseudo. */
+import { computed, ref, useId } from 'vue';
+import messagingService from '@/services/messaging.service';
+import { func } from '@/function';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
+import UserAvatar from '@/components/UserAvatar.vue';
+import type { Conversation } from '@/types/messaging.types';
 
-export interface Member {
+interface Member {
     _id?: string;
     id?: string;
     username: string;
@@ -103,132 +108,99 @@ interface SearchMembersResponse {
     user?: Member;
 }
 
+const props = defineProps<{
+    pseudoUser?: string;
+    idUser?: string | null;
+    idPost?: string | null;
+}>();
 
-export default {
-    name: "send_message",
+const emit = defineEmits<{
+    closeSendMessage: [];
+    newConversationCreated: [conversation: Conversation];
+}>();
 
-    components: { VerifiedBadge },
+const dialog = ref<HTMLElement | null>(null);
+const searchInput = ref<HTMLElement | null>(null);
+const messageInput = ref<HTMLElement | null>(null);
+const titleId = `send-message-title-${useId()}`;
+const searchId = `send-message-search-${useId()}`;
+const messageId = `send-message-text-${useId()}`;
 
-    props: {
-        pseudo_user: {
-            type: String,
-            required: false
-        },
-        id_user: {
-            type: String,
-            required: false,
-            default: null
-        },
-        id_post: {
-            type: String,
-            required: false,
-            default: null
-        }
-    },
+// Premier champ utile : la recherche si aucun destinataire n'est imposé, sinon le message.
+useDialogFocus(dialog, computed(() => searchInput.value ?? messageInput.value));
 
-    setup(props, { emit }) {
-        const route = useRoute();
-        const router = useRouter();
-        const instance = getCurrentInstance();
-        const $func = instance?.appContext.config.globalProperties.$func;
+const memberSearch = ref('');
+const memberSearchResults = ref<Member[]>([]);
+// Destinataire imposé par le parent (profil, annonce), sinon choisi dans la recherche.
+const selectedMember = ref<Member | null>(
+    props.idUser || props.pseudoUser ? { _id: props.idUser ?? undefined, username: props.pseudoUser ?? '' } : null
+);
+const textMessage = ref('');
 
-        const memberSearch = ref('');
-        const memberSearchResults = ref<Member[]>([]);
-        const selectedMember = ref<Member | null>(null);
-        const textMessage = ref('');
+const recipient = computed(() => ({
+    username: props.pseudoUser,
+    profilePicture: selectedMember.value?.profilePicture || selectedMember.value?.avatar,
+}));
 
-        // Computed pour la désactivation du bouton
-        function isButtonDisabled() {
-            const hasMessage = textMessage.value.trim() !== '';
-            return !hasMessage;
-        }
+function isButtonDisabled() {
+    return textMessage.value.trim() === '';
+}
 
-        // Fonction pour construire l'URL complète de l'image
-        const getImageUrl = (imagePath?: string): string => mediaUrl(imagePath);
-
-        // Pré-sélection si on a déjà un utilisateur ciblé
-        if (props.id_user || props.pseudo_user) {
-            selectedMember.value = {
-                _id: props.id_user,
-                username: props.pseudo_user
-            } as Member;
-        }
-
-        const searchMembers = async () => {
-            if (memberSearch.value.length < 2) {
-                memberSearchResults.value = [];
-                return;
-            }
-
-            try {
-                const response = await mssagingService.getUserByName(memberSearch.value);
-                // Le service retourne soit 'users' (tableau) soit 'user' (objet unique)
-                const responseData = response as SearchMembersResponse;
-                if (responseData.users && Array.isArray(responseData.users)) {
-                    memberSearchResults.value = responseData.users;
-                } else if (responseData.user) {
-                    memberSearchResults.value = [responseData.user];
-                } else {
-                    memberSearchResults.value = [];
-                }
-            } catch (error) {
-                console.error('Erreur lors de la recherche:', error);
-                memberSearchResults.value = [];
-            }
-        };
-
-        const selectMember = (member: Member) => {
-            selectedMember.value = member;
-            memberSearch.value = member.username;
-            memberSearchResults.value = [];
-        };
-
-        const closePopup = () => {
-            emit('closeSendMessage');
-        };
-
-        const sendMessage = () => {
-            const recipientId = selectedMember.value?._id || selectedMember.value?.id || props.id_user;
-
-            if (!recipientId) {
-                $func?.showToastError('Veuillez sélectionner un destinataire');
-                return;
-            }
-
-            if (textMessage.value.trim() === '') {
-                $func?.showToastError('Veuillez saisir un message');
-                return;
-            }
-
-            mssagingService.startConversation({
-                recipientId: recipientId,
-                initialMessage: textMessage.value,
-                productId: props.id_post ?? undefined,
-            }).then((response) => {
-                $func?.showToastSuccess('Message envoyé avec succès');
-                emit('newConversationCreated', response.conversation);
-                closePopup();
-            }).catch((error) => {
-                console.error('Erreur lors de l\'envoi:', error);
-                $func?.showToastError('Erreur lors de l\'envoi du message');
-            });
-        };
-
-        return {
-            route,
-            router,
-            memberSearch,
-            memberSearchResults,
-            selectedMember,
-            textMessage,
-            isButtonDisabled,
-            searchMembers,
-            selectMember,
-            closePopup,
-            sendMessage,
-            getImageUrl
-        };
+async function searchMembers() {
+    if (memberSearch.value.length < 2) {
+        memberSearchResults.value = [];
+        return;
     }
+
+    try {
+        // Le service retourne soit 'users' (tableau) soit 'user' (objet unique)
+        const response = await messagingService.getUserByName(memberSearch.value) as SearchMembersResponse;
+        if (Array.isArray(response.users)) {
+            memberSearchResults.value = response.users;
+        } else {
+            memberSearchResults.value = response.user ? [response.user] : [];
+        }
+    } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        memberSearchResults.value = [];
+    }
+}
+
+function selectMember(member: Member) {
+    selectedMember.value = member;
+    memberSearch.value = member.username;
+    memberSearchResults.value = [];
+}
+
+function closePopup() {
+    emit('closeSendMessage');
+}
+
+function sendMessage() {
+    const recipientId = selectedMember.value?._id || selectedMember.value?.id || props.idUser;
+
+    if (!recipientId) {
+        func.showToastError('Veuillez sélectionner un destinataire');
+        return;
+    }
+
+    if (textMessage.value.trim() === '') {
+        func.showToastError('Veuillez saisir un message');
+        return;
+    }
+
+    messagingService.startConversation({
+        recipientId,
+        initialMessage: textMessage.value,
+        productId: props.idPost ?? undefined,
+    }).then((response) => {
+        func.showToastSuccess('Message envoyé avec succès');
+        emit('newConversationCreated', response.conversation);
+        closePopup();
+    }).catch((error) => {
+        console.error('Erreur lors de l\'envoi:', error);
+        func.showToastError('Erreur lors de l\'envoi du message');
+    });
 }
 </script>
 
@@ -303,8 +275,6 @@ export default {
   overflow-y: auto;
 }
 
-.msg-modal__field {}
-
 .msg-modal__label {
   display: block;
   font-size: var(--font-size-sm);
@@ -325,7 +295,7 @@ export default {
 
   &:focus-within {
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-pink) 10%, transparent);
   }
 
   i { color: var(--text-muted); font-size: var(--font-size-sm); }
@@ -373,18 +343,9 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
+  overflow: hidden;
   flex-shrink: 0;
-
-  &--letter {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-gradient);
-    color: white;
-    font-weight: 700;
-    font-size: var(--font-size-md);
-  }
+  font-size: var(--font-size-md);
 }
 
 .msg-modal__result-info {
@@ -441,7 +402,7 @@ export default {
   &:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-pink) 10%, transparent);
   }
 }
 
@@ -478,20 +439,10 @@ export default {
   &--primary {
     background: var(--accent-gradient);
     border: none;
-    color: white;
+    color: var(--text-on-accent);
 
     &:hover { opacity: 0.9; transform: translateY(-1px); }
     &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px) scale(0.95); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 </style>

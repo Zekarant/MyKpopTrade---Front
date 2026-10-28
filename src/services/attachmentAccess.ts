@@ -1,6 +1,7 @@
 import { ref } from 'vue'
-import { API_URL } from '@/config/api'
-import { createApiClient, getAccessToken } from '@/services/http'
+import { getAccessToken } from '@/services/http'
+import { apiClient } from '@/services/apiClient'
+import { apiErrorStatus } from '@/services/apiError'
 
 /**
  * Jeton de lecture des pièces jointes, placé dans leurs URL (`<img src>` ne porte pas d'en-tête).
@@ -9,7 +10,7 @@ import { createApiClient, getAccessToken } from '@/services/http'
 
 const REFRESH_MARGIN_MS = 5 * 60 * 1000
 
-const api = createApiClient({ baseURL: API_URL })
+const api = apiClient()
 
 const current = ref<{ token: string; expiresAt: number } | null>(null)
 let inFlight: Promise<void> | null = null
@@ -35,8 +36,8 @@ export function ensureAttachmentToken(): Promise<void> {
       clearTimeout(refreshTimer)
       refreshTimer = setTimeout(() => void ensureAttachmentToken(), Math.max(lifetimeMs - REFRESH_MARGIN_MS, 0))
     })
-    .catch((error: { response?: { status?: number } }) => {
-      if (error?.response?.status === 404) legacyApi = true
+    .catch((error: unknown) => {
+      if (apiErrorStatus(error) === 404) legacyApi = true
     })
     .finally(() => {
       inFlight = null

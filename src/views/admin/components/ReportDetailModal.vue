@@ -1,11 +1,11 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="$emit('close')">
+  <div class="admin__modal-overlay" @click.self="emit('close')">
     <div class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="report-title">
       <div class="admin__modal-header">
         <h3 id="report-title">
           Signalement — {{ detail?.reasonLabel || '…' }}
         </h3>
-        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="$emit('close')">
+        <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('close')">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -169,7 +169,7 @@
           v-if="detail.target?.owner && detail.target.owner.accountStatus === 'active' && detail.target.owner.role !== 'admin'"
           type="button"
           class="admin__btn"
-          @click="$emit('suspend', detail.target.owner)"
+          @click="emit('suspend', detail.target.owner)"
         >
           <i class="bi bi-person-x"></i> Suspendre l'auteur
         </button>
@@ -193,156 +193,127 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { API_URL } from '@/config/api';
-  import { func } from '@/function';
-  import {
-    ACCOUNT_STATUS_LABELS,
-    REPORT_TARGET_LABELS,
-    ROLE_LABELS,
-    apiErrorMessage,
-    formatDate,
-    formatDateTime,
-    formatPrice,
-    getInitial
-  } from '../adminFormat';
-  import type { AdminReportDetail } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { API_URL } from '@/config/api';
+import { func } from '@/function';
+import {
+  ACCOUNT_STATUS_LABELS,
+  REPORT_TARGET_LABELS,
+  ROLE_LABELS,
+  apiErrorMessage,
+  formatDate,
+  formatDateTime,
+  formatPrice,
+  getInitial
+} from '../adminFormat';
+import type { AdminReportDetail, ReportTargetOwner } from '../types';
 
-  const NOISY_REPORTER_RATIO = 0.5;
-  const NOISY_REPORTER_MIN_REPORTS = 3;
+const NOISY_REPORTER_RATIO = 0.5;
+const NOISY_REPORTER_MIN_REPORTS = 3;
 
-  export default defineComponent({
-    name: 'ReportDetailModal',
-    props: {
-      reportId: { type: String, required: true }
-    },
-    emits: ['close', 'resolved', 'suspend'],
-    setup(props, { emit }) {
-      const detail = ref<AdminReportDetail | null>(null);
-      const loading = ref(true);
-      const acting = ref(false);
-      const adminNotes = ref('');
-      const targetImageFailed = ref(false);
-      const ownerAvatarFailed = ref(false);
+const props = defineProps<{ reportId: string }>();
+const emit = defineEmits<{ close: []; resolved: []; suspend: [owner: ReportTargetOwner] }>();
 
-      const mediaUrl = (path?: string): string | null => {
-        if (!path) return null;
-        return path.startsWith('http') ? path : `${API_URL}${path}`;
-      };
+const detail = ref<AdminReportDetail | null>(null);
+const loading = ref(true);
+const acting = ref(false);
+const adminNotes = ref('');
+const targetImageFailed = ref(false);
+const ownerAvatarFailed = ref(false);
 
-      const targetImage = computed(() => {
-        if (targetImageFailed.value) return null;
-        return mediaUrl(detail.value?.target?.images?.[0]);
-      });
+const mediaUrl = (path?: string): string | null => {
+  if (!path) return null;
+  return path.startsWith('http') ? path : `${API_URL}${path}`;
+};
 
-      const ownerAvatar = computed(() => {
-        const picture = detail.value?.target?.owner?.profilePicture;
-        if (ownerAvatarFailed.value || !picture || picture.includes('avatar-default')) return null;
-        return mediaUrl(picture);
-      });
+const targetImage = computed(() => {
+  if (targetImageFailed.value) return null;
+  return mediaUrl(detail.value?.target?.images?.[0]);
+});
 
-      const deletableTargetLabel = computed(() => {
-        const type = detail.value?.target?.type;
-        if (type === 'product') return 'le produit';
-        if (type === 'post') return 'la publication';
-        return null;
-      });
+const ownerAvatar = computed(() => {
+  const picture = detail.value?.target?.owner?.profilePicture;
+  if (ownerAvatarFailed.value || !picture || picture.includes('avatar-default')) return null;
+  return mediaUrl(picture);
+});
 
-      const isNoisyReporter = computed(() => {
-        const history = detail.value?.reporterHistory;
-        if (!history || history.total < NOISY_REPORTER_MIN_REPORTS) return false;
-        return history.rejected / history.total > NOISY_REPORTER_RATIO;
-      });
+const deletableTargetLabel = computed(() => {
+  const type = detail.value?.target?.type;
+  if (type === 'product') return 'le produit';
+  if (type === 'post') return 'la publication';
+  return null;
+});
 
-      const statusBadgeClass = (status: string) =>
-        status === 'active'
-          ? 'admin__badge--success'
-          : status === 'suspended'
-            ? 'admin__badge--warning'
-            : 'admin__badge--danger';
+const isNoisyReporter = computed(() => {
+  const history = detail.value?.reporterHistory;
+  if (!history || history.total < NOISY_REPORTER_MIN_REPORTS) return false;
+  return history.rejected / history.total > NOISY_REPORTER_RATIO;
+});
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          detail.value = await adminService.getReportDetail(props.reportId);
-          adminNotes.value = detail.value?.report?.adminNotes || '';
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger le signalement'));
-          detail.value = null;
-        } finally {
-          loading.value = false;
-        }
-      };
+const statusBadgeClass = (status: string) =>
+  status === 'active'
+    ? 'admin__badge--success'
+    : status === 'suspended'
+      ? 'admin__badge--warning'
+      : 'admin__badge--danger';
 
-      const resolve = async (status: 'resolved' | 'rejected') => {
-        if (acting.value) return;
+const load = async () => {
+  loading.value = true;
+  try {
+    detail.value = await adminService.getReportDetail(props.reportId);
+    adminNotes.value = detail.value?.report?.adminNotes || '';
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger le signalement'));
+    detail.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
 
-        acting.value = true;
-        try {
-          await adminService.updateReportStatus(props.reportId, status, adminNotes.value.trim() || undefined);
-          func.showToastSuccess(status === 'resolved' ? 'Signalement résolu' : 'Signalement rejeté');
-          emit('resolved');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Erreur lors de la mise à jour'));
-        } finally {
-          acting.value = false;
-        }
-      };
+const resolve = async (status: 'resolved' | 'rejected') => {
+  if (acting.value) return;
 
-      const deleteTargetAndResolve = async () => {
-        const target = detail.value?.target;
-        if (!target || acting.value) return;
-        if (!confirm(`Supprimer définitivement « ${target.label} » ?`)) return;
+  acting.value = true;
+  try {
+    await adminService.updateReportStatus(props.reportId, status, adminNotes.value.trim() || undefined);
+    func.showToastSuccess(status === 'resolved' ? 'Signalement résolu' : 'Signalement rejeté');
+    emit('resolved');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Erreur lors de la mise à jour'));
+  } finally {
+    acting.value = false;
+  }
+};
 
-        const motive = adminNotes.value.trim() || detail.value?.reasonLabel;
+const deleteTargetAndResolve = async () => {
+  const target = detail.value?.target;
+  if (!target || acting.value) return;
+  if (!confirm(`Supprimer définitivement « ${target.label} » ?`)) return;
 
-        acting.value = true;
-        try {
-          if (target.type === 'product') {
-            await adminService.deleteProduct(target.id, motive);
-          } else {
-            await adminService.adminDeletePost(target.id, motive);
-          }
-          await adminService.updateReportStatus(
-            props.reportId,
-            'resolved',
-            adminNotes.value.trim() || 'Contenu supprimé suite au signalement'
-          );
-          func.showToastSuccess('Contenu supprimé et signalement résolu');
-          emit('resolved');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        } finally {
-          acting.value = false;
-        }
-      };
+  const motive = adminNotes.value.trim() || detail.value?.reasonLabel;
 
-      onMounted(load);
-
-      return {
-        REPORT_TARGET_LABELS,
-        deletableTargetLabel,
-        ACCOUNT_STATUS_LABELS,
-        ROLE_LABELS,
-        detail,
-        loading,
-        acting,
-        adminNotes,
-        targetImage,
-        targetImageFailed,
-        ownerAvatar,
-        ownerAvatarFailed,
-        isNoisyReporter,
-        statusBadgeClass,
-        formatDate,
-        formatDateTime,
-        formatPrice,
-        getInitial,
-        resolve,
-        deleteTargetAndResolve
-      };
+  acting.value = true;
+  try {
+    if (target.type === 'product') {
+      await adminService.deleteProduct(target.id, motive);
+    } else {
+      await adminService.adminDeletePost(target.id, motive);
     }
-  });
+    await adminService.updateReportStatus(
+      props.reportId,
+      'resolved',
+      adminNotes.value.trim() || 'Contenu supprimé suite au signalement'
+    );
+    func.showToastSuccess('Contenu supprimé et signalement résolu');
+    emit('resolved');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  } finally {
+    acting.value = false;
+  }
+};
+
+onMounted(load);
 </script>

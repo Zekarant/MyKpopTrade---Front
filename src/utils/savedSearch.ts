@@ -79,8 +79,8 @@ export function describeCriteria(criteria: SavedSearchCriteria, labels: CatalogL
 }
 
 /**
- * Lien « Lancer » : la page de recherche ne lit que le texte dans son chemin
- * (et un tiret y coupe la requête), les critères passent donc par la query.
+ * Lien « Lancer » : tous les critères passent par la query de /search, le
+ * texte dans `q` comme sur la page de recherche.
  * Les clés reprennent les filtres de la page : `group` / `member` portent des
  * noms, `groupId` / `albumId` des identifiants du catalogue.
  */

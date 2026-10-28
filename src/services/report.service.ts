@@ -1,6 +1,6 @@
-import { type AxiosInstance, type AxiosResponse } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import type { AxiosResponse } from 'axios';
+import { apiClient } from '@/services/apiClient';
+import type { Pagination } from '@/types/pagination.types';
 
 export type ReportTargetType = 'product' | 'rating' | 'user' | 'post' | 'message';
 
@@ -19,19 +19,11 @@ export interface Report {
 
 export interface ReportsResponse {
   reports: Report[];
-  pagination: { page: number; limit: number; totalItems: number; totalPages: number };
+  pagination: Pagination;
 }
 
 class ReportService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    const baseURL = `${API_URL}/api/reports`;
-    this.apiClient = createApiClient({
-      baseURL,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  private client = apiClient('/api/reports');
 
   async createReport(data: {
     targetType: ReportTargetType;
@@ -39,18 +31,18 @@ class ReportService {
     reason: string;
     details?: string;
   }): Promise<Report> {
-    const response: AxiosResponse<Report> = await this.apiClient.post('/', data);
+    const response: AxiosResponse<Report> = await this.client.post('/', data);
     return response.data;
   }
 
   async getMyReports(page = 1): Promise<ReportsResponse> {
-    const response: AxiosResponse<ReportsResponse> = await this.apiClient.get('/me', { params: { page } });
+    const response: AxiosResponse<ReportsResponse> = await this.client.get('/me', { params: { page } });
     return response.data;
   }
 
   async checkIfReported(targetType: ReportTargetType, targetId: string): Promise<boolean> {
     try {
-      const response: AxiosResponse<{ hasReported: boolean }> = await this.apiClient.get(
+      const response: AxiosResponse<{ hasReported: boolean }> = await this.client.get(
         `/check/${targetType}/${targetId}`
       );
       return response.data.hasReported;

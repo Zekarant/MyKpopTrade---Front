@@ -1,6 +1,6 @@
 <template>
-    <div @click="close" class="report-overlay">
-        <div @click="$event.stopPropagation()" class="report-modal" role="dialog" aria-modal="true" :aria-label="title">
+    <div class="report-overlay" @click="close">
+        <div class="report-modal" role="dialog" aria-modal="true" :aria-label="title" @click="$event.stopPropagation()">
             <div class="report-modal__header">
                 <div class="report-modal__icon">
                     <i class="bi bi-exclamation-triangle"></i>
@@ -20,7 +20,7 @@
                         class="report-modal__reason"
                         :class="{ active: signalReason === reason.value }"
                     >
-                        <input type="radio" :value="reason.value" v-model="signalReason" />
+                        <input v-model="signalReason" type="radio" :value="reason.value" />
                         <i :class="reason.icon"></i>
                         <span>{{ reason.label }}</span>
                     </label>
@@ -41,8 +41,8 @@
                 </button>
                 <button
                     class="report-modal__btn report-modal__btn--submit"
-                    @click="report()"
                     :disabled="!signalReason"
+                    @click="report()"
                 >
                     <i class="bi bi-flag"></i>
                     Envoyer le signalement
@@ -66,16 +66,12 @@
     };
 
     export default {
-        name: "report_card",
+        name: "ReportCard",
         props: {
             type: { type: String, required: true },
             id: { type: String, required: true }
         },
-        computed: {
-            title(): string {
-                return TITLES[this.type as ReportTargetType] || 'Signaler ce contenu';
-            }
-        },
+        emits: ['closeReport'],
         data() {
             return {
                 signalReason: '',
@@ -90,6 +86,11 @@
                     { value: 'other', label: 'Autre raison', icon: 'bi bi-three-dots' },
                 ]
             };
+        },
+        computed: {
+            title(): string {
+                return TITLES[this.type as ReportTargetType] || 'Signaler ce contenu';
+            }
         },
         methods: {
             close() {

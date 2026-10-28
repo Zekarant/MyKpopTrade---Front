@@ -16,7 +16,7 @@
 
     <!-- Feed posts -->
     <div v-if="posts.length" class="feed-posts">
-      <div class="feed-post" v-for="post in posts" :key="post._id">
+      <div v-for="post in posts" :key="post._id" class="feed-post">
         <div class="feed-post__header">
           <span class="feed-post__avatar">{{ initialOf(post.author?.username) }}</span>
           <div class="feed-post__meta">
@@ -54,7 +54,7 @@
         </div>
         <!-- Replies inline -->
         <div v-if="post.showReplies" class="feed-post__replies">
-          <div class="feed-reply" v-for="reply in post.replies" :key="reply._id">
+          <div v-for="reply in post.replies" :key="reply._id" class="feed-reply">
             <span class="feed-reply__avatar">{{ initialOf(reply.author?.username) }}</span>
             <div class="feed-reply__body">
               <span class="feed-reply__author">

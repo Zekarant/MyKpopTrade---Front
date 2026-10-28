@@ -13,19 +13,19 @@
         <span v-if="profile.isEmailVerified" class="setting-badge setting-badge--success">
           <i class="bi bi-check-circle-fill"></i> Vérifiée
         </span>
-        <button v-else @click="verifEmail" class="btn-settings btn-settings--sm">Vérifier</button>
+        <button v-else class="btn-settings btn-settings--sm" @click="verifEmail">Vérifier</button>
       </div>
       <div class="field">
         <label class="field__label" for="settings-email">Changer d'adresse</label>
-        <input id="settings-email" type="email" v-model.trim="email" class="settings-input" autocomplete="email" />
+        <input id="settings-email" v-model.trim="email" type="email" class="settings-input" autocomplete="email" />
       </div>
       <template v-if="emailChanged">
         <div class="field">
           <label class="field__label" for="settings-current-password">Mot de passe actuel</label>
           <input
             id="settings-current-password"
-            type="password"
             v-model="currentPassword"
+            type="password"
             class="settings-input"
             autocomplete="current-password"
           />
@@ -36,11 +36,11 @@
           </small>
         </div>
         <div class="setting-row__inline">
-          <button @click="resetEmail" class="btn-settings btn-settings--ghost btn-settings--sm">Annuler</button>
+          <button class="btn-settings btn-settings--ghost btn-settings--sm" @click="resetEmail">Annuler</button>
           <button
-            @click="saveEmail"
             class="btn-settings btn-settings--primary btn-settings--sm"
             :disabled="!currentPassword || savingEmail"
+            @click="saveEmail"
           >
             {{ savingEmail ? 'Enregistrement…' : 'Changer l\'adresse' }}
           </button>
@@ -63,22 +63,22 @@
           </span>
         </div>
         <div class="setting-row__inline">
-          <input type="tel" v-model="phoneNumber" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" />
-          <button @click="saveTel" class="btn-settings btn-settings--sm" v-if="phoneNumber && phoneNumber !== profile.phoneNumber">Enregistrer</button>
-          <button @click="verifTel" class="btn-settings btn-settings--sm" v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest">Vérifier</button>
+          <input v-model="phoneNumber" type="tel" class="settings-input settings-input--sm" placeholder="+33 6 12 34 56 78" />
+          <button v-if="phoneNumber && phoneNumber !== profile.phoneNumber" class="btn-settings btn-settings--sm" @click="saveTel">Enregistrer</button>
+          <button v-else-if="phoneNumber && !profile.isPhoneVerified && !telRequest" class="btn-settings btn-settings--sm" @click="verifTel">Vérifier</button>
         </div>
         <div v-if="telRequest && !codeVerified" class="setting-row__inline" style="margin-top: 8px;">
           <input
-            type="text"
             v-model="phoneCode"
+            type="text"
             class="settings-input settings-input--sm"
             placeholder="Code à 6 chiffres"
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
           />
-          <button @click="verifCodeTel" class="btn-settings btn-settings--primary btn-settings--sm">Valider</button>
-          <button @click="verifTel" class="btn-settings btn-settings--sm">Renvoyer</button>
+          <button class="btn-settings btn-settings--primary btn-settings--sm" @click="verifCodeTel">Valider</button>
+          <button class="btn-settings btn-settings--sm" @click="verifTel">Renvoyer</button>
         </div>
         <small class="field__hint">
           Facultatif : renforce la confiance et la sécurité de votre compte. Jamais affiché publiquement.
@@ -154,7 +154,7 @@
             <input ref="identityFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onIdentityFileChange" />
           </div>
           <label class="identity-consent">
-            <input type="checkbox" v-model="identityConsentGiven" />
+            <input v-model="identityConsentGiven" type="checkbox" />
             J'autorise le traitement de mes données personnelles pour la vérification d'identité
           </label>
           <div class="identity-form__actions">

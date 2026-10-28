@@ -15,7 +15,7 @@
           class="admin__nav-item"
           :class="{ 'admin__nav-item--active': item.id === activeTab }"
           :aria-current="item.id === activeTab ? 'page' : undefined"
-          @click="$emit('select', item.id)"
+          @click="emit('select', item.id)"
         >
           <i :class="item.icon"></i>
           <span>{{ item.label }}</span>
@@ -26,24 +26,18 @@
   </aside>
 </template>
 
-<script lang="ts">
-  import { defineComponent, type PropType } from 'vue';
-  import { ADMIN_NAV, type AdminSection } from '../adminSections';
+<script setup lang="ts">
+import { ADMIN_NAV as nav, type AdminSection } from '../adminSections';
 
-  export default defineComponent({
-    name: 'AdminSidebar',
-    props: {
-      activeTab: { type: String, required: true },
-      counts: { type: Object as PropType<Record<string, number>>, default: () => ({}) }
-    },
-    emits: ['select'],
-    setup(props) {
-      const badgeFor = (item: AdminSection): number | null => {
-        if (!item.badgeKey) return null;
-        return props.counts[item.badgeKey] || null;
-      };
+const props = withDefaults(defineProps<{
+  activeTab: string;
+  counts?: Record<string, number>;
+}>(), { counts: () => ({}) });
 
-      return { nav: ADMIN_NAV, badgeFor };
-    }
-  });
+const emit = defineEmits<{ select: [id: string] }>();
+
+const badgeFor = (item: AdminSection): number | null => {
+  if (!item.badgeKey) return null;
+  return props.counts[item.badgeKey] || null;
+};
 </script>

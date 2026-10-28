@@ -83,7 +83,7 @@
       </table>
     </div>
 
-    <div v-if="pagination.totalPages > 1" class="admin__pagination">
+    <div v-if="pagination.pages > 1" class="admin__pagination">
       <button
         type="button"
         class="admin__icon-btn"
@@ -92,11 +92,11 @@
       >
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span>{{ state.page }} / {{ pagination.totalPages }} — {{ pagination.totalItems }} annonces</span>
+      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} annonces</span>
       <button
         type="button"
         class="admin__icon-btn"
-        :disabled="state.page >= pagination.totalPages"
+        :disabled="state.page >= pagination.pages"
         @click="commit({ page: state.page + 1 })"
       >
         <i class="bi bi-chevron-right"></i>
@@ -118,130 +118,105 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { API_URL } from '@/config/api';
-  import { func } from '@/function';
-  import ReasonPromptModal from '../components/ReasonPromptModal.vue';
-  import { PRODUCT_DELETION_REASONS } from '../adminPresets';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatDate, formatPrice } from '../adminFormat';
-  import type { AdminProduct } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { API_URL } from '@/config/api';
+import { func } from '@/function';
+import ReasonPromptModal from '../components/ReasonPromptModal.vue';
+import { PRODUCT_DELETION_REASONS } from '../adminPresets';
+import { useAdminQueryState } from '../useAdminQueryState';
+import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatDate, formatPrice } from '../adminFormat';
+import type { AdminProduct } from '../types';
 
-  const PAGE_SIZE = 20;
-  const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
 
-  export default defineComponent({
-    name: 'ProductsPanel',
-    components: { ReasonPromptModal },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const products = ref<AdminProduct[]>([]);
-      const pagination = ref({ totalPages: 1, totalItems: 0 });
-      const loading = ref(false);
-      const exporting = ref(false);
-      const productToDelete = ref<AdminProduct | null>(null);
-      const brokenThumbs = ref<Set<string>>(new Set());
+const emit = defineEmits<{ changed: [] }>();
 
-      const { state, commit } = useAdminQueryState(
-        { search: '', status: '', type: '', page: 1 },
-        () => load()
-      );
+const products = ref<AdminProduct[]>([]);
+const pagination = ref({ pages: 1, total: 0 });
+const loading = ref(false);
+const exporting = ref(false);
+const productToDelete = ref<AdminProduct | null>(null);
+const brokenThumbs = ref<Set<string>>(new Set());
 
-      const thumbUrl = (product: AdminProduct): string | null => {
-        const image = product.images?.[0];
-        if (!image || brokenThumbs.value.has(product._id)) return null;
-        return image.startsWith('http') ? image : `${API_URL}${image}`;
-      };
+const { state, commit } = useAdminQueryState(
+  { search: '', status: '', type: '', page: 1 },
+  () => load()
+);
 
-      const onThumbError = (product: AdminProduct) => {
-        brokenThumbs.value = new Set(brokenThumbs.value).add(product._id);
-      };
+const thumbUrl = (product: AdminProduct): string | null => {
+  const image = product.images?.[0];
+  if (!image || brokenThumbs.value.has(product._id)) return null;
+  return image.startsWith('http') ? image : `${API_URL}${image}`;
+};
 
-      const statusBadge = (product: AdminProduct) => {
-        if (product.isSold) return { label: 'Vendu', class: 'admin__badge--success' };
-        if (product.isAvailable) return { label: 'Disponible', class: 'admin__badge--accent' };
-        return { label: 'Indisponible', class: 'admin__badge' };
-      };
+const onThumbError = (product: AdminProduct) => {
+  brokenThumbs.value = new Set(brokenThumbs.value).add(product._id);
+};
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getProducts({
-            page: state.page,
-            limit: PAGE_SIZE,
-            search: state.search.trim() || undefined,
-            status: state.status || undefined,
-            type: state.type || undefined
-          });
-          products.value = data.products || [];
-          pagination.value = data.pagination || { totalPages: 1, totalItems: 0 };
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les produits'));
-          products.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const statusBadge = (product: AdminProduct) => {
+  if (product.isSold) return { label: 'Vendu', class: 'admin__badge--success' };
+  if (product.isAvailable) return { label: 'Disponible', class: 'admin__badge--accent' };
+  return { label: 'Indisponible', class: 'admin__badge' };
+};
 
-      let searchTimer: ReturnType<typeof setTimeout> | null = null;
-      const debouncedSearch = () => {
-        if (searchTimer) clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getProducts({
+      page: state.page,
+      limit: PAGE_SIZE,
+      search: state.search.trim() || undefined,
+      status: state.status || undefined,
+      type: state.type || undefined
+    });
+    products.value = data.products || [];
+    pagination.value = data.pagination || { pages: 1, total: 0 };
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les produits'));
+    products.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const remove = async (reason: string) => {
-        const product = productToDelete.value;
-        if (!product) return;
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+const debouncedSearch = () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => commit({ page: 1 }), SEARCH_DEBOUNCE_MS);
+};
 
-        try {
-          await adminService.deleteProduct(product._id, reason);
-          func.showToastSuccess('Produit supprimé');
-          productToDelete.value = null;
-          await load();
-          emit('changed');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
+const remove = async (reason: string) => {
+  const product = productToDelete.value;
+  if (!product) return;
 
-      const exportCsv = async () => {
-        exporting.value = true;
-        try {
-          await adminService.exportProductsCsv({
-            search: state.search.trim() || undefined,
-            status: state.status || undefined,
-            type: state.type || undefined
-          });
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
-        } finally {
-          exporting.value = false;
-        }
-      };
+  try {
+    await adminService.deleteProduct(product._id, reason);
+    func.showToastSuccess('Produit supprimé');
+    productToDelete.value = null;
+    await load();
+    emit('changed');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
 
-      onMounted(load);
+const exportCsv = async () => {
+  exporting.value = true;
+  try {
+    await adminService.exportProductsCsv({
+      search: state.search.trim() || undefined,
+      status: state.status || undefined,
+      type: state.type || undefined
+    });
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
+  } finally {
+    exporting.value = false;
+  }
+};
 
-      return {
-        PRODUCT_TYPE_LABELS,
-        PRODUCT_DELETION_REASONS,
-        state,
-        commit,
-        products,
-        pagination,
-        loading,
-        exporting,
-        productToDelete,
-        thumbUrl,
-        onThumbError,
-        statusBadge,
-        formatDate,
-        formatPrice,
-        debouncedSearch,
-        remove,
-        exportCsv
-      };
-    }
-  });
+onMounted(load);
 </script>

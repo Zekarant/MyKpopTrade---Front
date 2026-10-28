@@ -82,7 +82,7 @@ async function load(target: number) {
     const result = await reportService.getMyReports(target);
     reports.value = result.reports;
     page.value = result.pagination.page;
-    totalPages.value = result.pagination.totalPages;
+    totalPages.value = result.pagination.pages;
   } catch {
     // Un 401 a déjà redirigé vers /login ; sinon on affiche l'échec dans la page.
     loadFailed.value = true;

@@ -90,7 +90,7 @@
       &:focus {
         outline: none;
         border-color: var(--accent-pink);
-        box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+        box-shadow: var(--focus-ring);
       }
     }
 
@@ -141,19 +141,6 @@
       border-radius: var(--radius-sm);
     }
 
-    .image-preview i {
-      background: var(--danger);
-      padding: 6px;
-      border-radius: var(--radius-full);
-      height: 28px;
-      width: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 0.8rem;
-    }
-
     .image-swiper {
       height: 120px;
     }
@@ -187,33 +174,28 @@
       padding-left: 8px;
     }
 
+    // Bouton de retrait d'une photo : pastille rouge en haut à droite de la vignette.
     .delete_img {
       position: absolute;
       right: 12px;
       top: 4px;
+      background: var(--danger);
+      padding: 6px;
+      border: none;
+      border-radius: var(--radius-full);
+      height: 28px;
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
+      font-size: 0.8rem;
       cursor: pointer;
       transition: transform var(--transition-fast);
 
       &:hover {
         transform: scale(1.15);
       }
-    }
-
-    .image-preview button {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: var(--danger);
-      color: white;
-      border: none;
-      border-radius: var(--radius-full);
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      line-height: 20px;
-      text-align: center;
     }
 
     // === Input with addon (price + currency) ===
@@ -226,7 +208,7 @@
 
       &:focus-within {
         border-color: var(--accent-pink);
-        box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+        box-shadow: var(--focus-ring);
       }
 
       input {
@@ -415,7 +397,7 @@
 
       &:focus {
         border-color: var(--accent-pink) !important;
-        box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1) !important;
+        box-shadow: var(--focus-ring) !important;
       }
     }
 
@@ -447,7 +429,9 @@
       font-size: var(--font-size-sm);
       color: var(--text-primary);
 
-      &:hover:not(.disabled) {
+      // Option parcourue au clavier : même rendu qu'au survol.
+      &:hover:not(.disabled),
+      &--highlighted {
         background-color: var(--surface-hover);
         color: var(--accent-pink);
       }
@@ -479,7 +463,7 @@
     // === PayPal Required Banner ===
     .paypal-required-banner {
       background: var(--bg-card);
-      border: 2px solid #f59e0b;
+      border: 2px solid var(--warning);
       border-radius: var(--radius-md);
       padding: var(--space-lg);
       margin-bottom: var(--space-lg);
@@ -491,7 +475,7 @@
 
       > i {
         font-size: 2rem;
-        color: #f59e0b;
+        color: var(--warning);
       }
 
       strong {

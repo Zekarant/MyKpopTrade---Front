@@ -1,11 +1,11 @@
 <template v-if="!review.isHidden">
-    <div v-bind="$attrs" @click="closeMenu" class="review-card">
+    <div v-bind="$attrs" class="review-card" @click="closeMenu">
         <div class="review-card__date">Posté le {{ formatDate(review.createdAt) }}</div>
         <div class="review-card__body">
             <div class="review-card__content">
                 <div class="review-card__header">
                     <div class="review-card__avatar">
-                        <img :src="getUrlImage(review.reviewer.profilePicture)" @error="onImgError($event)" :alt="`Avatar de ${review.reviewer.username}`" width="44" height="44" loading="lazy" decoding="async" />
+                        <img :src="getUrlImage(review.reviewer.profilePicture)" :alt="`Avatar de ${review.reviewer.username}`" width="44" height="44" loading="lazy" decoding="async" @error="onImgError($event)" />
                     </div>
                     <div class="review-card__user">
                         <span class="review-card__username">@{{ review.reviewer.username }}</span>
@@ -14,11 +14,11 @@
                             <span class="review-card__rating-num">{{ review.rating }}/5</span>
                         </div>
                     </div>
-                    <button @click="toggleMenu($event)" class="review-card__menu-btn">
+                    <button class="review-card__menu-btn" @click="toggleMenu($event)">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <div v-if="isMenuVisible" class="review-card__dropdown">
-                        <button @click="showPopupReport = true" class="review-card__dropdown-item">
+                        <button class="review-card__dropdown-item" @click="showPopupReport = true">
                             <i class="bi bi-flag"></i> Signaler
                         </button>
                     </div>
@@ -32,7 +32,7 @@
             </div>
         </div>
     </div>
-    <report_card @closeReport="showPopupReport = false" :type="'rating'" :id="review._id" v-if="showPopupReport"></report_card>
+    <report_card v-if="showPopupReport" :id="review._id" :type="'rating'" @close-report="showPopupReport = false"></report_card>
 </template>
 
   <script lang="ts">
@@ -41,7 +41,7 @@
     import { formatDate, mediaUrl } from '@/utils/format';
 
     export default {
-        name: "review_card",
+        name: "ReviewCard",
         components: { ImageCarousel, report_card },
         inheritAttrs: false,
         props: {

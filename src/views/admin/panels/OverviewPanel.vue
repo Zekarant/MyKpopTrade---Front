@@ -132,55 +132,40 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref, type PropType } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import AdminSparkline from '../components/AdminSparkline.vue';
-  import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatPrice } from '../adminFormat';
-  import type { AdminProductStats, AdminTimeseriesPoint, AdminUserStats } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import AdminSparkline from '../components/AdminSparkline.vue';
+import { PRODUCT_TYPE_LABELS, apiErrorMessage, formatPrice } from '../adminFormat';
+import type { AdminProductStats, AdminTimeseriesPoint, AdminUserStats } from '../types';
 
-  export default defineComponent({
-    name: 'OverviewPanel',
-    components: { AdminSparkline },
-    props: {
-      stats: { type: Object as PropType<AdminUserStats>, required: true },
-      productStats: { type: Object as PropType<AdminProductStats>, required: true }
-    },
-    setup(props) {
-      const series = ref<AdminTimeseriesPoint[]>([]);
-      const days = ref(30);
-      const loading = ref(true);
+const DEFAULT_DAYS = 30;
 
-      const labels = computed(() => series.value.map((point) => point.date));
-      const hasTypeDistribution = computed(
-        () => Object.keys(props.productStats.typeDistribution || {}).length > 0
-      );
+const props = defineProps<{
+  stats: AdminUserStats;
+  productStats: AdminProductStats;
+}>();
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getStatsTimeseries();
-          series.value = data.series || [];
-          days.value = data.days || 30;
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les courbes'));
-        } finally {
-          loading.value = false;
-        }
-      };
+const series = ref<AdminTimeseriesPoint[]>([]);
+const days = ref(DEFAULT_DAYS);
+const loading = ref(true);
 
-      onMounted(load);
+const labels = computed(() => series.value.map((point) => point.date));
+const hasTypeDistribution = computed(() => Object.keys(props.productStats.typeDistribution || {}).length > 0);
 
-      return {
-        PRODUCT_TYPE_LABELS,
-        series,
-        days,
-        loading,
-        labels,
-        hasTypeDistribution,
-        formatPrice
-      };
-    }
-  });
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getStatsTimeseries();
+    series.value = data.series || [];
+    days.value = data.days || DEFAULT_DAYS;
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les courbes'));
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(load);
 </script>

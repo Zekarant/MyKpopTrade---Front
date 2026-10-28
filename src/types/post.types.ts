@@ -1,6 +1,6 @@
 // post.types.ts
 
-import type { IUser } from "./user.types";
+import type { Pagination } from "./pagination.types";
 
 export interface ShippingOption {
   method: string;
@@ -59,7 +59,8 @@ export interface Post {
   albumName: string;
   images: string[];
   shippingOptions: ShippingOption[];
-  seller: string | IUser[];
+  /** Peuplé par les listes ; identifiant brut sinon ; null si le compte a été supprimé. */
+  seller: ProductSeller | string | null;
   createdAt: string;
   updatedAt: string;
   isAvailable?: boolean;
@@ -171,11 +172,8 @@ export interface ApiResponse<T> {
 }
 
 export interface PostsResponse {
-  pagination: { limit: number; page: number; pages: number; } & { limit: number; page: number; pages: number; };
+  pagination: Pagination;
   products: Post[];
-  totalPages: number;
-  currentPage: number;
-  totalItems: number;
 }
 
 export interface SearchParams {

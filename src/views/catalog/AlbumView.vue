@@ -46,7 +46,7 @@
 
         <section class="catalog-section">
           <h2 class="catalog-section__title"><i class="bi bi-bag"></i> Annonces</h2>
-          <Grid v-if="listings.products.value.length" :dataList="listings.products.value" />
+          <Grid v-if="listings.products.value.length" :data-list="listings.products.value" />
           <p v-else-if="listings.failed.value" class="catalog-empty">Impossible de charger les annonces.</p>
           <p v-else-if="!listings.loading.value" class="catalog-empty">Aucune annonce en vente pour cet album.</p>
           <div v-if="listings.hasMore.value" class="catalog-more">
@@ -65,7 +65,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Grid from '@/components/grid.vue'
 import albumService, { type AlbumType, type KpopAlbum } from '@/services/album.service'
-import { apiErrorResponse } from '@/services/apiError'
+import { apiErrorStatus } from '@/services/apiError'
 import { useCatalogListings } from '@/composables/useCatalogListings'
 import { formatDate, mediaUrl } from '@/utils/format'
 
@@ -106,7 +106,7 @@ async function load() {
     state.value = 'loaded'
     document.title = `${album.value.name} · ${SITE_NAME}`
   } catch (error) {
-    const status = apiErrorResponse(error)?.status
+    const status = apiErrorStatus(error)
     state.value = status !== undefined && NOT_FOUND_STATUSES.includes(status) ? 'not-found' : 'error'
     return
   }

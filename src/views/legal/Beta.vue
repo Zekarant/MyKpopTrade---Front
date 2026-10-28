@@ -111,13 +111,6 @@ import { hasSession } from '@/services/session.cookies';
 
 export default defineComponent({
   name: 'BetaPage',
-  computed: {
-    // Session rétablissable : App.vue affiche la barre de navigation, la page
-    // retire donc son lien de retour et sa réserve d'espace « invité ».
-    isAuthenticated(): boolean {
-      return hasSession();
-    }
-  },
   data() {
     return {
       updatedAt: '3 septembre 2026',
@@ -189,6 +182,13 @@ export default defineComponent({
         }
       ]
     };
+  },
+  computed: {
+    // Session rétablissable : App.vue affiche la barre de navigation, la page
+    // retire donc son lien de retour et sa réserve d'espace « invité ».
+    isAuthenticated(): boolean {
+      return hasSession();
+    }
   }
 });
 </script>

@@ -1,6 +1,4 @@
-import { type AxiosInstance } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
 /** Valeurs acceptées par l'enum `albumType` du modèle back. */
 export type AlbumType = 'album' | 'single' | 'ep' | 'compilation';
@@ -29,49 +27,41 @@ export interface AlbumPayload {
 export type CreateAlbumPayload = AlbumPayload & { name: string; artistId: string };
 
 class AlbumService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    const baseURL = `${API_URL}/api/albums`;
-    this.apiClient = createApiClient({
-      baseURL,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  private client = apiClient('/api/albums');
 
   async getAlbums(params?: { limit?: number; page?: number }): Promise<KpopAlbum[]> {
-    const response = await this.apiClient.get('/', { params });
+    const response = await this.client.get('/', { params });
     return response.data?.albums || response.data || [];
   }
 
   async searchAlbums(query: string, limit?: number): Promise<KpopAlbum[]> {
-    const response = await this.apiClient.get('/search', { params: { query, limit } });
+    const response = await this.client.get('/search', { params: { query, limit } });
     return response.data?.albums || response.data || [];
   }
 
   async getAlbum(albumId: string): Promise<KpopAlbum> {
-    const response = await this.apiClient.get(`/${albumId}`);
+    const response = await this.client.get(`/${albumId}`);
     return response.data?.album || response.data;
   }
 
   async getAlbumsByGroup(groupId: string): Promise<KpopAlbum[]> {
-    const response = await this.apiClient.get(`/group/${groupId}`);
+    const response = await this.client.get(`/group/${groupId}`);
     return response.data?.albums || response.data || [];
   }
 
   // Admin
   async createAlbum(payload: CreateAlbumPayload): Promise<KpopAlbum> {
-    const response = await this.apiClient.post('/', payload);
+    const response = await this.client.post('/', payload);
     return response.data?.album || response.data;
   }
 
   async updateAlbum(albumId: string, payload: AlbumPayload): Promise<KpopAlbum> {
-    const response = await this.apiClient.put(`/${albumId}`, payload);
+    const response = await this.client.put(`/${albumId}`, payload);
     return response.data?.album || response.data;
   }
 
   async deleteAlbum(albumId: string): Promise<void> {
-    await this.apiClient.delete(`/${albumId}`);
+    await this.client.delete(`/${albumId}`);
   }
 }
 

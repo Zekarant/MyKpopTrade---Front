@@ -31,7 +31,7 @@
           <router-link v-else to="/login" class="btn btn-primary w-full">Se connecter</router-link>
         </div>
 
-        <form v-else @submit.prevent="resend" class="auth-form">
+        <form v-else class="auth-form" @submit.prevent="resend">
           <div class="auth-message auth-message--error">
             <i class="bi bi-exclamation-circle"></i>
             <span>{{ message }}</span>
@@ -117,6 +117,8 @@ async function resend() {
 </script>
 
 <style lang="scss" scoped>
+@use './auth/auth-form';
+
 .auth-page {
   min-height: 100vh;
   position: relative;
@@ -140,23 +142,13 @@ async function resend() {
 .auth-brand { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-2xl); }
 .auth-brand__logo {
   width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-gradient); color: white; font-weight: 800; font-size: 1.4rem;
+  background: var(--accent-gradient); color: var(--text-on-accent); font-weight: 800; font-size: 1.4rem;
   border-radius: var(--radius-md);
 }
 .auth-brand__title { font-size: var(--font-size-xl); font-weight: 800; letter-spacing: 0.05em; margin: 0; }
 .auth-brand__subtitle { color: var(--text-muted); font-size: var(--font-size-sm); margin: 4px 0 0; }
 
-.auth-form { display: flex; flex-direction: column; gap: var(--space-md); }
-.form-group { display: flex; flex-direction: column; gap: var(--space-xs); }
 .hint { color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.5; margin: 0; }
-
-.auth-message {
-  display: flex; align-items: center; gap: var(--space-sm);
-  padding: var(--space-md); border-radius: var(--radius-md); font-size: var(--font-size-sm);
-  &--info { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--surface-border); }
-  &--success { background: var(--success-light); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-}
 
 .auth-links { display: flex; justify-content: center; margin-top: var(--space-sm); }
 .auth-links__item {

@@ -18,12 +18,12 @@
             </div>
           </div>
 
-          <form @submit.prevent="reset" class="auth-form">
+          <form class="auth-form" @submit.prevent="reset">
             <div class="form-group">
               <label class="form-label">Email</label>
               <div class="input-group--custom" :class="{ 'input-group--error': errorBase }">
                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                <input type="email" v-model="email" placeholder="Votre adresse email" required />
+                <input v-model="email" type="email" placeholder="Votre adresse email" required />
               </div>
             </div>
 

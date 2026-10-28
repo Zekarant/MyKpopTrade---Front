@@ -141,11 +141,11 @@ import { legal, isLegalMissing, analyticsToolName } from '@/config/legal';
 export default defineComponent({
   name: 'CookiesPage',
   components: { LegalLayout },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  },
   setup() {
     return { legal, isLegalMissing, analyticsToolName };
+  },
+  data() {
+    return { updatedAt: '3 septembre 2026' };
   }
 });
 </script>

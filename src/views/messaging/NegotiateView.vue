@@ -1,141 +1,28 @@
 <template>
   <div class="negotiate-view">
     <div class="container">
-      <!-- Header -->
       <div class="header">
-        <button @click="goBack" class="back-btn">
+        <button type="button" class="back-btn" @click="goBack">
           <i class="bi bi-arrow-left"></i>
           Retour
         </button>
         <h1>Faire une offre</h1>
       </div>
 
-      <!-- Loading -->
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
         <p>Chargement...</p>
       </div>
 
-      <!-- Product info -->
-      <div v-else-if="product" class="content">
-        <div class="product-section">
-          <div class="product-images">
-            <img
-              :src="product.images[0] ? mediaUrl(product.images[0]) : '/placeholder.png'"
-              decoding="async"
-              :alt="product.title"
-              class="main-image"
-            />
-          </div>
-
-          <div class="product-info">
-            <h2>{{ product.title }}</h2>
-            <p class="description">{{ product.description }}</p>
-
-            <div class="price-info">
-              <div class="current-price">
-                <span class="label">Prix demandé</span>
-                <span class="price">{{ product.price }} €</span>
-              </div>
-
-              <div v-if="bounds.mode === 'pwyw'" class="min-offer">
-                <span class="label">Prix libre</span>
-                <span class="price">{{ pwywLabel }}</span>
-              </div>
-              <div v-else class="min-offer">
-                <span class="label">Offre minimum acceptée</span>
-                <span class="price">{{ bounds.min }} € ({{ bounds.minPercentage }}%)</span>
-              </div>
-            </div>
-
-            <div class="seller-info">
-              <i class="bi bi-person"></i>
-              <span>Vendu par {{ product.seller?.username }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Negotiation form -->
-        <div class="negotiation-form">
-          <h3>Votre offre</h3>
-
-          <div class="form-group">
-            <label>Montant de votre offre</label>
-            <div class="price-input-group">
-              <input
-                v-model.number="offerAmount"
-                type="number"
-                :min="bounds.min"
-                :max="bounds.mode === 'pwyw' ? bounds.max ?? undefined : product.price"
-                step="0.01"
-                placeholder="0.00"
-                class="form-control price-input"
-                @input="validateOffer"
-              />
-              <span class="currency">€</span>
-            </div>
-
-            <!-- Les pourcentages du prix n'ont pas de sens pour un prix libre, borné par sa fourchette. -->
-            <div v-if="bounds.mode === 'negotiation'" class="price-helpers">
-              <button
-                v-for="percentage in offerPercentages"
-                :key="percentage"
-                @click="setOfferPercentage(percentage)"
-                class="percentage-btn"
-                :class="{ active: isPercentageActive(percentage) }"
-              >
-                {{ percentage }}%
-              </button>
-            </div>
-
-            <div v-if="offerError" class="error-message">
-              <i class="bi bi-exclamation-circle"></i>
-              {{ offerError }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Message au vendeur (optionnel)</label>
-            <textarea
-              v-model="message"
-              rows="4"
-              placeholder="Expliquez pourquoi vous faites cette offre..."
-              class="form-control"
-            ></textarea>
-          </div>
-
-          <div class="offer-summary">
-            <div class="summary-row">
-              <span>Votre offre :</span>
-              <strong>{{ offerAmount || 0 }} €</strong>
-            </div>
-            <div v-if="savings > 0" class="summary-row">
-              <span>Économie :</span>
-              <strong class="savings">{{ savings }} € ({{ savingsPercentage }}%)</strong>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button @click="goBack" class="btn-secondary">
-              Annuler
-            </button>
-            <button
-              @click="submitOffer"
-              :disabled="!canSubmit"
-              class="btn-primary"
-            >
-              <i class="bi bi-tag"></i>
-              Envoyer l'offre
-            </button>
-          </div>
-        </div>
+      <div v-else-if="product && bounds" class="content">
+        <NegotiateProductSummary :product="product" :bounds="bounds" />
+        <NegotiateOfferForm :product="product" :bounds="bounds" @cancel="goBack" />
       </div>
 
-      <!-- Error state -->
       <div v-else class="error-state">
         <i class="bi bi-exclamation-triangle"></i>
         <p>Produit non trouvé</p>
-        <button @click="goBack" class="btn-primary">
+        <button type="button" class="btn-primary" @click="goBack">
           Retour
         </button>
       </div>
@@ -143,158 +30,52 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useMessagingStore } from '@/store/messaging.store';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import postService from '@/services/post.service';
-import { mediaUrl } from '@/utils/format';
 import type { ProductDetail } from '@/types/post.types';
-import { offerBounds, pwywRangeLabel, validateOfferAmount, type OfferBounds } from '@/components/offerRules';
+import { offerBounds } from '@/components/offerRules';
+import NegotiateProductSummary from './negotiate/NegotiateProductSummary.vue';
+import NegotiateOfferForm from './negotiate/NegotiateOfferForm.vue';
 
-export default defineComponent({
-  name: 'NegotiateView',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const messagingStore = useMessagingStore();
+defineOptions({ name: 'NegotiateView' });
 
-    // State
-    const product = ref<ProductDetail | null>(null);
-    const loading = ref(true);
-    const offerAmount = ref<number>(0);
-    const message = ref('');
-    const offerError = ref('');
-    const submitting = ref(false);
+/** Paramètre de la route /negotiate/:productId (`props: true`). */
+const props = defineProps<{ productId: string }>();
 
-    // Constants
-    const offerPercentages = [50, 60, 70, 80, 90];
+const router = useRouter();
 
-    // Computed
-    const productId = computed(() => route.params.productId as string);
+const product = ref<ProductDetail | null>(null);
+const loading = ref(true);
 
-    const bounds = computed<OfferBounds>(() =>
-      product.value
-        ? offerBounds(product.value)
-        : { mode: 'negotiation', min: 0, minPercentage: 0, price: 0 }
-    );
+const bounds = computed(() => (product.value ? offerBounds(product.value) : null));
 
-    const pwywLabel = computed(() =>
-      product.value ? pwywRangeLabel(product.value.pwywMinPrice, product.value.pwywMaxPrice) : ''
-    );
-
-    const savings = computed(() => {
-      if (!product.value || !offerAmount.value) return 0;
-      return Math.round((product.value.price - offerAmount.value) * 100) / 100;
-    });
-
-    const savingsPercentage = computed(() => {
-      if (!product.value || !offerAmount.value) return 0;
-      return Math.round((savings.value / product.value.price) * 100);
-    });
-
-    const canSubmit = computed(() =>
-      Boolean(product.value) &&
-      validateOfferAmount(offerAmount.value, product.value as ProductDetail) === null &&
-      !offerError.value &&
-      !submitting.value
-    );
-
-    // Methods
-    const loadProduct = async () => {
-      loading.value = true;
-      try {
-        // GET /api/products/:id renvoie { product, isFavorite }.
-        const response = await postService.getPost(productId.value);
-        product.value = response.product;
-
-        // Offre proposée par défaut : le plancher accepté (au moins un centime).
-        offerAmount.value = Math.max(bounds.value.min, 0.01);
-      } catch (error) {
-        console.error('Erreur lors du chargement du produit:', error);
-        product.value = null;
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const validateOffer = () => {
-      offerError.value = product.value
-        ? validateOfferAmount(offerAmount.value, product.value) ?? ''
-        : '';
-    };
-
-    const setOfferPercentage = (percentage: number) => {
-      if (!product.value) return;
-      offerAmount.value = Math.round(product.value.price * percentage / 100 * 100) / 100;
-      validateOffer();
-    };
-
-    const isPercentageActive = (percentage: number) => {
-      if (!product.value?.price) return false;
-      const currentPercentage = Math.round((offerAmount.value / product.value.price) * 100);
-      return currentPercentage === percentage;
-    };
-
-    const submitOffer = async () => {
-      if (!canSubmit.value) return;
-
-      submitting.value = true;
-      try {
-        const response = await messagingStore.initiateNegotiation(
-          productId.value,
-          offerAmount.value,
-          message.value
-        );
-
-        // Rediriger vers la conversation
-        router.push({
-          name: 'conversation',
-          params: { id: response.conversation._id }
-        });
-      } catch (error) {
-        console.error('Erreur lors de l\'envoi de l\'offre:', error);
-        offerError.value = (error as { message?: string })?.message || 'Une erreur est survenue. Veuillez réessayer.';
-      } finally {
-        submitting.value = false;
-      }
-    };
-
-    const goBack = () => {
-      router.back();
-    };
-
-    onMounted(() => {
-      loadProduct();
-    });
-
-    return {
-      mediaUrl,
-      product,
-      loading,
-      offerAmount,
-      message,
-      offerError,
-      offerPercentages,
-      bounds,
-      pwywLabel,
-      savings,
-      savingsPercentage,
-      canSubmit,
-      validateOffer,
-      setOfferPercentage,
-      isPercentageActive,
-      submitOffer,
-      goBack
-    };
+async function loadProduct() {
+  loading.value = true;
+  try {
+    // GET /api/products/:id renvoie { product, isFavorite }.
+    const response = await postService.getPost(props.productId);
+    product.value = response.product;
+  } catch (error) {
+    console.error('Erreur lors du chargement du produit:', error);
+    product.value = null;
+  } finally {
+    loading.value = false;
   }
-});
+}
+
+function goBack() {
+  router.back();
+}
+
+onMounted(loadProduct);
 </script>
 
 <style lang="scss" scoped>
 .negotiate-view {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-secondary);
   padding: 20px 0;
 }
 
@@ -310,28 +91,28 @@ export default defineComponent({
   gap: 20px;
   margin-bottom: 30px;
 
-  .back-btn {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: #666;
-
-    &:hover {
-      background: #f5f5f5;
-      color: #333;
-    }
-  }
-
   h1 {
     margin: 0;
     font-size: 28px;
-    color: #333;
+    color: var(--text-primary);
+  }
+}
+
+.back-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--surface-border);
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
   }
 }
 
@@ -344,8 +125,9 @@ export default defineComponent({
   padding: 60px 20px;
   text-align: center;
 
+  // Surcharge du `.spinner` global (_animations.scss) : plus grand, aux couleurs de la page.
   .spinner {
-    border: 3px solid #f3f3f3;
+    border: 3px solid var(--surface-border);
     border-top: 3px solid var(--primary-color);
     border-radius: 50%;
     width: 40px;
@@ -355,18 +137,18 @@ export default defineComponent({
 
   i {
     font-size: 60px;
-    color: #ddd;
+    color: var(--text-muted);
     margin-bottom: 20px;
   }
 
   p {
-    color: #666;
+    color: var(--text-secondary);
     margin: 20px 0;
   }
 
   .btn-primary {
     background: var(--primary-color);
-    color: white;
+    color: var(--bg-card);
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
@@ -379,279 +161,10 @@ export default defineComponent({
 }
 
 .content {
-  background: white;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-}
-
-.product-section {
-  display: flex;
-  gap: 30px;
-  padding: 30px;
-  border-bottom: 1px solid #e0e0e0;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    padding: 20px;
-  }
-
-  .product-images {
-    flex: 0 0 300px;
-
-    .main-image {
-      width: 100%;
-      height: 300px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-  }
-
-  .product-info {
-    flex: 1;
-
-    h2 {
-      margin: 0 0 15px 0;
-      font-size: 24px;
-      color: #333;
-    }
-
-    .description {
-      color: #666;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
-    .price-info {
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-
-      .current-price,
-      .min-offer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        .label {
-          color: #666;
-          font-size: 14px;
-        }
-
-        .price {
-          font-size: 20px;
-          font-weight: bold;
-          color: var(--primary-color);
-        }
-      }
-
-      .min-offer .price {
-        font-size: 16px;
-        color: #666;
-      }
-    }
-
-    .seller-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #666;
-      font-size: 14px;
-
-      i {
-        font-size: 16px;
-      }
-    }
-  }
-}
-
-.negotiation-form {
-  padding: 30px;
-
-  h3 {
-    margin: 0 0 20px 0;
-    font-size: 20px;
-    color: #333;
-  }
-
-  .form-group {
-    margin-bottom: 25px;
-
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .price-input-group {
-      display: flex;
-      align-items: center;
-      position: relative;
-
-      .price-input {
-        font-size: 24px;
-        font-weight: bold;
-        padding-right: 40px;
-        text-align: right;
-      }
-
-      .currency {
-        position: absolute;
-        right: 15px;
-        font-size: 20px;
-        color: #666;
-      }
-    }
-
-    .price-helpers {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-
-      .percentage-btn {
-        flex: 1;
-        padding: 8px;
-        border: 1px solid #ddd;
-        background: white;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s;
-
-        &:hover {
-          background: #f5f5f5;
-        }
-
-        &.active {
-          background: var(--primary-color);
-          color: white;
-          border-color: var(--primary-color);
-        }
-      }
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-
-      &:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
-      }
-    }
-
-    textarea.form-control {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    .error-message {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-      color: var(--danger-color);
-      font-size: 14px;
-
-      i {
-        font-size: 16px;
-      }
-    }
-  }
-
-  .offer-summary {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      span {
-        color: #666;
-      }
-
-      strong {
-        font-size: 18px;
-        color: #333;
-
-        &.savings {
-          color: #28a745;
-        }
-      }
-    }
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-
-    button {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      &.btn-secondary {
-        background: #f0f0f0;
-        color: #333;
-
-        &:hover {
-          background: #e0e0e0;
-        }
-      }
-
-      &.btn-primary {
-        background: var(--primary-color);
-        color: white;
-
-        &:hover:not(:disabled) {
-          opacity: 0.9;
-        }
-
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        i {
-          font-size: 18px;
-        }
-      }
-    }
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {
@@ -668,17 +181,5 @@ export default defineComponent({
       font-size: 24px;
     }
   }
-
-  .negotiation-form {
-    padding: 20px;
-
-    .form-actions {
-      flex-direction: column;
-
-      button {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-  }
-}</style>
+}
+</style>

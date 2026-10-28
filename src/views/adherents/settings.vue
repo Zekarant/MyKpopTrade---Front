@@ -4,7 +4,7 @@
       <div class="settings-page__container">
         <!-- Header -->
         <div class="settings-page__header">
-          <button @click="$router.back()" class="settings-page__back" aria-label="Retour">
+          <button class="settings-page__back" aria-label="Retour" @click="$router.back()">
             <i class="bi bi-arrow-left"></i>
           </button>
           <div class="settings-page__heading">

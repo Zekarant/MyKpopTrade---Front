@@ -18,11 +18,15 @@ import App from './App.vue'
 import router from './router'
 import pushService from './services/push.service'
 import { warnIfLegalIncomplete } from './config/legal'
+import { bindSessionEnd } from './store/sessionLifecycle'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+// Les services annoncent la fin de session sans connaître le routeur : c'est
+// ici que l'application vide les stores du compte et renvoie vers /login.
+bindSessionEnd(router)
 // Pas de composants globaux : chaque vue importe ceux qu'elle utilise, ce qui
 // les garde hors du bundle initial.
 app.config.globalProperties.$func = func

@@ -62,7 +62,7 @@
         </table>
       </div>
 
-      <div v-if="pagination.totalPages > 1" class="admin__pagination">
+      <div v-if="pagination.pages > 1" class="admin__pagination">
         <button
           type="button"
           class="admin__icon-btn"
@@ -71,11 +71,11 @@
         >
           <i class="bi bi-chevron-left"></i>
         </button>
-        <span>{{ state.page }} / {{ pagination.totalPages }}</span>
+        <span>{{ state.page }} / {{ pagination.pages }}</span>
         <button
           type="button"
           class="admin__icon-btn"
-          :disabled="state.page >= pagination.totalPages"
+          :disabled="state.page >= pagination.pages"
           @click="commit({ page: state.page + 1 })"
         >
           <i class="bi bi-chevron-right"></i>
@@ -85,69 +85,52 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
-  import type { AdminAuditLog } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import { useAdminQueryState } from '../useAdminQueryState';
+import { apiErrorMessage, formatDateTime, getInitial } from '../adminFormat';
+import type { AdminAuditLog } from '../types';
 
-  const TARGET_TYPE_LABELS: Record<string, string> = {
-    user: 'Utilisateur',
-    product: 'Produit',
-    post: 'Post',
-    report: 'Signalement',
-    verification: 'Vérification',
-    dispute: 'Litige',
-    payment: 'Paiement',
-    system: 'Système'
-  };
+const TARGET_TYPE_LABELS: Record<string, string> = {
+  user: 'Utilisateur',
+  product: 'Produit',
+  post: 'Post',
+  report: 'Signalement',
+  verification: 'Vérification',
+  dispute: 'Litige',
+  payment: 'Paiement',
+  system: 'Système'
+};
 
-  export default defineComponent({
-    name: 'AuditPanel',
-    setup() {
-      const logs = ref<AdminAuditLog[]>([]);
-      const stats = ref({ todayActions: 0, weekActions: 0 });
-      const pagination = ref({ totalPages: 1 });
-      const loading = ref(false);
+const logs = ref<AdminAuditLog[]>([]);
+const stats = ref({ todayActions: 0, weekActions: 0 });
+const pagination = ref({ pages: 1 });
+const loading = ref(false);
 
-      const { state, commit } = useAdminQueryState({ targetType: '', page: 1 }, () => load());
+const { state, commit } = useAdminQueryState({ targetType: '', page: 1 }, () => load());
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const [logsData, statsData] = await Promise.all([
-            adminService.getAuditLogs({
-              page: state.page,
-              targetType: state.targetType || undefined
-            }),
-            adminService.getAuditStats()
-          ]);
-          logs.value = logsData.logs || [];
-          pagination.value = logsData.pagination || { totalPages: 1 };
-          stats.value = statsData;
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger le journal'));
-          logs.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const [logsData, statsData] = await Promise.all([
+      adminService.getAuditLogs({
+        page: state.page,
+        targetType: state.targetType || undefined
+      }),
+      adminService.getAuditStats()
+    ]);
+    logs.value = logsData.logs || [];
+    pagination.value = logsData.pagination || { pages: 1 };
+    stats.value = statsData;
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger le journal'));
+    logs.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      onMounted(load);
-
-      return {
-        TARGET_TYPE_LABELS,
-        state,
-        commit,
-        logs,
-        stats,
-        pagination,
-        loading,
-        formatDateTime,
-        getInitial
-      };
-    }
-  });
+onMounted(load);
 </script>

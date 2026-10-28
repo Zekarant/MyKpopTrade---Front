@@ -7,7 +7,8 @@
 
     <header class="landing__header">
       <div class="landing__brand">
-        <img src="@/assets/images/logo.png" alt="Logo" class="landing__logo" />
+        <!-- Décoratif : le nom de la marque est écrit juste à côté. -->
+        <img src="@/assets/images/logo.png" alt="" class="landing__logo" />
         <span class="landing__brand-name">MyKpop<br/>Trade</span>
       </div>
       <router-link to="/login" class="landing__login-btn">
@@ -27,27 +28,31 @@
         <!-- Formulaire d'inscription -->
         <div class="landing__register-card">
           <h2 class="landing__register-title">Créer un compte</h2>
-          <form @submit.prevent="register" class="landing__register-form">
+          <form class="landing__register-form" @submit.prevent="register">
             <!-- Pas de champ téléphone : l'API l'ignorait à l'inscription
                  (minimisation des données, RGPD art. 5(1)(c)). -->
             <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'username' }">
               <i class="bi bi-person"></i>
-              <input type="text" v-model="username" placeholder="Pseudo" aria-label="Pseudo"
+              <input
+v-model="username" type="text" placeholder="Pseudo" aria-label="Pseudo"
                 autocomplete="username" required />
             </div>
             <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'email' }">
               <i class="bi bi-envelope"></i>
-              <input type="email" v-model="email" placeholder="Adresse email" aria-label="Adresse email"
+              <input
+v-model="email" type="email" placeholder="Adresse email" aria-label="Adresse email"
                 autocomplete="email" required />
             </div>
             <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'password' }">
               <i class="bi bi-lock"></i>
-              <input type="password" v-model="password" placeholder="Mot de passe" aria-label="Mot de passe"
+              <input
+v-model="password" type="password" placeholder="Mot de passe" aria-label="Mot de passe"
                 autocomplete="new-password" required />
             </div>
             <div class="landing__input-group" :class="{ 'landing__input-group--error': errorField === 'passwordConfirm' }">
               <i class="bi bi-lock-fill"></i>
-              <input type="password" v-model="passwordConfirm" placeholder="Confirmer le mot de passe"
+              <input
+v-model="passwordConfirm" type="password" placeholder="Confirmer le mot de passe"
                 aria-label="Confirmer le mot de passe" autocomplete="new-password" required />
             </div>
             <small class="landing__hint">
@@ -65,12 +70,12 @@
             </div>
 
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptBeta" />
+              <input v-model="acceptBeta" type="checkbox" />
               <span>Je comprends que MyKpopTrade est en bêta et j'utilise le service à mes risques.</span>
             </label>
 
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptPolicy" />
+              <input v-model="acceptPolicy" type="checkbox" />
               <span>
                 J'accepte les <router-link to="/cgu" target="_blank">CGU</router-link>
                 et la <router-link to="/privacy" target="_blank">politique de confidentialité</router-link>.
@@ -80,7 +85,7 @@
             <!-- Consentement marketing : RGPD art. 4(11) et 7(4) — spécifique,
                  libre et décoché par défaut. Il était codé en dur à `true`. -->
             <label class="landing__checkbox">
-              <input type="checkbox" v-model="acceptMarketing" />
+              <input v-model="acceptMarketing" type="checkbox" />
               <span>
                 J'accepte de recevoir les actualités et bons plans de MyKpopTrade par email.
                 <em>(facultatif, révocable à tout moment)</em>
@@ -111,7 +116,9 @@
       </div>
 
       <div class="landing__hero-visual">
-        <img src="@/assets/images/image.webp" alt="K-Pop cards" class="landing__hero-img" />
+        <img
+src="@/assets/images/image.webp" alt="Photocards K-pop : achetez, vendez, collectionnez"
+          class="landing__hero-img" />
       </div>
     </section>
   </main>
@@ -222,7 +229,7 @@ async function register() {
   &:hover {
     border-color: var(--accent-pink);
     color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -291,7 +298,7 @@ async function register() {
 
   &:focus-within {
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.08);
+    box-shadow: var(--focus-ring);
   }
 
   i {
@@ -315,7 +322,7 @@ async function register() {
 
 .landing__input-group--error {
   border-color: var(--danger);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px var(--danger-light);
 }
 
 .landing__hint {
@@ -387,7 +394,7 @@ async function register() {
   background: var(--accent-gradient);
   border: none;
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-on-accent);
   font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
@@ -397,11 +404,11 @@ async function register() {
   gap: var(--space-sm);
   margin-top: var(--space-sm);
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 16px rgba(255, 45, 120, 0.3);
+  box-shadow: var(--shadow-accent-md);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.4);
+    box-shadow: var(--shadow-accent-lg);
   }
 }
 
@@ -451,12 +458,7 @@ async function register() {
   max-height: 70vh;
   max-width: 100%;
   object-fit: contain;
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+  animation: floatLarge 4s ease-in-out infinite;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }

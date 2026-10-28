@@ -69,7 +69,7 @@ async function loadPage(pageToLoad: number) {
     const data = await feedPostService.getFeed(pageToLoad, FEED_PAGE_SIZE)
     posts.value = pageToLoad === 1 ? data.posts ?? [] : [...posts.value, ...(data.posts ?? [])]
     page.value = pageToLoad
-    pages.value = data.pagination?.totalPages ?? 0
+    pages.value = data.pagination?.pages ?? 0
   } catch {
     // Le fil est un complément du tableau de bord : en cas d'échec, il ne s'affiche pas.
   } finally {

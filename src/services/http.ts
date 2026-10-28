@@ -6,6 +6,8 @@ import axios, {
 import Cookies from 'js-cookie';
 import { API_URL } from '@/config/api';
 import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/session.cookies';
+import { notifySessionEnded } from '@/services/sessionEvents';
+import { toApiError } from '@/services/apiError';
 
 export { hasSession };
 
@@ -104,9 +106,10 @@ export async function ensureAccessToken(): Promise<string | null> {
 }
 
 /**
- * Session définitivement perdue : on nettoie et on renvoie vers la connexion.
+ * Session définitivement perdue : on nettoie et on l'annonce (l'application
+ * vide alors les stores et renvoie vers la connexion, cf. sessionEvents.ts).
  *
- * La redirection n'a lieu que si une session existait réellement. Sans ce
+ * L'annonce n'a lieu que si une session existait réellement. Sans ce
  * garde-fou, un visiteur anonyme qui effleure un endpoint protégé (une page
  * publique qui demande ses favoris, par exemple) se retrouverait propulsé sur
  * /login — ce que ne faisaient pas les services qui ignoraient les 401.
@@ -118,11 +121,7 @@ function handleSessionLost(hadSession: boolean): void {
     return;
   }
 
-  // Import différé : le routeur charge des vues qui importent des services,
-  // donc ce module. Un import statique créerait un cycle à l'initialisation.
-  void import('@/router').then(({ default: router }) => {
-    router.push('/login');
-  });
+  notifySessionEnded('expired');
 }
 
 function isAuthPath(url?: string): boolean {
@@ -181,7 +180,23 @@ export function installAuthInterceptors(client: AxiosInstance): AxiosInstance {
   return client;
 }
 
-/** Crée un client axios déjà équipé du renouvellement de session. */
-export function createApiClient(config: CreateAxiosDefaults = {}): AxiosInstance {
-  return installAuthInterceptors(axios.create(config));
+export interface ApiClientOptions {
+  /** Rejette les erreurs en `ApiError` (cf. apiError.ts) plutôt qu'en erreur axios brute. */
+  normalizeErrors?: boolean;
+}
+
+/**
+ * Crée un client axios déjà équipé du renouvellement de session.
+ * Les services passent par `apiClient()` (apiClient.ts), qui normalise les erreurs.
+ */
+export function createApiClient(config: CreateAxiosDefaults = {}, options: ApiClientOptions = {}): AxiosInstance {
+  const client = installAuthInterceptors(axios.create(config));
+
+  if (options.normalizeErrors) {
+    // Posé après les intercepteurs de session : un 401 renouvelable a déjà été
+    // rejoué, seule une erreur définitive arrive jusqu'à cette conversion.
+    client.interceptors.response.use(undefined, (error: unknown) => Promise.reject(toApiError(error)));
+  }
+
+  return client;
 }

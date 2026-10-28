@@ -31,7 +31,7 @@
             <span class="about-card__label">Nom d'utilisateur</span>
             <span class="about-card__value">{{ profile.username }}</span>
           </div>
-          <div class="about-card__row" v-if="profile.location">
+          <div v-if="profile.location" class="about-card__row">
             <span class="about-card__label">Lieu de résidence</span>
             <span class="about-card__value">{{ profile.location }}</span>
           </div>
@@ -39,18 +39,18 @@
       </div>
 
       <!-- Réseaux sociaux -->
-      <div class="about-card__block" v-if="hasSocialLinks || isOwnProfile">
+      <div v-if="hasSocialLinks || isOwnProfile" class="about-card__block">
         <h3 class="about-card__title"><i class="bi bi-share"></i> Réseaux sociaux</h3>
         <div v-if="hasSocialLinks" class="about-card__grid">
-          <div class="about-card__row" v-if="links.instagram">
+          <div v-if="links.instagram" class="about-card__row">
             <span class="about-card__label"><i class="bi bi-instagram"></i> Instagram</span>
             <span class="about-card__value">{{ links.instagram }}</span>
           </div>
-          <div class="about-card__row" v-if="links.twitter">
+          <div v-if="links.twitter" class="about-card__row">
             <span class="about-card__label"><i class="bi bi-twitter-x"></i> X (Twitter)</span>
             <span class="about-card__value">{{ links.twitter }}</span>
           </div>
-          <div class="about-card__row" v-if="links.discord">
+          <div v-if="links.discord" class="about-card__row">
             <span class="about-card__label"><i class="bi bi-discord"></i> Discord</span>
             <span class="about-card__value">{{ links.discord }}</span>
           </div>

@@ -60,7 +60,7 @@
                 Voir tout <i class="bi bi-arrow-right"></i>
               </button>
             </div>
-            <row_products @voirPlus="loadMore" :moreBtn="false" :pagination="productFavorites.pagination" :dataList="productFavorites.products"></row_products>
+            <row_products :more-btn="false" :pagination="productFavorites.pagination" :data-list="productFavorites.products" @voir-plus="loadMore"></row_products>
           </section>
 
           <!-- Recommendations -->
@@ -71,7 +71,7 @@
                 Recommandé pour toi
               </h2>
             </div>
-            <Grid :moreBtn="true" :pagination="paginationTab" :dataList="productRecommendations"></Grid>
+            <Grid :more-btn="true" :pagination="paginationTab" :data-list="productRecommendations"></Grid>
           </section>
 
           <!-- Feed -->
@@ -82,7 +82,7 @@
                 Fil d'actu
               </h2>
             </div>
-            <Grid :moreBtn="true" :pagination="paginationTab" :dataList="dataCardList"></Grid>
+            <Grid :more-btn="true" :pagination="paginationTab" :data-list="dataCardList"></Grid>
           </section>
 
           <!-- Empty state -->
@@ -111,6 +111,7 @@
     import { createApiClient } from '@/services/http';
     import type { Post, PostsResponse } from '@/types/post.types';
     import { formatDate } from '@/utils/format';
+    import { searchRoute } from '@/router/searchRoute';
 
     type ListPagination = PostsResponse['pagination'];
 
@@ -124,16 +125,6 @@
       row_products,
       Grid,
       DashboardFeed
-    },
-    mounted() {
-      authentification.verifSession().then(() => {
-        this.getFav();
-        this.getRecommendations();
-        this.getPosts(12);
-        this.loadDeletionStatus();
-      }).catch(() => {
-        // Session invalid - user will be redirected to login
-      });
     },
     setup() {
       const router = useRouter();
@@ -153,6 +144,16 @@
         productFavorites: { pagination: {}, products: [] },
         deletionDate: null,
       };
+    },
+    mounted() {
+      authentification.verifSession().then(() => {
+        this.getFav();
+        this.getRecommendations();
+        this.getPosts(12);
+        this.loadDeletionStatus();
+      }).catch(() => {
+        // Session invalid - user will be redirected to login
+      });
     },
     methods: {
       async getRecommendations(){
@@ -177,11 +178,7 @@
       loadMore({ products, pagination, type }: { products: Post[]; pagination: Partial<ListPagination>, type: string }) {
         sessionStorage.setItem('posts_str', JSON.stringify(products));
         sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
-        const combined = this.$func.buildCombinedSlug('', 'more'+type);
-        this.router.push({
-            name: 'searchList',
-            params: { combined }
-        });
+        this.router.push(searchRoute({ event: 'more' + type }));
       },
       async loadDeletionStatus() {
         try {

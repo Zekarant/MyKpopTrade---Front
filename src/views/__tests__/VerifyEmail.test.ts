@@ -68,11 +68,11 @@ describe('VerifyEmail', () => {
     expect(wrapper.find('.auth-message--success').text()).toContain('Un nouveau lien de vérification a été envoyé')
   })
 
-  it('affiche l\'erreur du renvoi, par exemple une adresse déjà vérifiée', async () => {
+  it('affiche l\'erreur du renvoi, par exemple trop de demandes', async () => {
     http.get.mockRejectedValue(expiredToken)
     http.post.mockRejectedValue({
       isAxiosError: true,
-      response: { status: 400, data: { message: 'Cette adresse email est déjà vérifiée' } }
+      response: { status: 429, data: { message: 'Trop de demandes d\'envoi d\'email. Veuillez patienter avant de réessayer.' } }
     })
     const wrapper = mountPage()
     await flushPromises()
@@ -82,6 +82,6 @@ describe('VerifyEmail', () => {
     await flushPromises()
 
     const errors = wrapper.findAll('.auth-message--error')
-    expect(errors[errors.length - 1].text()).toContain('Cette adresse email est déjà vérifiée')
+    expect(errors[errors.length - 1].text()).toContain('Trop de demandes d\'envoi d\'email')
   })
 })

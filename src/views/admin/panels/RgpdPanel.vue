@@ -111,127 +111,107 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import { apiErrorMessage, formatDate } from '../adminFormat';
-  import type { DeletionRequest } from '../types';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import { apiErrorMessage, formatDate } from '../adminFormat';
+import type { DeletionRequest } from '../types';
 
-  export default defineComponent({
-    name: 'RgpdPanel',
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const deletionRequests = ref<DeletionRequest[]>([]);
-      const stats = ref({ privacyAccepted: 0, dataProcessing: 0, marketing: 0 });
-      const exportSearch = ref('');
-      const anonymizeSearch = ref('');
-      const loading = ref(false);
-      const exporting = ref(false);
-      const anonymizing = ref(false);
+const emit = defineEmits<{ changed: [] }>();
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const [deletions, consents] = await Promise.all([
-            adminService.getDeletionRequests(),
-            adminService.getRgpdStats()
-          ]);
-          deletionRequests.value = deletions.users || [];
-          stats.value = consents;
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les données RGPD'));
-        } finally {
-          loading.value = false;
-        }
-      };
+const deletionRequests = ref<DeletionRequest[]>([]);
+const stats = ref({ privacyAccepted: 0, dataProcessing: 0, marketing: 0 });
+const exportSearch = ref('');
+const anonymizeSearch = ref('');
+const loading = ref(false);
+const exporting = ref(false);
+const anonymizing = ref(false);
 
-      const refresh = async () => {
-        await load();
-        emit('changed');
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const [deletions, consents] = await Promise.all([
+      adminService.getDeletionRequests(),
+      adminService.getRgpdStats()
+    ]);
+    deletionRequests.value = deletions.users || [];
+    stats.value = consents;
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les données RGPD'));
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const exportUserData = async () => {
-        const term = exportSearch.value.trim();
-        if (!term) return;
+const refresh = async () => {
+  await load();
+  emit('changed');
+};
 
-        exporting.value = true;
-        try {
-          const data = await adminService.exportUserData(term);
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `donnees-${term}.json`;
-          link.click();
-          URL.revokeObjectURL(url);
-          func.showToastSuccess('Export généré');
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Utilisateur introuvable'));
-        } finally {
-          exporting.value = false;
-        }
-      };
+const exportUserData = async () => {
+  const term = exportSearch.value.trim();
+  if (!term) return;
 
-      const anonymize = async () => {
-        const term = anonymizeSearch.value.trim();
-        if (!term) return;
-        if (!confirm(`Anonymiser définitivement « ${term} » ? Cette action est irréversible.`)) return;
+  exporting.value = true;
+  try {
+    const data = await adminService.exportUserData(term);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `donnees-${term}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    func.showToastSuccess('Export généré');
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Utilisateur introuvable'));
+  } finally {
+    exporting.value = false;
+  }
+};
 
-        anonymizing.value = true;
-        try {
-          await adminService.anonymizeUser(term);
-          func.showToastSuccess('Utilisateur anonymisé');
-          anonymizeSearch.value = '';
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'anonymisation a échoué'));
-        } finally {
-          anonymizing.value = false;
-        }
-      };
+const anonymize = async () => {
+  const term = anonymizeSearch.value.trim();
+  if (!term) return;
+  if (!confirm(`Anonymiser définitivement « ${term} » ? Cette action est irréversible.`)) return;
 
-      const confirmDeletion = async (request: DeletionRequest) => {
-        if (!confirm(`Supprimer définitivement le compte de ${request.username} ? Cette action est irréversible.`)) {
-          return;
-        }
+  anonymizing.value = true;
+  try {
+    await adminService.anonymizeUser(term);
+    func.showToastSuccess('Utilisateur anonymisé');
+    anonymizeSearch.value = '';
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'anonymisation a échoué'));
+  } finally {
+    anonymizing.value = false;
+  }
+};
 
-        try {
-          await adminService.confirmDeletion(request._id);
-          func.showToastSuccess('Compte supprimé');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
-        }
-      };
+const confirmDeletion = async (request: DeletionRequest) => {
+  if (!confirm(`Supprimer définitivement le compte de ${request.username} ? Cette action est irréversible.`)) {
+    return;
+  }
 
-      const cancelDeletion = async (request: DeletionRequest) => {
-        try {
-          await adminService.cancelDeletion(request._id);
-          func.showToastSuccess('Demande annulée');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'annulation a échoué'));
-        }
-      };
+  try {
+    await adminService.confirmDeletion(request._id);
+    func.showToastSuccess('Compte supprimé');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'La suppression a échoué'));
+  }
+};
 
-      onMounted(load);
+const cancelDeletion = async (request: DeletionRequest) => {
+  try {
+    await adminService.cancelDeletion(request._id);
+    func.showToastSuccess('Demande annulée');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'annulation a échoué'));
+  }
+};
 
-      return {
-        deletionRequests,
-        stats,
-        exportSearch,
-        anonymizeSearch,
-        loading,
-        exporting,
-        anonymizing,
-        formatDate,
-        load,
-        exportUserData,
-        anonymize,
-        confirmDeletion,
-        cancelDeletion
-      };
-    }
-  });
+onMounted(load);
 </script>

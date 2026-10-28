@@ -1,5 +1,4 @@
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 import type { AdvancedSearchPayload } from '@/services/search.service';
 
 /** Critères enregistrés : ceux de la recherche avancée, sans pagination ni tri. */
@@ -18,7 +17,7 @@ export interface SavedSearch {
   createdAt: string;
 }
 
-const client = createApiClient({ baseURL: `${API_URL}/api/saved-searches` });
+const client = apiClient('/api/saved-searches');
 
 class SavedSearchService {
   async list(): Promise<SavedSearch[]> {

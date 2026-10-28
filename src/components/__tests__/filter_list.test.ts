@@ -70,4 +70,25 @@ describe('filter_list', () => {
     expect((wrapper.get('[aria-label="Prix maximum en euros"]').element as HTMLInputElement).value).toBe('40')
     expect(await apply(wrapper)).toMatchObject({ groupId: 'g1', group: 'Stray Kids', member: 'Felix', min: 5, max: 40 })
   })
+
+  it('n\'altère pas des filtres déjà appliqués tant qu\'on ne clique pas de nouveau sur « Appliquer »', async () => {
+    const wrapper = mount(FilterList)
+    await wrapper.get('[data-test="filter-type"]').setValue('album')
+    const applied = await apply(wrapper)
+
+    await wrapper.get('[data-test="filter-type"]').setValue('merch')
+
+    expect(applied.type).toBe('album')
+  })
+
+  it('ferme le panneau plein écran avec Échap et rend le défilement de la page', async () => {
+    const wrapper = mount(FilterList)
+    await wrapper.get('.filter-toggle-btn').trigger('click')
+    expect(wrapper.get('.filter-panel').classes()).toContain('show')
+
+    await wrapper.get('.filter-panel').trigger('keydown', { key: 'Escape' })
+
+    expect(wrapper.get('.filter-panel').classes()).not.toContain('show')
+    expect(document.body.style.overflow).toBe('')
+  })
 })

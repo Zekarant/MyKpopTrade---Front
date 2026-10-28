@@ -5,7 +5,7 @@
         <i class="bi bi-plus-lg"></i> Créer une annonce
       </button>
     </div>
-    <Grid v-if="products.length" :style="{ width: '100%' }" :admin="isOwnProfile" :dataUser="profile" :dataList="activeProducts"></Grid>
+    <Grid v-if="products.length" :style="{ width: '100%' }" :admin="isOwnProfile" :data-user="profile" :data-list="activeProducts"></Grid>
     <div v-else class="empty-state">
       <i class="bi bi-megaphone"></i>
       <p>Aucune annonce pour le moment.</p>

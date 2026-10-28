@@ -43,9 +43,9 @@
         <div class="paypal-card__actions">
           <button
             v-if="!paypal.merchantId || paypal.blockReason === 'CONSENT_MISSING'"
-            @click="connectPaypal"
             :disabled="paypalConnecting"
             class="btn-settings btn-settings--primary"
+            @click="connectPaypal"
           >
             <i class="bi bi-paypal"></i>
             {{ paypalConnecting ? 'Redirection...' : (paypal.merchantId ? 'Relancer la connexion PayPal' : 'Connecter mon compte PayPal') }}
@@ -53,9 +53,9 @@
 
           <button
             v-if="paypal.merchantId && paypal.blockReason && paypal.blockReason !== 'CONSENT_MISSING'"
-            @click="refreshPaypalStatus"
             :disabled="paypalRefreshing"
             class="btn-settings btn-settings--primary"
+            @click="refreshPaypalStatus"
           >
             <i class="bi bi-arrow-clockwise"></i>
             {{ paypalRefreshing ? 'Vérification...' : 'Rafraîchir mon statut' }}
@@ -63,8 +63,8 @@
 
           <button
             v-if="paypal.merchantId"
-            @click="disconnectPaypal"
             class="btn-settings btn-settings--danger"
+            @click="disconnectPaypal"
           >
             <i class="bi bi-x-circle"></i> Déconnecter
           </button>
@@ -89,8 +89,8 @@
           </div>
         </div>
         <div class="setting-row__inline">
-          <input type="text" v-model="legalName" maxlength="300" class="settings-input settings-input--sm" placeholder="Nom légal complet" />
-          <button @click="saveLegalName" class="btn-settings btn-settings--sm" v-if="legalNameChanged">Enregistrer</button>
+          <input v-model="legalName" type="text" maxlength="300" class="settings-input settings-input--sm" placeholder="Nom légal complet" />
+          <button v-if="legalNameChanged" class="btn-settings btn-settings--sm" @click="saveLegalName">Enregistrer</button>
         </div>
       </div>
       <div class="setting-row setting-row--column">
@@ -100,14 +100,14 @@
             <span>Adresse</span>
           </div>
         </div>
-        <input type="text" v-model="address.streetLine1" maxlength="200" class="settings-input" placeholder="Rue et numéro" style="margin-top: 8px;" />
-        <input type="text" v-model="address.streetLine2" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" />
+        <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input" placeholder="Rue et numéro" style="margin-top: 8px;" />
+        <input v-model="address.streetLine2" type="text" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" />
         <div class="setting-row__inline" style="margin-top: 0;">
-          <input type="text" v-model="address.postalCode" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" />
-          <input type="text" v-model="address.city" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" />
-          <input type="text" v-model="address.country" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" style="flex: 0 0 70px;" />
+          <input v-model="address.postalCode" type="text" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" />
+          <input v-model="address.city" type="text" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" />
+          <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" style="flex: 0 0 70px;" />
         </div>
-        <button @click="saveAddress" class="btn-settings btn-settings--sm" v-if="addressChanged" style="align-self: flex-start; margin-top: 8px;">Enregistrer</button>
+        <button v-if="addressChanged" class="btn-settings btn-settings--sm" style="align-self: flex-start; margin-top: 8px;" @click="saveAddress">Enregistrer</button>
       </div>
     </div>
   </section>
@@ -144,28 +144,28 @@
 
       <label>Nom légal complet</label>
       <input
-        type="text"
         v-model.trim="legalName"
+        type="text"
         maxlength="300"
         placeholder="Prénom et nom"
       />
 
       <label>Adresse</label>
-      <input type="text" v-model.trim="address.streetLine1" maxlength="200" placeholder="Rue et numéro" />
-      <input type="text" v-model.trim="address.streetLine2" maxlength="200" placeholder="Complément (optionnel)" />
+      <input v-model.trim="address.streetLine1" type="text" maxlength="200" placeholder="Rue et numéro" />
+      <input v-model.trim="address.streetLine2" type="text" maxlength="200" placeholder="Complément (optionnel)" />
       <div class="modal-inline">
-        <input type="text" v-model.trim="address.postalCode" maxlength="16" placeholder="Code postal" />
-        <input type="text" v-model.trim="address.city" maxlength="100" placeholder="Ville" />
-        <input type="text" v-model.trim="address.country" maxlength="2" placeholder="FR" style="flex: 0 0 70px;" />
+        <input v-model.trim="address.postalCode" type="text" maxlength="16" placeholder="Code postal" />
+        <input v-model.trim="address.city" type="text" maxlength="100" placeholder="Ville" />
+        <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" style="flex: 0 0 70px;" />
       </div>
 
       <p v-if="paypalInfoError" class="modal-error">{{ paypalInfoError }}</p>
 
       <div class="modal-actions">
-        <button class="btn-settings btn-settings--ghost" @click="closePaypalInfoModal" :disabled="paypalConnecting">
+        <button class="btn-settings btn-settings--ghost" :disabled="paypalConnecting" @click="closePaypalInfoModal">
           Annuler
         </button>
-        <button class="btn-settings btn-settings--primary" @click="submitPaypalInfoAndConnect" :disabled="paypalConnecting">
+        <button class="btn-settings btn-settings--primary" :disabled="paypalConnecting" @click="submitPaypalInfoAndConnect">
           {{ paypalConnecting ? 'Redirection...' : 'Continuer vers PayPal' }}
         </button>
       </div>

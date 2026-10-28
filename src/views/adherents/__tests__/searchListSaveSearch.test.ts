@@ -7,21 +7,24 @@ import { reactive } from 'vue'
 const savedSearchApi = vi.hoisted(() => ({ create: vi.fn() }))
 const searchApi = vi.hoisted(() => ({ advancedSearch: vi.fn() }))
 const session = vi.hoisted(() => ({ loggedIn: true }))
-const route = vi.hoisted(() => ({ current: { query: {} as Record<string, string | string[]> } }))
+const route = vi.hoisted(() => ({ current: { query: {} as Record<string, string | string[]>, fullPath: '/search' } }))
+const router = vi.hoisted(() => ({ push: vi.fn() }))
 const toast = vi.hoisted(() => ({
   showToastSuccess: vi.fn(),
   showToastError: vi.fn(),
-  showToastInfo: vi.fn(),
-  buildCombinedSlug: (query: string, event: string) => [query, event].filter(Boolean).join('-')
+  showToastInfo: vi.fn()
 }))
 
 vi.mock('@/services/savedSearch.service', () => ({ default: savedSearchApi }))
 vi.mock('@/services/search.service', () => ({ default: searchApi }))
 vi.mock('@/services/post.service', () => ({ default: {} }))
 vi.mock('@/services/session.cookies', () => ({ hasSession: () => session.loggedIn }))
+vi.mock('@/function', () => ({ func: toast }))
 vi.mock('@vueuse/core', () => ({ useInfiniteScroll: vi.fn() }))
-vi.mock('vue-router', () => ({ useRoute: () => route.current, useRouter: () => ({ push: vi.fn() }) }))
-vi.mock('@/components/search_bar_2.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('vue-router', () => ({ useRoute: () => route.current, useRouter: () => router }))
+vi.mock('@/components/search_bar_2.vue', () => ({
+  default: { name: 'SearchBarStub', props: ['query'], emits: ['search'], template: '<div />' }
+}))
 vi.mock('@/components/filter_list.vue', () => ({
   default: { name: 'FilterListStub', props: ['initialFilters'], emits: ['saveFilter'], template: '<div />' }
 }))
@@ -30,8 +33,8 @@ vi.mock('@/components/grid.vue', () => ({ default: { template: '<div />' } }))
 import SearchList from '../searchList.vue'
 
 async function mountPage(query: Record<string, string | string[]> = {}) {
-  route.current = reactive({ query })
-  const wrapper = mount(SearchList, { global: { mocks: { $func: toast } } })
+  route.current = reactive({ query, fullPath: '/search' })
+  const wrapper = mount(SearchList)
   await flushPromises()
   return wrapper
 }
@@ -127,5 +130,46 @@ describe('searchList — sauvegarde de la recherche', () => {
     const wrapper = await mountPage({ q: 'golden' })
 
     expect(saveButton(wrapper).exists()).toBe(false)
+  })
+})
+
+describe('searchList — URL de recherche', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    session.loggedIn = true
+    searchApi.advancedSearch.mockResolvedValue({ products: [], pagination: { page: 1, limit: 10, pages: 1, total: 0 } })
+  })
+
+  it('porte un nouveau texte dans la query `q` de /search', async () => {
+    const wrapper = await mountPage({ q: 'golden' })
+
+    wrapper.findComponent({ name: 'SearchBarStub' }).vm.$emit('search', 'butter')
+
+    expect(router.push).toHaveBeenCalledWith({ name: 'searchList', query: { q: 'butter' } })
+  })
+
+  it('relance la recherche sans changer d\'URL quand le texte est inchangé', async () => {
+    const wrapper = await mountPage({ q: 'golden' })
+    searchApi.advancedSearch.mockClear()
+
+    wrapper.findComponent({ name: 'SearchBarStub' }).vm.$emit('search', 'golden')
+    await flushPromises()
+
+    expect(router.push).not.toHaveBeenCalled()
+    expect(searchApi.advancedSearch).toHaveBeenCalledWith(expect.objectContaining({ query: 'golden' }))
+  })
+
+  it('relance la recherche au changement d\'URL en gardant les filtres du panneau', async () => {
+    const wrapper = await mountPage()
+    wrapper.findComponent({ name: 'FilterListStub' }).vm.$emit('saveFilter', {
+      min: null, max: null, conditions: null, type: 'album', group: null, member: null
+    })
+    await flushPromises()
+    searchApi.advancedSearch.mockClear()
+
+    Object.assign(route.current, { query: { q: 'butter' }, fullPath: '/search?q=butter' })
+    await flushPromises()
+
+    expect(searchApi.advancedSearch).toHaveBeenCalledWith(expect.objectContaining({ query: 'butter', type: 'album' }))
   })
 })

@@ -88,7 +88,7 @@
             <i class="bi bi-bag"></i>
             Annonces{{ selectedMember ? ` — ${selectedMember}` : '' }}
           </h2>
-          <Grid v-if="listings.products.value.length" :dataList="listings.products.value" />
+          <Grid v-if="listings.products.value.length" :data-list="listings.products.value" />
           <p v-else-if="listings.failed.value" class="catalog-empty">Impossible de charger les annonces.</p>
           <p v-else-if="!listings.loading.value" class="catalog-empty">Aucune annonce en vente pour l'instant.</p>
           <div v-if="listings.hasMore.value" class="catalog-more">
@@ -108,7 +108,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Grid from '@/components/grid.vue'
 import groupService, { type KpopGroup } from '@/services/group.service'
 import type { KpopAlbum } from '@/services/album.service'
-import { apiErrorResponse } from '@/services/apiError'
+import { apiErrorStatus } from '@/services/apiError'
 import { hasSession } from '@/services/session.cookies'
 import { useCatalogListings } from '@/composables/useCatalogListings'
 import { formatDate, mediaUrl } from '@/utils/format'
@@ -152,7 +152,7 @@ async function load() {
     state.value = 'loaded'
     document.title = `${detail.group.name} · ${SITE_NAME}`
   } catch (error) {
-    const status = apiErrorResponse(error)?.status
+    const status = apiErrorStatus(error)
     state.value = status !== undefined && NOT_FOUND_STATUSES.includes(status) ? 'not-found' : 'error'
     return
   }

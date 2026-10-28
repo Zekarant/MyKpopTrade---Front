@@ -1,7 +1,7 @@
 <template>
   <main class="page">
     <div class="dispute-detail">
-      <div class="dispute-detail__container" v-if="dispute">
+      <div v-if="dispute" class="dispute-detail__container">
         <header class="dispute-detail__header">
           <button class="btn btn--ghost btn--sm" @click="$router.back()">
             <i class="bi bi-arrow-left"></i> Retour
@@ -92,10 +92,10 @@ export default defineComponent({
       return this.canReply && this.dispute.openedBy === this.myId;
     }
   },
-  async mounted() { await this.fetch(); },
   watch: {
     id() { this.fetch(); }
   },
+  async mounted() { await this.fetch(); },
   methods: {
     async fetch() {
       this.loading = true;

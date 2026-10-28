@@ -106,164 +106,150 @@
 </template>
 
 <script lang="ts">
-  import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
-  import authentificationService from '@/services/authentification.service';
-  import adminService from '@/services/admin.service';
-  import AdminCommandPalette from './components/AdminCommandPalette.vue';
-  import AdminSidebar from './components/AdminSidebar.vue';
-  import { ADMIN_SECTIONS, DEFAULT_ADMIN_TAB } from './adminSections';
-  import { formatPrice } from './adminFormat';
-  import type { AdminProductStats, AdminQueue, AdminUserStats } from './types';
+import { defineAsyncComponent, type Component } from 'vue';
 
-  // Un seul panneau est affiché à la fois : chacun devient son propre chunk,
-  // chargé à la première ouverture de l'onglet, au lieu de tout embarquer dans
-  // le chunk de la vue admin. defineAsyncComponent met le chargement en cache.
-  const PANELS: Record<string, Component> = {
-    queue: defineAsyncComponent(() => import('./panels/QueuePanel.vue')),
-    overview: defineAsyncComponent(() => import('./panels/OverviewPanel.vue')),
-    reports: defineAsyncComponent(() => import('./panels/ReportsPanel.vue')),
-    disputes: defineAsyncComponent(() => import('./panels/DisputesPanel.vue')),
-    moderation: defineAsyncComponent(() => import('./panels/ModerationPanel.vue')),
-    verifications: defineAsyncComponent(() => import('./panels/VerificationsPanel.vue')),
-    products: defineAsyncComponent(() => import('./panels/ProductsPanel.vue')),
-    suspended: defineAsyncComponent(() => import('./panels/SuspendedProductsPanel.vue')),
-    kpop: defineAsyncComponent(() => import('./panels/KpopPanel.vue')),
-    users: defineAsyncComponent(() => import('./panels/UsersPanel.vue')),
-    rgpd: defineAsyncComponent(() => import('./panels/RgpdPanel.vue')),
-    faq: defineAsyncComponent(() => import('./panels/FaqPanel.vue')),
-    audit: defineAsyncComponent(() => import('./panels/AuditPanel.vue'))
-  };
+// Un seul panneau est affiché à la fois : chacun devient son propre chunk,
+// chargé à la première ouverture de l'onglet, au lieu de tout embarquer dans
+// le chunk de la vue admin. Déclarés au niveau du module (hors <script setup>,
+// exécuté à chaque montage) pour que defineAsyncComponent garde son cache.
+const PANELS: Record<string, Component> = {
+  queue: defineAsyncComponent(() => import('./panels/QueuePanel.vue')),
+  overview: defineAsyncComponent(() => import('./panels/OverviewPanel.vue')),
+  reports: defineAsyncComponent(() => import('./panels/ReportsPanel.vue')),
+  disputes: defineAsyncComponent(() => import('./panels/DisputesPanel.vue')),
+  moderation: defineAsyncComponent(() => import('./panels/ModerationPanel.vue')),
+  verifications: defineAsyncComponent(() => import('./panels/VerificationsPanel.vue')),
+  products: defineAsyncComponent(() => import('./panels/ProductsPanel.vue')),
+  suspended: defineAsyncComponent(() => import('./panels/SuspendedProductsPanel.vue')),
+  kpop: defineAsyncComponent(() => import('./panels/KpopPanel.vue')),
+  users: defineAsyncComponent(() => import('./panels/UsersPanel.vue')),
+  rgpd: defineAsyncComponent(() => import('./panels/RgpdPanel.vue')),
+  faq: defineAsyncComponent(() => import('./panels/FaqPanel.vue')),
+  audit: defineAsyncComponent(() => import('./panels/AuditPanel.vue'))
+};
 
-  export default defineComponent({
-    name: 'AdminView',
-    components: { AdminCommandPalette, AdminSidebar },
-    setup() {
-      const route = useRoute();
-      const router = useRouter();
+// `?tab=constructor` ne doit pas passer pour un onglet : propriétés propres seulement.
+const isPanel = (tabId: string): boolean => Object.prototype.hasOwnProperty.call(PANELS, tabId);
+</script>
 
-      const currentTab = ref(DEFAULT_ADMIN_TAB);
-      const stats = ref<AdminUserStats>({ totalUsers: 0, newUsers: 0, suspendedUsers: 0, activeUsers: 0 });
-      const productStats = ref<AdminProductStats>({
-        total: 0,
-        available: 0,
-        sold: 0,
-        suspended: 0,
-        newProducts: 0,
-        recentSales: 0,
-        totalRevenue: 0,
-        typeDistribution: {}
-      });
-      const queueCounts = ref<Record<string, number>>({ total: 0 });
-      const paletteOpen = ref(false);
-      const remountToken = ref(0);
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import authentificationService from '@/services/authentification.service';
+import adminService from '@/services/admin.service';
+import AdminCommandPalette from './components/AdminCommandPalette.vue';
+import AdminSidebar from './components/AdminSidebar.vue';
+import { ADMIN_SECTIONS, DEFAULT_ADMIN_TAB } from './adminSections';
+import { formatPrice } from './adminFormat';
+import type { AdminProductStats, AdminQueue, AdminUserStats } from './types';
 
-      const section = computed(() => ADMIN_SECTIONS[currentTab.value] ?? ADMIN_SECTIONS[DEFAULT_ADMIN_TAB]);
-      const activePanel = computed(() => PANELS[currentTab.value] ?? PANELS[DEFAULT_ADMIN_TAB]);
-      const panelKey = computed(() => `${currentTab.value}:${remountToken.value}`);
+defineOptions({ name: 'AdminView' });
 
-      const shortcutHint = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
-        ? '⌘K'
-        : 'Ctrl+K';
+const route = useRoute();
+const router = useRouter();
 
-      const panelProps = computed(() =>
-        currentTab.value === 'overview'
-          ? { stats: stats.value, productStats: productStats.value }
-          : {}
-      );
+const currentTab = ref(DEFAULT_ADMIN_TAB);
+const stats = ref<AdminUserStats>({ totalUsers: 0, newUsers: 0, suspendedUsers: 0, activeUsers: 0 });
+const productStats = ref<AdminProductStats>({
+  total: 0,
+  available: 0,
+  sold: 0,
+  suspended: 0,
+  newProducts: 0,
+  recentSales: 0,
+  totalRevenue: 0,
+  typeDistribution: {}
+});
+const queueCounts = ref<Record<string, number>>({ total: 0 });
+const paletteOpen = ref(false);
+const remountToken = ref(0);
 
-      const switchTab = (tabId: string) => {
-        if (!PANELS[tabId] || tabId === currentTab.value) return;
-        currentTab.value = tabId;
-        router.replace({ query: { tab: tabId } });
-      };
+const section = computed(() => ADMIN_SECTIONS[currentTab.value] ?? ADMIN_SECTIONS[DEFAULT_ADMIN_TAB]);
+const activePanel = computed(() => (isPanel(currentTab.value) ? PANELS[currentTab.value] : PANELS[DEFAULT_ADMIN_TAB]));
+const panelKey = computed(() => `${currentTab.value}:${remountToken.value}`);
 
-      const goTo = (tabId: string, query: Record<string, string> = {}) => {
-        if (!PANELS[tabId]) return;
-        currentTab.value = tabId;
-        router.replace({ query: { tab: tabId, ...query } });
-        remountToken.value += 1;
-      };
+const shortcutHint = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+  ? '⌘K'
+  : 'Ctrl+K';
 
-      const applyTabFromRoute = () => {
-        const requested = route.query.tab;
-        const tabId = Array.isArray(requested) ? requested[0] : requested;
-        if (typeof tabId === 'string' && PANELS[tabId]) {
-          currentTab.value = tabId;
-        }
-      };
+const panelProps = computed(() =>
+  currentTab.value === 'overview'
+    ? { stats: stats.value, productStats: productStats.value }
+    : {}
+);
 
-      const onPaletteNavigate = ({ tab, search }: { tab: string; search?: string }) => {
-        if (!PANELS[tab]) return;
-        currentTab.value = tab;
-        router.replace({ query: search ? { tab, search } : { tab } });
-        remountToken.value += 1;
-      };
+const switchTab = (tabId: string) => {
+  if (!isPanel(tabId) || tabId === currentTab.value) return;
+  currentTab.value = tabId;
+  router.replace({ query: { tab: tabId } });
+};
 
-      const loadCounters = async () => {
-        const [queue, userStats, catalogStats] = await Promise.allSettled<
-          [Promise<AdminQueue>, Promise<AdminUserStats>, Promise<AdminProductStats>]
-        >([
-          adminService.getQueue(),
-          adminService.getStats(),
-          adminService.getProductStats()
-        ]);
+const goTo = (tabId: string, query: Record<string, string> = {}) => {
+  if (!isPanel(tabId)) return;
+  currentTab.value = tabId;
+  router.replace({ query: { tab: tabId, ...query } });
+  remountToken.value += 1;
+};
 
-        if (queue.status === 'fulfilled') {
-          queueCounts.value = { ...queue.value.counts, total: queue.value.total };
-        }
-        if (userStats.status === 'fulfilled') {
-          stats.value = userStats.value;
-        }
-        if (catalogStats.status === 'fulfilled') {
-          productStats.value = catalogStats.value;
-        }
-      };
+const applyTabFromRoute = () => {
+  const requested = route.query.tab;
+  const tabId = Array.isArray(requested) ? requested[0] : requested;
+  if (typeof tabId === 'string' && isPanel(tabId)) {
+    currentTab.value = tabId;
+  }
+};
 
-      watch(() => route.query.tab, applyTabFromRoute);
+const onPaletteNavigate = ({ tab, search }: { tab: string; search?: string }) => {
+  if (!isPanel(tab)) return;
+  currentTab.value = tab;
+  router.replace({ query: search ? { tab, search } : { tab } });
+  remountToken.value += 1;
+};
 
-      const onKeydown = (event: KeyboardEvent) => {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-          event.preventDefault();
-          paletteOpen.value = true;
-        }
-      };
+const loadCounters = async () => {
+  const [queue, userStats, catalogStats] = await Promise.allSettled<
+    [Promise<AdminQueue>, Promise<AdminUserStats>, Promise<AdminProductStats>]
+  >([
+    adminService.getQueue(),
+    adminService.getStats(),
+    adminService.getProductStats()
+  ]);
 
-      onMounted(async () => {
-        window.addEventListener('keydown', onKeydown);
+  if (queue.status === 'fulfilled') {
+    queueCounts.value = { ...queue.value.counts, total: queue.value.total };
+  }
+  if (userStats.status === 'fulfilled') {
+    stats.value = userStats.value;
+  }
+  if (catalogStats.status === 'fulfilled') {
+    productStats.value = catalogStats.value;
+  }
+};
 
-        try {
-          await authentificationService.verifSession();
-        } catch {
-          router.push({ name: 'login' });
-          return;
-        }
+watch(() => route.query.tab, applyTabFromRoute);
 
-        applyTabFromRoute();
-        await loadCounters();
-      });
+const onKeydown = (event: KeyboardEvent) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    paletteOpen.value = true;
+  }
+};
 
-      onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
+onMounted(async () => {
+  window.addEventListener('keydown', onKeydown);
 
-      return {
-        currentTab,
-        stats,
-        productStats,
-        queueCounts,
-        paletteOpen,
-        section,
-        activePanel,
-        panelKey,
-        panelProps,
-        shortcutHint,
-        switchTab,
-        goTo,
-        onPaletteNavigate,
-        loadCounters,
-        formatPrice
-      };
-    }
-  });
+  try {
+    await authentificationService.verifSession();
+  } catch {
+    router.push({ name: 'login' });
+    return;
+  }
+
+  applyTabFromRoute();
+  await loadCounters();
+});
+
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 </script>
 
 <style lang="scss">

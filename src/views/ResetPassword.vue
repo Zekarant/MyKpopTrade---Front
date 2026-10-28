@@ -23,7 +23,7 @@
           <router-link to="/login" class="btn btn-primary w-full">Se connecter</router-link>
         </div>
 
-        <form v-else @submit.prevent="submit" class="auth-form">
+        <form v-else class="auth-form" @submit.prevent="submit">
           <div class="form-group">
             <label class="form-label" for="reset-password">Nouveau mot de passe</label>
             <div class="input-group--custom" :class="{ 'input-group--error': errorMessage }">
@@ -38,7 +38,7 @@
             </div>
             <small class="hint">
               8 caractères minimum, avec une majuscule, une minuscule, un chiffre et un
-              caractère spécial parmi {{ SPECIAL_CHARS }}
+              caractère spécial parmi {{ PASSWORD_SPECIAL_CHARS }}
             </small>
           </div>
 
@@ -83,11 +83,9 @@ import { useRoute } from 'vue-router';
 import { API_URL } from '@/config/api';
 import { createApiClient } from '@/services/http';
 import { apiErrorMessage } from '@/services/apiError';
+import { PASSWORD_SPECIAL_CHARS, passwordRuleError } from '@/composables/useRegisterForm';
 
 const api = createApiClient({ baseURL: API_URL });
-
-/** Seuls caractères spéciaux reconnus par `validatePassword` côté API : « - » ou « _ » ne comptent pas. */
-const SPECIAL_CHARS = '!@#$%^&*(),.?":{}|<>';
 
 const route = useRoute();
 const password = ref('');
@@ -95,18 +93,6 @@ const confirmPassword = ref('');
 const errorMessage = ref('');
 const successMessage = ref('');
 const loading = ref(false);
-
-/** Miroir de `validatePassword` côté API, pour dire quelle règle manque sans aller-retour. */
-function passwordRuleError(value: string): string {
-  if (value.length < 8) return 'Le mot de passe doit faire au moins 8 caractères.';
-  if (!/[A-Z]/.test(value)) return 'Il manque une majuscule.';
-  if (!/[a-z]/.test(value)) return 'Il manque une minuscule.';
-  if (!/[0-9]/.test(value)) return 'Il manque un chiffre.';
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
-    return `Il manque un caractère spécial parmi ${SPECIAL_CHARS}`;
-  }
-  return '';
-}
 
 async function submit() {
   errorMessage.value = passwordRuleError(password.value);
@@ -133,6 +119,8 @@ async function submit() {
 </script>
 
 <style lang="scss" scoped>
+@use './auth/auth-form';
+
 .auth-page {
   min-height: 100vh;
   position: relative;
@@ -156,23 +144,13 @@ async function submit() {
 .auth-brand { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-2xl); }
 .auth-brand__logo {
   width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-gradient); color: white; font-weight: 800; font-size: 1.4rem;
+  background: var(--accent-gradient); color: var(--text-on-accent); font-weight: 800; font-size: 1.4rem;
   border-radius: var(--radius-md);
 }
 .auth-brand__title { font-size: var(--font-size-xl); font-weight: 800; letter-spacing: 0.05em; margin: 0; }
 .auth-brand__subtitle { color: var(--text-muted); font-size: var(--font-size-sm); margin: 4px 0 0; }
 
-.auth-form { display: flex; flex-direction: column; gap: var(--space-md); }
-.form-group { display: flex; flex-direction: column; gap: var(--space-xs); }
 .hint { color: var(--text-muted); font-size: var(--font-size-xs); line-height: 1.5; }
-.input-group--error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; }
-
-.auth-message {
-  display: flex; align-items: center; gap: var(--space-sm);
-  padding: var(--space-md); border-radius: var(--radius-md); font-size: var(--font-size-sm);
-  &--success { background: var(--success-light); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-  &--error { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-}
 
 .auth-links {
   display: flex; flex-direction: column; align-items: center;

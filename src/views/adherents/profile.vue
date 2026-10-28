@@ -3,7 +3,7 @@
         <div class="profile-layout">
           <div class="profile-layout__content">
             <div class="profile-banner-wrap">
-              <banner_profil :profilInfo="profile" :admin="isOwnProfile"></banner_profil>
+              <banner_profil :profil-info="profile" :admin="isOwnProfile"></banner_profil>
               <div v-if="!isOwnProfile && profileUserId" class="profile-banner-wrap__actions">
                 <button
                   class="profile-report-btn"
@@ -15,7 +15,7 @@
                 <BlockUserButton :user-id="profileUserId" :username="profile.username" />
               </div>
             </div>
-            <segment_profil @partDisplayed="(part: string) => (partView = part)"></segment_profil>
+            <segment_profil @part-displayed="(part: string) => (partView = part)"></segment_profil>
 
             <!-- KeepAlive : un brouillon de publication ou un filtre d'avis survit au changement d'onglet. -->
             <KeepAlive>
@@ -50,7 +50,7 @@
             </KeepAlive>
 
             <!-- Wishlist -->
-            <div class="profile-tab-content" v-if="partView === 'wishlist'">
+            <div v-if="partView === 'wishlist'" class="profile-tab-content">
               <div class="empty-state">
                 <i class="bi bi-heart"></i>
                 <p>Aucun article dans la wishlist.</p>
@@ -62,9 +62,9 @@
 
         <report_card
           v-if="reportTarget"
-          :type="reportTarget.type"
           :id="reportTarget.id"
-          @closeReport="reportTarget = null"
+          :type="reportTarget.type"
+          @close-report="reportTarget = null"
         ></report_card>
 
     </main>

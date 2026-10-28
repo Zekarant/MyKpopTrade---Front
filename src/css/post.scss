@@ -36,10 +36,6 @@
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 // === Main card layout ===
 .post-modal__card {
   display: flex;
@@ -55,7 +51,7 @@
 .post-modal__gallery {
   position: relative;
   width: 50%;
-  background: #0a0a0a;
+  background: var(--bg-media);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -77,7 +73,7 @@
 
   &--sold {
     background: var(--danger);
-    color: white;
+    color: var(--text-on-accent);
   }
 
   &--withdrawn {
@@ -107,7 +103,7 @@
 
   &:hover {
     transform: scale(1.1);
-    background: white;
+    background: var(--bg-elevated);
   }
 
   &--active {
@@ -159,8 +155,20 @@
   gap: var(--space-sm);
   padding-bottom: var(--space-md);
   border-bottom: 1px solid var(--surface-border);
-  cursor: pointer;
   margin-right: 40px;
+}
+
+.post-modal__seller-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .post-modal__avatar {
@@ -193,12 +201,19 @@
   color: var(--text-primary);
 }
 
-.post-modal__actions-menu {
+.post-modal__menu {
   margin-left: auto;
   position: relative;
-  cursor: pointer;
+}
+
+.post-modal__actions-menu {
+  display: flex;
   padding: var(--space-xs);
+  background: none;
+  border: none;
   border-radius: var(--radius-sm);
+  color: inherit;
+  cursor: pointer;
 
   &:hover {
     background: var(--surface-hover);
@@ -269,6 +284,10 @@
   white-space: nowrap;
 }
 
+.post-modal__pwyw {
+  margin-top: var(--space-xs);
+}
+
 // === Description ===
 .post-modal__description {
   margin-top: var(--space-md);
@@ -290,7 +309,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-sm);
-  margin-top: var(--space-md);
+  margin: var(--space-md) 0 0;
 }
 
 .post-modal__detail-item {
@@ -308,9 +327,17 @@
 }
 
 .post-modal__detail-value {
+  margin: 0;
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   font-weight: 500;
+}
+
+.post-modal__detail-link {
+  color: var(--accent-pink);
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
 }
 
 // === Shipping ===
@@ -381,12 +408,12 @@
 
   &--primary {
     background: var(--accent-gradient);
-    color: white;
+    color: var(--text-on-accent);
     box-shadow: var(--shadow-glow-pink);
 
     &:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 24px rgba(255, 45, 120, 0.25);
+      box-shadow: 0 6px 24px color-mix(in srgb, var(--accent-pink) 25%, transparent);
     }
   }
 
@@ -414,12 +441,12 @@
 
   &--cart {
     background: transparent;
-    border: 1.5px solid var(--accent-purple, #7c3aed);
-    color: var(--accent-purple, #7c3aed);
+    border: 1.5px solid var(--accent-purple);
+    color: var(--accent-purple);
     transition: all 0.3s ease;
 
     &:hover:not(:disabled) {
-      background: rgba(124, 58, 237, 0.08);
+      background: color-mix(in srgb, var(--accent-purple) 8%, transparent);
       transform: translateY(-1px);
     }
 
@@ -430,19 +457,19 @@
   }
 
   &--cart-added {
-    background: var(--accent-purple, #7c3aed) !important;
-    color: #fff !important;
-    border-color: var(--accent-purple, #7c3aed) !important;
+    background: var(--accent-purple) !important;
+    color: var(--text-on-accent) !important;
+    border-color: var(--accent-purple) !important;
     opacity: 1 !important;
     cursor: default !important;
   }
 
   &--danger {
     background: var(--danger);
-    color: white;
+    color: var(--text-on-accent);
 
     &:hover {
-      background: #dc2626;
+      background: color-mix(in srgb, var(--danger) 85%, black);
       transform: translateY(-1px);
     }
   }

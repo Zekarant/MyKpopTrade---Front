@@ -16,7 +16,7 @@
             </div>
           </div>
 
-          <form @submit.prevent="submit" class="auth-form">
+          <form class="auth-form" @submit.prevent="submit">
             <div class="form-group">
               <label class="form-label">Pseudo <span class="required">*</span></label>
               <div class="input-group--custom" :class="{ 'input-group--error': usernameError }">

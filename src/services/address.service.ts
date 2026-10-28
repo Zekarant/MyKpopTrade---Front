@@ -1,6 +1,4 @@
-import { type AxiosInstance } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
 
 export interface AddressResult {
   label: string;
@@ -23,15 +21,7 @@ export interface ShippingAddressInput {
 }
 
 class AddressService {
-  private client: AxiosInstance;
-
-  constructor() {
-    const baseUrl = `${API_URL}/api/addresses`;
-    this.client = createApiClient({
-      baseURL: baseUrl,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  private client = apiClient('/api/addresses');
 
   async lookup(params: { q?: string; postalCode?: string; city?: string; limit?: number }): Promise<AddressResult[]> {
     if (!params.q && !params.postalCode) return [];

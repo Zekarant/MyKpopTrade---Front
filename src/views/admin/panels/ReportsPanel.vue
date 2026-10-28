@@ -130,7 +130,7 @@
       </table>
     </div>
 
-    <div v-if="pagination.totalPages > 1" class="admin__pagination">
+    <div v-if="pagination.pages > 1" class="admin__pagination">
       <button
         type="button"
         class="admin__icon-btn"
@@ -139,11 +139,11 @@
       >
         <i class="bi bi-chevron-left"></i>
       </button>
-      <span>{{ state.page }} / {{ pagination.totalPages }} — {{ pagination.totalItems }} signalements</span>
+      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} signalements</span>
       <button
         type="button"
         class="admin__icon-btn"
-        :disabled="state.page >= pagination.totalPages"
+        :disabled="state.page >= pagination.pages"
         @click="commit({ page: state.page + 1 })"
       >
         <i class="bi bi-chevron-right"></i>
@@ -179,196 +179,157 @@
   </div>
 </template>
 
-<script lang="ts">
-  import { computed, defineComponent, onMounted, ref } from 'vue';
-  import adminService from '@/services/admin.service';
-  import { func } from '@/function';
-  import ReasonPromptModal from '../components/ReasonPromptModal.vue';
-  import ReportDetailModal from '../components/ReportDetailModal.vue';
-  import SuspendUserModal from '../components/SuspendUserModal.vue';
-  import { REPORT_RESOLUTION_NOTES } from '../adminPresets';
-  import { useAdminQueryState } from '../useAdminQueryState';
-  import {
-    REPORT_REASON_LABELS,
-    REPORT_STATUS_LABELS,
-    REPORT_TARGET_LABELS,
-    apiErrorMessage,
-    formatAge,
-    formatDate,
-    getInitial
-  } from '../adminFormat';
-  import type { AdminReport, ReportTargetOwner } from '../types';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import adminService from '@/services/admin.service';
+import { func } from '@/function';
+import ReasonPromptModal from '../components/ReasonPromptModal.vue';
+import ReportDetailModal from '../components/ReportDetailModal.vue';
+import SuspendUserModal from '../components/SuspendUserModal.vue';
+import { REPORT_RESOLUTION_NOTES } from '../adminPresets';
+import { useAdminQueryState } from '../useAdminQueryState';
+import {
+  REPORT_REASON_LABELS,
+  REPORT_STATUS_LABELS,
+  REPORT_TARGET_LABELS,
+  apiErrorMessage,
+  formatAge,
+  formatDate,
+  getInitial
+} from '../adminFormat';
+import type { AdminReport, ReportTargetOwner } from '../types';
 
-  const PAGE_SIZE = 50;
+const PAGE_SIZE = 50;
 
-  export default defineComponent({
-    name: 'ReportsPanel',
-    components: { ReasonPromptModal, ReportDetailModal, SuspendUserModal },
-    emits: ['changed'],
-    setup(_props, { emit }) {
-      const reports = ref<AdminReport[]>([]);
-      const pagination = ref({ totalPages: 1, totalItems: 0 });
-      const loading = ref(false);
-      const exporting = ref(false);
-      const detailReportId = ref<string | null>(null);
-      const userToSuspend = ref<{ _id: string; username: string } | null>(null);
-      const bulkTarget = ref<'resolved' | 'rejected' | null>(null);
-      const selection = ref<Set<string>>(new Set());
+const emit = defineEmits<{ changed: [] }>();
 
-      const { state, commit } = useAdminQueryState(
-        { status: 'pending', targetType: '', page: 1 },
-        () => load()
-      );
+const reports = ref<AdminReport[]>([]);
+const pagination = ref({ pages: 1, total: 0 });
+const loading = ref(false);
+const exporting = ref(false);
+const detailReportId = ref<string | null>(null);
+const userToSuspend = ref<{ _id: string; username: string } | null>(null);
+const bulkTarget = ref<'resolved' | 'rejected' | null>(null);
+const selection = ref<Set<string>>(new Set());
 
-      const selectedIds = computed(() => [...selection.value]);
-      const allSelected = computed(
-        () => reports.value.length > 0 && reports.value.every((report) => selection.value.has(report._id))
-      );
+const { state, commit } = useAdminQueryState(
+  { status: 'pending', targetType: '', page: 1 },
+  () => load()
+);
 
-      const statusBadgeClass = (status: string) =>
-        ({
-          pending: 'admin__badge--warning',
-          reviewed: 'admin__badge--info',
-          resolved: 'admin__badge--success',
-          rejected: 'admin__badge'
-        })[status] || 'admin__badge';
+const selectedIds = computed(() => [...selection.value]);
+const allSelected = computed(
+  () => reports.value.length > 0 && reports.value.every((report) => selection.value.has(report._id))
+);
 
-      const clearSelection = () => {
-        selection.value = new Set();
-      };
+const statusBadgeClass = (status: string) =>
+  ({
+    pending: 'admin__badge--warning',
+    reviewed: 'admin__badge--info',
+    resolved: 'admin__badge--success',
+    rejected: 'admin__badge'
+  })[status] || 'admin__badge';
 
-      const toggle = (reportId: string) => {
-        const next = new Set(selection.value);
-        if (next.has(reportId)) next.delete(reportId);
-        else next.add(reportId);
-        selection.value = next;
-      };
+const clearSelection = () => {
+  selection.value = new Set();
+};
 
-      const toggleAll = () => {
-        selection.value = allSelected.value
-          ? new Set()
-          : new Set(reports.value.map((report) => report._id));
-      };
+const toggle = (reportId: string) => {
+  const next = new Set(selection.value);
+  if (next.has(reportId)) next.delete(reportId);
+  else next.add(reportId);
+  selection.value = next;
+};
 
-      const load = async () => {
-        loading.value = true;
-        try {
-          const data = await adminService.getReports({
-            status: state.status || undefined,
-            targetType: state.targetType || undefined,
-            page: state.page,
-            limit: PAGE_SIZE
-          });
-          reports.value = data.reports || [];
-          pagination.value = data.pagination || { totalPages: 1, totalItems: 0 };
-          const visible = new Set(reports.value.map((report) => report._id));
-          selection.value = new Set(selectedIds.value.filter((id) => visible.has(id)));
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Impossible de charger les signalements'));
-          reports.value = [];
-        } finally {
-          loading.value = false;
-        }
-      };
+const toggleAll = () => {
+  selection.value = allSelected.value
+    ? new Set()
+    : new Set(reports.value.map((report) => report._id));
+};
 
-      const refresh = async () => {
-        await load();
-        emit('changed');
-      };
+const load = async () => {
+  loading.value = true;
+  try {
+    const data = await adminService.getReports({
+      status: state.status || undefined,
+      targetType: state.targetType || undefined,
+      page: state.page,
+      limit: PAGE_SIZE
+    });
+    reports.value = data.reports || [];
+    pagination.value = data.pagination || { pages: 1, total: 0 };
+    const visible = new Set(reports.value.map((report) => report._id));
+    selection.value = new Set(selectedIds.value.filter((id) => visible.has(id)));
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Impossible de charger les signalements'));
+    reports.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
 
-      const openDetail = (reportId: string) => {
-        detailReportId.value = reportId;
-      };
+const refresh = async () => {
+  await load();
+  emit('changed');
+};
 
-      const onDetailResolved = async () => {
-        detailReportId.value = null;
-        await refresh();
-      };
+const openDetail = (reportId: string) => {
+  detailReportId.value = reportId;
+};
 
-      const onSuspendRequest = (owner: ReportTargetOwner) => {
-        userToSuspend.value = { _id: owner._id, username: owner.username };
-      };
+const onDetailResolved = async () => {
+  detailReportId.value = null;
+  await refresh();
+};
 
-      const onSuspendConfirmed = () => {
-        userToSuspend.value = null;
-        emit('changed');
-      };
+const onSuspendRequest = (owner: ReportTargetOwner) => {
+  userToSuspend.value = { _id: owner._id, username: owner.username };
+};
 
-      const quickResolve = async (reportId: string, status: 'resolved' | 'rejected') => {
-        try {
-          await adminService.updateReportStatus(reportId, status);
-          func.showToastSuccess(status === 'resolved' ? 'Signalement résolu' : 'Signalement rejeté');
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Erreur lors de la mise à jour'));
-        }
-      };
+const onSuspendConfirmed = () => {
+  userToSuspend.value = null;
+  emit('changed');
+};
 
-      const applyBulk = async (note: string) => {
-        const status = bulkTarget.value;
-        const ids = selectedIds.value;
-        if (!status || ids.length === 0) return;
+const quickResolve = async (reportId: string, status: 'resolved' | 'rejected') => {
+  try {
+    await adminService.updateReportStatus(reportId, status);
+    func.showToastSuccess(status === 'resolved' ? 'Signalement résolu' : 'Signalement rejeté');
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Erreur lors de la mise à jour'));
+  }
+};
 
-        try {
-          const data = await adminService.bulkUpdateReports(ids, status, note || undefined);
-          func.showToastSuccess(data.message || `${ids.length} signalement(s) traité(s)`);
-          bulkTarget.value = null;
-          clearSelection();
-          await refresh();
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'Le traitement groupé a échoué'));
-        }
-      };
+const applyBulk = async (note: string) => {
+  const status = bulkTarget.value;
+  const ids = selectedIds.value;
+  if (!status || ids.length === 0) return;
 
-      const exportCsv = async () => {
-        exporting.value = true;
-        try {
-          await adminService.exportReportsCsv({
-            status: state.status || undefined,
-            targetType: state.targetType || undefined
-          });
-        } catch (error) {
-          func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
-        } finally {
-          exporting.value = false;
-        }
-      };
+  try {
+    const data = await adminService.bulkUpdateReports(ids, status, note || undefined);
+    func.showToastSuccess(data.message || `${ids.length} signalement(s) traité(s)`);
+    bulkTarget.value = null;
+    clearSelection();
+    await refresh();
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'Le traitement groupé a échoué'));
+  }
+};
 
-      onMounted(load);
+const exportCsv = async () => {
+  exporting.value = true;
+  try {
+    await adminService.exportReportsCsv({
+      status: state.status || undefined,
+      targetType: state.targetType || undefined
+    });
+  } catch (error) {
+    func.showToastError(apiErrorMessage(error, 'L\'export a échoué'));
+  } finally {
+    exporting.value = false;
+  }
+};
 
-      return {
-        REPORT_REASON_LABELS,
-        REPORT_STATUS_LABELS,
-        REPORT_TARGET_LABELS,
-        REPORT_RESOLUTION_NOTES,
-        state,
-        commit,
-        reports,
-        pagination,
-        loading,
-        exporting,
-        detailReportId,
-        userToSuspend,
-        bulkTarget,
-        selection,
-        selectedIds,
-        allSelected,
-        statusBadgeClass,
-        clearSelection,
-        toggle,
-        toggleAll,
-        formatAge,
-        formatDate,
-        getInitial,
-        load,
-        openDetail,
-        onDetailResolved,
-        onSuspendRequest,
-        onSuspendConfirmed,
-        quickResolve,
-        applyBulk,
-        exportCsv
-      };
-    }
-  });
+onMounted(load);
 </script>

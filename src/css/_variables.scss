@@ -12,6 +12,8 @@
   --bg-elevated: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.85);
   --bg-glass-light: rgba(0, 0, 0, 0.02);
+  // Fond des photos en grand (fiche annonce) : sombre dans les deux thèmes, pour faire ressortir les images.
+  --bg-media: #0a0a0a;
 
   // Surface colors
   --surface-hover: rgba(0, 0, 0, 0.04);
@@ -23,6 +25,8 @@
   --text-secondary: #6c757d;
   --text-muted: #adb5bd;
   --text-inverse: #ffffff;
+  // Texte posé sur l'accent (rose, dégradé) : reste blanc en mode sombre, contrairement à --text-inverse.
+  --text-on-accent: #ffffff;
 
   // Accent colors (K-pop vibrant)
   --accent-pink: #ff2d78;
@@ -45,6 +49,12 @@
   --error: #ef4444;
   --info: #3b82f6;
   --info-light: rgba(59, 130, 246, 0.1);
+  // Bordure des messages de statut : un cran plus marquée que leur fond (`*-light`).
+  --success-border: rgba(16, 185, 129, 0.2);
+  --danger-border: rgba(239, 68, 68, 0.2);
+  // Charte du bouton PayPal : identique en mode sombre, l'acheteur doit le reconnaître.
+  --paypal-gold: #ffc439;
+  --paypal-blue: #003087;
 
   // Shadows
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -54,6 +64,11 @@
   --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
   --shadow-glow-pink: 0 4px 20px rgba(255, 45, 120, 0.15);
   --shadow-glow-purple: 0 4px 20px rgba(168, 85, 247, 0.15);
+  // Halo de focus des champs : même teinte que l'accent, assez discret pour rester lisible.
+  --focus-ring: 0 0 0 3px rgba(255, 45, 120, 0.1);
+  --shadow-accent-sm: 0 2px 8px rgba(255, 45, 120, 0.2);
+  --shadow-accent-md: 0 4px 16px rgba(255, 45, 120, 0.3);
+  --shadow-accent-lg: 0 6px 24px rgba(255, 45, 120, 0.4);
 
   // Border radius
   --radius-xs: 4px;

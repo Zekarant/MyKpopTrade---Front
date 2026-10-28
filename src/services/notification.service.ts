@@ -1,6 +1,5 @@
-import { type AxiosInstance, type AxiosResponse } from 'axios';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import type { AxiosResponse } from 'axios';
+import { apiClient } from '@/services/apiClient';
 
 export interface Notification {
   _id: string;
@@ -25,31 +24,23 @@ export interface NotificationsResponse {
 }
 
 class NotificationService {
-  private apiClient: AxiosInstance;
-
-  constructor() {
-    const baseURL = `${API_URL}/api/notifications`;
-    this.apiClient = createApiClient({
-      baseURL,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  private client = apiClient('/api/notifications');
 
   async getNotifications(): Promise<NotificationsResponse> {
-    const response: AxiosResponse<NotificationsResponse> = await this.apiClient.get('/');
+    const response: AxiosResponse<NotificationsResponse> = await this.client.get('/');
     return response.data;
   }
 
   async markAsRead(id: string): Promise<void> {
-    await this.apiClient.put(`/${id}/read`);
+    await this.client.put(`/${id}/read`);
   }
 
   async markAllAsRead(): Promise<void> {
-    await this.apiClient.put('/read-all');
+    await this.client.put('/read-all');
   }
 
   async deleteNotification(id: string): Promise<void> {
-    await this.apiClient.delete(`/${id}`);
+    await this.client.delete(`/${id}`);
   }
 }
 

@@ -12,9 +12,9 @@
               <div class="message-bubble">
                 <div v-if="attachments.length > 0" class="grid-attachements">
                   <div
-                    class="message-attachement"
                     v-for="(attachement, index) in attachments.slice(0, 4)"
                     :key="index"
+                    class="message-attachement"
                     :class="{ 'has-more': index === 3 && attachments.length > 4 }"
                     :data-count="index === 3 && attachments.length > 4 ? `+${attachments.length - 4}` : ''" @click="emit('open-attachments', messageAttachmentUrls(message), index)">
                     <img :src="attachmentUrl(message._id || message.id, attachement)" alt="Pièce jointe" loading="lazy" decoding="async">
@@ -23,7 +23,7 @@
                 <p>{{ message.content }}</p>
                 <div v-if="message.contentType === 'offer'" class="offer-actions">
                   <!-- Si c'est l'utilisateur actuel qui a envoyé l'offre -->
-                  <div class="btn-offer" v-if="own">
+                  <div v-if="own" class="btn-offer">
                     <!-- Afficher le statut de l'offre -->
                     <div v-if="offerStatus" class="offer-status">
                       <span v-if="offerStatus === 'accepted'" class="status-accepted">
@@ -39,12 +39,12 @@
                         <i class="bi bi-clock"></i> En attente
                       </span>
                     </div>
-                    <div class="cancel-offer" @click="emit('cancel-offer', message)" v-if="offerStatus === 'pending'">
+                    <div v-if="offerStatus === 'pending'" class="cancel-offer" @click="emit('cancel-offer', message)">
                       Annuler
                     </div>
                   </div>
                   <!-- Si c'est l'autre utilisateur qui a reçu l'offre -->
-                  <div class="btns-offers" v-else>
+                  <div v-else class="btns-offers">
                     <!-- Vérifier si l'offre est déjà acceptée ou refusée -->
                     <div v-if="offerStatus" class="offer-status">
                       <span v-if="offerStatus === 'accepted'" class="status-accepted">
@@ -85,9 +85,9 @@
             </div>
             <report_card
               v-if="showReport"
-              type="message"
               :id="message._id || message.id || ''"
-              @closeReport="showReport = false"
+              type="message"
+              @close-report="showReport = false"
             ></report_card>
           </div>
 </template>

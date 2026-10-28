@@ -1,0 +1,56 @@
+// Briques communes aux formulaires des pages d'authentification.
+// Un style `scoped` n'atteint pas l'intérieur des composants enfants : chaque
+// composant qui affiche ces blocs importe ce partial (`@use`) dans son propre
+// `<style scoped>`, plutôt que de recopier les mêmes règles.
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.auth-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+
+  &--info {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--surface-border);
+  }
+
+  &--success {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+  }
+
+  &--error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+  }
+}
+
+// La classe de <Transition name="fade"> est posée sur l'élément du composant
+// qui la déclare : la règle doit donc vivre dans son style scopé.
+.fade-enter-active,
+.fade-leave-active {
+  transition: all var(--transition-base);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}

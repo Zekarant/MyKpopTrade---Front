@@ -62,6 +62,37 @@ export function getOtherParticipant<P extends Ref>(
   return other ?? participants[0] ?? null;
 }
 
+/** Identifiant d'une conversation ou d'un message : l'API expose `_id`, d'anciennes réponses `id`. */
+export const entityId = (entity: { _id?: Id; id?: Id } | null | undefined): string => entity?._id || entity?.id || '';
+
+/** Le produit d'une conversation peut arriver peuplé ou sous forme d'identifiant. */
+export function productIdOf(conversation: { productId?: unknown }): string | undefined {
+  const product = conversation.productId;
+  return typeof product === 'string' ? product : (product as { _id?: Id } | null | undefined)?._id;
+}
+
+/**
+ * Conversation déjà présente dans la liste pour une conversation qui vient
+ * d'être créée : même identifiant, sinon même interlocuteur et même produit
+ * (ou aucun produit des deux côtés). Évite d'afficher un doublon.
+ */
+export function findMatchingConversation<C extends ConversationLike & { productId?: unknown }>(
+  conversations: C[],
+  created: C,
+  userId: Id | null | undefined
+): C | undefined {
+  const createdId = entityId(created);
+  const byId = conversations.find((conversation) => entityId(conversation) === createdId);
+  if (byId) return byId;
+
+  const otherId = refId(getOtherParticipant(created as ConversationLike, userId));
+  const productId = productIdOf(created);
+  return conversations.find((conversation) =>
+    refId(getOtherParticipant(conversation as ConversationLike, userId)) === otherId &&
+    productIdOf(conversation) === productId
+  );
+}
+
 const lastMessageText = (conversation: ConversationLike): string => {
   const last = conversation.lastMessage;
   if (!last) return '';
