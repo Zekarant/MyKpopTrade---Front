@@ -197,10 +197,6 @@ const reset = async () => {
   gap: var(--space-md);
 }
 
-.input-group--error {
-  border-color: var(--danger) !important;
-  box-shadow: 0 0 0 3px var(--danger-light) !important;
-}
 
 .auth-message {
   display: flex;

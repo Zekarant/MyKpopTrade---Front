@@ -215,9 +215,10 @@
     background: var(--bg-secondary);
   }
 
+  // Après `:focus-within`, même spécificité : l'erreur reste visible pendant la saisie.
   &.input-group--error {
-    border-color: var(--danger) !important;
-    box-shadow: 0 0 0 3px var(--danger-light) !important;
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-light);
   }
 
   .input-icon {

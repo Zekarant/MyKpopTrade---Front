@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // MyKpopTrade - Page Réglages (adhérent)
 // Chargée sous `.settings-root` via `meta.load-css` : non scopée, pour que
 // les sections en héritent sans en embarquer chacune une copie.
@@ -106,6 +106,10 @@ a.setting-row:hover { color: inherit; }
   font-size: var(--font-size-sm);
 
   i { font-size: 1.1rem; color: var(--text-muted); }
+
+  // Couleurs des marques Google et Discord.
+  i.oauth-icon--google { color: #4285f4; }
+  i.oauth-icon--discord { color: #5865f2; }
 }
 
 .setting-row__label-group {
@@ -834,3 +838,8 @@ a.setting-row:hover { color: inherit; }
   .save-bar__text { white-space: normal; }
 }
 
+// Code pays à deux lettres, à côté du code postal et de la ville. En fin de fichier :
+// l'emporte sur le `flex: 1` de `.settings-input--sm` et de `.modal-inline input`.
+input.settings-input--country {
+  flex: 0 0 70px;
+}

@@ -9,7 +9,7 @@
       </div>
 
       <div class="admin__modal-body">
-        <p v-if="description" class="admin__muted" style="margin: 0 0 var(--space-md)">{{ description }}</p>
+        <p v-if="description" class="admin__muted mt-0 mb-3">{{ description }}</p>
 
         <div class="admin__field">
           <label>Motifs courants</label>

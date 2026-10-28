@@ -76,7 +76,7 @@ v-model="anonymizeSearch"
 
         <div class="admin__card">
           <h3><i class="bi bi-clock-history"></i> Suppressions planifiées</h3>
-          <p v-if="deletionRequests.length === 0" class="admin__muted" style="margin: 0">
+          <p v-if="deletionRequests.length === 0" class="admin__muted m-0">
             Aucune demande en attente.
           </p>
           <dl v-else class="admin__definition-list">

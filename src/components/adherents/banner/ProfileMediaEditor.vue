@@ -151,19 +151,20 @@ async function confirmDeletion() {
   &--picture { right: 0; }
 }
 
-@media (max-width: 768px) {
-  .picture {
-    top: calc(15vh - 60px);
-    left: calc(calc(100% - 130px) / 2) !important;
-  }
-  .background {
-    height: 15vh;
-  }
-}
-
+// De la plus large à la plus étroite : la plus étroite l'emporte.
 @media only screen and (max-width: 1024px) {
   .picture {
     left: 14%;
+  }
+}
+
+@media (max-width: 768px) {
+  .picture {
+    top: calc(15vh - 60px);
+    left: calc(calc(100% - 130px) / 2);
+  }
+  .background {
+    height: 15vh;
   }
 }
 </style>

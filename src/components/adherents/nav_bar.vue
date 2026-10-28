@@ -478,8 +478,9 @@ function logout() {
     background: var(--surface-hover);
   }
 
-  &--active {
-    color: var(--accent-pink) !important;
+  &--active,
+  &--active:hover {
+    color: var(--accent-pink);
     background: rgba(255, 45, 120, 0.08);
   }
 
@@ -1037,7 +1038,7 @@ function logout() {
   .navbar__profile,
   .navbar__dropdown,
   .navbar__right {
-    display: none !important;
+    display: none;
   }
 
   .navbar__inner {
@@ -1071,7 +1072,7 @@ function logout() {
 
 @media (min-width: 769px) {
   .navbar__mobile {
-    display: none !important;
+    display: none;
   }
 }
 </style>

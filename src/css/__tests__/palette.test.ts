@@ -17,8 +17,9 @@ const ALLOWED: Record<string, string[]> = {
   'css/two-factor-card.scss': ['#fff'],
   // Texte du point « retourné » : sombre sur l'ambre de --warning, dans les deux thèmes.
   'css/payments.scss': ['#1f1f1f'],
-  // Couleur de la marque Discord.
+  // Couleurs des marques Google et Discord.
   'views/auth/OAuthButtons.vue': ['#5865f2'],
+  'css/settings.scss': ['#4285f4', '#5865f2'],
 }
 
 function styleFiles(dir: string): string[] {

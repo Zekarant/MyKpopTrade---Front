@@ -100,14 +100,14 @@
             <span>Adresse</span>
           </div>
         </div>
-        <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input" placeholder="Rue et numéro" aria-label="Rue et numéro" style="margin-top: 8px;" />
+        <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input mt-2" placeholder="Rue et numéro" aria-label="Rue et numéro" />
         <input v-model="address.streetLine2" type="text" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" aria-label="Complément d'adresse (optionnel)" />
-        <div class="setting-row__inline" style="margin-top: 0;">
+        <div class="setting-row__inline mt-0">
           <input v-model="address.postalCode" type="text" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" aria-label="Code postal" />
           <input v-model="address.city" type="text" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" aria-label="Ville" />
-          <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" aria-label="Pays (code à deux lettres)" style="flex: 0 0 70px;" />
+          <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm settings-input--country" placeholder="FR" aria-label="Pays (code à deux lettres)" />
         </div>
-        <button v-if="addressChanged" class="btn-settings btn-settings--sm" style="align-self: flex-start; margin-top: 8px;" @click="saveAddress">Enregistrer</button>
+        <button v-if="addressChanged" class="btn-settings btn-settings--sm align-self-start mt-2" @click="saveAddress">Enregistrer</button>
       </div>
     </div>
   </section>
@@ -157,7 +157,7 @@
       <div class="modal-inline">
         <input v-model.trim="address.postalCode" type="text" maxlength="16" placeholder="Code postal" aria-label="Code postal" />
         <input v-model.trim="address.city" type="text" maxlength="100" placeholder="Ville" aria-label="Ville" />
-        <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" aria-label="Pays (code à deux lettres)" style="flex: 0 0 70px;" />
+        <input v-model.trim="address.country" type="text" maxlength="2" class="settings-input--country" placeholder="FR" aria-label="Pays (code à deux lettres)" />
       </div>
 
       <p v-if="paypalInfoError" class="modal-error">{{ paypalInfoError }}</p>

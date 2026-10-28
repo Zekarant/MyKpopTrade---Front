@@ -20,7 +20,7 @@ v-model="search"
 
     <template v-else>
       <div v-for="group in filteredGroups" :key="group.category" class="admin__panel-header">
-        <h3 style="margin: 0; font-size: var(--font-size-md); color: var(--text-primary)">
+        <h3 class="admin__group-title">
           {{ group.category }} ({{ group.faqs.length }})
         </h3>
       </div>
@@ -127,7 +127,7 @@ v-model="search"
               Publiée
             </label>
           </div>
-          <p v-if="formError" class="admin__hint" style="color: var(--danger)">{{ formError }}</p>
+          <p v-if="formError" class="admin__hint admin__hint--error">{{ formError }}</p>
         </form>
         <div class="admin__modal-footer">
           <button type="button" class="admin__btn admin__btn--ghost" @click="showForm = false">Annuler</button>

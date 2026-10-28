@@ -12,8 +12,8 @@
       </div>
 
       <div v-if="loading" class="saved-searches__loading">
-        <div class="skeleton" style="height: 88px;"></div>
-        <div class="skeleton" style="height: 88px;"></div>
+        <div class="skeleton skeleton--row"></div>
+        <div class="skeleton skeleton--row"></div>
       </div>
 
       <ul v-else-if="savedSearches.length > 0" class="saved-searches__list">
@@ -304,5 +304,9 @@ async function remove(search: SavedSearch) {
   .btn {
     margin-top: var(--space-lg);
   }
+}
+
+.skeleton--row {
+  height: 88px;
 }
 </style>
