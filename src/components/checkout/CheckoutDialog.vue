@@ -417,9 +417,4 @@ h3 {
     color: var(--paypal-blue);
   }
 }
-
-.spin {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
 </style>

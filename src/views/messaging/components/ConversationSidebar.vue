@@ -159,7 +159,7 @@
         </div>
 
         <div v-else class="loading">
-          <i class="bi bi-arrow-clockwise"></i>
+          <i class="bi bi-arrow-clockwise spin" aria-hidden="true"></i>
           Chargement...
         </div>
       </div>

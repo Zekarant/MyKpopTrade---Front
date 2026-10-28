@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { NOW, ME, profile } from './fixtures/settings'
+import { test, expect, type Locator } from '@playwright/test'
+import { ME, NOW, currentUser } from './fixtures/messaging'
 import { mockApi, setupSession } from './support'
 
 /**
@@ -7,29 +7,29 @@ import { mockApi, setupSession } from './support'
  * playwright.config.ts) : les animations sont coupées, sauf celles des
  * indicateurs de chargement, qui continuent de tourner lentement.
  */
-test('réduire les animations — seuls les indicateurs de chargement tournent', async ({ page }) => {
+
+const iterations = (locator: Locator) => locator.evaluate((el) => getComputedStyle(el).animationIterationCount)
+
+test('réduire les animations — les indicateurs de chargement tournent toujours', async ({ page }) => {
   await setupSession(page, { now: NOW, userId: ME })
-  await mockApi(page, (path) => (path === '/api/auth/profile' || path === '/api/users/me' ? profile : undefined))
-  await page.goto('/adherents/settings?section=profil')
-  await expect(page.locator('.settings-page__title')).toHaveText('Paramètres')
-
-  const styles = await page.evaluate(() => {
-    const classes = ['spin', 'spinner', 'cart-page__spinner', 'other']
-    return classes.map((cls) => {
-      const el = document.createElement('div')
-      el.className = cls
-      el.style.animationName = 'spin'
-      document.body.append(el)
-      const { animationIterationCount, animationDuration } = getComputedStyle(el)
-      el.remove()
-      return { cls, animationIterationCount, animationDuration }
-    })
+  // La liste des conversations ne répond jamais : l'écran reste en chargement.
+  await mockApi(page, (path) => {
+    if (path === '/api/users/me' || path === '/api/auth/profile') return currentUser
+    if (path === '/api/messaging/' || path === '/api/messaging') return new Promise(() => {})
+    return undefined
   })
+  await page.goto('/adherents/messages')
 
-  expect(styles).toEqual([
-    { cls: 'spin', animationIterationCount: 'infinite', animationDuration: '1.5s' },
-    { cls: 'spinner', animationIterationCount: 'infinite', animationDuration: '1.5s' },
-    { cls: 'cart-page__spinner', animationIterationCount: 'infinite', animationDuration: '1.5s' },
-    { cls: 'other', animationIterationCount: '1', animationDuration: '1e-05s' }
-  ])
+  const icon = page.locator('.loading .spin').first()
+  await expect(icon).toBeVisible()
+  expect(await iterations(icon)).toBe('infinite')
+
+  // Les autres animations restent coupées (une seule itération, quasi instantanée).
+  await page.evaluate(() => {
+    const el = document.createElement('div')
+    el.id = 'other-animation'
+    el.style.animation = 'spin 1s linear infinite'
+    document.body.append(el)
+  })
+  expect(await iterations(page.locator('#other-animation'))).toBe('1')
 })

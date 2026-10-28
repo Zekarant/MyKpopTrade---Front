@@ -1,7 +1,7 @@
 <template>
   <div ref="container" class="messages-area">
     <div v-if="loadingOlder" class="loading-more-messages">
-      <i class="bi bi-arrow-clockwise"></i>
+      <i class="bi bi-arrow-clockwise spin" aria-hidden="true"></i>
       <span>Chargement...</span>
     </div>
     <MessageBubble
