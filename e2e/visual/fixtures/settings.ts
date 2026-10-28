@@ -40,3 +40,22 @@ export const paypalStatus = {
 }
 
 export const twoFactorStatus = { enabled: false, recoveryCodesRemaining: 0 }
+
+/** Choix variés, pour que la capture montre des cases cochées et décochées. */
+export const notificationPreferences = {
+  preferences: {
+    orders: { email: true, push: true },
+    offers: { email: true, push: false },
+    messages: { email: false, push: true },
+    disputes: { email: true, push: true },
+    reviews: { email: false, push: false },
+    social: { email: false, push: true }
+  }
+}
+
+export const blockedUsers = {
+  blockedUsers: [
+    { _id: 'user-blocked', username: 'Spammeur', profilePicture: '/uploads/profiles/blocked.png', blockedAt: '2026-09-02T10:00:00+02:00' }
+  ],
+  pagination: { page: 1, limit: 20, total: 1, pages: 1 }
+}
