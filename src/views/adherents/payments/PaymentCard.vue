@@ -36,7 +36,7 @@
     <PaymentShipment v-if="payment.shipment" :shipment="payment.shipment" />
 
     <div class="payment-card__actions">
-      <button v-if="canMarkDelivered(payment, currentUserId)" type="button" class="btn btn--ghost btn--sm" @click="emit('markDelivered', payment)">
+      <button v-if="canMarkDelivered(payment, currentUserId)" type="button" class="btn btn-ghost btn-sm" @click="emit('markDelivered', payment)">
         <i class="bi bi-check2-circle"></i> Marquer livré
       </button>
     </div>

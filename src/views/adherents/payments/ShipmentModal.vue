@@ -15,7 +15,7 @@
     <input :id="`${uid}-url`" v-model="trackingUrl" type="url" placeholder="https://…" />
 
     <template #confirm>
-      <button type="button" class="btn btn--primary" :disabled="!carrier || !trackingNumber" @click="submit">Enregistrer</button>
+      <button type="button" class="btn btn-primary" :disabled="!carrier || !trackingNumber" @click="submit">Enregistrer</button>
     </template>
   </PaymentModal>
 </template>

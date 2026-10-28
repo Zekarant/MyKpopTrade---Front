@@ -14,7 +14,7 @@
     <textarea :id="`${uid}-description`" v-model="description" rows="5" maxlength="2000" placeholder="Donnez tous les détails utiles..."></textarea>
 
     <template #confirm>
-      <button type="button" class="btn btn--danger" :disabled="!description.trim()" @click="emit('submit', { reason, description })">
+      <button type="button" class="btn btn-danger" :disabled="!description.trim()" @click="emit('submit', { reason, description })">
         Ouvrir le litige
       </button>
     </template>

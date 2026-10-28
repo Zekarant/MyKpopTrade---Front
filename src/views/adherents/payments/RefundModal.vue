@@ -30,7 +30,7 @@
     <input :id="`${uid}-password`" v-model="password" type="password" placeholder="Votre mot de passe" />
 
     <template #confirm>
-      <button type="button" class="btn btn--danger" :disabled="!canSubmit" @click="submit">Confirmer le remboursement</button>
+      <button type="button" class="btn btn-danger" :disabled="!canSubmit" @click="submit">Confirmer le remboursement</button>
     </template>
   </PaymentModal>
 </template>

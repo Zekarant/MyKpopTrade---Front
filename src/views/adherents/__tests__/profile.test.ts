@@ -56,7 +56,7 @@ async function mountProfile() {
 }
 
 async function openTab(wrapper: Awaited<ReturnType<typeof mountProfile>>, label: string) {
-  await wrapper.findAll('.btn-group .btn').find((b) => b.text() === label)!.trigger('click')
+  await wrapper.findAll('.segment-tab').find((b) => b.text() === label)!.trigger('click')
   await flushPromises()
 }
 

@@ -145,19 +145,6 @@ onMounted(loadProduct);
     color: var(--text-secondary);
     margin: 20px 0;
   }
-
-  .btn-primary {
-    background: var(--primary-color);
-    color: var(--bg-card);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
 }
 
 .content {

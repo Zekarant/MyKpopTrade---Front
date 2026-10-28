@@ -438,28 +438,8 @@ a.setting-row:hover { color: inherit; }
   }
 }
 
-// PayPal info modal
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-md);
-  z-index: 1000;
-}
-
+// Contenu de la fenêtre d'info PayPal (fenêtre elle-même : _components.scss).
 .modal-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl);
-  width: 100%;
-  max-width: 460px;
-  max-height: 90vh;
-  overflow-y: auto;
-
   h2 {
     font-size: var(--font-size-lg);
     margin: 0 0 var(--space-xs);

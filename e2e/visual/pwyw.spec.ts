@@ -22,7 +22,7 @@ async function mockPwywApi(page: Page) {
 async function openPwywListing(page: Page) {
   await mockPwywApi(page)
   await page.goto(`/adherents/profile/${OTHER}`)
-  await page.locator('.btn-group .btn', { hasText: 'Annonces' }).click()
+  await page.locator('.segment-tab', { hasText: 'Annonces' }).click()
   await page.locator('.product-card').first().click()
   await expect(page.locator('.post-modal__pwyw')).toBeVisible()
   await page.waitForLoadState('networkidle')

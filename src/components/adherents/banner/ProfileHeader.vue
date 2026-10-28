@@ -68,11 +68,6 @@ const { isFollowing, followersCount, followingCount, toggleFollow } = useFollow(
   flex-wrap: wrap;
   gap: 10px;
 }
-.actions .btn {
-  border-radius: 2px;
-  width: auto;
-  font-size: 12px;
-}
 .nickname_block {
   display: inline-flex;
   align-items: center;
@@ -94,15 +89,6 @@ const { isFollowing, followersCount, followingCount, toggleFollow } = useFollow(
   text-decoration-skip-ink: none;
   color: var(--primary-color);
 }
-button.btn.btn-outline {
-  color: var(--blue);
-  border-color: var(--blue);
-}
-button.btn.btn-outline:hover {
-  background-color: var(--blue);
-  color: white;
-}
-
 @media (max-width: 768px) {
   .profil_main {
     align-items: center;

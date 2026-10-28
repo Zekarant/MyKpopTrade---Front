@@ -140,24 +140,7 @@ h1 {
 }
 
 .btn {
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
   width: 100%;
-}
-
-.btn-secondary {
-  background: var(--secondary-color);
-  color: var(--text-on-accent);
-
-  &:hover {
-    background: var(--secondary-color-shade);
-    transform: translateY(-2px);
-  }
 }
 
 @media (max-width: 550px) {

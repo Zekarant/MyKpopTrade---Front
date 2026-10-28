@@ -235,45 +235,6 @@ textarea.form-control {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-
-  button {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .btn-secondary {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-
-    &:hover {
-      background: var(--surface-border);
-    }
-  }
-
-  .btn-primary {
-    background: var(--primary-color);
-    color: var(--bg-card);
-
-    &:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    i {
-      font-size: 18px;
-    }
-  }
 }
 
 @media (max-width: 768px) {
@@ -286,7 +247,6 @@ textarea.form-control {
 
     button {
       width: 100%;
-      justify-content: center;
     }
   }
 }

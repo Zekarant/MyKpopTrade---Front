@@ -23,7 +23,7 @@ async function openProfile(page: Page, who: 'me' | typeof OTHER) {
 }
 
 async function openTab(page: Page, label: string) {
-  await page.locator('.btn-group .btn', { hasText: label }).click()
+  await page.locator('.segment-tab', { hasText: label }).click()
   await page.waitForLoadState('networkidle')
 }
 

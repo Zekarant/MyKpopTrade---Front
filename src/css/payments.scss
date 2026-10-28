@@ -228,32 +228,12 @@
 
 .payment-card__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
 
-.btn {
-  display: inline-flex; align-items: center; gap: var(--space-xs);
-  padding: 8px 16px; border-radius: var(--radius-md); border: none;
-  font-size: var(--font-size-sm); font-weight: 600; cursor: pointer;
-  transition: all var(--transition-fast);
-  &--sm { padding: 6px 12px; font-size: var(--font-size-xs); }
-  &--primary { background: var(--accent-gradient); color: white; }
-  &--ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--surface-border);
-    &:hover { background: var(--surface-hover); } }
-  &--danger { background: #dc3545; color: white; &:hover { background: #c82333; } }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
 .btn-link { color: var(--accent-pink); text-decoration: none; font-size: var(--font-size-sm); &:hover { text-decoration: underline; } }
 
 .pager { display: flex; justify-content: center; align-items: center; gap: var(--space-md); padding: var(--space-lg); }
 
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
-}
+// Contenu des fenêtres (fenêtre elle-même : _components.scss).
 .modal-card {
-  background: var(--bg-card); border: 1px solid var(--surface-border);
-  border-radius: var(--radius-lg); padding: var(--space-xl);
-  width: 90%; max-width: 480px;
   h2 { margin: 0 0 var(--space-sm); font-size: var(--font-size-xl); }
   .modal-subtitle { color: var(--text-muted); margin-bottom: var(--space-lg); font-size: var(--font-size-sm); }
   label { display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-xs); margin-top: var(--space-md); }

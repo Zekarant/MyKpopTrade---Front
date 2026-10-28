@@ -7,7 +7,7 @@
       <slot />
 
       <div class="modal-actions">
-        <button type="button" class="btn btn--ghost" @click="emit('close')">Annuler</button>
+        <button type="button" class="btn btn-ghost" @click="emit('close')">Annuler</button>
         <slot name="confirm" />
       </div>
     </div>
