@@ -3,8 +3,8 @@
   <div class="popup-content offer-modal" @click.stop>
     <div class="popup-header">
       <h3>Faire une offre</h3>
-      <button class="close-btn" @click="$emit('close')">
-        <i class="bi bi-x"></i>
+      <button type="button" class="close-btn" aria-label="Fermer" @click="$emit('close')">
+        <i class="bi bi-x" aria-hidden="true"></i>
       </button>
     </div>
 

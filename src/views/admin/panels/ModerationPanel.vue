@@ -89,25 +89,7 @@
         </table>
       </div>
 
-      <div v-if="pagination.pages > 1" class="admin__pagination">
-        <button
-          type="button"
-          class="admin__icon-btn"
-          :disabled="state.page <= 1"
-          @click="commit({ page: state.page - 1 })"
-        >
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <span>{{ state.page }} / {{ pagination.pages }}</span>
-        <button
-          type="button"
-          class="admin__icon-btn"
-          :disabled="state.page >= pagination.pages"
-          @click="commit({ page: state.page + 1 })"
-        >
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
+      <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })" />
     </div>
 
     <ReasonPromptModal
@@ -127,6 +109,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
 import { func } from '@/function';

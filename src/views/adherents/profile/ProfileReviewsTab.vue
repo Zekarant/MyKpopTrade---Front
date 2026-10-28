@@ -46,11 +46,12 @@
         <div class="response-popup">
           <div class="response-popup__header">
             <h3><i class="bi bi-reply"></i> Répondre à l'avis</h3>
-            <button class="response-popup__close" @click="closeResponsePopup"><i class="bi bi-x-lg"></i></button>
+            <button class="response-popup__close" aria-label="Fermer" @click="closeResponsePopup"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
           </div>
           <div class="response-popup__body">
             <textarea
               v-model="responseText"
+              aria-label="Votre réponse à l'avis"
               class="response-popup__textarea"
               placeholder="Écrivez votre réponse..."
               rows="4"

@@ -140,13 +140,21 @@
 
         <!-- Nouveau formulaire -->
         <template v-else>
-          <select v-model="identityDocumentType" class="settings-input">
+          <select v-model="identityDocumentType" class="settings-input" aria-label="Type de document">
             <option value="id_card">Carte d'identité</option>
             <option value="passport">Passeport</option>
             <option value="driver_license">Permis de conduire</option>
           </select>
-          <div class="identity-upload" @click="identityFileInput?.click()">
-            <img v-if="identityDocumentPreview" :src="identityDocumentPreview" class="identity-upload__preview" />
+          <div
+            class="identity-upload"
+            role="button"
+            tabindex="0"
+            aria-label="Importer votre document d'identité"
+            @click="identityFileInput?.click()"
+            @keydown.enter.prevent="identityFileInput?.click()"
+            @keydown.space.prevent="identityFileInput?.click()"
+          >
+            <img v-if="identityDocumentPreview" :src="identityDocumentPreview" alt="Aperçu du document importé" class="identity-upload__preview" />
             <template v-else>
               <i class="bi bi-cloud-upload"></i>
               <span>Cliquez pour importer votre document</span>

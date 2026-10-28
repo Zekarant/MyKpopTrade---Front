@@ -60,6 +60,7 @@
             <input
               type="text"
               placeholder="Rechercher..."
+              aria-label="Rechercher une conversation"
               :value="searchQuery"
               @input="emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
             />
@@ -76,12 +77,15 @@
             :key="conversation._id || conversation.id"
             class="conversation-item"
             :class="{
-              active: (selectedConversation?._id && selectedConversation._id === conversation._id) ||
-            (selectedConversation?.id && selectedConversation.id === conversation.id),
+              active: isSelected(conversation),
               unread: (conversation.unreadCount ?? 0) > 0,
               favorite: isFavorite(conversation)
             }"
-            @click="emit('select', conversation)">
+            tabindex="0"
+            :aria-current="isSelected(conversation) ? 'true' : undefined"
+            @click="emit('select', conversation)"
+            @keydown.enter.self="emit('select', conversation)"
+            @keydown.space.self.prevent="emit('select', conversation)">
 
             <div>
               <div class="conversation-avatar">
@@ -110,10 +114,13 @@
             <div class="conversation-actions" @click.stop>
               <button
                 class="action-dots-btn"
-                :title="'Options'"
+                title="Options"
+                aria-label="Options de la conversation"
+                aria-haspopup="menu"
+                :aria-expanded="openMenuId === (conversation._id || conversation.id)"
                 @click="emit('toggle-menu', conversation._id || conversation.id)"
               >
-                <i class="bi bi-three-dots"></i>
+                <i class="bi bi-three-dots" aria-hidden="true"></i>
               </button>
               <!-- Dropdown Menu -->
               <div
@@ -163,6 +170,7 @@
 /** Colonne de gauche de la messagerie ; composant d'affichage, toute action remonte au parent. */
 import {
   conversationTypeLabel,
+  entityId,
   formatMessageTimestamp,
   getOtherParticipant,
   isArchivedConversation,
@@ -202,6 +210,8 @@ const emit = defineEmits<{
 const otherParticipant = (conversation: SidebarConversation) => getOtherParticipant(conversation, props.userId)
 const isFavorite = (conversation: SidebarConversation) => isFavoriteConversation(conversation, props.userId)
 const isArchived = (conversation: SidebarConversation) => isArchivedConversation(conversation, props.userId)
+const isSelected = (conversation: SidebarConversation) =>
+  props.selectedConversation !== null && entityId(props.selectedConversation) === entityId(conversation)
 </script>
 
 <style lang="scss" scoped>

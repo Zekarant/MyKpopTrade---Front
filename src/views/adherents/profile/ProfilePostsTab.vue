@@ -4,7 +4,7 @@
     <div v-if="isOwnProfile" class="post-create">
       <div class="post-create__input">
         <span class="post-create__avatar">{{ initialOf(username) }}</span>
-        <textarea v-model="newPostContent" class="post-create__textarea" placeholder="Quoi de neuf ?" rows="2" maxlength="1000"></textarea>
+        <textarea v-model="newPostContent" class="post-create__textarea" placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" rows="2" maxlength="1000"></textarea>
       </div>
       <div class="post-create__footer">
         <span class="post-create__count">{{ newPostContent.length }}/1000</span>
@@ -26,16 +26,17 @@
             </span>
             <span class="feed-post__date">{{ formatPostDate(post.createdAt) }}</span>
           </div>
-          <button v-if="isOwnProfile" class="feed-post__delete" @click="removePost(post._id)">
-            <i class="bi bi-trash"></i>
+          <button v-if="isOwnProfile" class="feed-post__delete" aria-label="Supprimer la publication" @click="removePost(post._id)">
+            <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
           <button
             v-else
             class="feed-post__delete"
             title="Signaler cette publication"
+            aria-label="Signaler cette publication"
             @click="emit('report', { type: 'post', id: post._id })"
           >
-            <i class="bi bi-flag"></i>
+            <i class="bi bi-flag" aria-hidden="true"></i>
           </button>
         </div>
         <p class="feed-post__content">{{ post.content }}</p>
@@ -65,9 +66,9 @@
             </div>
           </div>
           <div class="feed-reply__form">
-            <input v-model="post.replyText" placeholder="Répondre..." class="feed-reply__input" @keyup.enter="submitReply(post)" />
-            <button class="feed-reply__send" :disabled="!post.replyText.trim()" @click="submitReply(post)">
-              <i class="bi bi-send"></i>
+            <input v-model="post.replyText" placeholder="Répondre..." aria-label="Votre réponse" class="feed-reply__input" @keyup.enter="submitReply(post)" />
+            <button class="feed-reply__send" aria-label="Envoyer la réponse" :disabled="!post.replyText.trim()" @click="submitReply(post)">
+              <i class="bi bi-send" aria-hidden="true"></i>
             </button>
           </div>
         </div>

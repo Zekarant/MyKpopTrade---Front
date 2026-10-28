@@ -130,25 +130,9 @@
       </table>
     </div>
 
-    <div v-if="pagination.pages > 1" class="admin__pagination">
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page <= 1"
-        @click="commit({ page: state.page - 1 })"
-      >
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <span>{{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} signalements</span>
-      <button
-        type="button"
-        class="admin__icon-btn"
-        :disabled="state.page >= pagination.pages"
-        @click="commit({ page: state.page + 1 })"
-      >
-        <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+    <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })">
+      {{ state.page }} / {{ pagination.pages }} — {{ pagination.total }} signalements
+    </AdminPagination>
 
     <ReportDetailModal
       v-if="detailReportId"
@@ -181,6 +165,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import { func } from '@/function';
 import ReasonPromptModal from '../components/ReasonPromptModal.vue';

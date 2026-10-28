@@ -18,10 +18,10 @@
         <swiper-slide v-for="item in visibleList" :key="item._id">
             <card :data="item" @open="openPost" @remove-favorite="removeFavorite" />
         </swiper-slide>
-        <button type="button" class="custom-swiper-prev">
+        <button type="button" class="custom-swiper-prev" aria-label="Annonces précédentes">
             <i class="bi bi-chevron-left" aria-hidden="true"></i>
         </button>
-        <button type="button" class="custom-swiper-next">
+        <button type="button" class="custom-swiper-next" aria-label="Annonces suivantes">
             <i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>
         <swiper-slide v-if="hasMorePages(pagination)" class="voir-plus-slide">
