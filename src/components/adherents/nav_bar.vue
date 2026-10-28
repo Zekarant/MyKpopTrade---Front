@@ -2,28 +2,29 @@
   <nav class="navbar" :class="{ 'navbar--open': menuOpen }">
     <div class="navbar__inner">
       <!-- Logo -->
-      <div class="navbar__brand" @click="navPage('dashboard', null)">
-        <span class="navbar__logo">K</span>
+      <RouterLink :to="{ name: 'dashboard' }" class="navbar__brand" @click="closeMenus">
+        <span class="navbar__logo" aria-hidden="true">K</span>
         <span class="navbar__title">MyKpopTrade</span>
-      </div>
+      </RouterLink>
 
       <!-- Desktop Navigation -->
       <div class="navbar__links">
-        <a
+        <RouterLink
           v-for="menu in itemMenu"
           :key="menu.page"
+          :to="{ name: menu.page }"
           class="navbar__link"
           :class="{ 'navbar__link--active': menu.active }"
-          @click.prevent="navPage(menu.page, menu.parameter)"
-          href="#"
+          :aria-current="menu.active ? 'page' : undefined"
+          @click="closeMenus"
         >
           <i :class="menu.iconClass"></i>
           <span>{{ menu.label }}</span>
-        </a>
+        </RouterLink>
       </div>
 
       <!-- Center action -->
-      <button class="navbar__sell-btn" @click="togglePopup" aria-label="Vendre">
+      <button type="button" class="navbar__sell-btn" aria-label="Vendre" @click="goToSell">
         <i class="bi bi-plus-lg"></i>
         <span class="navbar__sell-text">Vendre</span>
       </button>
@@ -31,14 +32,22 @@
       <!-- Right section -->
       <div class="navbar__right">
         <!-- Notifications -->
-        <div ref="notifWrapper" class="navbar__notif-wrapper" @click.stop="toggleNotifications">
-          <button class="navbar__icon-btn" aria-label="Notifications">
+        <div ref="notifWrapper" class="navbar__notif-wrapper">
+          <button
+            ref="notifTrigger"
+            type="button"
+            class="navbar__icon-btn"
+            :aria-label="unreadNotifications > 0 ? `Notifications, ${unreadNotifications} non lues` : 'Notifications'"
+            :aria-expanded="notificationsOpen"
+            aria-controls="navbar-notifications"
+            @click.stop="toggleNotifications"
+          >
             <i class="bi bi-bell"></i>
-            <span v-if="unreadNotifications > 0" class="navbar__badge">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
+            <span v-if="unreadNotifications > 0" class="navbar__badge" aria-hidden="true">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
           </button>
           <!-- Notifications dropdown -->
           <Transition name="dropdown">
-            <div v-if="notificationsOpen" class="navbar__notif-dropdown" @click.stop>
+            <div v-if="notificationsOpen" id="navbar-notifications" class="navbar__notif-dropdown" @click.stop>
               <div class="navbar__notif-header">
                 <span class="navbar__notif-title">Notifications</span>
                 <button v-if="notifications.length > 0" class="navbar__notif-mark-all" @click="markAllRead">Tout marquer comme lu</button>
@@ -48,12 +57,14 @@
                   <i class="bi bi-bell-slash"></i>
                   <span>Aucune notification</span>
                 </div>
-                <div v-for="notif in notifications" :key="notif._id" class="navbar__notif-item" :class="{ 'navbar__notif-item--unread': !notif.isRead }" @click="onNotifClick(notif)">
-                  <i class="bi" :class="getNotifIcon(notif.type)"></i>
-                  <div class="navbar__notif-content">
-                    <span class="navbar__notif-text">{{ notif.content }}</span>
-                    <span class="navbar__notif-time">{{ formatRelative(notif.createdAt) }}</span>
-                  </div>
+                <div v-for="notif in notifications" :key="notif._id" class="navbar__notif-item" :class="{ 'navbar__notif-item--unread': !notif.isRead }">
+                  <button type="button" class="navbar__notif-open" @click="onNotifClick(notif)">
+                    <i class="bi" :class="getNotifIcon(notif.type)" aria-hidden="true"></i>
+                    <span class="navbar__notif-content">
+                      <span class="navbar__notif-text">{{ notif.content }}</span>
+                      <span class="navbar__notif-time">{{ formatRelative(notif.createdAt) }}</span>
+                    </span>
+                  </button>
                   <button
                     type="button"
                     class="navbar__notif-delete"
@@ -69,30 +80,43 @@
         </div>
 
         <!-- Messages -->
-        <button class="navbar__icon-btn" @click="navPage('messages', 'me')" aria-label="Messages">
+        <RouterLink :to="{ name: 'messages' }" class="navbar__icon-btn" aria-label="Messages" @click="closeMenus">
           <i class="bi bi-chat-dots"></i>
-        </button>
+        </RouterLink>
 
         <!-- Cart -->
-        <button class="navbar__icon-btn" @click="navPage('cart', null)" aria-label="Panier">
+        <RouterLink
+          :to="{ name: 'cart' }"
+          class="navbar__icon-btn"
+          :aria-label="cartCount > 0 ? `Panier, ${cartCount} articles` : 'Panier'"
+          @click="closeMenus"
+        >
           <i class="bi bi-cart3"></i>
-          <span v-if="cartCount > 0" class="navbar__badge">{{ cartCount > 9 ? '9+' : cartCount }}</span>
-        </button>
+          <span v-if="cartCount > 0" class="navbar__badge" aria-hidden="true">{{ cartCount > 9 ? '9+' : cartCount }}</span>
+        </RouterLink>
 
         <!-- Profile dropdown trigger -->
-        <div ref="profileTrigger" class="navbar__profile" @click.stop="toggleDropdown">
-          <div v-if="dataUser" class="navbar__avatar">
+        <button
+          ref="profileTrigger"
+          type="button"
+          class="navbar__profile"
+          aria-label="Menu du compte"
+          :aria-expanded="dropdownOpen"
+          aria-controls="navbar-account-menu"
+          @click.stop="toggleDropdown"
+        >
+          <span v-if="dataUser" class="navbar__avatar">
             <UserAvatar :user="dataUser" />
-          </div>
-          <div v-else class="navbar__avatar navbar__avatar--placeholder">
+          </span>
+          <span v-else class="navbar__avatar navbar__avatar--placeholder">
             <i class="bi bi-person-fill"></i>
-          </div>
+          </span>
           <i class="bi bi-chevron-down navbar__chevron" :class="{ 'navbar__chevron--open': dropdownOpen }"></i>
-        </div>
+        </button>
 
         <!-- Profile Dropdown -->
         <Transition name="dropdown">
-          <div v-if="dropdownOpen" ref="profileDropdown" class="navbar__dropdown" @click.stop>
+          <div v-if="dropdownOpen" id="navbar-account-menu" ref="profileDropdown" class="navbar__dropdown" @click.stop>
             <div class="navbar__dropdown-header">
               <div v-if="dataUser" class="navbar__dropdown-avatar">
                 <UserAvatar :user="dataUser" />
@@ -106,54 +130,49 @@
               </div>
             </div>
             <div class="navbar__dropdown-divider"></div>
-            <a @click="togglePopup" href="#" class="navbar__dropdown-item navbar__dropdown-item--accent">
+            <RouterLink :to="{ name: 'add_post' }" class="navbar__dropdown-item navbar__dropdown-item--accent" @click="closeMenus">
               <i class="bi bi-plus-circle"></i>
               Vendre un article
-            </a>
-            <a @click="navPage('profile', 'me')" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-person"></i>
-              Mon profil public
-            </a>
-            <a @click="navPage('collection', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-collection"></i>
-              Ma collection
-            </a>
-            <a @click="navPage('saved_searches', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-bookmark-star"></i>
-              Recherches sauvegardées
-            </a>
-            <a @click="navPage('messages', 'me')" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-envelope"></i>
-              Mes messages
-            </a>
-            <a @click="navPage('payments', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-receipt"></i>
-              Mes paiements
-            </a>
-            <a @click="navPage('disputes', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-shield-exclamation"></i>
-              Mes litiges
-            </a>
+            </RouterLink>
+            <RouterLink
+              v-for="link in accountLinks"
+              :key="link.label"
+              :to="link.to"
+              class="navbar__dropdown-item"
+              @click="closeMenus"
+            >
+              <i :class="link.iconClass"></i>
+              {{ link.label }}
+            </RouterLink>
             <div class="navbar__dropdown-divider"></div>
-            <a @click="navPage('settings', null)" href="#" class="navbar__dropdown-item">
-              <i class="bi bi-gear"></i>
-              Paramètres
-            </a>
-            <a v-if="isAdmin" @click="navPage('admin', null)" href="#" class="navbar__dropdown-item navbar__dropdown-item--admin">
-              <i class="bi bi-shield-check"></i>
-              Administration
-            </a>
+            <RouterLink
+              v-for="link in settingsLinks"
+              :key="link.label"
+              :to="link.to"
+              class="navbar__dropdown-item"
+              @click="closeMenus"
+            >
+              <i :class="link.iconClass"></i>
+              {{ link.label }}
+            </RouterLink>
             <div class="navbar__dropdown-divider"></div>
-            <a @click="logout" href="#" class="navbar__dropdown-item navbar__dropdown-item--danger">
+            <button type="button" class="navbar__dropdown-item navbar__dropdown-item--danger" @click="logout">
               <i class="bi bi-box-arrow-right"></i>
               Déconnexion
-            </a>
+            </button>
           </div>
         </Transition>
       </div>
 
       <!-- Mobile toggle -->
-      <button class="navbar__toggle" @click="menuOpen = !menuOpen" aria-label="Menu">
+      <button
+        type="button"
+        class="navbar__toggle"
+        aria-label="Menu"
+        :aria-expanded="menuOpen"
+        aria-controls="navbar-mobile-menu"
+        @click="menuOpen = !menuOpen"
+      >
         <span class="navbar__toggle-line"></span>
         <span class="navbar__toggle-line"></span>
         <span class="navbar__toggle-line"></span>
@@ -162,7 +181,7 @@
 
     <!-- Mobile menu -->
     <Transition name="slide-down">
-      <div v-if="menuOpen" class="navbar__mobile">
+      <div v-if="menuOpen" id="navbar-mobile-menu" class="navbar__mobile">
         <!-- Mobile user info -->
         <div class="navbar__mobile-user">
           <div v-if="dataUser" class="navbar__mobile-user-avatar">
@@ -174,58 +193,37 @@
           <span class="navbar__mobile-user-name">{{ dataUser?.username || 'Utilisateur' }}</span>
         </div>
         <div class="navbar__dropdown-divider"></div>
-        <a
+        <RouterLink
           v-for="menu in itemMenu"
           :key="menu.page"
+          :to="{ name: menu.page }"
           class="navbar__mobile-link"
           :class="{ 'navbar__mobile-link--active': menu.active }"
-          @click.prevent="navPage(menu.page, menu.parameter)"
-          href="#"
+          :aria-current="menu.active ? 'page' : undefined"
+          @click="closeMenus"
         >
           <i :class="menu.iconClass"></i>
           <span>{{ menu.label }}</span>
-        </a>
-        <button class="btn btn-primary w-full mt-md" @click="togglePopup">
+        </RouterLink>
+        <button type="button" class="btn btn-primary w-full mt-md" @click="goToSell">
           <i class="bi bi-plus-lg"></i>
           Vendre un article
         </button>
         <div class="navbar__dropdown-divider"></div>
-        <a @click="navPage('profile', 'me')" href="#" class="navbar__mobile-link">
-          <i class="bi bi-person"></i>
-          <span>Mon profil public</span>
-        </a>
-        <a @click="navPage('collection', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-collection"></i>
-          <span>Ma collection</span>
-        </a>
-        <a @click="navPage('saved_searches', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-bookmark-star"></i>
-          <span>Recherches sauvegardées</span>
-        </a>
-        <a @click="navPage('messages', 'me')" href="#" class="navbar__mobile-link">
-          <i class="bi bi-envelope"></i>
-          <span>Mes messages</span>
-        </a>
-        <a @click="navPage('payments', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-receipt"></i>
-          <span>Mes paiements</span>
-        </a>
-        <a @click="navPage('disputes', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-shield-exclamation"></i>
-          <span>Mes litiges</span>
-        </a>
-        <a @click="navPage('settings', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-gear"></i>
-          <span>Paramètres</span>
-        </a>
-        <a v-if="isAdmin" @click="navPage('admin', null)" href="#" class="navbar__mobile-link">
-          <i class="bi bi-shield-check"></i>
-          <span>Administration</span>
-        </a>
-        <a @click="logout" href="#" class="navbar__mobile-link navbar__mobile-link--danger">
+        <RouterLink
+          v-for="link in [...accountLinks, ...settingsLinks]"
+          :key="link.label"
+          :to="link.to"
+          class="navbar__mobile-link"
+          @click="closeMenus"
+        >
+          <i :class="link.iconClass"></i>
+          <span>{{ link.label }}</span>
+        </RouterLink>
+        <button type="button" class="navbar__mobile-link navbar__mobile-link--danger" @click="logout">
           <i class="bi bi-box-arrow-right"></i>
           <span>Déconnexion</span>
-        </a>
+        </button>
       </div>
     </Transition>
   </nav>
@@ -239,8 +237,8 @@
  * chaque page.
  */
 import { computed, onMounted, ref } from 'vue';
-import { useRoute, useRouter, type RouteRecordNameGeneric } from 'vue-router';
-import { onClickOutside } from '@vueuse/core';
+import { useRoute, useRouter, type RouteLocationRaw, type RouteRecordNameGeneric } from 'vue-router';
+import { onClickOutside, onKeyStroke } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import authentificationService from '@/services/authentification.service';
 import type { Notification } from '@/services/notification.service';
@@ -267,7 +265,8 @@ const notificationsOpen = ref(false);
 const menuOpen = ref(false);
 
 const notifWrapper = ref<HTMLElement | null>(null);
-const profileTrigger = ref<HTMLElement | null>(null);
+const notifTrigger = ref<HTMLButtonElement | null>(null);
+const profileTrigger = ref<HTMLButtonElement | null>(null);
 const profileDropdown = ref<HTMLElement | null>(null);
 
 const fullName = computed(() =>
@@ -284,14 +283,47 @@ function isActive(page: RouteRecordNameGeneric): boolean {
 // Calculé (et non posé une fois dans data()) : la barre n'est plus remontée à
 // chaque page, l'entrée active doit donc suivre la route.
 const itemMenu = computed(() => [
-  { label: 'Accueil', iconClass: 'bi bi-house', page: 'dashboard', parameter: null },
-  { label: 'Rechercher', iconClass: 'bi bi-search', page: 'searchList', parameter: null },
-  { label: 'Contact', iconClass: 'bi bi-headset', page: 'contact', parameter: null }
+  { label: 'Accueil', iconClass: 'bi bi-house', page: 'dashboard' },
+  { label: 'Rechercher', iconClass: 'bi bi-search', page: 'searchList' },
+  { label: 'Contact', iconClass: 'bi bi-headset', page: 'contact' }
 ].map((item) => ({ ...item, active: isActive(item.page) })));
+
+interface AccountLink {
+  label: string;
+  iconClass: string;
+  to: RouteLocationRaw;
+}
+
+// Partagés par le menu du compte (bureau) et le menu mobile.
+const accountLinks: AccountLink[] = [
+  { label: 'Mon profil public', iconClass: 'bi bi-person', to: { name: 'profile', params: { id: 'me' } } },
+  { label: 'Ma collection', iconClass: 'bi bi-collection', to: { name: 'collection' } },
+  { label: 'Recherches sauvegardées', iconClass: 'bi bi-bookmark-star', to: { name: 'saved_searches' } },
+  { label: 'Mes messages', iconClass: 'bi bi-envelope', to: { name: 'messages' } },
+  { label: 'Mes paiements', iconClass: 'bi bi-receipt', to: { name: 'payments' } },
+  { label: 'Mes litiges', iconClass: 'bi bi-shield-exclamation', to: { name: 'disputes' } }
+];
+
+const settingsLinks = computed<AccountLink[]>(() => [
+  { label: 'Paramètres', iconClass: 'bi bi-gear', to: { name: 'settings' } },
+  ...(isAdmin.value ? [{ label: 'Administration', iconClass: 'bi bi-shield-check', to: { name: 'admin' } }] : [])
+]);
 
 // Le déclencheur est ignoré : son propre @click bascule déjà le menu.
 onClickOutside(profileDropdown, () => { dropdownOpen.value = false; }, { ignore: [profileTrigger] });
 onClickOutside(notifWrapper, () => { notificationsOpen.value = false; });
+
+// Escape ferme le menu ouvert et rend le focus à son déclencheur, pour que le
+// clavier ne se retrouve pas en haut de la page.
+onKeyStroke('Escape', () => {
+  if (notificationsOpen.value) {
+    notificationsOpen.value = false;
+    notifTrigger.value?.focus();
+  } else if (dropdownOpen.value) {
+    dropdownOpen.value = false;
+    profileTrigger.value?.focus();
+  }
+});
 
 onMounted(() => {
   userStore.fetchProfile().catch((error) => {
@@ -304,17 +336,14 @@ onMounted(() => {
   startRealtimeSync();
 });
 
-function navPage(page: RouteRecordNameGeneric, parameter: string | null) {
+function closeMenus() {
   menuOpen.value = false;
   dropdownOpen.value = false;
-  setTimeout(() => {
-    const target: { name: RouteRecordNameGeneric; params?: { id: string } } = { name: page };
-    if (parameter) target.params = { id: parameter };
-    router.push(target);
-  }, 0);
+  notificationsOpen.value = false;
 }
 
-function togglePopup() {
+function goToSell() {
+  closeMenus();
   router.push({ name: 'add_post' });
 }
 
@@ -396,6 +425,7 @@ function logout() {
   gap: var(--space-sm);
   cursor: pointer;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
 .navbar__logo {
@@ -502,6 +532,7 @@ function logout() {
   cursor: pointer;
   transition: all var(--transition-fast);
   font-size: 1.1rem;
+  text-decoration: none;
 
   &:hover {
     color: var(--accent-pink);
@@ -618,6 +649,23 @@ function logout() {
   }
 }
 
+// Bouton qui ouvre la notification : remet à zéro les styles natifs pour
+// garder l'apparence de l'ancienne ligne cliquable.
+.navbar__notif-open {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .navbar__notif-content {
   display: flex;
   flex-direction: column;
@@ -664,6 +712,9 @@ function logout() {
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  color: inherit;
 
   &:hover {
     background: var(--surface-hover);
@@ -682,6 +733,7 @@ function logout() {
 }
 
 .navbar__avatar {
+  display: block;
   width: 34px;
   height: 34px;
   border-radius: var(--radius-full);
@@ -795,15 +847,22 @@ function logout() {
   margin: var(--space-xs) 0;
 }
 
+// Liens et bouton (déconnexion) partagent ce style : remise à zéro du bouton natif.
 .navbar__dropdown-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  width: 100%;
   padding: 10px 12px;
+  font: inherit;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+  text-align: left;
   text-decoration: none;
+  background: none;
+  border: none;
   border-radius: var(--radius-md);
+  cursor: pointer;
   transition: all var(--transition-fast);
 
   &:hover {
@@ -911,12 +970,18 @@ function logout() {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  width: 100%;
   padding: 14px 16px;
+  font: inherit;
   font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--text-secondary);
+  text-align: left;
   text-decoration: none;
+  background: none;
+  border: none;
   border-radius: var(--radius-md);
+  cursor: pointer;
   transition: all var(--transition-fast);
 
   &:hover {
