@@ -29,8 +29,6 @@
   padding: var(--space-3xl) var(--space-lg);
   color: var(--text-muted);
   i { font-size: 2rem; display: block; margin-bottom: var(--space-md); }
-  // Animation `spin` partagée : _animations.scss.
-  .spin { animation: spin 1s linear infinite; }
 }
 
 .payments-list { display: flex; flex-direction: column; gap: var(--space-md); }

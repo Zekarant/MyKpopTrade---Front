@@ -492,10 +492,6 @@
   background: var(--danger-light);
 }
 
-.loading-more-messages i {
-  animation: spin 1s linear infinite;
-}
-
 .message-input textarea {
   width: 100%;
   padding: 12px;
@@ -529,7 +525,6 @@
 
 .loading i {
   font-size: 24px;
-  animation: spin 1s linear infinite;
 }
 
 /* Responsive Design */
