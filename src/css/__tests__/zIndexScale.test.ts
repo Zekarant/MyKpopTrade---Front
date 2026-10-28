@@ -15,7 +15,7 @@ function styleFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) return name === '__tests__' ? [] : styleFiles(path)
-    return /\.(scss|vue)$/.test(name) ? [path] : []
+    return /\.(scss|vue|ts)$/.test(name) ? [path] : []
   })
 }
 
@@ -25,7 +25,8 @@ describe('échelle des z-index', () => {
       readFileSync(file, 'utf8')
         .split('\n')
         .flatMap((line, i) => {
-          const value = line.match(/z-index:\s*(\d+)/)?.[1]
+          // CSS (`z-index: 10`) comme style posé en JS (`zIndex: '10'`).
+          const value = line.match(/z-?index['"]?\s*:\s*['"]?(\d+)/i)?.[1]
           return value && Number(value) > LOCAL_MAX ? [`${relative(SRC, file)}:${i + 1}: ${line.trim()}`] : []
         })
     )

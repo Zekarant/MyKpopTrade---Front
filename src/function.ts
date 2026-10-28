@@ -23,7 +23,7 @@ function ensureToastContainer(): HTMLElement {
       position: 'fixed',
       top: '24px',
       right: '24px',
-      zIndex: '9999',
+      zIndex: 'var(--z-toast)',
       display: 'flex',
       flexDirection: 'column',
       gap: '10px',
