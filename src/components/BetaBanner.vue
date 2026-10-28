@@ -45,10 +45,11 @@ function dismiss() {
 </script>
 
 <style lang="scss" scoped>
+// Collé en bas de l'écran pendant le défilement, puis à sa place après le pied
+// de page : en `fixed`, il recouvrait la fin de chaque page (pied de page,
+// derniers boutons) sans qu'aucun espace ne lui soit réservé.
 .beta-banner {
-  position: fixed;
-  left: 0;
-  right: 0;
+  position: sticky;
   bottom: 0;
   z-index: var(--z-toast);
   background: var(--bg-card);
