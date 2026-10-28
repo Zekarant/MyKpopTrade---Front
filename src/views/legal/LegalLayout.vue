@@ -38,10 +38,13 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { hasSession } from '@/services/session.cookies';
 import { missingLegalKeys } from '@/config/legal';
+
+defineOptions({ name: 'LegalLayout' });
+
+defineProps<{ title: string; updatedAt: string }>();
 
 const legalDocuments = [
   { label: 'Mentions légales', to: '/legal' },
@@ -50,25 +53,9 @@ const legalDocuments = [
   { label: 'Cookies', to: '/cookies' }
 ] as const;
 
-export default defineComponent({
-  name: 'LegalLayout',
-  props: {
-    title: { type: String, required: true },
-    updatedAt: { type: String, required: true }
-  },
-  setup() {
-    return { legalDocuments };
-  },
-  computed: {
-    // Session rétablissable : on peut donc afficher la barre de navigation complète.
-    isAuthenticated(): boolean {
-      return hasSession();
-    },
-    missingCount(): number {
-      return missingLegalKeys().length;
-    }
-  }
-});
+// Session rétablissable : on peut donc afficher la barre de navigation complète.
+const isAuthenticated = hasSession();
+const missingCount = missingLegalKeys().length;
 </script>
 
 <style lang="scss" scoped>

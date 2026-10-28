@@ -6,7 +6,7 @@
           <div class="deletion-banner__content">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span>
-              Votre compte sera supprimé le <strong>{{ formatDate(deletionDate) }}</strong>.
+              Votre compte sera supprimé le <strong>{{ formatDate(deletionDate, 'long') }}</strong>.
               Vous pouvez encore annuler cette demande.
             </span>
           </div>
@@ -97,9 +97,9 @@
     </main>
   </template>
 
-  <script lang="ts">
-    import { defineComponent } from 'vue';
-    import { useRouter } from "vue-router";
+  <script setup lang="ts">
+    import { onMounted, ref } from 'vue';
+    import { useRouter } from 'vue-router';
 
     import search_bar from '@/components/search_bar.vue';
     import row_products from '@/components/row_products.vue';
@@ -107,96 +107,73 @@
     import DashboardFeed from '@/components/DashboardFeed.vue';
     import postService from '@/services/post.service';
     import authentification from '@/services/authentification.service';
-    import { API_URL } from '@/config/api';
-    import { createApiClient } from '@/services/http';
+    import accountService from '@/services/account.service';
     import type { Post, PostsResponse } from '@/types/post.types';
     import { formatDate } from '@/utils/format';
     import { searchRoute } from '@/router/searchRoute';
 
+    defineOptions({ name: 'DashboardView' });
+
     type ListPagination = PostsResponse['pagination'];
 
-    /** Client partagé : renouvelle la session expirée et rejoue la requête. */
-    const api = createApiClient({ baseURL: API_URL });
+    const router = useRouter();
 
-  export default defineComponent({
-    name: 'DashboardView',
-    components: {
-      search_bar,
-      row_products,
-      Grid,
-      DashboardFeed
-    },
-    setup() {
-      const router = useRouter();
-      return { router };
-    },
-    data(): {
-      dataCardList: Post[],
-      paginationTab: Partial<ListPagination>,
-      productRecommendations: Post[],
-      productFavorites: { pagination: Partial<ListPagination>; products: Post[]; },
-      deletionDate: string | null,
-    } {
-      return {
-        productRecommendations: [],
-        dataCardList: [],
-        paginationTab: {},
-        productFavorites: { pagination: {}, products: [] },
-        deletionDate: null,
-      };
-    },
-    mounted() {
-      authentification.verifSession().then(() => {
-        this.getFav();
-        this.getRecommendations();
-        this.getPosts(12);
-        this.loadDeletionStatus();
-      }).catch(() => {
-        // Session invalid - user will be redirected to login
+    const productRecommendations = ref<Post[]>([]);
+    const dataCardList = ref<Post[]>([]);
+    const paginationTab = ref<Partial<ListPagination>>({});
+    const productFavorites = ref<{ pagination: Partial<ListPagination>; products: Post[] }>({ pagination: {}, products: [] });
+    const deletionDate = ref<string | null>(null);
+
+    async function getRecommendations() {
+      productRecommendations.value = await postService.getRecommendations();
+    }
+
+    function getPosts(limit = 12) {
+      postService.getPosts(limit).then((posts) => {
+        dataCardList.value = posts.products;
+        paginationTab.value = posts.pagination;
+      }).catch((error) => {
+        console.error('Erreur lors de la récupération des posts:', error);
       });
-    },
-    methods: {
-      async getRecommendations(){
-        const products = await postService.getRecommendations();
-        this.productRecommendations = products;
-      },
-      getPosts(limit = 12) {
-        postService.getPosts(limit).then((posts) => {
-          this.dataCardList = posts.products;
-          this.paginationTab = posts.pagination;
-        }).catch((error) => {
-          console.error('Erreur lors de la récupération des posts:', error);
-        });
-      },
-      getFav(){
-        postService.getFavorites(10).then((posts) => {
-          this.productFavorites = posts;
-        }).catch((error) => {
-          console.error('Erreur lors de la récupération des posts:', error);
-        });
-      },
-      loadMore({ products, pagination, type }: { products: Post[]; pagination: Partial<ListPagination>, type: string }) {
-        sessionStorage.setItem('posts_str', JSON.stringify(products));
-        sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
-        this.router.push(searchRoute({ event: 'more' + type }));
-      },
-      async loadDeletionStatus() {
-        try {
-          const res = await api.get('/api/auth/profile');
-          const profile = res.data?.user || res.data;
-          this.deletionDate = profile?.scheduledDeletionDate || null;
-        } catch {
-          this.deletionDate = null;
-        }
-      },
-      formatDate(iso: string) {
-        return formatDate(iso, 'long');
-      },
-      goToSettings() {
-        this.router.push('/adherents/settings');
-      },
-    },
-  })
+    }
+
+    function getFav() {
+      postService.getFavorites(10).then((posts) => {
+        productFavorites.value = posts;
+      }).catch((error) => {
+        console.error('Erreur lors de la récupération des posts:', error);
+      });
+    }
+
+    function loadMore({ products, pagination, type }: { products: Post[]; pagination: Partial<ListPagination>; type: string }) {
+      sessionStorage.setItem('posts_str', JSON.stringify(products));
+      sessionStorage.setItem('pagination_str', JSON.stringify(pagination));
+      router.push(searchRoute({ event: 'more' + type }));
+    }
+
+    async function loadDeletionStatus() {
+      try {
+        const profile = await accountService.getProfile<{ scheduledDeletionDate?: string | null }>();
+        deletionDate.value = profile?.scheduledDeletionDate || null;
+      } catch {
+        deletionDate.value = null;
+      }
+    }
+
+    function goToSettings() {
+      router.push('/adherents/settings');
+    }
+
+    onMounted(() => {
+      authentification.verifSession().then(() => {
+        getFav();
+        void getRecommendations();
+        getPosts(12);
+        void loadDeletionStatus();
+      }).catch(() => {
+        // Session invalide : l'utilisateur est redirigé vers /login.
+      });
+    });
   </script>
 
 <style lang="scss" scoped>

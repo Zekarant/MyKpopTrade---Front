@@ -1,6 +1,4 @@
-import { createApiClient } from '@/services/http';
 import { apiErrorStatus } from '@/services/apiError';
-import { API_URL } from '@/config/api';
 import { formatDate as formatSharedDate } from '@/utils/format';
 
 /** Adresse de facturation, telle que stockée par l'API. */
@@ -48,11 +46,7 @@ export interface SectionProps {
   reloadProfile: () => Promise<void>;
 }
 
-/** Client partagé : renouvelle la session expirée et rejoue la requête. */
-export const api = createApiClient({ baseURL: API_URL });
-
-// Lecteurs communs (apiError.ts) : ils comprennent les erreurs de `api` ci-dessus
-// comme les `ApiError` rejetées par les services (blocage, RGPD, paiements).
+// Lecteurs communs (apiError.ts) des `ApiError` rejetées par les services.
 export {
   apiErrorMessage as apiMessage,
   apiErrorStatus as apiStatus,

@@ -1,11 +1,11 @@
 <template v-if="!review.isHidden">
     <div v-bind="$attrs" class="review-card" @click="closeMenu">
-        <div class="review-card__date">Posté le {{ formatDate(review.createdAt) }}</div>
+        <div class="review-card__date">Posté le {{ formatDate(review.createdAt, 'long') }}</div>
         <div class="review-card__body">
             <div class="review-card__content">
                 <div class="review-card__header">
                     <div class="review-card__avatar">
-                        <img :src="getUrlImage(review.reviewer.profilePicture)" :alt="`Avatar de ${review.reviewer.username}`" width="44" height="44" loading="lazy" decoding="async" @error="onImgError($event)" />
+                        <img :src="mediaUrl(review.reviewer.profilePicture)" :alt="`Avatar de ${review.reviewer.username}`" width="44" height="44" loading="lazy" decoding="async" @error="onImgError($event)" />
                     </div>
                     <div class="review-card__user">
                         <span class="review-card__username">@{{ review.reviewer.username }}</span>
@@ -35,47 +35,46 @@
     <report_card v-if="showPopupReport" :id="review._id" :type="'rating'" @close-report="showPopupReport = false"></report_card>
 </template>
 
-  <script lang="ts">
+  <script setup lang="ts">
+    import { ref } from 'vue';
     import ImageCarousel from '../components/ImageCarousel.vue';
     import report_card from '../components/report_card.vue';
     import { formatDate, mediaUrl } from '@/utils/format';
 
-    export default {
-        name: "ReviewCard",
-        components: { ImageCarousel, report_card },
-        inheritAttrs: false,
-        props: {
-            review: { type: Object, required: true },
-        },
-        data() {
-            return {
-                isMenuVisible: false,
-                showPopupReport: false
-            };
-        },
-        methods: {
-            toggleMenu(event: MouseEvent) {
-                event.stopPropagation();
-                this.isMenuVisible = !this.isMenuVisible;
-            },
-            closeMenu() {
-                this.isMenuVisible = false;
-            },
-            onImgError(event: Event) {
-                const img = event.target as HTMLImageElement;
-                img.style.display = 'none';
-                if (img.parentElement) {
-                    img.parentElement.classList.add('review-card__avatar--fallback');
-                }
-            },
-            getUrlImage(url: string) {
-                return mediaUrl(url);
-            },
-            formatDate(dateString: string) {
-                return formatDate(dateString, 'long');
-            },
-        },
-    };
+    defineOptions({ name: 'ReviewCard', inheritAttrs: false });
+
+    /** Champs de l'avis lus par la carte. */
+    interface DisplayedReview {
+        _id: string;
+        isHidden?: boolean;
+        createdAt: string;
+        rating: number;
+        review: string;
+        reviewer: { username: string; profilePicture?: string };
+        images?: string[];
+    }
+
+    defineProps<{ review: DisplayedReview }>();
+
+    const isMenuVisible = ref(false);
+    const showPopupReport = ref(false);
+
+    function toggleMenu(event: MouseEvent) {
+        event.stopPropagation();
+        isMenuVisible.value = !isMenuVisible.value;
+    }
+
+    function closeMenu() {
+        isMenuVisible.value = false;
+    }
+
+    function onImgError(event: Event) {
+        const img = event.target as HTMLImageElement;
+        img.style.display = 'none';
+        if (img.parentElement) {
+            img.parentElement.classList.add('review-card__avatar--fallback');
+        }
+    }
   </script>
 
   <style lang="scss" scoped>

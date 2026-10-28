@@ -177,20 +177,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { func } from '@/function';
-import { api, apiCode, apiMessage, apiStatus, formatDate, isSessionLost } from './shared';
+import accountService, { type IdentityVerificationStatus } from '@/services/account.service';
+import { apiCode, apiMessage, apiStatus, formatDate, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
 const props = defineProps<SectionProps>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();
 
-interface IdentityVerificationStatus {
-  verification: { status: string; submittedAt: string; rejectionReason?: string };
-  userVerification: { isVerified: boolean };
-}
-
 async function verifEmail() {
   try {
-    await api.post('/api/auth/resend-verification', { email: props.profile.email });
+    await accountService.resendVerificationEmail(props.profile.email || '');
     func.showToastSuccess('Email de vérification envoyé');
   } catch (error) {
     func.showToastError(apiMessage(error, 'Erreur'));
@@ -215,7 +211,7 @@ async function saveEmail() {
   savingEmail.value = true;
   currentPasswordError.value = '';
   try {
-    const { data } = await api.put('/api/auth/profile', {
+    const data = await accountService.updateProfile<SettingsProfile>({
       email: email.value,
       currentPassword: currentPassword.value
     });
@@ -248,10 +244,10 @@ watch(() => props.profile, (profile) => {
 
 async function saveTel() {
   try {
-    const response = await api.put('/api/auth/profile', { phoneNumber: phoneNumber.value });
+    const data = await accountService.updateProfile<SettingsProfile>({ phoneNumber: phoneNumber.value });
     func.showToastSuccess('Numéro enregistré');
     // L'API normalise le numéro (« 06 12… » → « +336… ») et remet la vérification à zéro.
-    const savedPhone: string = response.data?.user?.phoneNumber ?? phoneNumber.value;
+    const savedPhone = data?.user?.phoneNumber ?? phoneNumber.value;
     emit('patch', { phoneNumber: savedPhone, isPhoneVerified: false });
     phoneNumber.value = savedPhone;
     codeVerified.value = false;
@@ -264,7 +260,7 @@ async function saveTel() {
 
 async function verifTel() {
   try {
-    await api.post('/api/auth/send-phone-verification', {});
+    await accountService.sendPhoneVerification();
     telRequest.value = true;
     func.showToastSuccess('Code envoyé');
   } catch (error) {
@@ -274,7 +270,7 @@ async function verifTel() {
 
 async function verifCodeTel() {
   try {
-    await api.post('/api/auth/verify-phone', { code: phoneCode.value });
+    await accountService.verifyPhone(phoneCode.value);
     codeVerified.value = true;
     telRequest.value = false;
     func.showToastSuccess('Téléphone vérifié');
@@ -297,8 +293,7 @@ async function openIdentityVerification() {
   showIdentityForm.value = true;
 
   try {
-    const statusRes = await api.get('/api/verification/identity/status/');
-    identityVerification.value = statusRes.data;
+    identityVerification.value = await accountService.getIdentityVerification();
   } catch (error) {
     // 404 = aucune demande en cours, c'est le cas normal d'un premier dépôt.
     if (apiStatus(error) === 404) {
@@ -319,12 +314,8 @@ function onIdentityFileChange(event: Event) {
 async function submitIdentityVerification() {
   if (!identityDocumentFile.value || !identityConsentGiven.value) return;
   identitySubmitting.value = true;
-  const formData = new FormData();
-  formData.append('documentType', identityDocumentType.value);
-  formData.append('consentGiven', 'true');
-  formData.append('document', identityDocumentFile.value);
   try {
-    await api.post('/api/verification/identity', formData);
+    await accountService.submitIdentityVerification(identityDocumentType.value, identityDocumentFile.value);
     func.showToastSuccess('Demande de vérification envoyée');
     showIdentityForm.value = false;
     await props.reloadProfile();
@@ -337,8 +328,7 @@ async function submitIdentityVerification() {
 
 async function cancelIdentityVerification() {
   try {
-    const res = await api.delete('/api/verification/identity/cancel');
-    func.showToastSuccess(res.data.message);
+    func.showToastSuccess(await accountService.cancelIdentityVerification());
     showIdentityForm.value = false;
     identityVerification.value = null;
   } catch (error) {

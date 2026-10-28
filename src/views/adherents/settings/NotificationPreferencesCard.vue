@@ -68,13 +68,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { func } from '@/function';
-import { api, apiMessage, isSessionLost } from './shared';
-
-type CategoryId = 'orders' | 'offers' | 'messages' | 'disputes' | 'reviews' | 'social';
-type ChannelId = 'email' | 'push';
-type NotificationPreferences = Record<CategoryId, Record<ChannelId, boolean>>;
-
-const ENDPOINT = '/api/users/me/notification-preferences';
+import userService, {
+  type NotificationCategory as CategoryId,
+  type NotificationChannel as ChannelId,
+  type NotificationPreferences
+} from '@/services/user.service';
+import { apiMessage, isSessionLost } from './shared';
 
 const CATEGORIES: { id: CategoryId; label: string; hint: string }[] = [
   { id: 'orders', label: 'Commandes', hint: 'Ventes, achats, expéditions et remboursements.' },
@@ -99,8 +98,7 @@ async function load() {
   loading.value = true;
   loadError.value = false;
   try {
-    const { data } = await api.get<{ preferences: NotificationPreferences }>(ENDPOINT);
-    preferences.value = data.preferences;
+    preferences.value = await userService.getNotificationPreferences();
   } catch {
     loadError.value = true;
   } finally {
@@ -118,10 +116,7 @@ async function change(category: CategoryId, channel: ChannelId, event: Event) {
   const checked = input.checked;
   saving.value = true;
   try {
-    const { data } = await api.put<{ preferences: NotificationPreferences }>(ENDPOINT, {
-      [category]: { [channel]: checked }
-    });
-    preferences.value = data.preferences;
+    preferences.value = await userService.updateNotificationPreferences({ [category]: { [channel]: checked } });
     func.showToastSuccess('Préférences de notification enregistrées.');
   } catch (error) {
     input.checked = !checked;

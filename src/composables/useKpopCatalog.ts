@@ -1,5 +1,4 @@
 import { computed, ref, watch, type Ref } from 'vue';
-import axios from 'axios';
 import groupService, { type KpopGroup } from '@/services/group.service';
 import type { KpopAlbum } from '@/services/album.service';
 import type { PostData } from '@/types/post.types';
@@ -14,13 +13,12 @@ interface KpopCatalogFields {
 
 async function fetchGroups(query: string): Promise<KpopGroup[]> {
   try {
-    const response = query.trim()
-      // `params` encode les « & », « # » ou « + » de la saisie (ex. « (G)I-DLE »).
-      ? await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/search`, { params: { query } })
+    const groups = query.trim()
+      ? await groupService.searchGroups(query)
       // Sans `limit`, l'API n'en rend que 20 : la liste déroulante doit proposer
       // tout le catalogue (plafonné à 2000 côté API).
-      : await axios.get(`${import.meta.env.VITE_API_URL}/api/groups`, { params: { limit: 2000 } });
-    return response.data.groups || [];
+      : await groupService.getGroups({ limit: 2000 });
+    return groups || [];
   } catch (error) {
     console.error('Erreur lors du chargement des groupes K-pop:', error);
     return [];

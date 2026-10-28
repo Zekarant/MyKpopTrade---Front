@@ -11,17 +11,20 @@ const http = vi.hoisted(() => ({
   delete: vi.fn()
 }))
 const toast = vi.hoisted(() => ({ showToastSuccess: vi.fn(), showToastError: vi.fn() }))
-const users = vi.hoisted(() => ({ anonymizeMyAccount: vi.fn() }))
+const nav = vi.hoisted(() => ({ route: { query: {} as Record<string, string> } }))
 
-vi.mock('@/services/http', () => ({
-  createApiClient: () => http,
+vi.mock('@/services/http', async () => ({
+  createApiClient: (await import('@/test-utils/routedApiClient')).routedApiClient(http),
   ensureAccessToken: vi.fn(async () => 'token')
+}))
+vi.mock('vue-router', () => ({
+  useRoute: () => nav.route,
+  useRouter: () => ({ replace: ({ query }: { query: Record<string, string> }) => { nav.route.query = query } })
 }))
 vi.mock('@/function', () => ({ func: toast }))
 vi.mock('@/services/payment.service', () => ({
   default: { getPayPalAccountStatus: vi.fn(async () => ({ connected: false, scopes: [] })) }
 }))
-vi.mock('@/services/user.service', () => ({ default: users }))
 vi.mock('@/components/adherents/nav_bar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/components/adherents/TwoFactorCard.vue', () => ({ default: { template: '<div />' } }))
 
@@ -40,19 +43,13 @@ const savedProfile = () => ({
   accountStatus: 'active'
 })
 
-let route: { query: Record<string, string> }
-
 async function mountPage() {
-  route = reactive({ query: {} })
+  nav.route = reactive({ query: {} })
   const wrapper = mount(SettingsPage, {
     attachTo: document.body,
     global: {
       stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      mocks: {
-        $route: route,
-        $router: { replace: ({ query }: { query: Record<string, string> }) => { route.query = query }, back: vi.fn() },
-        $func: toast
-      }
+      mocks: { $router: { back: vi.fn() } }
     }
   })
   await flushPromises()
@@ -74,7 +71,7 @@ describe('page Paramètres', () => {
         const on = { email: true, push: true }
         return { data: { preferences: { orders: on, offers: on, messages: on, disputes: on, reviews: on, social: on } } }
       }
-      if (url === '/me/blocked') return { data: { blockedUsers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } } }
+      if (url === '/api/users/me/blocked') return { data: { blockedUsers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } } }
       throw new Error(`GET inattendu : ${url}`)
     })
     http.put.mockImplementation(async (_url: string, body: Record<string, unknown>) => ({
@@ -216,13 +213,13 @@ describe('page Paramètres', () => {
     it('exige le mot de passe actuel puis recharge le profil', async () => {
       const wrapper = await openAnonymize()
       expect(anonymizeButton(wrapper).attributes('disabled')).toBeDefined()
-      users.anonymizeMyAccount.mockResolvedValueOnce({ message: 'Données anonymisées' })
+      http.post.mockResolvedValueOnce({ data: { message: 'Données anonymisées' } })
 
       await wrapper.find('#settings-anonymize-password').setValue('Secret1!')
       await anonymizeButton(wrapper).trigger('click')
       await flushPromises()
 
-      expect(users.anonymizeMyAccount).toHaveBeenCalledWith({ confirmation: true, currentPassword: 'Secret1!' })
+      expect(http.post).toHaveBeenCalledWith('/api/users/me/anonymize', { confirmation: true, currentPassword: 'Secret1!' })
       expect(toast.showToastSuccess).toHaveBeenCalledWith('Données anonymisées')
       expect(http.get.mock.calls.filter(([url]) => url === '/api/auth/profile')).toHaveLength(2)
     })
@@ -230,7 +227,7 @@ describe('page Paramètres', () => {
     it('un mot de passe refusé s\'affiche sous le champ, sans fermer la session', async () => {
       const wrapper = await openAnonymize()
       await wrapper.find('#settings-anonymize-password').setValue('mauvais')
-      users.anonymizeMyAccount.mockRejectedValueOnce({
+      http.post.mockRejectedValueOnce({
         response: { status: 401, data: { message: 'Mot de passe actuel incorrect', code: 'CURRENT_PASSWORD_INVALID' } }
       })
 

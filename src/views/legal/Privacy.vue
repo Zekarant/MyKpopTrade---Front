@@ -252,19 +252,11 @@
   </LegalLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import LegalLayout from './LegalLayout.vue';
 import { legal, isLegalMissing, dataProcessors } from '@/config/legal';
 
-export default defineComponent({
-  name: 'PrivacyPage',
-  components: { LegalLayout },
-  setup() {
-    return { legal, isLegalMissing, dataProcessors };
-  },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  }
-});
+defineOptions({ name: 'PrivacyPage' });
+
+const updatedAt = '3 septembre 2026';
 </script>

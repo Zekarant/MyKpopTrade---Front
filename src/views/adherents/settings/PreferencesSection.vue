@@ -31,7 +31,8 @@
 <script setup lang="ts">
 import { func } from '@/function';
 import NotificationPreferencesCard from './NotificationPreferencesCard.vue';
-import { api, apiMessage } from './shared';
+import accountService from '@/services/account.service';
+import { apiMessage } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
 const props = defineProps<SectionProps>();
@@ -42,7 +43,7 @@ async function changeAllowDirectMessages(event: Event) {
   const input = event.target as HTMLInputElement;
   const checked = input.checked;
   try {
-    await api.put('/api/auth/profile', { preferences: { allowDirectMessages: checked } });
+    await accountService.updateProfile({ preferences: { allowDirectMessages: checked } });
     emit('patch', { preferences: { ...props.profile.preferences, allowDirectMessages: checked } });
   } catch (error) {
     input.checked = !checked;

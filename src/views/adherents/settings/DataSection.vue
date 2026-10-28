@@ -107,7 +107,7 @@ import { ref, watch } from 'vue';
 import { func } from '@/function';
 import userService from '@/services/user.service';
 import BlockedUsersCard from './BlockedUsersCard.vue';
-import { api, apiCode, apiMessage, formatDate, isSessionLost } from './shared';
+import { apiCode, apiMessage, formatDate, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
 
 const props = defineProps<SectionProps>();
@@ -142,8 +142,8 @@ async function toggleMarketingConsent(event: Event) {
 
 async function exportUserData() {
   try {
-    const res = await api.get('/api/users/me/data-export');
-    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+    const data = await userService.exportMyData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

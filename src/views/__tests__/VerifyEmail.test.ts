@@ -8,7 +8,9 @@ const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 const session = vi.hoisted(() => ({ hasSession: vi.fn(() => false) }))
 
 vi.mock('vue-router', () => ({ useRoute: () => route }))
-vi.mock('@/services/http', () => ({ createApiClient: () => http }))
+vi.mock('@/services/http', async () => ({
+  createApiClient: (await import('@/test-utils/routedApiClient')).routedApiClient(http)
+}))
 vi.mock('@/services/session.cookies', () => session)
 
 import VerifyEmail from '../VerifyEmail.vue'

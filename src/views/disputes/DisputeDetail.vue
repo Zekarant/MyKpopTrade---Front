@@ -8,14 +8,14 @@
           </button>
           <h1>Litige #{{ dispute._id.substring(0, 8) }}</h1>
           <div class="dispute-detail__meta">
-            <span :class="['status-badge', `status-badge--${dispute.status}`]">{{ statusLabel(dispute.status) }}</span>
-            <span class="reason-pill">{{ reasonLabel(dispute.reason) }}</span>
+            <span :class="['status-badge', `status-badge--${dispute.status}`]">{{ DISPUTE_STATUS_LABELS[dispute.status] }}</span>
+            <span class="reason-pill">{{ DISPUTE_REASON_LABELS[dispute.reason] }}</span>
             <small>Ouvert le {{ formatDate(dispute.createdAt) }} par {{ dispute.openedByRole === 'buyer' ? 'l\'acheteur' : 'le vendeur' }}</small>
           </div>
         </header>
 
         <section v-if="dispute.resolution" class="dispute-detail__resolution">
-          <strong><i class="bi bi-gavel"></i> Décision : {{ statusLabel(dispute.resolution.outcome) }}</strong>
+          <strong><i class="bi bi-gavel"></i> Décision : {{ DISPUTE_STATUS_LABELS[dispute.resolution.outcome] }}</strong>
           <p v-if="dispute.resolution.notes">{{ dispute.resolution.notes }}</p>
           <small>Tranché le {{ formatDate(dispute.resolution.decidedAt) }}</small>
         </section>
@@ -57,108 +57,87 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
+import { func } from '@/function';
 import { currentUserId } from '@/services/session.cookies';
 import { apiErrorMessage } from '@/services/apiError';
-import disputeService, { type Dispute, type DisputeMessage, type DisputeStatus, type DisputeReason } from '@/services/dispute.service';
+import disputeService, { type Dispute } from '@/services/dispute.service';
 import { formatDate, formatDateTime } from '@/utils/format';
+import { DISPUTE_REASON_LABELS, DISPUTE_STATUS_LABELS } from './disputeLabels';
 
-export default defineComponent({
-  name: 'DisputeDetail',
-  props: { id: { type: String, required: true } },
-  data() {
-    return {
-      dispute: null as Dispute | null,
-      loading: false,
-      reply: '',
-      sending: false,
-      myId: currentUserId() || ''
-    };
-  },
-  computed: {
-    sortedMessages(): DisputeMessage[] {
-      if (!this.dispute) return [];
-      return [...this.dispute.messages].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-    },
-    canReply(): boolean {
-      if (!this.dispute) return false;
-      return ['opened', 'under_review'].includes(this.dispute.status);
-    },
-    canCancel(): boolean {
-      if (!this.dispute) return false;
-      return this.canReply && this.dispute.openedBy === this.myId;
-    }
-  },
-  watch: {
-    id() { this.fetch(); }
-  },
-  async mounted() { await this.fetch(); },
-  methods: {
-    async fetch() {
-      this.loading = true;
-      try {
-        const res = await disputeService.getOne(this.id);
-        this.dispute = res.dispute;
-      } catch (e) {
-        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
-      } finally { this.loading = false; }
-    },
-    async send() {
-      if (!this.dispute) return;
-      this.sending = true;
-      try {
-        const res = await disputeService.addMessage(this.dispute._id, { content: this.reply });
-        this.dispute = res.dispute;
-        this.reply = '';
-        this.$func?.showToastSuccess?.('Message envoyé');
-      } catch (e) {
-        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
-      } finally { this.sending = false; }
-    },
-    async cancelDispute() {
-      if (!this.dispute) return;
-      if (!confirm('Retirer définitivement ce litige ?')) return;
-      try {
-        const res = await disputeService.cancel(this.dispute._id);
-        this.dispute = res.dispute;
-        this.$func?.showToastSuccess?.('Litige retiré');
-      } catch (e) {
-        this.$func?.showToastError?.(apiErrorMessage(e, 'Erreur'));
-      }
-    },
-    formatDate(iso: string) {
-      return formatDate(iso);
-    },
-    formatDateTime(iso: string) {
-      return formatDateTime(iso);
-    },
-    statusLabel(s: DisputeStatus) {
-      return ({
-        opened: 'Ouvert', under_review: 'En cours d\'examen',
-        resolved: 'Résolu (vendeur)', refunded: 'Remboursé',
-        rejected: 'Rejeté', cancelled: 'Retiré'
-      } as Record<DisputeStatus, string>)[s];
-    },
-    reasonLabel(r: DisputeReason) {
-      return ({
-        not_received: 'Colis non reçu', damaged: 'Colis endommagé',
-        not_as_described: 'Produit non conforme', counterfeit: 'Contrefaçon',
-        wrong_item: 'Mauvais article', partial_delivery: 'Livraison partielle',
-        seller_unresponsive: 'Vendeur ne répond pas',
-        buyer_abuse: 'Abus acheteur', other: 'Autre'
-      } as Record<DisputeReason, string>)[r];
-    },
-    roleLabel(r: string) {
-      return ({ buyer: 'Acheteur', seller: 'Vendeur', admin: 'Modération' } as Record<string, string>)[r] || r;
-    },
-    roleIcon(r: string) {
-      return ({ buyer: 'bi bi-bag', seller: 'bi bi-shop', admin: 'bi bi-shield-check' } as Record<string, string>)[r] || 'bi bi-person';
-    }
-  }
+defineOptions({ name: 'DisputeDetail' });
+
+const props = defineProps<{ id: string }>();
+
+const ROLE_LABELS: Record<string, string> = { buyer: 'Acheteur', seller: 'Vendeur', admin: 'Modération' };
+const ROLE_ICONS: Record<string, string> = { buyer: 'bi bi-bag', seller: 'bi bi-shop', admin: 'bi bi-shield-check' };
+
+const dispute = ref<Dispute | null>(null);
+const loading = ref(false);
+const reply = ref('');
+const sending = ref(false);
+const myId = currentUserId() || '';
+
+const sortedMessages = computed(() => {
+  if (!dispute.value) return [];
+  return [...dispute.value.messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 });
+
+const canReply = computed(() => !!dispute.value && ['opened', 'under_review'].includes(dispute.value.status));
+const canCancel = computed(() => canReply.value && dispute.value?.openedBy === myId);
+
+async function fetchDispute() {
+  loading.value = true;
+  try {
+    const res = await disputeService.getOne(props.id);
+    dispute.value = res.dispute;
+  } catch (e) {
+    func.showToastError(apiErrorMessage(e, 'Erreur'));
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function send() {
+  if (!dispute.value) return;
+  sending.value = true;
+  try {
+    const res = await disputeService.addMessage(dispute.value._id, { content: reply.value });
+    dispute.value = res.dispute;
+    reply.value = '';
+    func.showToastSuccess('Message envoyé');
+  } catch (e) {
+    func.showToastError(apiErrorMessage(e, 'Erreur'));
+  } finally {
+    sending.value = false;
+  }
+}
+
+async function cancelDispute() {
+  if (!dispute.value) return;
+  if (!confirm('Retirer définitivement ce litige ?')) return;
+  try {
+    const res = await disputeService.cancel(dispute.value._id);
+    dispute.value = res.dispute;
+    func.showToastSuccess('Litige retiré');
+  } catch (e) {
+    func.showToastError(apiErrorMessage(e, 'Erreur'));
+  }
+}
+
+function roleLabel(role: string) {
+  return ROLE_LABELS[role] || role;
+}
+
+function roleIcon(role: string) {
+  return ROLE_ICONS[role] || 'bi bi-person';
+}
+
+watch(() => props.id, fetchDispute);
+onMounted(fetchDispute);
 </script>
 
 <style lang="scss" scoped>

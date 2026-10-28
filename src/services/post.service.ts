@@ -351,6 +351,15 @@ class PostService {
     const { data } = await this.client.get<PostsResponse>('/products/inventory/me', { params: { status, limit, page } });
     return data;
   }
+
+  /** Annonces publiques d'un autre membre, mêmes filtres que `getInventory`. */
+  async getUserInventory(userId: string, status: string = 'available', limit: number = 20, page: number = 1): Promise<PostsResponse> {
+    const { data } = await this.client.get<PostsResponse>(
+      `/products/inventory/user/${encodeURIComponent(userId)}`,
+      { params: { status, limit, page } }
+    );
+    return data;
+  }
 }
 
 export default new PostService();

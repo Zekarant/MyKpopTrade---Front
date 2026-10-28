@@ -11,7 +11,8 @@
  * (partagé avec la messagerie) ne gère pas.
  */
 import { ref } from 'vue';
-import send_offer, { type OfferSentPayload } from '@/components/send_offer.vue';
+import send_offer from '@/components/send_offer.vue';
+import type { OfferSentPayload } from '@/components/offerRules';
 import messagingService from '@/services/messaging.service';
 import { func } from '@/function';
 import { useDialogFocus } from '@/composables/useDialogFocus';

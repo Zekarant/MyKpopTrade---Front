@@ -6,7 +6,7 @@ import { defineComponent, h, reactive } from 'vue'
 
 const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn() }))
 const feed = vi.hoisted(() => ({ getUserPosts: vi.fn(), getPost: vi.fn(), createPost: vi.fn(), deletePost: vi.fn(), toggleLike: vi.fn(), replyToPost: vi.fn() }))
-const reviewsApi = vi.hoisted(() => ({ getProfileReviews: vi.fn() }))
+const reviewsApi = vi.hoisted(() => ({ getProfileReviews: vi.fn(), createReviewResponse: vi.fn(), updateReviewResponse: vi.fn() }))
 
 // Route réactive, exposée pour simuler une navigation d'un profil à l'autre.
 vi.mock('vue-router', async () => {
@@ -14,7 +14,9 @@ vi.mock('vue-router', async () => {
   const route = makeReactive({ params: { id: 'me' } as Record<string, string> })
   return { useRoute: () => route, useRouter: () => ({ push: vi.fn() }), testRoute: route }
 })
-vi.mock('@/services/http', () => ({ createApiClient: () => http }))
+vi.mock('@/services/http', async () => ({
+  createApiClient: (await import('@/test-utils/routedApiClient')).routedApiClient(http)
+}))
 vi.mock('@/services/feedPost.service', () => ({ default: feed }))
 vi.mock('@/services/review.service', () => ({ default: reviewsApi }))
 vi.mock('@/services/follow.service', () => ({ default: { getFollowers: vi.fn(async () => ({ followers: [], total: 0 })) } }))
@@ -77,7 +79,7 @@ describe('page profil', () => {
         { _id: 'ancien', rating: 4, review: 'avis ancien', createdAt: '2026-01-10T10:00:00Z' }
       ])
     })
-    http.post.mockResolvedValue({ status: 201 })
+    reviewsApi.createReviewResponse.mockResolvedValue({})
   })
 
   it('affiche mes publications une fois le profil chargé', async () => {
@@ -139,7 +141,7 @@ describe('page profil', () => {
     await wrapper.find('.response-popup__btn--primary').trigger('click')
     await flushPromises()
 
-    expect(http.post).toHaveBeenCalledWith('/api/profiles/ratings/ancien/response', { response: 'Merci !' })
+    expect(reviewsApi.createReviewResponse).toHaveBeenCalledWith('ancien', 'Merci !')
     const items = wrapper.findAll('.review-item')
     expect(items[0].text()).toContain('avis ancien')
     expect(items[0].text()).toContain('Merci !')

@@ -98,15 +98,17 @@
   </main>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { func } from '@/function';
+import accountService from '@/services/account.service';
 import ProfileSection from './settings/ProfileSection.vue';
 import SecuritySection from './settings/SecuritySection.vue';
 import AccountSection from './settings/AccountSection.vue';
 import PaymentsSection from './settings/PaymentsSection.vue';
 import PreferencesSection from './settings/PreferencesSection.vue';
 import DataSection from './settings/DataSection.vue';
-import { api } from './settings/shared';
 import type { SettingsProfile } from './settings/shared';
 import { usePaypalAccount } from './settings/usePaypalAccount';
 
@@ -132,101 +134,81 @@ const SOCIAL_LINK_ERRORS: Record<string, string> = {
 };
 
 /** Page Paramètres : en-tête, navigation et chargement du profil ; chaque section porte son propre état. */
-export default defineComponent({
-  name: 'SettingsPage',
-  components: {
-    ProfileSection,
-    SecuritySection,
-    AccountSection,
-    PaymentsSection,
-    PreferencesSection,
-    DataSection
-  },
-  data() {
-    return {
-      sections: SETTINGS_SECTIONS,
-      activeSection: 'profil' as SectionId,
-      userProfile: {} as SettingsProfile,
-      paypal: usePaypalAccount()
-    };
-  },
-  computed: {
-    activeSectionLabel(): string {
-      return SETTINGS_SECTIONS.find((s) => s.id === this.activeSection)?.label ?? '';
-    }
-  },
-  watch: {
-    // Permet d'arriver directement sur une section depuis un lien.
-    '$route.query.section': {
-      immediate: true,
-      handler(section: unknown) {
-        if (typeof section === 'string' && SETTINGS_SECTIONS.some((s) => s.id === section)) {
-          this.activeSection = section as SectionId;
-        }
-      }
-    }
-  },
-  async mounted() {
-    await this.loadProfile();
-    // Retour du parcours d'onboarding PayPal : on force un statut frais plutôt
-    // que de croire le query param.
-    const params = new URLSearchParams(window.location.search);
-    const justOnboarded = params.get('paypal_onboarding') === 'complete';
-    const onboardingError = params.get('paypal_error');
+defineOptions({ name: 'SettingsPage' });
 
-    this.reportSocialLinkOutcome(params);
+const route = useRoute();
+const router = useRouter();
 
-    await this.paypal.load(justOnboarded);
+const sections = SETTINGS_SECTIONS;
+const activeSection = ref<SectionId>('profil');
+const userProfile = ref<SettingsProfile>({});
+const paypal = usePaypalAccount();
 
-    if (justOnboarded && !this.paypal.connected && this.paypal.blockMessage) {
-      this.$func.showToastError(this.paypal.blockMessage);
-    } else if (justOnboarded) {
-      this.$func.showToastSuccess('Votre compte PayPal est connecté.');
-    } else if (onboardingError) {
-      this.$func.showToastError(
-        'La connexion PayPal n\'a pas pu être finalisée. Merci de réessayer.'
-      );
-    }
-  },
-  methods: {
-    /** Reflète la section dans l'URL, pour pouvoir la partager. */
-    goToSection(section: SectionId) {
-      this.activeSection = section;
-      this.$router.replace({ query: { ...this.$route.query, section } });
-    },
+const activeSectionLabel = computed(() => SETTINGS_SECTIONS.find((s) => s.id === activeSection.value)?.label ?? '');
 
-    /** Restitue le retour de l'API : `?linked=google` ou `?error=<code>`. */
-    reportSocialLinkOutcome(params: URLSearchParams) {
-      const linked = params.get('linked');
-      const error = params.get('error');
+// Permet d'arriver directement sur une section depuis un lien.
+watch(() => route.query.section, (section) => {
+  if (typeof section === 'string' && SETTINGS_SECTIONS.some((s) => s.id === section)) {
+    activeSection.value = section as SectionId;
+  }
+}, { immediate: true });
 
-      if (linked) {
-        const label = linked === 'discord' ? 'Discord' : 'Google';
-        this.$func.showToastSuccess(`Votre compte ${label} est maintenant lié.`);
-        this.goToSection('securite');
-        return;
-      }
+/** Reflète la section dans l'URL, pour pouvoir la partager. */
+function goToSection(section: SectionId) {
+  activeSection.value = section;
+  router.replace({ query: { ...route.query, section } });
+}
 
-      if (!error) return;
+/** Restitue le retour de l'API : `?linked=google` ou `?error=<code>`. */
+function reportSocialLinkOutcome(params: URLSearchParams) {
+  const linked = params.get('linked');
+  const error = params.get('error');
 
-      this.$func.showToastError(SOCIAL_LINK_ERRORS[error] || 'La liaison du compte a échoué.');
-      this.goToSection('securite');
-    },
+  if (linked) {
+    const label = linked === 'discord' ? 'Discord' : 'Google';
+    func.showToastSuccess(`Votre compte ${label} est maintenant lié.`);
+    goToSection('securite');
+    return;
+  }
 
-    /** Remplace l'objet profil : les sections qui le surveillent resynchronisent leurs champs. */
-    async loadProfile() {
-      try {
-        const res = await api.get('/api/auth/profile');
-        this.userProfile = res.data.user || res.data;
-      } catch {
-        // Session perdue : le client HTTP a déjà redirigé vers /login.
-      }
-    },
+  if (!error) return;
 
-    /** Mise à jour partielle, appliquée en place pour ne rien resynchroniser. */
-    patchProfile(changes: Partial<SettingsProfile>) {
-      Object.assign(this.userProfile, changes);
-    }
+  func.showToastError(SOCIAL_LINK_ERRORS[error] || 'La liaison du compte a échoué.');
+  goToSection('securite');
+}
+
+/** Remplace l'objet profil : les sections qui le surveillent resynchronisent leurs champs. */
+async function loadProfile() {
+  try {
+    userProfile.value = await accountService.getProfile<SettingsProfile>();
+  } catch {
+    // Session perdue : le client HTTP a déjà redirigé vers /login.
+  }
+}
+
+/** Mise à jour partielle, appliquée en place pour ne rien resynchroniser. */
+function patchProfile(changes: Partial<SettingsProfile>) {
+  Object.assign(userProfile.value, changes);
+}
+
+onMounted(async () => {
+  await loadProfile();
+  // Retour du parcours d'onboarding PayPal : on force un statut frais plutôt
+  // que de croire le query param.
+  const params = new URLSearchParams(window.location.search);
+  const justOnboarded = params.get('paypal_onboarding') === 'complete';
+  const onboardingError = params.get('paypal_error');
+
+  reportSocialLinkOutcome(params);
+
+  await paypal.load(justOnboarded);
+
+  if (justOnboarded && !paypal.connected && paypal.blockMessage) {
+    func.showToastError(paypal.blockMessage);
+  } else if (justOnboarded) {
+    func.showToastSuccess('Votre compte PayPal est connecté.');
+  } else if (onboardingError) {
+    func.showToastError('La connexion PayPal n\'a pas pu être finalisée. Merci de réessayer.');
   }
 });
 </script>

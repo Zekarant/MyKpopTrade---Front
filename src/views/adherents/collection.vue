@@ -55,58 +55,48 @@
     </main>
   </template>
 
-  <script lang="ts">
-    import { defineComponent, ref } from 'vue';
+  <script setup lang="ts">
+    import { onMounted, ref } from 'vue';
     import authentification from '@/services/authentification.service';
     import postService from '@/services/post.service';
     import Grid from '@/components/grid.vue';
     import type { Post } from '@/types/post.types';
 
-  export default defineComponent({
-    name: 'CollectionView',
-    components: {
-      Grid,
-    },
-    setup() {
-      const products = ref<Post[]>([]);
-      const loading = ref(true);
-      const activeTab = ref('available');
-      const pagination = ref({ page: 1, pages: 1, limit: 20 });
+    defineOptions({ name: 'CollectionView' });
 
-      return { products, loading, activeTab, pagination };
-    },
-    mounted() {
-      authentification.verifSession().then(() => {
-        this.loadProducts();
-      }).catch(() => {});
-    },
-    methods: {
-      switchTab(tab: string) {
-        this.activeTab = tab;
-        this.pagination = { page: 1, pages: 1, limit: 20 };
-        this.loadProducts();
-      },
-      async loadProducts() {
-        this.loading = true;
-        try {
-          if (this.activeTab === 'favorites') {
-            const data = await postService.getFavorites(this.pagination.limit, this.pagination.page);
-            this.products = data.products || [];
-            this.pagination = data.pagination || this.pagination;
-          } else {
-            const data = await postService.getInventory(this.activeTab, this.pagination.limit, this.pagination.page);
-            this.products = data.products || [];
-            this.pagination = data.pagination || this.pagination;
-          }
-        } catch (error) {
-          console.error('Erreur chargement collection:', error);
-          this.products = [];
-        } finally {
-          this.loading = false;
-        }
+    const FIRST_PAGE = { page: 1, pages: 1, limit: 20 };
+
+    const products = ref<Post[]>([]);
+    const loading = ref(true);
+    const activeTab = ref('available');
+    const pagination = ref({ ...FIRST_PAGE });
+
+    function switchTab(tab: string) {
+      activeTab.value = tab;
+      pagination.value = { ...FIRST_PAGE };
+      void loadProducts();
+    }
+
+    async function loadProducts() {
+      loading.value = true;
+      const { limit, page } = pagination.value;
+      try {
+        const data = activeTab.value === 'favorites'
+          ? await postService.getFavorites(limit, page)
+          : await postService.getInventory(activeTab.value, limit, page);
+        products.value = data.products || [];
+        pagination.value = data.pagination || pagination.value;
+      } catch (error) {
+        console.error('Erreur chargement collection:', error);
+        products.value = [];
+      } finally {
+        loading.value = false;
       }
     }
-  })
+
+    onMounted(() => {
+      authentification.verifSession().then(loadProducts).catch(() => {});
+    });
   </script>
 
 <style lang="scss" scoped>

@@ -133,19 +133,11 @@
   </LegalLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import LegalLayout from './LegalLayout.vue';
-import { legal, isLegalMissing, analyticsToolName } from '@/config/legal';
+import { legal, analyticsToolName } from '@/config/legal';
 
-export default defineComponent({
-  name: 'CookiesPage',
-  components: { LegalLayout },
-  setup() {
-    return { legal, isLegalMissing, analyticsToolName };
-  },
-  data() {
-    return { updatedAt: '3 septembre 2026' };
-  }
-});
+defineOptions({ name: 'CookiesPage' });
+
+const updatedAt = '3 septembre 2026';
 </script>

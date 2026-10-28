@@ -4,7 +4,9 @@ import { flushPromises, mount } from '@vue/test-utils'
 const http = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }))
 const toast = vi.hoisted(() => ({ showToastSuccess: vi.fn(), showToastError: vi.fn() }))
 
-vi.mock('@/services/http', () => ({ createApiClient: () => http }))
+vi.mock('@/services/http', async () => ({
+  createApiClient: (await import('@/test-utils/routedApiClient')).routedApiClient(http)
+}))
 vi.mock('@/function', () => ({ func: toast }))
 
 import NotificationPreferencesCard from '../NotificationPreferencesCard.vue'

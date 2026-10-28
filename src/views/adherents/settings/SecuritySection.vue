@@ -59,7 +59,8 @@ import { ref } from 'vue';
 import TwoFactorCard from '@/components/adherents/TwoFactorCard.vue';
 import { func } from '@/function';
 import { API_URL } from '@/config/api';
-import { api, apiMessage, isSessionLost } from './shared';
+import accountService, { type LinkableProvider } from '@/services/account.service';
+import { apiMessage, isSessionLost } from './shared';
 import type { SectionProps } from './shared';
 
 const props = defineProps<SectionProps>();
@@ -71,18 +72,12 @@ const confirmPassword = ref('');
 
 async function savePassword() {
   try {
-    // `withCredentials` : l'API lit le cookie de session pour garder celle-ci
-    // ouverte et fermer toutes les autres.
-    const res = await api.put(
-      '/api/auth/update-password',
-      {
-        currentPassword: currentPassword.value,
-        newPassword: newPassword.value,
-        confirmPassword: confirmPassword.value
-      },
-      { withCredentials: true }
-    );
-    func.showToastSuccess(res.data.message);
+    const message = await accountService.updatePassword({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+      confirmPassword: confirmPassword.value
+    });
+    func.showToastSuccess(message);
     showPasswordForm.value = false;
     currentPassword.value = '';
     newPassword.value = '';
@@ -92,13 +87,12 @@ async function savePassword() {
   }
 }
 
-// Une redirection ne peut pas porter d'en-tête Authorization : l'URL porte un
-// ticket à usage unique valable une minute, jamais le jeton d'accès.
-async function linkProvider(provider: 'google' | 'discord') {
+// L'URL de redirection porte un ticket à usage unique, jamais le jeton d'accès.
+async function linkProvider(provider: LinkableProvider) {
   if (props.profile.socialAuth?.[provider]?.id) return;
   try {
-    const { data } = await api.post<{ ticket: string }>(`/api/auth/link/${provider}`);
-    window.location.href = `${API_URL}/api/auth/${provider}/link?ticket=${encodeURIComponent(data.ticket)}`;
+    const ticket = await accountService.requestLinkTicket(provider);
+    window.location.href = `${API_URL}/api/auth/${provider}/link?ticket=${encodeURIComponent(ticket)}`;
   } catch (error) {
     if (!isSessionLost(error)) func.showToastError(apiMessage(error, 'La liaison du compte a échoué.'));
   }

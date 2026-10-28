@@ -73,19 +73,18 @@ import { computed, onActivated, ref, watch } from 'vue'
 import Filter_review from '@/components/filter_review.vue'
 import Review_card from '@/components/review_card.vue'
 import reviewService from '@/services/review.service'
-import { API_URL } from '@/config/api'
-import { createApiClient } from '@/services/http'
 
 const props = defineProps<{ profileUserId: string; isOwnProfile: boolean }>()
-
-const api = createApiClient({ baseURL: API_URL })
 
 interface Rating {
   _id: string
   rating: number
+  review: string
+  reviewer: { username: string; profilePicture?: string }
+  images?: string[]
+  isHidden?: boolean
   createdAt: string
   response?: { content?: string }
-  [key: string]: unknown
 }
 
 const stats = ref({ averageRating: 0, totalRatings: 0 })
@@ -159,12 +158,13 @@ async function submitResponse() {
   if (!review || !text.trim()) return
 
   try {
-    const method = review.response?.content ? 'put' : 'post'
-    const response = await api[method](`/api/profiles/ratings/${review._id}/response`, { response: text })
-    if (response.status === 200 || response.status === 201) {
-      review.response = { ...review.response, content: text }
-      closeResponsePopup()
+    if (review.response?.content) {
+      await reviewService.updateReviewResponse(review._id, text)
+    } else {
+      await reviewService.createReviewResponse(review._id, text)
     }
+    review.response = { ...review.response, content: text }
+    closeResponsePopup()
   } catch (error) {
     console.error('Erreur lors de la réponse:', error)
   }
