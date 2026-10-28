@@ -157,9 +157,9 @@ onMounted(() => load(1));
   background: var(--surface-hover);
   color: var(--text-secondary);
 
-  &--pending { background: #fef3c7; color: #92400e; }
-  &--reviewed { background: #dbeafe; color: #1e40af; }
-  &--resolved { background: #d1fae5; color: #065f46; }
+  &--pending { background: var(--warning-light); color: var(--warning); }
+  &--reviewed { background: var(--info-light); color: var(--info); }
+  &--resolved { background: var(--success-light); color: var(--success); }
 }
 
 .my-reports__reason {

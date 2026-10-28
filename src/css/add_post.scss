@@ -506,9 +506,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #dc2626;
+  background-color: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -663,7 +663,7 @@
   .sell-steps__marker {
     border-color: var(--accent-pink);
     background: var(--accent-pink);
-    color: #fff;
+    color: var(--text-on-accent);
   }
 }
 
@@ -674,7 +674,7 @@
   .sell-steps__marker {
     border-color: var(--success);
     background: var(--success);
-    color: #fff;
+    color: var(--text-on-accent);
   }
 }
 
@@ -703,7 +703,7 @@
   padding: 1px 6px;
   border-radius: var(--radius-full, 999px);
   background: rgba(0, 0, 0, 0.65);
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.03em;

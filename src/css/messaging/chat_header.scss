@@ -4,7 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--surface-border);
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -23,7 +23,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--surface-border);
   overflow: hidden;
   position: relative;
   display: block;
@@ -41,24 +41,24 @@
 }
 
 .favorite-icon {
-  color: #ffc107;
+  color: var(--warning);
   font-size: 12px;
   flex-shrink: 0;
 }
 
 .participant-info .name {
   font-weight: 600;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 16px;
 }
 
 .participant-info .status {
   font-size: 13px;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .participant-info .status.online {
-  color: #28a745;
+  color: var(--success);
 }
 
 .chat-actions {
@@ -79,19 +79,19 @@
   width: 40px;
   height: 40px;
   border: none;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .action-btn:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .action-btn:focus {
@@ -100,7 +100,7 @@
 }
 
 .action-btn i.bi-star-fill {
-  color: #ffc107;
+  color: var(--warning);
 }
 
 .dropdown-menu {
@@ -108,7 +108,7 @@
   top: 100%;
   right: 0;
   background: white;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   z-index: var(--z-dropdown);
@@ -127,12 +127,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #495057;
+  color: var(--text-primary);
   transition: background 0.2s;
 }
 
 .dropdown-item:hover {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 .dropdown-item.danger {
@@ -140,7 +140,7 @@
 }
 
 .dropdown-item.danger:hover {
-  background: #f8d7da;
+  background: var(--danger-light);
 }
 
 .information {

@@ -194,7 +194,7 @@ async function confirmAction() {
   padding: 10px 14px;
   border: none;
   border-radius: var(--radius-md, 8px);
-  background: var(--surface-hover, #f1f1f1);
+  background: var(--surface-hover, var(--bg-tertiary));
   color: var(--text-secondary, inherit);
   font-weight: 600;
   cursor: pointer;

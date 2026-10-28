@@ -145,7 +145,7 @@
     align-items: center;
     gap: 2px;
     margin-top: 2px;
-    i { font-size: 0.75rem; color: #FFD485; }
+    i { font-size: 0.75rem; color: var(--warning); }
 }
 .review-card__rating-num {
     font-size: var(--font-size-xs);

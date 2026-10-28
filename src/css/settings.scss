@@ -134,11 +134,11 @@ a.setting-row:hover { color: inherit; }
 
   &--success {
     background: rgba(40, 167, 69, 0.1);
-    color: #28a745;
+    color: var(--success);
   }
   &--warning {
     background: rgba(255, 193, 7, 0.1);
-    color: #e0a800;
+    color: var(--warning);
   }
   &--link {
     background: rgba(255, 45, 120, 0.1);
@@ -147,15 +147,15 @@ a.setting-row:hover { color: inherit; }
   }
   &--danger {
     background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+    color: var(--danger);
   }
   &--info {
     background: rgba(13, 110, 253, 0.1);
-    color: #0d6efd;
+    color: var(--info);
   }
   &--identity {
     background: rgba(111, 66, 193, 0.1);
-    color: #6f42c1;
+    color: var(--accent-purple);
   }
 }
 
@@ -278,7 +278,7 @@ a.setting-row:hover { color: inherit; }
 
   > i {
     font-size: 1.5rem;
-    color: #003087;
+    color: var(--paypal-blue);
   }
 }
 .paypal-card__title {
@@ -300,7 +300,7 @@ a.setting-row:hover { color: inherit; }
   gap: 6px;
 }
 .paypal-card__meta { color: var(--text-muted); }
-.paypal-card__hint { color: #e0a800; }
+.paypal-card__hint { color: var(--warning); }
 .paypal-card__email-form {
   display: flex;
   gap: var(--space-sm);
@@ -312,8 +312,8 @@ a.setting-row:hover { color: inherit; }
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--bg-secondary, #f5f5f5);
-  border: 1px solid var(--surface-border, #ddd);
+  background: var(--bg-secondary, var(--bg-secondary));
+  border: 1px solid var(--surface-border, var(--surface-border));
   border-radius: var(--radius-md, 8px);
   padding: 0.5rem 0.75rem;
   flex: 1;
@@ -352,7 +352,7 @@ a.setting-row:hover { color: inherit; }
     gap: 6px;
     margin: 0;
 
-    &--danger { color: #c82333; }
+    &--danger { color: var(--danger); }
   }
 
   &__actions {
@@ -498,7 +498,7 @@ a.setting-row:hover { color: inherit; }
 }
 
 .modal-error {
-  color: #c82333;
+  color: var(--danger);
   font-size: var(--font-size-xs);
   margin: var(--space-xs) 0 0;
 }
@@ -610,9 +610,9 @@ a.setting-row:hover { color: inherit; }
 
   &--active {
     background: var(--accent-pink);
-    color: #fff;
+    color: var(--text-on-accent);
 
-    &:hover { background: var(--accent-pink); color: #fff; }
+    &:hover { background: var(--accent-pink); color: var(--text-on-accent); }
   }
 }
 
@@ -720,7 +720,7 @@ a.setting-row:hover { color: inherit; }
 .avatar-row__initial {
   font-size: 2rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .avatar-row__actions {

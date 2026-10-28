@@ -94,7 +94,7 @@ const sizeStyle = computed(() =>
   width: 100%;
   height: 100%;
   background: var(--accent-gradient);
-  color: #fff;
+  color: var(--text-on-accent);
   font-weight: 700;
   line-height: 1;
   user-select: none;

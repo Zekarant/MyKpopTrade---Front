@@ -1,7 +1,7 @@
 /* Zone de saisie : pièces jointes, texte, emojis (MessageComposer.vue) */
 .message-input-area {
   padding: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--surface-border);
   background: white;
   position: relative;
 }
@@ -14,7 +14,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.08);
-  color: var(--danger, #b91c1c);
+  color: var(--danger, var(--danger));
   font-size: 13px;
 }
 
@@ -30,7 +30,7 @@
   height: 100px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--surface-border);
 }
 
 .attachment-image {
@@ -63,7 +63,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 25px;
   padding: 8px;
 }
@@ -78,13 +78,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6c757d;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
 .attach-btn:hover, .emoji-btn:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .input-wrapper {
@@ -122,12 +122,12 @@
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #0b5ed7;
+  background: var(--info);
   transform: scale(1.05);
 }
 
 .send-btn:disabled {
-  background: #6c757d;
+  background: var(--text-secondary);
   cursor: not-allowed;
   transform: none;
 }

@@ -61,10 +61,10 @@
 .payment-card__price { font-weight: 700; color: var(--accent-pink); font-size: var(--font-size-lg); }
 
 .status-badge { font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
-  &--pending { background: rgba(255,193,7,.15); color: #e0a800; }
-  &--completed { background: rgba(40,167,69,.15); color: #28a745; }
-  &--failed, &--cancelled { background: rgba(220,53,69,.15); color: #dc3545; }
-  &--refunded, &--partially_refunded { background: rgba(108,117,125,.15); color: #6c757d; }
+  &--pending { background: rgba(255,193,7,.15); color: var(--warning); }
+  &--completed { background: rgba(40,167,69,.15); color: var(--success); }
+  &--failed, &--cancelled { background: rgba(220,53,69,.15); color: var(--danger); }
+  &--refunded, &--partially_refunded { background: rgba(108,117,125,.15); color: var(--text-secondary); }
 }
 
 .payment-card__shipment {
@@ -171,9 +171,9 @@
 .timeline-item {
   position: relative;
   padding-left: var(--space-md);
-  &--delivered .timeline-dot { background: #28a745; color: white; }
-  &--exception .timeline-dot { background: #dc3545; color: white; }
-  &--returned .timeline-dot { background: #ffc107; color: #1f1f1f; }
+  &--delivered .timeline-dot { background: var(--success); color: white; }
+  &--exception .timeline-dot { background: var(--danger); color: white; }
+  &--returned .timeline-dot { background: var(--warning); color: var(--text-primary); }
 }
 .timeline-dot {
   position: absolute;
@@ -215,14 +215,14 @@
 
   &--pending {
     background: rgba(255, 193, 7, 0.12);
-    border: 1.5px solid #e0a800;
-    color: #e0a800;
+    border: 1.5px solid var(--warning);
+    color: var(--warning);
   }
 
   &--failed {
     background: rgba(220, 53, 69, 0.12);
-    border: 1.5px solid #dc3545;
-    color: #dc3545;
+    border: 1.5px solid var(--danger);
+    color: var(--danger);
   }
 }
 
