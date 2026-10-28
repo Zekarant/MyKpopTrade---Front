@@ -1,6 +1,6 @@
 <template>
   <div class="admin__modal-overlay" @click.self="emit('cancel')">
-    <div class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="reason-title">
+    <div ref="dialogEl" class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="reason-title">
       <div class="admin__modal-header">
         <h3 id="reason-title">{{ title }}</h3>
         <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('cancel')">
@@ -64,6 +64,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 
 const minLength = 5;
 
@@ -89,6 +90,9 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{ confirm: [reason: string]; cancel: [] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('cancel'));
 
 const reason = ref('');
 const textarea = ref<HTMLTextAreaElement | null>(null);

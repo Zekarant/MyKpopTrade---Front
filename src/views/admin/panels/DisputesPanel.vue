@@ -74,9 +74,9 @@
     <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })" />
 
     <div v-if="activeDispute" class="admin__modal-overlay" @click.self="activeDispute = null">
-      <div class="admin__modal" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal" aria-labelledby="dispute-resolution-title" @close="activeDispute = null">
         <div class="admin__modal-header">
-          <h3>Trancher le litige</h3>
+          <h3 id="dispute-resolution-title">Trancher le litige</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="activeDispute = null">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -129,7 +129,7 @@
             {{ submitting ? 'Enregistrement…' : 'Confirmer' }}
           </button>
         </div>
-      </div>
+      </DialogFrame>
     </div>
   </div>
 </template>
@@ -151,6 +151,7 @@ import {
   formatAge,
   formatDate
 } from '../adminFormat';
+import DialogFrame from '@/components/DialogFrame.vue';
 
 const PAGE_SIZE = 20;
 const PENDING_STATUSES = ['opened', 'under_review'];

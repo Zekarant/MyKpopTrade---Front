@@ -1,6 +1,6 @@
 <template>
   <div class="admin__modal-overlay" @click.self="emit('close')">
-    <div class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="user-detail-title">
+    <div ref="dialogEl" class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="user-detail-title">
       <div class="admin__modal-header">
         <h3 id="user-detail-title">{{ detail?.user?.username || 'Fiche de modération' }}</h3>
         <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('close')">
@@ -183,11 +183,15 @@ import {
   formatDateTime
 } from '../adminFormat';
 import type { AdminNote, AdminUser, AdminUserDetail } from '../types';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 
 const NOTE_MAX_LENGTH = 2000;
 
 const props = defineProps<{ userId: string }>();
 const emit = defineEmits<{ close: []; suspend: [user: AdminUser]; reactivate: [user: AdminUser]; changed: [] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('close'));
 
 const detail = ref<AdminUserDetail | null>(null);
 const notes = ref<AdminNote[]>([]);

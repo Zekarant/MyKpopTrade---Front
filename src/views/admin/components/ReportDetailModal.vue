@@ -1,6 +1,6 @@
 <template>
   <div class="admin__modal-overlay" @click.self="emit('close')">
-    <div class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <div ref="dialogEl" class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="report-title">
       <div class="admin__modal-header">
         <h3 id="report-title">
           Signalement — {{ detail?.reasonLabel || '…' }}
@@ -209,12 +209,16 @@ import {
   getInitial
 } from '../adminFormat';
 import type { AdminReportDetail, ReportTargetOwner } from '../types';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 
 const NOISY_REPORTER_RATIO = 0.5;
 const NOISY_REPORTER_MIN_REPORTS = 3;
 
 const props = defineProps<{ reportId: string }>();
 const emit = defineEmits<{ close: []; resolved: []; suspend: [owner: ReportTargetOwner] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('close'));
 
 const detail = ref<AdminReportDetail | null>(null);
 const loading = ref(true);

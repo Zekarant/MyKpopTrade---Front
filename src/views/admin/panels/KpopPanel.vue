@@ -161,9 +161,9 @@ v-else
     </template>
 
     <div v-if="showGroupForm" class="admin__modal-overlay" @click.self="showGroupForm = false">
-      <div class="admin__modal" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal" aria-labelledby="kpop-group-title" @close="showGroupForm = false">
         <div class="admin__modal-header">
-          <h3>{{ editing ? 'Modifier le groupe' : 'Nouveau groupe' }}</h3>
+          <h3 id="kpop-group-title">{{ editing ? 'Modifier le groupe' : 'Nouveau groupe' }}</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="showGroupForm = false">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -195,13 +195,13 @@ v-else
             {{ editing ? 'Enregistrer' : 'Créer' }}
           </button>
         </div>
-      </div>
+      </DialogFrame>
     </div>
 
     <div v-if="showAlbumForm" class="admin__modal-overlay" @click.self="showAlbumForm = false">
-      <div class="admin__modal" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal" aria-labelledby="kpop-album-title" @close="showAlbumForm = false">
         <div class="admin__modal-header">
-          <h3>{{ editing ? 'Modifier l\'album' : 'Nouvel album' }}</h3>
+          <h3 id="kpop-album-title">{{ editing ? 'Modifier l\'album' : 'Nouvel album' }}</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="showAlbumForm = false">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -240,13 +240,13 @@ v-else
             {{ editing ? 'Enregistrer' : 'Créer' }}
           </button>
         </div>
-      </div>
+      </DialogFrame>
     </div>
 
     <div v-if="followersGroup" class="admin__modal-overlay" @click.self="followersGroup = null">
-      <div class="admin__modal" role="dialog" aria-modal="true">
+      <DialogFrame class="admin__modal" aria-labelledby="kpop-followers-title" @close="followersGroup = null">
         <div class="admin__modal-header">
-          <h3>Followers de {{ followersGroup.name }}</h3>
+          <h3 id="kpop-followers-title">Followers de {{ followersGroup.name }}</h3>
           <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="followersGroup = null">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -265,7 +265,7 @@ v-else
             </div>
           </dl>
         </div>
-      </div>
+      </DialogFrame>
     </div>
   </div>
 </template>
@@ -284,6 +284,7 @@ import {
   groupFormFrom
 } from '../kpopForms';
 import type { CatalogEntity } from '../types';
+import DialogFrame from '@/components/DialogFrame.vue';
 
 const CATALOG_LIMIT = 2000;
 const SEARCH_DEBOUNCE_MS = 300;

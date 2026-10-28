@@ -18,9 +18,9 @@
         </button>
     </div>
     <Teleport to="body">
-      <div v-if="openedPost" class="post-overlay" @click.self="closePost">
+      <DialogFrame v-if="openedPost" class="post-overlay" :aria-label="openedPost.title" @close="closePost" @click.self="closePost">
           <post :key="openedPost._id" :id-post="openedPost._id" :my-profile="admin" :data-user="dataUser" @close-post="closePost" @sold="closePost" />
-      </div>
+      </DialogFrame>
     </Teleport>
 </template>
 
@@ -29,6 +29,7 @@
 import { useRouter } from 'vue-router';
 import post from '@/components/post.vue';
 import card from '@/components/card.vue';
+import DialogFrame from '@/components/DialogFrame.vue';
 import type { Post } from '@/types/post.types';
 import { hasMorePages, type ListPagination, type PostSeller } from '@/components/post/types';
 import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';

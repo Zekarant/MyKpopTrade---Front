@@ -20,7 +20,15 @@ async function openSettings(page: Page, section: string) {
   await page.waitForLoadState('networkidle')
 }
 
-const snap = (page: Page, name: string) => expect(page).toHaveScreenshot(name, { fullPage: true })
+/**
+ * Capture pleine page depuis le haut : la barre de navigation fixe est dessinée à
+ * la position de défilement, que le clic précédent (bouton en bas de page sur
+ * mobile) laisse variable d'une exécution à l'autre.
+ */
+async function snap(page: Page, name: string) {
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await expect(page).toHaveScreenshot(name, { fullPage: true })
+}
 
 test.describe('paramètres — rendu de référence', () => {
   for (const section of ['profil', 'securite', 'compte', 'paiements', 'preferences', 'donnees']) {

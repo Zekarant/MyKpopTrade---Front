@@ -1,6 +1,6 @@
 <template>
     <div class="report-overlay" @click="close">
-        <div class="report-modal" role="dialog" aria-modal="true" :aria-label="title" @click="$event.stopPropagation()">
+        <div ref="dialogEl" class="report-modal" role="dialog" aria-modal="true" :aria-label="title" @click="$event.stopPropagation()">
             <div class="report-modal__header">
                 <div class="report-modal__icon">
                     <i class="bi bi-exclamation-triangle"></i>
@@ -58,6 +58,7 @@
     import { func } from '@/function';
     import reportService, { type ReportTargetType } from '@/services/report.service';
     import { apiErrorMessage } from '@/services/apiError';
+    import { useDialogFocus } from '@/composables/useDialogFocus';
 
     defineOptions({ name: 'ReportCard' });
 
@@ -81,6 +82,9 @@
 
     const props = defineProps<{ type: ReportTargetType; id: string }>();
     const emit = defineEmits<{ closeReport: [] }>();
+
+    const dialogEl = ref<HTMLElement | null>(null);
+    useDialogFocus(dialogEl, undefined, () => emit('closeReport'));
 
     const uid = useId();
     const signalReason = ref('');

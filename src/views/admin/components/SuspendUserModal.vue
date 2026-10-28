@@ -1,6 +1,6 @@
 <template>
   <div class="admin__modal-overlay" @click.self="emit('close')">
-    <div class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="suspend-title">
+    <div ref="dialogEl" class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="suspend-title">
       <div class="admin__modal-header">
         <h3 id="suspend-title">Suspendre {{ user.username }}</h3>
         <button type="button" class="admin__icon-btn" aria-label="Fermer" @click="emit('close')">
@@ -70,6 +70,7 @@ import adminService from '@/services/admin.service';
 import { func } from '@/function';
 import { apiErrorMessage } from '../adminFormat';
 import { SUSPENSION_REASONS } from '../adminPresets';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 
 const MIN_REASON_LENGTH = 5;
 const MAX_REASON_LENGTH = 500;
@@ -85,6 +86,9 @@ const DURATION_OPTIONS: { label: string; value: number | null }[] = [
 
 const props = defineProps<{ user: { _id: string; username: string } }>();
 const emit = defineEmits<{ close: []; confirmed: [] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('close'));
 
 const reason = ref('');
 const durationChoice = ref<number | null>(7);

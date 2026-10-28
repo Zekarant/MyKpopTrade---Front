@@ -1,8 +1,8 @@
 <template>
 <div class="popup-overlay" @click.self="$emit('close')">
-  <div class="popup-content offer-modal" @click.stop>
+  <div ref="dialogEl" class="popup-content offer-modal" role="dialog" aria-modal="true" aria-labelledby="offer-modal-title" @click.stop>
     <div class="popup-header">
-      <h3>Faire une offre</h3>
+      <h3 id="offer-modal-title">Faire une offre</h3>
       <button type="button" class="close-btn" aria-label="Fermer" @click="$emit('close')">
         <i class="bi bi-x" aria-hidden="true"></i>
       </button>
@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { API_URL } from '@/config/api';
+import { useDialogFocus } from '@/composables/useDialogFocus';
 import {
   formatAmount,
   offerBounds,
@@ -101,6 +102,9 @@ defineOptions({ name: 'SendOffer' });
 
 const props = defineProps<{ conversation?: OfferConversation; product?: OfferProduct }>();
 const emit = defineEmits<{ close: []; offerSent: [payload: OfferSentPayload] }>();
+
+const dialogEl = ref<HTMLElement | null>(null);
+useDialogFocus(dialogEl, undefined, () => emit('close'));
 
 const offerAmount = ref<number | ''>('')
 const offerMessage = ref('')

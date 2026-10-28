@@ -28,7 +28,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5199',
     locale: 'fr-FR',
-    timezoneId: 'Europe/Paris'
+    timezoneId: 'Europe/Paris',
+    // Sans défilement doux : une capture prise pendant le défilement serait décalée.
+    reducedMotion: 'reduce'
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

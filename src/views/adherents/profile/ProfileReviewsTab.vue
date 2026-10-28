@@ -43,9 +43,9 @@
     <!-- Popup réponse avis -->
     <Transition name="fade">
       <div v-if="responding" class="response-popup-overlay" @click.self="closeResponsePopup">
-        <div class="response-popup">
+        <DialogFrame class="response-popup" aria-labelledby="review-response-title" @close="closeResponsePopup">
           <div class="response-popup__header">
-            <h3><i class="bi bi-reply"></i> Répondre à l'avis</h3>
+            <h3 id="review-response-title"><i class="bi bi-reply"></i> Répondre à l'avis</h3>
             <button class="response-popup__close" aria-label="Fermer" @click="closeResponsePopup"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
           </div>
           <div class="response-popup__body">
@@ -63,7 +63,7 @@
               <i class="bi bi-send"></i> {{ responding.response?.content ? 'Modifier' : 'Envoyer' }}
             </button>
           </div>
-        </div>
+        </DialogFrame>
       </div>
     </Transition>
   </div>
@@ -74,6 +74,7 @@ import { computed, onActivated, ref, watch } from 'vue'
 import Filter_review from '@/components/filter_review.vue'
 import Review_card from '@/components/review_card.vue'
 import reviewService from '@/services/review.service'
+import DialogFrame from '@/components/DialogFrame.vue'
 
 const props = defineProps<{ profileUserId: string; isOwnProfile: boolean }>()
 

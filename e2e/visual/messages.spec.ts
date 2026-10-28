@@ -99,8 +99,12 @@ test.describe('messagerie — rendu de référence', () => {
     // défilement animé de la page : la discussion finissait décalée d'une exécution
     // à l'autre. L'événement seul ouvre le sélecteur sans rien faire défiler.
     await page.locator('.emoji-btn').dispatchEvent('click')
-    await expect(page.locator('.emoji-picker-popup')).toBeVisible()
-    await expect(page).toHaveScreenshot('emoji-picker.png', { fullPage: true })
+    // Le sélecteur est chargé à la demande : sous charge, la fenêtre paraissait
+    // avant son contenu et la capture partait à moitié dessinée.
+    await expect(page.locator('.emoji-picker-popup .v3-body')).toBeVisible()
+    await page.waitForLoadState('networkidle')
+    // Des centaines d'emojis à peindre : la capture seule dépasse 5 s sur un poste chargé.
+    await expect(page).toHaveScreenshot('emoji-picker.png', { fullPage: true, timeout: 15_000 })
   })
 
   test('panneau « Information » (mobile)', async ({ page }, testInfo) => {

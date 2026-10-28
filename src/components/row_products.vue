@@ -31,9 +31,9 @@
    </div>
   </div>
   <Teleport to="body">
-    <div v-if="openedPost" class="post-overlay" @click.self="closePost">
+    <DialogFrame v-if="openedPost" class="post-overlay" :aria-label="openedPost.title" @close="closePost" @click.self="closePost">
         <post :key="openedPost._id" :id-post="openedPost._id" @close-post="closePost" />
-    </div>
+    </DialogFrame>
   </Teleport>
 </template>
 
@@ -46,6 +46,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import post from '@/components/post.vue';
 import card from '@/components/card.vue';
+import DialogFrame from '@/components/DialogFrame.vue';
 import type { Post } from '@/types/post.types';
 import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 import { usePostOverlay } from '@/components/post/usePostOverlay';

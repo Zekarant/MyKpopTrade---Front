@@ -136,8 +136,8 @@
        avant de générer le lien d'onboarding, pour que PayPal réconcilie
        un compte existant plutôt que d'en créer un doublon. -->
   <div v-if="paypalInfoModalOpen" class="modal-overlay" @click.self="closePaypalInfoModal">
-    <div class="modal-card">
-      <h2>Vérifiez vos informations</h2>
+    <DialogFrame class="modal-card" aria-labelledby="paypal-info-title" @close="closePaypalInfoModal">
+      <h2 id="paypal-info-title">Vérifiez vos informations</h2>
 
       <label for="paypal-info-email">E-mail</label>
       <input id="paypal-info-email" type="email" :value="profile.email" disabled />
@@ -170,7 +170,7 @@
           {{ paypalConnecting ? 'Redirection...' : 'Continuer vers PayPal' }}
         </button>
       </div>
-    </div>
+    </DialogFrame>
   </div>
 </template>
 
@@ -182,6 +182,7 @@ import accountService from '@/services/account.service';
 import { apiMessage } from './shared';
 import type { BillingAddress, SectionProps, SettingsProfile } from './shared';
 import type { PaypalAccount } from './usePaypalAccount';
+import DialogFrame from '@/components/DialogFrame.vue';
 
 const props = defineProps<SectionProps & { paypal: PaypalAccount }>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();

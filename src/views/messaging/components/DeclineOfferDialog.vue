@@ -1,6 +1,6 @@
 <template>
   <div class="popup-overlay">
-    <div class="popup-content" role="dialog" aria-modal="true" aria-labelledby="decline-offer-title">
+    <div ref="dialogEl" class="popup-content" role="dialog" aria-modal="true" aria-labelledby="decline-offer-title">
       <h3 id="decline-offer-title" class="popup-title">Refuser l'offre</h3>
       <p class="popup-message">Êtes-vous sûr de vouloir refuser cette offre ?</p>
       <textarea
@@ -20,11 +20,15 @@
 <script setup lang="ts">
 /** Confirmation du refus d'une offre, avec un message facultatif pour l'acheteur. */
 import { ref } from 'vue'
+import { useDialogFocus } from '@/composables/useDialogFocus'
 
 const emit = defineEmits<{
   confirm: [message: string]
   cancel: []
 }>()
+
+const dialogEl = ref<HTMLElement | null>(null)
+useDialogFocus(dialogEl, undefined, () => emit('cancel'))
 
 const message = ref('')
 </script>
