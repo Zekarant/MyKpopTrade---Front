@@ -40,6 +40,13 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
   const submitting = ref(false)
   const counterError = ref('')
 
+  const openId = () => (selected.value ? entityId(selected.value) : null)
+  /**
+   * Une réponse ne s'applique qu'à la conversation encore ouverte : si le membre
+   * en a ouvert une autre pendant l'appel, elle ne doit ni l'écraser ni l'y ramener.
+   */
+  const stillOpen = (conversationId: string | null) => conversationId !== null && openId() === conversationId
+
   /** Le vendeur répond par une contre-offre, l'acheteur fait une offre. */
   function openOffer(): void {
     if (selected.value?.isOwner) {
@@ -53,11 +60,13 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
   /** Nouvelle offre de l'acheteur. Volontairement sans attente : la fenêtre se ferme tout de suite. */
   function sendOffer(offerInfo: OfferInfo): void {
     offerOpen.value = false
+    const from = openId()
     messagingService.initiateNegotiation({
       productId: offerInfo.offerData.productId,
       initialOffer: offerInfo.amount,
       message: offerInfo.message
     }).then((response) => {
+      if (!stillOpen(from)) return
       selected.value = response.conversation
       if (response.conversation.lastMessage) onOfferPosted(response.conversation.lastMessage)
     }).catch((error: Error) => {
@@ -87,10 +96,11 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
   }
 
   async function accept(message: ViewMessage): Promise<void> {
+    const from = openId()
     try {
       const response = await store.respondToNegotiation(message.conversation || message.id || '', 'accept')
       toast.showToastSuccess('Offre acceptée avec succès.')
-      reload(response.conversation)
+      if (stillOpen(from)) reload(response.conversation)
     } catch (error) {
       toast.showToastError('Erreur lors de l\'acceptation de l\'offre.')
       console.error('Erreur lors de l\'acceptation de l\'offre:', error)
@@ -98,11 +108,12 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
   }
 
   async function decline(text: string): Promise<void> {
+    const from = openId()
     try {
       // Le message de refus est le 4e paramètre ; le 3e est le montant d'une contre-offre.
       const response = await store.respondToNegotiation(entityId(selected.value), 'reject', undefined, text)
       declineOpen.value = false
-      reload(response.conversation)
+      if (stillOpen(from)) reload(response.conversation)
     } catch (error) {
       console.error('Erreur lors du refus de l\'offre:', error)
     }
@@ -121,7 +132,7 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
         entityId(message)
       )
       toast.showToastSuccess('Offre annulée avec succès.')
-      reload(conversation)
+      if (stillOpen(entityId(conversation))) reload(conversation)
     } catch (error) {
       toast.showToastError('Erreur lors de l\'annulation de l\'offre.')
       console.error('Erreur lors de l\'annulation de l\'offre:', error)

@@ -11,6 +11,8 @@ interface ConversationActionsOptions {
   userId: () => string | null
   /** Recharge la conversation ouverte (favori modifié : son détail change). */
   reload: (conversation: ViewConversation) => void
+  /** Ferme la conversation ouverte, chargement en cours compris. */
+  close: () => void
   /** Ferme les menus ouverts une fois l'action faite. */
   closeMenus: () => void
 }
@@ -19,13 +21,16 @@ interface ConversationActionsOptions {
  * Actions de liste sur une conversation : favori, lu / non lu, archivage et
  * suppression. Communes à la colonne de gauche et à l'en-tête de la conversation.
  */
-export function useConversationActions({ store, selected, userId, reload, closeMenus }: ConversationActionsOptions) {
+export function useConversationActions({ store, selected, userId, reload, close, closeMenus }: ConversationActionsOptions) {
   const isSelected = (conversation: ViewConversation) =>
     selected.value !== null && entityId(selected.value) === entityId(conversation)
 
-  /** La conversation retirée de la vue courante ne doit plus rester ouverte. */
+  /**
+   * La conversation retirée de la vue courante ne doit plus rester ouverte, ni
+   * revenir quand son chargement, encore en cours, se termine.
+   */
   function deselect(conversation: ViewConversation): void {
-    if (isSelected(conversation)) selected.value = null
+    if (isSelected(conversation)) close()
   }
 
   async function toggleFavorite(conversation: ViewConversation): Promise<void> {
