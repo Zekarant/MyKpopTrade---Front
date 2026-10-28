@@ -73,6 +73,25 @@ test.describe('profil — rendu de référence', () => {
     await snap(page, 'me-review-response.png')
   })
 
+  test('mon profil : Escape demande confirmation avant de perdre une réponse non envoyée', async ({ page }) => {
+    await openProfile(page, 'me')
+    await openTab(page, 'Avis')
+    await page.locator('.review-item__respond-btn').click()
+    const popup = page.locator('.response-popup')
+    await popup.locator('textarea').fill('Merci beaucoup !')
+
+    const questions: string[] = []
+    page.once('dialog', (dialog) => { questions.push(dialog.message()); return dialog.dismiss() })
+    await page.keyboard.press('Escape')
+    await expect(popup).toBeVisible()
+    await expect(popup.locator('textarea')).toHaveValue('Merci beaucoup !')
+
+    page.once('dialog', (dialog) => { questions.push(dialog.message()); return dialog.accept() })
+    await page.keyboard.press('Escape')
+    await expect(popup).toHaveCount(0)
+    expect(questions).toEqual(['Abandonner le texte saisi ?', 'Abandonner le texte saisi ?'])
+  })
+
   test('mon profil : abonnés', async ({ page }) => {
     await openProfile(page, 'me')
     await openTab(page, 'Abonnés')

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-overlay" @click.self="emit('close')" @keydown.esc="emit('close')">
+  <div class="modal-overlay" @click.self="emit('close')">
     <div ref="dialog" class="modal-card" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="subtitleId">
       <h2 :id="titleId"><i :class="icon"></i> {{ title }}</h2>
       <p :id="subtitleId" class="modal-subtitle">{{ subtitle }}</p>
@@ -35,5 +35,5 @@ const dialog = ref<HTMLElement | null>(null);
 const titleId = `payment-modal-title-${useId()}`;
 const subtitleId = `payment-modal-subtitle-${useId()}`;
 
-useDialogFocus(dialog);
+useDialogFocus(dialog, undefined, () => emit('close'));
 </script>
