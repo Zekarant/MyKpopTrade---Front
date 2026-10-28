@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ME, NOW, paypalStatus, profile, twoFactorStatus } from './fixtures/settings'
+import { ME, NOW, blockedUsers, notificationPreferences, paypalStatus, profile, twoFactorStatus } from './fixtures/settings'
 import { mockApi, setupSession } from './support'
 
 async function openSettings(page: Page, section: string) {
@@ -8,6 +8,8 @@ async function openSettings(page: Page, section: string) {
     if (path === '/api/auth/profile' || path === '/api/users/me') return profile
     if (path === '/api/payments/paypal/account-status') return paypalStatus
     if (path === '/api/auth/2fa/status') return twoFactorStatus
+    if (path === '/api/users/me/notification-preferences') return notificationPreferences
+    if (path === '/api/users/me/blocked') return blockedUsers
     // Aucune demande de vérification d'identité : premier dépôt.
     if (path.startsWith('/api/verification/identity/status')) return { __status: 404, message: 'Aucune demande' }
     if (path === '/api/auth/send-phone-verification' && method === 'POST') return { message: 'Code envoyé' }
@@ -68,5 +70,12 @@ test.describe('paramètres — rendu de référence', () => {
     await page.locator('.btn-settings--danger', { hasText: 'Supprimer mon compte' }).click()
     await expect(page.locator('.delete-confirm')).toBeVisible()
     await snap(page, 'donnees-delete-confirm.png')
+  })
+
+  test('confirmation de l\'anonymisation par mot de passe', async ({ page }) => {
+    await openSettings(page, 'donnees')
+    await page.locator('.btn-settings', { hasText: 'Anonymiser mes données' }).click()
+    await expect(page.locator('#settings-anonymize-password')).toBeVisible()
+    await snap(page, 'donnees-anonymize-confirm.png')
   })
 })
