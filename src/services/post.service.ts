@@ -1,8 +1,6 @@
-import type { AxiosInstance, AxiosResponse } from 'axios';
 import { currentUserId } from '@/services/session.cookies';
-import authentificationService  from '@/services/authentification.service';
-import { API_URL } from '@/config/api';
-import { createApiClient } from '@/services/http';
+import { apiClient } from '@/services/apiClient';
+import { apiErrorBody } from '@/services/apiError';
 
 import type {
   Post,
@@ -20,10 +18,15 @@ export type PostSaveResult =
   | { ok: true; productId: string }
   | { ok: false; error?: PostSaveErrorBody };
 
-const getIdUser = (): string | undefined => currentUserId() ?? undefined;
-
 function saveFailure(error: unknown): PostSaveResult {
-  return { ok: false, error: (error as { response?: { data?: PostSaveErrorBody } }).response?.data };
+  return { ok: false, error: apiErrorBody<PostSaveErrorBody>(error) };
+}
+
+function requirePostId(id: string | number | undefined): string {
+  if (!id) {
+    throw new Error('ID du post requis');
+  }
+  return id.toString();
 }
 
 /**
@@ -67,109 +70,45 @@ export interface CatalogListParams {
   limit?: number;
 }
 
-/** Réponse « session invalide » de l'API. */
-function isUnauthorized(error: unknown): boolean {
-  const response = (error as { response?: { status?: number; data?: { code?: string; message?: string } } })?.response;
-  return response?.status === 401 ||
-    response?.data?.code === 'TOKEN_EXPIRED' ||
-    response?.data?.message === 'Token invalide';
-}
-
 /**
- * Un 401 ici signifie session perdue : le client HTTP a déjà tenté le renouvellement.
- * L'échec attendu de verifSession est avalé pour ne pas masquer l'erreur d'origine.
+ * Annonces : catalogue, publication, favoris et photos.
+ *
+ * Les erreurs remontent en `ApiError` ; une session expirée est traitée par le
+ * client HTTP (renouvellement puis retour à la connexion). Seules les méthodes
+ * d'agrément (favori, recommandations) avalent l'échec pour rendre une valeur
+ * neutre : leur absence ne doit pas casser la page qui les affiche.
  */
-async function endSessionIfUnauthorized(error: unknown): Promise<void> {
-  if (isUnauthorized(error)) {
-    await authentificationService.verifSession().catch(() => undefined);
-  }
-}
-
 class PostService {
-  private apiClient: AxiosInstance;
-  private uploadClient: AxiosInstance;
-  private API_BASE_URL: string = `${API_URL}/api`;
+  private client = apiClient('/api');
 
-  constructor() {
-
-    this.apiClient = createApiClient({
-      baseURL: `${this.API_BASE_URL}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Sans Content-Type par défaut : axios doit pouvoir poser lui-même
-    // `multipart/form-data` et sa frontière pour les envois de fichiers.
-    this.uploadClient = createApiClient({
-      baseURL: `${this.API_BASE_URL}`,
-    });
-  }
-  // Récupérer tous les posts
   async getPosts(
     limit: number = 20,
     page: number = 1,
     kpopGroup: string | null = null,
     type: string = 'photocard'
   ): Promise<PostsResponse> {
-    try {
-      const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products', { params: {
-          limit,
-          page,
-          kpopGroup,
-          type
-        }, });
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la recherche :', error);
-      throw error;
-    }
+    const { data } = await this.client.get<PostsResponse>('/products', { params: { limit, page, kpopGroup, type } });
+    return data;
   }
 
   /** Annonces en vente d'un groupe ou d'un album (anciennes annonces comprises, côté API). */
   async getCatalogPosts(params: CatalogListParams): Promise<PostsResponse> {
-    const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products', { params });
-    return response.data;
+    const { data } = await this.client.get<PostsResponse>('/products', { params });
+    return data;
   }
 
-  // Récupérer un post par ID
   async getPost(id: string | number | undefined): Promise<PostResponse> {
-    if (!id) {
-      throw new Error('ID du post requis');
-    }
-
-    const postId = id.toString();
-
-    try {
-      const response: AxiosResponse<PostResponse> = await this.apiClient.get(`/products/${postId}`);
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la recherche :', error);
-      throw error;
-    }
+    const postId = requirePostId(id);
+    const { data } = await this.client.get<PostResponse>(`/products/${postId}`);
+    return data;
   }
 
-  // Supprimer un post
   async deletePost(id: string | number | undefined): Promise<{ message: string }> {
-    if (!id) {
-      throw new Error('ID du post requis');
-    }
-
-    const postId = id.toString();
-
-    try {
-      const response: AxiosResponse<{ message: string }> = await this.apiClient.delete(`/products/${postId}`);
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la suppression :', error);
-      throw error;
-    }
+    const postId = requirePostId(id);
+    const { data } = await this.client.delete<{ message: string }>(`/products/${postId}`);
+    return data;
   }
 
-  // Créer un post
   async createPost(postData: PostData): Promise<PostSaveResult> {
     const data = new FormData();
     data.append('title', postData.title);
@@ -198,13 +137,12 @@ class PostService {
     data.append('shippingOptions', JSON.stringify(cleanShippingOptions(postData.shippingOptions)));
 
     try {
-      const response: AxiosResponse<{ product?: { _id?: string } }> = await this.uploadClient.post('/products', data);
+      const response = await this.client.post<{ product?: { _id?: string } }>('/products', data);
       const productId = response.data?.product?._id;
       return productId
         ? { ok: true, productId }
         : { ok: false, error: { message: 'Réponse inattendue du serveur' } };
     } catch (error) {
-      await endSessionIfUnauthorized(error);
       return saveFailure(error);
     }
   }
@@ -214,11 +152,7 @@ class PostService {
    * routes dédiées : voir `syncProductImages`.
    */
   async updatePost(id: string | number | undefined, postData: PostData): Promise<PostSaveResult> {
-    if (!id) {
-      throw new Error('ID du post requis');
-    }
-
-    const postId = id.toString();
+    const postId = requirePostId(id);
 
     const data = {
       title: postData.title,
@@ -237,10 +171,9 @@ class PostService {
     };
 
     try {
-      await this.apiClient.put(`/products/${postId}`, data);
+      await this.client.put(`/products/${postId}`, data);
       return { ok: true, productId: postId };
     } catch (error) {
-      await endSessionIfUnauthorized(error);
       return saveFailure(error);
     }
   }
@@ -303,22 +236,16 @@ class PostService {
     return current;
   }
 
-  // Marquer comme vendu. `idUser` part comme `buyerId` ; l'API ignore l'identifiant du vendeur lui-même.
-  async sold(idUser: string | undefined, id: string | number | undefined): Promise<boolean> {
-    if (!id || !idUser) {
-      throw new Error('ID du post et ID utilisateur requis');
+  /** Marque comme vendu hors de la plateforme : sans `buyerId`, l'API n'attribue l'achat à personne. */
+  async sold(id: string | number | undefined): Promise<boolean> {
+    if (!id) {
+      throw new Error('ID du post requis');
     }
 
-    const postId = id.toString();
-
     try {
-      const response: AxiosResponse = await this.apiClient.post(`/products/${postId}/sold/`, {
-        buyerId: idUser
-      });
-
+      const response = await this.client.post(`/products/${id.toString()}/sold/`, {});
       return response.status === 200;
     } catch (error) {
-      await endSessionIfUnauthorized(error);
       console.error('Erreur lors de la modification du post :', error);
       return false;
     }
@@ -329,146 +256,86 @@ class PostService {
    * la vente ; elle refuse (409) un article payé via la plateforme.
    */
   async relist(id: string): Promise<void> {
-    try {
-      await this.apiClient.put(`/products/${id}`, { isAvailable: true });
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      throw error;
-    }
+    await this.client.put(`/products/${id}`, { isAvailable: true });
   }
 
-  // Rechercher des posts
   async search(
     query: string,
     maxPrice: number | null = null,
     minPrice: number | null = null,
     type: string | null = null
   ): Promise<PostsResponse> {
-    const tabParam: SearchParams = {
-      search: query,
-      limit: 12
-    };
+    const params: SearchParams = { search: query, limit: 12 };
 
+    // Les filtres arrivent parfois de l'URL : la chaîne « null » vaut « absent ».
     if (minPrice !== null && minPrice.toString() !== 'null') {
-      tabParam.minPrice = minPrice;
+      params.minPrice = minPrice;
     }
     if (maxPrice !== null && maxPrice.toString() !== 'null') {
-      tabParam.maxPrice = maxPrice;
+      params.maxPrice = maxPrice;
     }
     if (type && type !== 'null') {
-      tabParam.type = type;
+      params.type = type;
     }
 
-    try {
-      const response: AxiosResponse<PostsResponse> = await this.apiClient.get(`/products`, {
-        params: tabParam,
-      });
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la recherche :', error);
-      throw error;
-    }
+    const { data } = await this.client.get<PostsResponse>('/products', { params });
+    return data;
   }
 
-  // Ajouter aux favoris
   async addFavorite(id: string | number | undefined): Promise<boolean> {
-    if (!id) {
-      throw new Error('ID du post requis');
-    }
-
-    const postId = id.toString();
+    const postId = requirePostId(id);
 
     try {
-      const response: AxiosResponse = await this.apiClient.post(`/products/${postId}/favorite`, {
-        buyerId: getIdUser()
+      const response = await this.client.post(`/products/${postId}/favorite`, {
+        buyerId: currentUserId() ?? undefined
       });
-
       return response.status === 200;
     } catch (error) {
-      await endSessionIfUnauthorized(error);
       console.error('Erreur lors de l\'ajout aux favoris :', error);
       return false;
     }
   }
 
-  // Récupérer les favoris
   async getFavorites(limit: number = 20, page: number = 1): Promise<PostsResponse> {
-    try {
-      const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products/inventory/favorites/', { params: {
-          limit,
-          page
-        } });
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la récupération des favoris :', error);
-      throw error;
-    }
+    const { data } = await this.client.get<PostsResponse>('/products/inventory/favorites/', { params: { limit, page } });
+    return data;
   }
 
-  // Obtenir les recommandations
   async getRecommendations(): Promise<Post[]> {
-    const tabRecommendations: Post[] = [];
-
     try {
-      const response: AxiosResponse<{ products: Post[] }> = await this.apiClient.get(`/products/recommendations/`);
-      if (Array.isArray(response.data?.products)) {
-        response.data.products.forEach((productFav: Post) => {
-          tabRecommendations.push(productFav);
-        });
-      }
+      const { data } = await this.client.get<{ products: Post[] }>('/products/recommendations/');
+      return Array.isArray(data?.products) ? [...data.products] : [];
     } catch (error) {
-      await endSessionIfUnauthorized(error);
       console.error('Erreur lors de la récupération des recommandations :', error);
+      return [];
     }
-
-    return tabRecommendations;
   }
 
   async addProductImage(productId: string, image: File): Promise<ProductImagesResponse> {
     const formData = new FormData();
     formData.append('productImage', image);
-    try {
-      const response = await this.uploadClient.post<ProductImagesResponse>(
-        `/products/${productId}/images`,
-        formData
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout d\'image :', error);
-      throw error;
-    }
+    const { data } = await this.client.post<ProductImagesResponse>(`/products/${productId}/images`, formData);
+    return data;
   }
 
   /** L'API désigne l'image par sa position dans `images`, jamais par son chemin. */
   async deleteProductImage(productId: string, imageIndex: number): Promise<ProductImagesResponse> {
-    try {
-      const response = await this.apiClient.delete<ProductImagesResponse>(`/products/${productId}/images`, {
-        data: { imageIndex },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la suppression d\'image :', error);
-      throw error;
-    }
+    const { data } = await this.client.delete<ProductImagesResponse>(`/products/${productId}/images`, {
+      data: { imageIndex },
+    });
+    return data;
   }
 
   /** `imageOrder[i]` : position actuelle de l'image qui doit passer en position i. */
   async reorderProductImages(productId: string, imageOrder: number[]): Promise<ProductImagesResponse> {
-    try {
-      const response = await this.apiClient.put<ProductImagesResponse>(`/products/${productId}/images/reorder`, { imageOrder });
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la réorganisation des images :', error);
-      throw error;
-    }
+    const { data } = await this.client.put<ProductImagesResponse>(`/products/${productId}/images/reorder`, { imageOrder });
+    return data;
   }
 
   async getQuickRecommendations(limit = 4): Promise<Post[]> {
     try {
-      const response = await this.apiClient.get<{ products?: Post[] }>('/products/quick-recommendations', { params: { limit } });
-      return response.data?.products || [];
+      const { data } = await this.client.get<{ products?: Post[] }>('/products/quick-recommendations', { params: { limit } });
+      return data?.products || [];
     } catch (error) {
       console.error('Erreur quick-recommendations :', error);
       return [];
@@ -476,31 +343,14 @@ class PostService {
   }
 
   async getProductStats(): Promise<ProductStatsResponse> {
-    try {
-      const response: AxiosResponse<ProductStatsResponse> = await this.apiClient.get('/products/stats');
-      return response.data;
-    } catch (error) {
-      console.error('Erreur stats produits :', error);
-      throw error;
-    }
+    const { data } = await this.client.get<ProductStatsResponse>('/products/stats');
+    return data;
   }
 
-  // Récupérer l'inventaire de l'utilisateur
   async getInventory(status: string = 'available', limit: number = 20, page: number = 1): Promise<PostsResponse> {
-    try {
-      const response: AxiosResponse<PostsResponse> = await this.apiClient.get('/products/inventory/me', { params: {
-          status,
-          limit,
-          page
-        } });
-      return response.data;
-    } catch (error) {
-      await endSessionIfUnauthorized(error);
-      console.error('Erreur lors de la récupération de l\'inventaire :', error);
-      throw error;
-    }
+    const { data } = await this.client.get<PostsResponse>('/products/inventory/me', { params: { status, limit, page } });
+    return data;
   }
 }
 
-// Export singleton instance
 export default new PostService();

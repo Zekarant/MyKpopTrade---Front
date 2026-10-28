@@ -8,12 +8,13 @@ import { useCartStore } from '@/store/cart.store'
 
 const router = vi.hoisted(() => ({ push: vi.fn() }))
 const cookies = vi.hoisted(() => ({ get: vi.fn() }))
-const postService = vi.hoisted(() => ({ getPost: vi.fn(), addFavorite: vi.fn() }))
+const postService = vi.hoisted(() => ({ getPost: vi.fn(), addFavorite: vi.fn(), sold: vi.fn() }))
 const cartService = vi.hoisted(() => ({ addItem: vi.fn(), getCart: vi.fn() }))
 const func = vi.hoisted(() => ({ showToastSuccess: vi.fn(), showToastError: vi.fn() }))
 
 vi.mock('vue-router', () => ({ useRoute: () => ({ params: {} }), useRouter: () => router }))
 vi.mock('js-cookie', () => ({ default: cookies }))
+vi.mock('@/function', () => ({ func }))
 vi.mock('@/services/post.service', () => ({ default: postService }))
 vi.mock('@/services/cart.service', () => ({ default: cartService }))
 vi.mock('@/services/http', () => ({ hasSession: () => Boolean(cookies.get('id_user')) }))
@@ -53,7 +54,7 @@ const productResponse: PostResponse = {
 async function mountPost(product: PostResponse = productResponse) {
   const wrapper = mount(Post, {
     props: { idPost: 'p1', product },
-    global: { mocks: { $func: func }, stubs: { 'router-link': RouterLinkStub } },
+    global: { stubs: { 'router-link': RouterLinkStub } },
   })
   await flushPromises()
   return wrapper
@@ -148,5 +149,53 @@ describe('post (fiche annonce)', () => {
 
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/products/p1`)
     expect(func.showToastSuccess).toHaveBeenCalledWith('Lien copié')
+  })
+
+  describe('confirmations du vendeur', () => {
+    async function openSoldDialog() {
+      cookies.get.mockReturnValue('s1')
+      const wrapper = await mountPost()
+      await wrapper.find('.post-modal__actions-menu').trigger('click')
+      await button(wrapper, 'Vendu').trigger('click')
+      return wrapper
+    }
+
+    it('marque l\'article vendu une seule fois et prévient le parent', async () => {
+      postService.sold.mockResolvedValue(true)
+      const wrapper = await openSoldDialog()
+
+      await button(wrapper, 'Confirmer').trigger('click')
+      await flushPromises()
+
+      expect(postService.sold).toHaveBeenCalledTimes(1)
+      // Vente hors plateforme : aucun acheteur, et surtout pas le vendeur lui-même.
+      expect(postService.sold).toHaveBeenCalledWith('p1')
+      expect(wrapper.emitted('sold')).toHaveLength(1)
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    })
+
+    it('garde la confirmation ouverte et explique l\'échec si la vente n\'est pas enregistrée', async () => {
+      postService.sold.mockRejectedValue(new Error('Network Error'))
+      const wrapper = await openSoldDialog()
+
+      await button(wrapper, 'Confirmer').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.emitted('sold')).toBeUndefined()
+      expect(func.showToastError).toHaveBeenCalledWith('Impossible de marquer cet article comme vendu.')
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+    })
+
+    it('ferme la confirmation avec Échap, sans rien changer', async () => {
+      const wrapper = await openSoldDialog()
+      const dialog = wrapper.get('[role="dialog"]')
+      expect(dialog.attributes('aria-modal')).toBe('true')
+      expect(wrapper.get(`#${dialog.attributes('aria-labelledby')}`).text()).toBe('Marquer cet article comme vendu ?')
+
+      await dialog.trigger('keydown', { key: 'Escape' })
+
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+      expect(postService.sold).not.toHaveBeenCalled()
+    })
   })
 })
