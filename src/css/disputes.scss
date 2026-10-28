@@ -1,9 +1,9 @@
 /* Styles communs à la liste des litiges et au détail d'un litige. */
 .status-badge {
   font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
-  &--opened { background: rgba(255,193,7,.15); color: var(--warning); }
-  &--under_review { background: rgba(33,150,243,.15); color: var(--info); }
-  &--resolved, &--refunded { background: rgba(40,167,69,.15); color: var(--success); }
+  &--opened { background: rgba(255,193,7,.15); color: var(--warning-text); }
+  &--under_review { background: rgba(33,150,243,.15); color: var(--info-text); }
+  &--resolved, &--refunded { background: rgba(40,167,69,.15); color: var(--success-text); }
   &--rejected, &--cancelled { background: rgba(108,117,125,.15); color: var(--text-secondary); }
 }
 

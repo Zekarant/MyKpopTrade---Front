@@ -30,7 +30,7 @@
 
   i { color: var(--accent-pink); }
 
-  &--danger i { color: var(--danger); }
+  &--danger i { color: var(--danger-text); }
 }
 
 // Porte le retrait horizontal de la carte. Les rangées pleine largeur le
@@ -82,7 +82,7 @@
     background: var(--danger);
     border-color: transparent;
     color: white;
-    &:hover { background: var(--danger); }
+    &:hover { filter: brightness(0.9); }
   }
 
   &--sm {

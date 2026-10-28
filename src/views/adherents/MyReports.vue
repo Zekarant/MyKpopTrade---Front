@@ -157,9 +157,9 @@ onMounted(() => load(1));
   background: var(--surface-hover);
   color: var(--text-secondary);
 
-  &--pending { background: var(--warning-light); color: var(--warning); }
-  &--reviewed { background: var(--info-light); color: var(--info); }
-  &--resolved { background: var(--success-light); color: var(--success); }
+  &--pending { background: var(--warning-light); color: var(--warning-text); }
+  &--reviewed { background: var(--info-light); color: var(--info-text); }
+  &--resolved { background: var(--success-light); color: var(--success-text); }
 }
 
 .my-reports__reason {

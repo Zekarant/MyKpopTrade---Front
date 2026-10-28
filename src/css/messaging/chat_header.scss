@@ -41,7 +41,7 @@
 }
 
 .favorite-icon {
-  color: var(--warning);
+  color: var(--warning-text);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -58,7 +58,7 @@
 }
 
 .participant-info .status.online {
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .chat-actions {
@@ -100,7 +100,7 @@
 }
 
 .action-btn i.bi-star-fill {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .dropdown-menu {

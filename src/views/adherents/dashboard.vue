@@ -194,7 +194,7 @@
     align-items: center;
     gap: var(--space-sm);
 
-    i { color: var(--danger); font-size: 1.25rem; flex-shrink: 0; }
+    i { color: var(--danger-text); font-size: 1.25rem; flex-shrink: 0; }
   }
 
   &__btn {
@@ -211,7 +211,7 @@
     white-space: nowrap;
     flex-shrink: 0;
 
-    &:hover { background: var(--danger); }
+    &:hover { filter: brightness(0.9); }
   }
 }
 

@@ -61,9 +61,9 @@
 .payment-card__price { font-weight: 700; color: var(--accent-pink); font-size: var(--font-size-lg); }
 
 .status-badge { font-size: var(--font-size-xs); font-weight: 600; padding: 3px 10px; border-radius: 20px;
-  &--pending { background: rgba(255,193,7,.15); color: var(--warning); }
-  &--completed { background: rgba(40,167,69,.15); color: var(--success); }
-  &--failed, &--cancelled { background: rgba(220,53,69,.15); color: var(--danger); }
+  &--pending { background: rgba(255,193,7,.15); color: var(--warning-text); }
+  &--completed { background: rgba(40,167,69,.15); color: var(--success-text); }
+  &--failed, &--cancelled { background: rgba(220,53,69,.15); color: var(--danger-text); }
   &--refunded, &--partially_refunded { background: rgba(108,117,125,.15); color: var(--text-secondary); }
 }
 
@@ -173,7 +173,7 @@
   padding-left: var(--space-md);
   &--delivered .timeline-dot { background: var(--success); color: white; }
   &--exception .timeline-dot { background: var(--danger); color: white; }
-  &--returned .timeline-dot { background: var(--warning); color: var(--text-primary); }
+  &--returned .timeline-dot { background: var(--warning); color: #1f1f1f; }
 }
 .timeline-dot {
   position: absolute;
@@ -216,13 +216,13 @@
   &--pending {
     background: rgba(255, 193, 7, 0.12);
     border: 1.5px solid var(--warning);
-    color: var(--warning);
+    color: var(--warning-text);
   }
 
   &--failed {
     background: rgba(220, 53, 69, 0.12);
     border: 1.5px solid var(--danger);
-    color: var(--danger);
+    color: var(--danger-text);
   }
 }
 

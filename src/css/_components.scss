@@ -122,7 +122,7 @@
   color: white;
 
   &:hover {
-    background: var(--danger);
+    filter: brightness(0.9);
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   }
 }
@@ -132,7 +132,7 @@
   color: white;
 
   &:hover {
-    background: var(--success);
+    filter: brightness(0.9);
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
   }
 }

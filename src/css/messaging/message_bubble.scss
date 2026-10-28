@@ -175,7 +175,7 @@
 // Teintes de statut semi-transparentes : posées sur un fond de carte opaque pour
 // rester lisibles sur la bulle bleue de ses propres messages.
 .status-accepted {
-  color: var(--success);
+  color: var(--success-text);
   background: linear-gradient(var(--success-light), var(--success-light)), var(--bg-card);
   border: 1px solid var(--success-border);
   padding: 4px 8px;
@@ -188,7 +188,7 @@
 }
 
 .status-rejected {
-  color: var(--danger);
+  color: var(--danger-text);
   background: linear-gradient(var(--danger-light), var(--danger-light)), var(--bg-card);
   border: 1px solid var(--danger-border);
   padding: 4px 8px;
@@ -200,7 +200,7 @@
 }
 
 .status-pending {
-  color: var(--warning);
+  color: var(--warning-text);
   background: linear-gradient(var(--warning-light), var(--warning-light)), var(--bg-card);
   border: 1px solid var(--warning);
   padding: 4px 8px;
@@ -285,7 +285,7 @@
 }
 
 .btn-success:hover {
-  background: var(--success);
+  filter: brightness(0.9);
   transform: translateY(-1px);
 }
 

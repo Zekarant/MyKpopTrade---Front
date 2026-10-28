@@ -15,6 +15,8 @@ const ALLOWED: Record<string, string[]> = {
   'css/_variables.scss': ['*'],
   // QR code de la double authentification : fond blanc dans les deux thèmes, sinon illisible.
   'css/two-factor-card.scss': ['#fff'],
+  // Texte du point « retourné » : sombre sur l'ambre de --warning, dans les deux thèmes.
+  'css/payments.scss': ['#1f1f1f'],
   // Couleur de la marque Discord.
   'views/auth/OAuthButtons.vue': ['#5865f2'],
 }

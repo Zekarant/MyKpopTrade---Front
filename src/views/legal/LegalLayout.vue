@@ -102,7 +102,7 @@ const missingCount = missingLegalKeys().length;
 .legal-page__draft {
   background: rgba(255, 193, 7, .15);
   border-left: 3px solid var(--warning);
-  color: var(--warning);
+  color: var(--warning-text);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);

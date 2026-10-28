@@ -272,7 +272,7 @@ const submitOffer = async () => {
 
 .price-value {
   font-weight: 600;
-  color: var(--success);
+  color: var(--success-text);
   font-size: 16px;
 }
 
@@ -342,7 +342,7 @@ const submitOffer = async () => {
 .offer-error {
   margin-top: 6px;
   font-size: 13px;
-  color: var(--danger-color, var(--danger));
+  color: var(--danger-color, var(--danger-text));
 }
 
 .price-info {
@@ -351,7 +351,7 @@ const submitOffer = async () => {
 }
 
 .savings {
-  color: var(--success);
+  color: var(--success-text);
   font-weight: 600;
   font-size: 14px;
 }
