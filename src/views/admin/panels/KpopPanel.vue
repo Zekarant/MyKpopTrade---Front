@@ -23,16 +23,18 @@
 
     <div class="admin__panel-header">
       <input
-        v-if="subTab === 'groups'"
+v-if="subTab === 'groups'"
         v-model="groupSearch"
+        aria-label="Rechercher un groupe"
         type="search"
         class="admin__input admin__input--search"
         placeholder="Rechercher un groupe…"
         @input="debouncedSearchGroups"
       />
       <input
-        v-else
+v-else
         v-model="albumSearch"
+        aria-label="Rechercher un album"
         type="search"
         class="admin__input admin__input--search"
         placeholder="Rechercher un album…"

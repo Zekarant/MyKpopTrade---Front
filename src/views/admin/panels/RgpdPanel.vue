@@ -14,7 +14,8 @@
           <p>Rassemble l'ensemble des données personnelles d'un compte dans un fichier JSON.</p>
           <div class="admin__toolbar">
             <input
-              v-model="exportSearch"
+v-model="exportSearch"
+              aria-label="Rechercher un membre (pseudo ou email exact)"
               type="search"
               class="admin__input admin__input--search"
               placeholder="Pseudo ou email exact…"
@@ -38,7 +39,8 @@
           </p>
           <div class="admin__toolbar">
             <input
-              v-model="anonymizeSearch"
+v-model="anonymizeSearch"
+              aria-label="Rechercher un membre (pseudo ou email exact)"
               type="search"
               class="admin__input admin__input--search"
               placeholder="Pseudo ou email exact…"

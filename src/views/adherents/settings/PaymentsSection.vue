@@ -89,7 +89,7 @@
           </div>
         </div>
         <div class="setting-row__inline">
-          <input v-model="legalName" type="text" maxlength="300" class="settings-input settings-input--sm" placeholder="Nom légal complet" />
+          <input v-model="legalName" type="text" maxlength="300" class="settings-input settings-input--sm" placeholder="Nom légal complet" aria-label="Nom légal complet" />
           <button v-if="legalNameChanged" class="btn-settings btn-settings--sm" @click="saveLegalName">Enregistrer</button>
         </div>
       </div>
@@ -100,12 +100,12 @@
             <span>Adresse</span>
           </div>
         </div>
-        <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input" placeholder="Rue et numéro" style="margin-top: 8px;" />
-        <input v-model="address.streetLine2" type="text" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" />
+        <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input" placeholder="Rue et numéro" aria-label="Rue et numéro" style="margin-top: 8px;" />
+        <input v-model="address.streetLine2" type="text" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" aria-label="Complément d'adresse (optionnel)" />
         <div class="setting-row__inline" style="margin-top: 0;">
-          <input v-model="address.postalCode" type="text" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" />
-          <input v-model="address.city" type="text" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" />
-          <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" style="flex: 0 0 70px;" />
+          <input v-model="address.postalCode" type="text" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" aria-label="Code postal" />
+          <input v-model="address.city" type="text" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" aria-label="Ville" />
+          <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm" placeholder="FR" aria-label="Pays (code à deux lettres)" style="flex: 0 0 70px;" />
         </div>
         <button v-if="addressChanged" class="btn-settings btn-settings--sm" style="align-self: flex-start; margin-top: 8px;" @click="saveAddress">Enregistrer</button>
       </div>
@@ -139,24 +139,25 @@
     <div class="modal-card">
       <h2>Vérifiez vos informations</h2>
 
-      <label>E-mail</label>
-      <input type="email" :value="profile.email" disabled />
+      <label for="paypal-info-email">E-mail</label>
+      <input id="paypal-info-email" type="email" :value="profile.email" disabled />
 
-      <label>Nom légal complet</label>
+      <label for="paypal-info-legal-name">Nom légal complet</label>
       <input
+        id="paypal-info-legal-name"
         v-model.trim="legalName"
         type="text"
         maxlength="300"
         placeholder="Prénom et nom"
       />
 
-      <label>Adresse</label>
-      <input v-model.trim="address.streetLine1" type="text" maxlength="200" placeholder="Rue et numéro" />
-      <input v-model.trim="address.streetLine2" type="text" maxlength="200" placeholder="Complément (optionnel)" />
+      <label for="paypal-info-street">Adresse</label>
+      <input id="paypal-info-street" v-model.trim="address.streetLine1" type="text" maxlength="200" placeholder="Rue et numéro" />
+      <input v-model.trim="address.streetLine2" type="text" maxlength="200" placeholder="Complément (optionnel)" aria-label="Complément d'adresse (optionnel)" />
       <div class="modal-inline">
-        <input v-model.trim="address.postalCode" type="text" maxlength="16" placeholder="Code postal" />
-        <input v-model.trim="address.city" type="text" maxlength="100" placeholder="Ville" />
-        <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" style="flex: 0 0 70px;" />
+        <input v-model.trim="address.postalCode" type="text" maxlength="16" placeholder="Code postal" aria-label="Code postal" />
+        <input v-model.trim="address.city" type="text" maxlength="100" placeholder="Ville" aria-label="Ville" />
+        <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" aria-label="Pays (code à deux lettres)" style="flex: 0 0 70px;" />
       </div>
 
       <p v-if="paypalInfoError" class="modal-error">{{ paypalInfoError }}</p>

@@ -20,10 +20,10 @@
 
           <form class="auth-form" @submit.prevent="reset">
             <div class="form-group">
-              <label class="form-label">Email</label>
+              <label class="form-label" for="forgot-email">Email</label>
               <div class="input-group--custom" :class="{ 'input-group--error': errorBase }">
                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                <input v-model="email" type="email" placeholder="Votre adresse email" required />
+                <input id="forgot-email" v-model="email" type="email" placeholder="Votre adresse email" autocomplete="email" required />
               </div>
             </div>
 

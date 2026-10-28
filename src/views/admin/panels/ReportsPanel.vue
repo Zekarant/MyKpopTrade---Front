@@ -2,14 +2,14 @@
   <div class="admin__panel">
     <div class="admin__panel-header">
       <div class="admin__toolbar">
-        <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.status" aria-label="Filtrer par statut" class="admin__select" @change="commit({ page: 1 })">
           <option value="pending">En attente</option>
           <option value="reviewed">Examinés</option>
           <option value="resolved">Résolus</option>
           <option value="rejected">Rejetés</option>
           <option value="">Tous les statuts</option>
         </select>
-        <select v-model="state.targetType" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.targetType" aria-label="Filtrer par cible" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Toutes les cibles</option>
           <option v-for="(label, value) in REPORT_TARGET_LABELS" :key="value" :value="value">{{ label }}</option>
         </select>
@@ -64,7 +64,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="report in reports" :key="report._id" @click="openDetail(report._id)">
+          <tr v-for="report in reports" :key="report._id" v-keyboard-click role="row" @click="openDetail(report._id)">
             <td class="admin__cell-select" @click.stop>
               <input
                 type="checkbox"
@@ -165,6 +165,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { vKeyboardClick } from '@/composables/vKeyboardClick';
 import AdminPagination from '../components/AdminPagination.vue';
 import adminService from '@/services/admin.service';
 import { func } from '@/function';

@@ -19,7 +19,7 @@
 
     <div class="admin__panel">
       <div class="admin__panel-header">
-        <select v-model="state.targetType" class="admin__select" @change="commit({ page: 1 })">
+        <select v-model="state.targetType" aria-label="Filtrer par cible" class="admin__select" @change="commit({ page: 1 })">
           <option value="">Toutes les cibles</option>
           <option v-for="(label, value) in TARGET_TYPE_LABELS" :key="value" :value="value">{{ label }}</option>
         </select>

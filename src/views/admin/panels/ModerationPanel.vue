@@ -28,13 +28,14 @@
       <div class="admin__panel-header">
         <div class="admin__toolbar">
           <input
-            v-model="state.search"
+v-model="state.search"
+            aria-label="Rechercher un contenu"
             type="search"
             class="admin__input admin__input--search"
             placeholder="Rechercher un contenu…"
             @input="debouncedSearch"
           />
-          <select v-model="state.type" class="admin__select" @change="commit({ page: 1 })">
+          <select v-model="state.type" aria-label="Filtrer par type" class="admin__select" @change="commit({ page: 1 })">
             <option value="">Posts et réponses</option>
             <option value="post">Posts uniquement</option>
             <option value="reply">Réponses uniquement</option>

@@ -1,7 +1,7 @@
 <template>
   <div class="admin__panel">
     <div class="admin__panel-header">
-      <select v-model="state.status" class="admin__select" @change="commit({ page: 1 })">
+      <select v-model="state.status" aria-label="Filtrer par statut" class="admin__select" @change="commit({ page: 1 })">
         <option value="opened">Ouverts</option>
         <option value="under_review">En arbitrage</option>
         <option value="">Tous</option>

@@ -40,7 +40,7 @@
 
         <section v-if="canReply" class="dispute-detail__reply">
           <h3>Répondre</h3>
-          <textarea v-model="reply" rows="4" placeholder="Apportez des précisions ou des preuves..." maxlength="2000"></textarea>
+          <textarea v-model="reply" rows="4" placeholder="Apportez des précisions ou des preuves..." aria-label="Votre réponse" maxlength="2000"></textarea>
           <div class="reply-actions">
             <button class="btn btn--primary" :disabled="!reply.trim() || sending" @click="send">
               <i class="bi bi-send"></i> Envoyer

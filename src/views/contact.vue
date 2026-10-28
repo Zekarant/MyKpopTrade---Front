@@ -23,6 +23,8 @@
                 class="form-control"
                 :class="{ 'is-invalid': errors.name }"
                 placeholder="Votre nom"
+                aria-label="Votre nom"
+                autocomplete="name"
                 required
               />
             </div>
@@ -36,6 +38,8 @@
                 class="form-control"
                 :class="{ 'is-invalid': errors.email }"
                 placeholder="Votre email"
+                aria-label="Votre email"
+                autocomplete="email"
                 required
               />
             </div>
@@ -45,7 +49,7 @@
             <span class="input-group-text">
               <i class="bi bi-tag"></i>
             </span>
-            <select v-model="form.subject" class="form-control" :class="{ 'is-invalid': errors.subject }">
+            <select v-model="form.subject" class="form-control" :class="{ 'is-invalid': errors.subject }" aria-label="Sujet de votre message">
               <option value="" disabled>Sujet de votre message</option>
               <option value="Problème de compte">Problème de compte</option>
               <option value="Problème de paiement">Problème de paiement</option>
@@ -64,6 +68,7 @@
               class="form-control"
               :class="{ 'is-invalid': errors.message }"
               placeholder="Décrivez votre problème ou question..."
+              aria-label="Votre message"
               rows="5"
               required
             ></textarea>

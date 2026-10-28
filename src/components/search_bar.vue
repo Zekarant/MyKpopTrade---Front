@@ -7,6 +7,7 @@
         type="text"
         class="search-input"
         placeholder="Rechercher un article, un groupe, un membre..."
+        aria-label="Rechercher un article, un groupe, un membre"
         @keyup.enter="onSearch"
       />
       <button class="search-submit" aria-label="Rechercher" @click="onSearch">

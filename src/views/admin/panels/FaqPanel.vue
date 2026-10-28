@@ -2,7 +2,8 @@
   <div class="admin__panel">
     <div class="admin__panel-header">
       <input
-        v-model="search"
+v-model="search"
+        aria-label="Rechercher une question"
         type="search"
         class="admin__input admin__input--search"
         placeholder="Rechercher une question…"

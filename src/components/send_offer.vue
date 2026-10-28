@@ -58,10 +58,10 @@
       </div>
 
       <div class="form-group">
-           <input v-model="offerTermsAccepted" class="form-check-input" type="checkbox" required>
+           <input id="offerTerms" v-model="offerTermsAccepted" class="form-check-input" type="checkbox" required>
 
-            <label class="checkbox-label">
-            J'accepte les <a href="#" class="terms-link">conditions d'utilisation</a> pour les offres
+            <label for="offerTerms" class="checkbox-label">
+            J'accepte les <a href="/cgu" target="_blank" rel="noopener" class="terms-link">conditions d'utilisation</a> pour les offres
             </label>
       </div>
 

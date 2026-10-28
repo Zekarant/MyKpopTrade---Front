@@ -12,8 +12,8 @@
             </div>
 
             <div class="report-modal__body">
-                <label class="report-modal__label">Motif du signalement</label>
-                <div class="report-modal__reasons">
+                <span :id="`${uid}-reason`" class="report-modal__label">Motif du signalement</span>
+                <div class="report-modal__reasons" role="radiogroup" :aria-labelledby="`${uid}-reason`">
                     <label
                         v-for="reason in reasons"
                         :key="reason.value"
@@ -26,8 +26,9 @@
                     </label>
                 </div>
 
-                <label class="report-modal__label">Détails supplémentaires</label>
+                <label class="report-modal__label" :for="`${uid}-details`">Détails supplémentaires</label>
                 <textarea
+                    :id="`${uid}-details`"
                     v-model="signalReasonTxt"
                     class="report-modal__textarea"
                     placeholder="Décrivez le problème pour nous aider à comprendre la situation..."
@@ -53,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, ref } from 'vue';
+    import { computed, ref, useId } from 'vue';
     import { func } from '@/function';
     import reportService, { type ReportTargetType } from '@/services/report.service';
     import { apiErrorMessage } from '@/services/apiError';
@@ -81,6 +82,7 @@
     const props = defineProps<{ type: ReportTargetType; id: string }>();
     const emit = defineEmits<{ closeReport: [] }>();
 
+    const uid = useId();
     const signalReason = ref('');
     const signalReasonTxt = ref('');
 

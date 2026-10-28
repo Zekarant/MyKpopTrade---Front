@@ -2,16 +2,16 @@
   <section class="settings-card">
     <h3 class="settings-card__title"><i class="bi bi-shield-lock"></i> Mot de passe</h3>
     <div class="settings-card__body">
-      <div v-if="!showPasswordForm" class="setting-row setting-row--clickable" @click="showPasswordForm = true">
+      <div v-if="!showPasswordForm" v-keyboard-click class="setting-row setting-row--clickable" @click="showPasswordForm = true">
         <div class="setting-row__left">
           <span>Changer le mot de passe</span>
         </div>
-        <i class="bi bi-chevron-right"></i>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
       </div>
       <div v-else class="password-form">
-        <input v-model="currentPassword" type="password" placeholder="Mot de passe actuel" autocomplete="current-password" class="settings-input" />
-        <input v-model="newPassword" type="password" placeholder="Nouveau mot de passe" autocomplete="new-password" class="settings-input" />
-        <input v-model="confirmPassword" type="password" placeholder="Confirmer le nouveau mot de passe" autocomplete="new-password" class="settings-input" />
+        <input v-model="currentPassword" type="password" placeholder="Mot de passe actuel" aria-label="Mot de passe actuel" autocomplete="current-password" class="settings-input" />
+        <input v-model="newPassword" type="password" placeholder="Nouveau mot de passe" aria-label="Nouveau mot de passe" autocomplete="new-password" class="settings-input" />
+        <input v-model="confirmPassword" type="password" placeholder="Confirmer le nouveau mot de passe" aria-label="Confirmer le nouveau mot de passe" autocomplete="new-password" class="settings-input" />
         <div class="password-form__actions">
           <button class="btn-settings btn-settings--ghost" @click="showPasswordForm = false">Annuler</button>
           <button class="btn-settings btn-settings--primary" @click="savePassword">Enregistrer</button>
@@ -26,7 +26,12 @@
   <section class="settings-card">
     <h3 class="settings-card__title"><i class="bi bi-link-45deg"></i> Comptes liés</h3>
     <div class="settings-card__body">
-      <div class="setting-row" :class="{ 'setting-row--clickable': !profile.socialAuth?.google?.id }" @click="linkProvider('google')">
+      <div
+        v-keyboard-click="!profile.socialAuth?.google?.id"
+        class="setting-row"
+        :class="{ 'setting-row--clickable': !profile.socialAuth?.google?.id }"
+        @click="linkProvider('google')"
+      >
         <div class="setting-row__left">
           <i class="bi bi-google" style="color: #4285F4;"></i>
           <span>Google</span>
@@ -36,7 +41,12 @@
         </span>
         <span v-else class="setting-badge setting-badge--link">Lier le compte</span>
       </div>
-      <div class="setting-row" :class="{ 'setting-row--clickable': !profile.socialAuth?.discord?.id }" @click="linkProvider('discord')">
+      <div
+        v-keyboard-click="!profile.socialAuth?.discord?.id"
+        class="setting-row"
+        :class="{ 'setting-row--clickable': !profile.socialAuth?.discord?.id }"
+        @click="linkProvider('discord')"
+      >
         <div class="setting-row__left">
           <i class="bi bi-discord" style="color: #5865F2;"></i>
           <span>Discord</span>
@@ -60,6 +70,7 @@ import TwoFactorCard from '@/components/adherents/TwoFactorCard.vue';
 import { func } from '@/function';
 import { API_URL } from '@/config/api';
 import accountService, { type LinkableProvider } from '@/services/account.service';
+import { vKeyboardClick } from '@/composables/vKeyboardClick';
 import { apiMessage, isSessionLost } from './shared';
 import type { SectionProps } from './shared';
 

@@ -16,7 +16,7 @@
           <p>Aucun litige en cours. C'est bon signe !</p>
         </div>
         <div v-else class="disputes-list">
-          <article v-for="d in disputes" :key="d._id" class="dispute-card" @click="open(d._id)">
+          <article v-for="d in disputes" :key="d._id" v-keyboard-click class="dispute-card" @click="open(d._id)">
             <div class="dispute-card__head">
               <span :class="['status-badge', `status-badge--${d.status}`]">{{ DISPUTE_STATUS_LABELS[d.status] }}</span>
               <small>{{ formatDate(d.createdAt) }}</small>
@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { vKeyboardClick } from '@/composables/vKeyboardClick';
 import { useRouter } from 'vue-router';
 import { func } from '@/function';
 import { apiErrorMessage } from '@/services/apiError';
