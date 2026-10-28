@@ -64,7 +64,7 @@ class UserService {
     return data;
   }
 
-  async anonymizeMyAccount(payload: { confirmation: boolean }) {
+  async anonymizeMyAccount(payload: { confirmation: boolean; currentPassword: string }) {
     const { data } = await this.usersClient.post('/me/anonymize', payload);
     return data;
   }
