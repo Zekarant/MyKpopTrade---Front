@@ -342,7 +342,7 @@ const submitOffer = async () => {
 .offer-error {
   margin-top: 6px;
   font-size: 13px;
-  color: var(--danger-color, var(--danger-text));
+  color: var(--danger-text);
 }
 
 .price-info {

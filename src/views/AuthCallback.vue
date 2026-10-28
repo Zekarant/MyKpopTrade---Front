@@ -92,9 +92,9 @@ onMounted(async () => {
   font-size: 1.1rem;
 }
 .text-danger {
-  color: var(--danger-color, var(--danger-text));
+  color: var(--danger-text);
 }
 .text-success {
-  color: var(--success-color, var(--success-text));
+  color: var(--success-text);
 }
 </style>

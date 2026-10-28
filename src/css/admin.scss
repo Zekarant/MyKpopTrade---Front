@@ -609,10 +609,10 @@ $sidebar-breakpoint: 1024px;
   font-weight: 600;
   white-space: nowrap;
 
-  &--info { background: var(--info-light); color: var(--info); }
-  &--success { background: var(--success-light); color: var(--success); }
-  &--warning { background: var(--warning-light); color: var(--warning); }
-  &--danger { background: var(--danger-light); color: var(--danger); }
+  &--info { background: var(--info-light); color: var(--info-text); }
+  &--success { background: var(--success-light); color: var(--success-text); }
+  &--warning { background: var(--warning-light); color: var(--warning-text); }
+  &--danger { background: var(--danger-light); color: var(--danger-text); }
   &--accent { background: rgba(168, 85, 247, 0.12); color: var(--accent-purple); }
 }
 

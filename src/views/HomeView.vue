@@ -362,7 +362,7 @@ async function register() {
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: var(--warning);
+  color: var(--warning-text);
   border: 1px solid var(--warning);
   border-radius: var(--radius-full);
   padding: 1px 8px;
