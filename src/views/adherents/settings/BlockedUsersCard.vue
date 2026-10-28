@@ -33,7 +33,7 @@
         type="button"
         class="btn-settings btn-settings--full btn-settings--ghost"
         :disabled="loading"
-        @click="loadPage(page + 1)"
+        @click="loadMore"
       >
         Afficher plus
       </button>
@@ -49,21 +49,36 @@ import UserAvatar from '@/components/UserAvatar.vue';
 import blockService, { type BlockedUser } from '@/services/block.service';
 import { apiMessage, formatDate, isSessionLost } from './shared';
 
+const PAGE_SIZE = 20;
+
 const blockedUsers = ref<BlockedUser[]>([]);
-const page = ref(1);
-const totalPages = ref(1);
+/** Blocages enregistrés côté serveur, déblocages faits ici compris. */
+const total = ref(0);
+/**
+ * Rangs de la liste du serveur déjà parcourus. Distinct du nombre de membres
+ * affichés : le serveur peut écarter d'une page le blocage d'un compte supprimé.
+ */
+const covered = ref(0);
 const loading = ref(false);
 const unblockingId = ref<string | null>(null);
 
-const hasMore = computed(() => page.value < totalPages.value);
+const hasMore = computed(() => covered.value < total.value);
 
-async function loadPage(target: number) {
+/** Lit la page `page` et ajoute les membres pas encore affichés. */
+async function readPage(page: number): Promise<number> {
+  const result = await blockService.listBlocked(page, PAGE_SIZE);
+  const shown = new Set(blockedUsers.value.map((user) => user._id));
+  const fresh = result.blockedUsers.filter((user) => !shown.has(user._id));
+  blockedUsers.value = [...blockedUsers.value, ...fresh];
+  total.value = result.pagination.total;
+  covered.value = Math.min(page * PAGE_SIZE, total.value);
+  return fresh.length;
+}
+
+async function withLoading(load: () => Promise<void>) {
   loading.value = true;
   try {
-    const result = await blockService.listBlocked(target);
-    blockedUsers.value = target === 1 ? result.blockedUsers : [...blockedUsers.value, ...result.blockedUsers];
-    page.value = result.pagination.page;
-    totalPages.value = result.pagination.pages;
+    await load();
   } catch (error) {
     if (!isSessionLost(error)) func.showToastError(apiMessage(error, 'Impossible de charger les membres bloqués.'));
   } finally {
@@ -71,11 +86,37 @@ async function loadPage(target: number) {
   }
 }
 
+function loadFirstPage() {
+  return withLoading(async () => {
+    blockedUsers.value = [];
+    await readPage(1);
+  });
+}
+
+/**
+ * Suite de la liste. Un déblocage décale la liste côté serveur : la « page
+ * suivante » sauterait alors des membres. On relit donc la page qui contient
+ * le premier rang pas encore parcouru (les membres déjà affichés sont écartés),
+ * puis les suivantes jusqu'à avoir une page de nouveaux membres.
+ * `covered` avance à chaque tour : la boucle s'arrête toujours.
+ */
+function loadMore() {
+  return withLoading(async () => {
+    let added = 0;
+    while (added < PAGE_SIZE && hasMore.value) {
+      added += await readPage(Math.floor(covered.value / PAGE_SIZE) + 1);
+    }
+  });
+}
+
 async function unblock(user: BlockedUser) {
   unblockingId.value = user._id;
   try {
     await blockService.unblock(user._id);
     blockedUsers.value = blockedUsers.value.filter((blocked) => blocked._id !== user._id);
+    // Le membre débloqué était dans les rangs parcourus : la suite remonte d'un rang.
+    total.value = Math.max(0, total.value - 1);
+    covered.value = Math.max(0, covered.value - 1);
     func.showToastSuccess(`${user.username} est débloqué.`);
   } catch (error) {
     if (!isSessionLost(error)) func.showToastError(apiMessage(error, 'Impossible de débloquer ce membre.'));
@@ -84,7 +125,7 @@ async function unblock(user: BlockedUser) {
   }
 }
 
-onMounted(() => loadPage(1));
+onMounted(loadFirstPage);
 </script>
 
 <style lang="scss" scoped>

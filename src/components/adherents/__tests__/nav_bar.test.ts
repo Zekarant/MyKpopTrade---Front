@@ -83,6 +83,21 @@ describe('nav_bar', () => {
     expect(document.activeElement).toBe(bell.element)
   })
 
+  it('referme le menu mobile avec Escape en rendant le focus au bouton du menu', async () => {
+    await mountNavBar()
+    const toggle = wrapper.find('.navbar__toggle')
+
+    await toggle.trigger('click')
+    expect(wrapper.find('#navbar-mobile-menu').exists()).toBe(true)
+
+    pressEscape()
+    await flushPromises()
+
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.find('#navbar-mobile-menu').exists()).toBe(false)
+    expect(document.activeElement).toBe(toggle.element)
+  })
+
   it('n\'a plus de lien factice et pointe vers de vraies adresses', async () => {
     await mountNavBar()
     await wrapper.find('.navbar__profile').trigger('click')

@@ -166,6 +166,7 @@
 
       <!-- Mobile toggle -->
       <button
+        ref="menuToggle"
         type="button"
         class="navbar__toggle"
         aria-label="Menu"
@@ -268,6 +269,7 @@ const notifWrapper = ref<HTMLElement | null>(null);
 const notifTrigger = ref<HTMLButtonElement | null>(null);
 const profileTrigger = ref<HTMLButtonElement | null>(null);
 const profileDropdown = ref<HTMLElement | null>(null);
+const menuToggle = ref<HTMLButtonElement | null>(null);
 
 const fullName = computed(() =>
   [dataUser.value?.firstName, dataUser.value?.lastName].filter(Boolean).join(' ')
@@ -322,6 +324,9 @@ onKeyStroke('Escape', () => {
   } else if (dropdownOpen.value) {
     dropdownOpen.value = false;
     profileTrigger.value?.focus();
+  } else if (menuOpen.value) {
+    menuOpen.value = false;
+    menuToggle.value?.focus();
   }
 });
 
