@@ -208,6 +208,7 @@ import accountService from '@/services/account.service';
 import userService from '@/services/user.service';
 import { apiMessage, isSessionLost } from './shared';
 import type { SectionProps, SettingsProfile } from './shared';
+import { usernameRuleError } from '@/composables/useRegisterForm';
 
 const props = defineProps<SectionProps>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();
@@ -272,16 +273,7 @@ const avatarUrl = computed(() => {
 });
 
 /** Aligné sur `validateUsername` côté API. */
-const usernameError = computed(() => {
-  const username = form.value.username;
-  if (!username) return 'Le pseudo est obligatoire.';
-  if (username.length < 3) return 'Le pseudo doit comporter au moins 3 caractères.';
-  if (username.length > 30) return 'Le pseudo ne peut pas dépasser 30 caractères.';
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-    return 'Caractères autorisés : lettres, chiffres, tiret et underscore.';
-  }
-  return '';
-});
+const usernameError = computed(() => usernameRuleError(form.value.username));
 
 const profileChanged = computed(() => {
   const saved = formFrom(props.profile);

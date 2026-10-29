@@ -30,6 +30,7 @@ import { useId } from 'vue';
 import type { ShippingAddressPayload } from '@/services/payment.service';
 import type { AddressResult } from '@/services/address.service';
 import AddressAutocomplete from './AddressAutocomplete.vue';
+import { POSTAL_CODE_MAX_LENGTH } from '@/utils/address';
 
 type AddressField = keyof ShippingAddressPayload;
 
@@ -37,7 +38,7 @@ const FIELDS: { key: AddressField; label: string; maxlength?: number; full?: boo
   { key: 'recipientName', label: 'Nom du destinataire', maxlength: 100, full: true },
   { key: 'streetLine1', label: 'Adresse', full: true },
   { key: 'streetLine2', label: 'Complément', maxlength: 200, full: true, optional: true },
-  { key: 'postalCode', label: 'Code postal', maxlength: 16 },
+  { key: 'postalCode', label: 'Code postal', maxlength: POSTAL_CODE_MAX_LENGTH },
   { key: 'city', label: 'Ville', maxlength: 100 },
   { key: 'country', label: 'Pays', maxlength: 2, placeholder: 'FR' },
   { key: 'phone', label: 'Téléphone', maxlength: 32, optional: true, type: 'tel' }

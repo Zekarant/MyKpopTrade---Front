@@ -115,6 +115,7 @@ import { func } from '@/function';
 import { hasSession } from '@/services/session.cookies';
 import accountService from '@/services/account.service';
 import { apiErrorMessage } from '@/services/apiError';
+import { usernameRuleError } from '@/composables/useRegisterForm';
 
 defineOptions({ name: 'ProfileCompletion' });
 
@@ -143,16 +144,7 @@ const form = reactive({
 });
 
 /** Validation locale du pseudo, alignée sur `validateUsername` côté API. */
-const usernameError = computed(() => {
-  const username = form.username;
-  if (!username) return 'Le pseudo est obligatoire.';
-  if (username.length < 3) return 'Au moins 3 caractères.';
-  if (username.length > 30) return '30 caractères maximum.';
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-    return 'Lettres, chiffres, tiret et underscore uniquement.';
-  }
-  return '';
-});
+const usernameError = computed(() => usernameRuleError(form.username));
 
 onMounted(async () => {
   // Le refresh token fait foi : le jeton d'accès (15 min) peut avoir

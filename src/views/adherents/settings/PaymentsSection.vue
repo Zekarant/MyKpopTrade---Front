@@ -103,7 +103,7 @@
         <input v-model="address.streetLine1" type="text" maxlength="200" class="settings-input mt-2" placeholder="Rue et numéro" aria-label="Rue et numéro" />
         <input v-model="address.streetLine2" type="text" maxlength="200" class="settings-input" placeholder="Complément (optionnel)" aria-label="Complément d'adresse (optionnel)" />
         <div class="setting-row__inline mt-0">
-          <input v-model="address.postalCode" type="text" maxlength="16" class="settings-input settings-input--sm" placeholder="Code postal" aria-label="Code postal" />
+          <input v-model="address.postalCode" type="text" :maxlength="POSTAL_CODE_MAX_LENGTH" class="settings-input settings-input--sm" placeholder="Code postal" aria-label="Code postal" />
           <input v-model="address.city" type="text" maxlength="100" class="settings-input settings-input--sm" placeholder="Ville" aria-label="Ville" />
           <input v-model="address.country" type="text" maxlength="2" class="settings-input settings-input--sm settings-input--country" placeholder="FR" aria-label="Pays (code à deux lettres)" />
         </div>
@@ -155,7 +155,7 @@
       <input id="paypal-info-street" v-model.trim="address.streetLine1" type="text" maxlength="200" placeholder="Rue et numéro" />
       <input v-model.trim="address.streetLine2" type="text" maxlength="200" placeholder="Complément (optionnel)" aria-label="Complément d'adresse (optionnel)" />
       <div class="modal-inline">
-        <input v-model.trim="address.postalCode" type="text" maxlength="16" placeholder="Code postal" aria-label="Code postal" />
+        <input v-model.trim="address.postalCode" type="text" :maxlength="POSTAL_CODE_MAX_LENGTH" placeholder="Code postal" aria-label="Code postal" />
         <input v-model.trim="address.city" type="text" maxlength="100" placeholder="Ville" aria-label="Ville" />
         <input v-model.trim="address.country" type="text" maxlength="2" class="settings-input--country" placeholder="FR" aria-label="Pays (code à deux lettres)" />
       </div>
@@ -184,6 +184,7 @@ import type { BillingAddress, SectionProps, SettingsProfile } from './shared';
 import type { PaypalAccount } from './usePaypalAccount';
 import DialogFrame from '@/components/DialogFrame.vue';
 import { vDismiss } from '@/composables/vDismiss';
+import { POSTAL_CODE_MAX_LENGTH, isPostalAddressComplete } from '@/utils/address';
 
 const props = defineProps<SectionProps & { paypal: PaypalAccount }>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();
@@ -250,7 +251,7 @@ async function saveLegalName() {
 async function saveAddress() {
   const current = address.value;
   const hasAny = current.streetLine1 || current.streetLine2 || current.postalCode || current.city;
-  const hasRequired = current.streetLine1 && current.postalCode && current.city;
+  const hasRequired = isPostalAddressComplete(current);
   if (hasAny && !hasRequired) {
     func.showToastError('Adresse incomplète : rue, code postal et ville sont requis');
     return;
@@ -322,7 +323,7 @@ async function submitPaypalInfoAndConnect() {
     return;
   }
   const current = address.value;
-  if (!current.streetLine1 || !current.postalCode || !current.city) {
+  if (!isPostalAddressComplete(current)) {
     paypalInfoError.value = 'Adresse incomplète : rue, code postal et ville sont requis.';
     return;
   }
