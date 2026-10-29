@@ -13,7 +13,7 @@
 import { ref } from 'vue';
 import send_offer from '@/components/send_offer.vue';
 import type { OfferSentPayload } from '@/components/offerRules';
-import messagingService from '@/services/messaging.service';
+import { useMessagingStore } from '@/store/messaging.store';
 import { func } from '@/function';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import type { ProductDetail } from '@/types/post.types';
@@ -22,16 +22,15 @@ defineProps<{ product: ProductDetail }>();
 
 const emit = defineEmits<{ close: [] }>();
 
+const messagingStore = useMessagingStore();
+
 const dialog = ref<HTMLElement | null>(null);
 useDialogFocus(dialog, undefined, () => emit('close'));
 
 function sendOffer(offer: OfferSentPayload) {
     emit('close');
-    messagingService.initiateNegotiation({
-        productId: offer.offerData.productId,
-        initialOffer: offer.amount,
-        message: offer.message,
-    }).then(() => {
+    // Par le store, comme depuis la messagerie : la conversation y est rangée sans doublon.
+    messagingStore.initiateNegotiation(offer.offerData.productId, offer.amount, offer.message).then(() => {
         func.showToastSuccess('Offre envoyée avec succès !');
     }).catch((error: { message?: string }) => {
         console.error('Erreur lors de l\'envoi de l\'offre:', error);

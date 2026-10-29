@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import messagingService from '@/services/messaging.service';
 import type { Conversation, Message, NegotiationRequest } from '@/types/messaging.types';
 import { currentUserId } from '@/services/session.cookies';
+import { findMatchingConversation } from '@/views/messaging/conversationHelpers';
 
 export interface ReadReceipt {
   conversationId: string;
@@ -265,6 +266,11 @@ export const useMessagingStore = defineStore('messaging', {
       }
     },
 
+    /**
+     * Ouvre une conversation (fenêtre « Nouvelle conversation »). L'API peut
+     * renvoyer une conversation déjà connue : jamais de doublon dans la liste.
+     * @returns la réponse, avec la conversation de la liste quand elle existait déjà
+     */
     async startConversation(recipientId: string, productId?: string, initialMessage?: string) {
       try {
         const response = await messagingService.startConversation({
@@ -273,10 +279,10 @@ export const useMessagingStore = defineStore('messaging', {
           initialMessage
         });
 
-        // Ajouter la nouvelle conversation à la liste
-        this.conversations.unshift(response.conversation);
+        const existing = findMatchingConversation(this.conversations, response.conversation, currentUserId());
+        if (!existing) this.conversations.unshift(response.conversation);
 
-        return response;
+        return { ...response, conversation: existing ?? response.conversation };
       } catch (error) {
         this.error = 'Erreur lors de la création de la conversation';
         console.error(error);

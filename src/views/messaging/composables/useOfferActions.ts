@@ -1,6 +1,5 @@
 import { ref, type Ref } from 'vue'
 import type { useMessagingStore } from '@/store/messaging.store'
-import messagingService from '@/services/messaging.service'
 import type { ViewConversation, ViewMessage } from '../types'
 import { entityId } from '../conversationHelpers'
 
@@ -61,11 +60,7 @@ export function useOfferActions({ store, selected, toast, reload, onOfferPosted 
   function sendOffer(offerInfo: OfferInfo): void {
     offerOpen.value = false
     const from = openId()
-    messagingService.initiateNegotiation({
-      productId: offerInfo.offerData.productId,
-      initialOffer: offerInfo.amount,
-      message: offerInfo.message
-    }).then((response) => {
+    store.initiateNegotiation(offerInfo.offerData.productId, offerInfo.amount, offerInfo.message).then((response) => {
       if (!stillOpen(from)) return
       selected.value = response.conversation
       if (response.conversation.lastMessage) onOfferPosted(response.conversation.lastMessage)

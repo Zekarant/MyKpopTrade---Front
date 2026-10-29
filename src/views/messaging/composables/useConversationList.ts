@@ -5,7 +5,6 @@ import {
   countConversationsByTab,
   entityId,
   filterConversations,
-  findMatchingConversation,
   type ConversationLike
 } from '../conversationHelpers'
 
@@ -32,15 +31,5 @@ export function useConversationList(store: MessagingStore, userId: () => string 
     return (requestedId ? conversations.find((c) => entityId(c) === requestedId) : undefined) ?? conversations[0]
   }
 
-  /**
-   * Conversation créée depuis la fenêtre « Nouvelle conversation » : jamais de doublon dans la liste.
-   * @returns la conversation à ouvrir (celle qui existait déjà, le cas échéant)
-   */
-  function addCreated(created: ViewConversation): ViewConversation {
-    const existing = findMatchingConversation(store.conversations as ViewConversation[], created, userId())
-    if (!existing) store.conversations.unshift(created)
-    return existing ?? created
-  }
-
-  return { activeTab, searchQuery, filtered, counts, initialConversation, addCreated }
+  return { activeTab, searchQuery, filtered, counts, initialConversation }
 }
