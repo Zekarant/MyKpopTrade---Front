@@ -20,6 +20,8 @@ export type OfferProduct = Partial<Omit<OfferPricing, 'price'>> & {
   _id: string;
   title: string;
   price?: number;
+  /** Devise de l'annonce (EUR si absente). */
+  currency?: string;
   images?: string[];
 };
 

@@ -92,6 +92,19 @@ describe('formatRelative', () => {
   })
 })
 
+describe('formatPrice et formatDate — cas ajoutés', () => {
+  const plain = (text: string) => text.replace(/\s/g, ' ')
+
+  it('une devise absente ou vide retombe sur l\'euro', () => {
+    expect(plain(formatPrice(12.5, ''))).toBe('12,50 €')
+    expect(plain(formatPrice(12.5, null))).toBe('12,50 €')
+  })
+
+  it('formatDate « dayMonth » : jour et mois abrégé, sans année', () => {
+    expect(formatDate('2026-10-09T12:00:00Z', 'dayMonth')).toBe('09 oct.')
+  })
+})
+
 describe('currencySymbol', () => {
   it('donne le symbole d\'une devise connue, le code sinon', () => {
     expect(currencySymbol('EUR')).toBe('€')

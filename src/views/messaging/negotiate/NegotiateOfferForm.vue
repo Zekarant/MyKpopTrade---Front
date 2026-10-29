@@ -50,7 +50,7 @@
       ></textarea>
     </div>
 
-    <NegotiateOfferSummary :amount="offerAmount" :price="product.price" />
+    <NegotiateOfferSummary :amount="offerAmount" :price="product.price" :currency="product.currency" />
 
     <div class="form-actions">
       <button type="button" class="btn-secondary" @click="emit('cancel')">
@@ -91,13 +91,13 @@ const offerError = ref('');
 const submitting = ref(false);
 
 const canSubmit = computed(() =>
-  validateOfferAmount(offerAmount.value, props.product) === null &&
+  validateOfferAmount(offerAmount.value, props.product, props.product.currency) === null &&
   !offerError.value &&
   !submitting.value
 );
 
 function validateOffer() {
-  offerError.value = validateOfferAmount(offerAmount.value, props.product) ?? '';
+  offerError.value = validateOfferAmount(offerAmount.value, props.product, props.product.currency) ?? '';
 }
 
 function setOfferPercentage(percentage: number) {

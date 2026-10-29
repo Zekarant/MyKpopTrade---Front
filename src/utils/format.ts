@@ -23,10 +23,11 @@ function toDate(value: DateInput): Date | null {
 // dizaines : un formateur par devise suffit.
 const priceFormatters = new Map<string, Intl.NumberFormat>();
 
-/** Montant dans sa devise, à la française : « 1 234,50 € ». */
-export function formatPrice(amount: number | null | undefined, currency = 'EUR'): string {
+/** Montant dans sa devise (EUR si absente ou vide), à la française : « 1 234,50 € ». */
+export function formatPrice(amount: number | null | undefined, currencyCode?: string | null): string {
   const value = Number(amount);
   if (amount === null || amount === undefined || !Number.isFinite(value)) return '';
+  const currency = currencyCode || 'EUR';
 
   let formatter = priceFormatters.get(currency);
   if (!formatter) {
