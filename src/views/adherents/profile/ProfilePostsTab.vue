@@ -24,7 +24,7 @@
               {{ post.author?.username }}
               <VerifiedBadge v-if="post.author?.isIdentityVerified" :size="12" />
             </span>
-            <span class="feed-post__date">{{ formatPostDate(post.createdAt) }}</span>
+            <span class="feed-post__date">{{ formatRelative(post.createdAt, Date.now(), { ago: true }) }}</span>
           </div>
           <button v-if="isOwnProfile" class="feed-post__delete" aria-label="Supprimer la publication" @click="removePost(post._id)">
             <i class="bi bi-trash" aria-hidden="true"></i>
@@ -85,7 +85,7 @@
 import { onActivated, ref, watch } from 'vue'
 import VerifiedBadge from '@/components/VerifiedBadge.vue'
 import feedPostService from '@/services/feedPost.service'
-import { mediaUrl } from '@/utils/format'
+import { formatRelative, mediaUrl } from '@/utils/format'
 import { initialOf, type ReportTarget } from './types'
 
 const props = defineProps<{ profileUserId: string; isOwnProfile: boolean; username?: string }>()
@@ -195,18 +195,5 @@ async function submitReply(post: FeedPost) {
   } catch (e) {
     console.error('Erreur réponse:', e)
   }
-}
-
-function formatPostDate(date: string) {
-  if (!date) return ''
-  const d = new Date(date)
-  const minutes = Math.floor((Date.now() - d.getTime()) / 60000)
-  if (minutes < 1) return 'À l\'instant'
-  if (minutes < 60) return `il y a ${minutes}min`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `il y a ${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `il y a ${days}j`
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
 }
 </script>

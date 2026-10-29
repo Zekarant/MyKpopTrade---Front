@@ -72,6 +72,7 @@ import { apiErrorMessage } from '../adminFormat';
 import { SUSPENSION_REASONS } from '../adminPresets';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { vDismiss } from '@/composables/vDismiss';
+import { formatDate } from '@/utils/format';
 
 const MIN_REASON_LENGTH = 5;
 const MAX_REASON_LENGTH = 500;
@@ -102,7 +103,7 @@ const deadlineHint = computed(() => {
     return 'Le compte restera suspendu jusqu\'à une réactivation manuelle.';
   }
   const end = new Date(Date.now() + durationChoice.value * MS_PER_DAY);
-  return `Réactivation automatique le ${end.toLocaleDateString('fr-FR')}.`;
+  return `Réactivation automatique le ${formatDate(end, 'long')}.`;
 });
 
 const submit = async () => {

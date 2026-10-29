@@ -4,6 +4,8 @@
  * - sinon : au moins minOfferPercentage % du prix (50 % par défaut), et sous le prix demandé.
  */
 
+import { formatPrice } from '@/utils/format';
+
 export interface OfferPricing {
   price: number;
   allowOffers?: boolean;
@@ -46,13 +48,6 @@ export type OfferBounds =
   | { mode: 'pwyw'; min: number; max: number | null }
   | { mode: 'negotiation'; min: number; minPercentage: number; price: number };
 
-const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
-
-/** « 12,5 € » : même rendu que les prix affichés sur les annonces. */
-export function formatAmount(amount: number, symbol = '€'): string {
-  return `${amountFormatter.format(amount)} ${symbol}`;
-}
-
 export function acceptsOffers(pricing: Partial<OfferPricing> | null | undefined): boolean {
   return Boolean(pricing?.allowOffers || pricing?.isPayWhatYouWant);
 }
@@ -79,17 +74,17 @@ export function offerBounds(pricing: OfferPricing): OfferBounds {
   };
 }
 
-/** « à partir de 5 € » ou « entre 5 € et 30 € ». */
-export function pwywRangeLabel(min: number | null | undefined, max: number | null | undefined, symbol = '€'): string {
-  const floor = formatAmount(min ?? 0, symbol);
-  return max ? `entre ${floor} et ${formatAmount(max, symbol)}` : `à partir de ${floor}`;
+/** « à partir de 5,00 € » ou « entre 5,00 € et 30,00 € » (même rendu que les prix des annonces). */
+export function pwywRangeLabel(min: number | null | undefined, max: number | null | undefined, currency = 'EUR'): string {
+  const floor = formatPrice(min ?? 0, currency);
+  return max ? `entre ${floor} et ${formatPrice(max, currency)}` : `à partir de ${floor}`;
 }
 
 /** @returns le message à afficher, ou `null` si l'offre est recevable. */
 export function validateOfferAmount(
   amount: number | null | undefined,
   pricing: OfferPricing,
-  symbol = '€'
+  currency = 'EUR'
 ): string | null {
   if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
     return 'Indiquez un montant supérieur à 0.';
@@ -98,16 +93,16 @@ export function validateOfferAmount(
   const bounds = offerBounds(pricing);
   if (bounds.mode === 'pwyw') {
     if (amount < bounds.min) {
-      return `Le prix libre commence à ${formatAmount(bounds.min, symbol)}.`;
+      return `Le prix libre commence à ${formatPrice(bounds.min, currency)}.`;
     }
     if (bounds.max !== null && amount > bounds.max) {
-      return `Le prix libre ne dépasse pas ${formatAmount(bounds.max, symbol)}.`;
+      return `Le prix libre ne dépasse pas ${formatPrice(bounds.max, currency)}.`;
     }
     return null;
   }
 
   if (amount < bounds.min) {
-    return `L'offre minimum est de ${formatAmount(bounds.min, symbol)} (${bounds.minPercentage} % du prix).`;
+    return `L'offre minimum est de ${formatPrice(bounds.min, currency)} (${bounds.minPercentage} % du prix).`;
   }
   if (amount >= bounds.price) {
     return 'L\'offre doit être inférieure au prix demandé.';

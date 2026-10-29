@@ -58,7 +58,7 @@ describe('NegotiateView', () => {
     const wrapper = mountPage()
     await flushPromises()
 
-    expect(wrapper.text().replace(/\s/g, ' ')).toContain('entre 8 € et 30 €')
+    expect(wrapper.text().replace(/\s/g, ' ')).toContain('entre 8,00 € et 30,00 €')
     expect(wrapper.find('.price-helpers').exists()).toBe(false)
     expect((wrapper.find('input.price-input').element as HTMLInputElement).value).toBe('8')
   })
@@ -73,7 +73,7 @@ describe('NegotiateView', () => {
     await flushPromises()
     await wrapper.find('input.price-input').setValue('35')
 
-    expect(wrapper.text().replace(/\s/g, ' ')).toContain('Le prix libre ne dépasse pas 30 €.')
+    expect(wrapper.text().replace(/\s/g, ' ')).toContain('Le prix libre ne dépasse pas 30,00 €.')
     expect(wrapper.find('.form-actions .btn-primary').attributes('disabled')).toBeDefined()
   })
 
@@ -84,7 +84,7 @@ describe('NegotiateView', () => {
     const wrapper = mountPage()
     await flushPromises()
     await wrapper.find('.price-helpers .percentage-btn:nth-child(3)').trigger('click')
-    expect(wrapper.find('.offer-summary .savings').text()).toBe('12 € (30%)')
+    expect(wrapper.find('.offer-summary .savings').text().replace(/\s/g, ' ')).toBe('12,00 € (30 %)')
     await wrapper.find('textarea').setValue('Possible à 28 € ?')
     await wrapper.find('.form-actions .btn-primary').trigger('click')
     await flushPromises()

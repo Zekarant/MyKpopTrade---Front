@@ -15,7 +15,7 @@
       <div class="product-details">
         <h4>{{ title }}</h4>
         <div class="original-price">
-          Prix initial: <span class="price-value">{{ price }}€</span>
+          Prix initial : <span class="price-value">{{ formatPrice(price) }}</span>
         </div>
       </div>
     </div>
@@ -40,7 +40,7 @@
         <div v-if="offerError" class="offer-error" role="alert">{{ offerError }}</div>
         <div class="price-info">
           <span v-if="!offerError && typeof offerAmount === 'number' && offerAmount > 0 && offerAmount < price" class="savings">
-            Économie: {{ (price - offerAmount).toFixed(2) }}€
+            Économie : {{ formatPrice(price - offerAmount) }}
           </span>
         </div>
       </div>
@@ -89,7 +89,6 @@ import { API_URL } from '@/config/api';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { vDismiss } from '@/composables/vDismiss';
 import {
-  formatAmount,
   offerBounds,
   pwywRangeLabel,
   validateOfferAmount,
@@ -98,6 +97,7 @@ import {
   type OfferProduct,
   type OfferSentPayload
 } from './offerRules';
+import { formatPrice } from '@/utils/format';
 
 defineOptions({ name: 'SendOffer' });
 
@@ -127,7 +127,7 @@ const ruleLabel = computed(() => {
   if (current.mode === 'pwyw') {
     return `Prix libre : ${pwywRangeLabel(current.min, current.max)}`
   }
-  return `Offre minimum : ${formatAmount(current.min)} (${current.minPercentage} % du prix)`
+  return `Offre minimum : ${formatPrice(current.min)} (${current.minPercentage} % du prix)`
 })
 
 const inputMin = computed(() => Math.max(bounds.value.min, 0.01))
