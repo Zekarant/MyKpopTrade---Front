@@ -57,13 +57,13 @@
   padding: 13px 14px;
   margin-bottom: 10px;
   transition: border 0.18s, box-shadow 0.18s, background 0.18s;
-  box-shadow: 0 1px 5px rgba(13,110,253,0.04) inset;
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--info) 4%, transparent) inset;
 }
 
 .counter-input:focus {
   border: 1.5px solid var(--info);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px rgba(13,110,253,0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 8%, transparent);
 }
 
 .counter-popup-actions {

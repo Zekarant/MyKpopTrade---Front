@@ -248,11 +248,11 @@ function onMaxTyped(event: Event) {
 }
 
 .slider-price__thumb:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px rgba(255, 45, 120, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-pink) 25%, transparent);
 }
 
 .slider-price__thumb:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 4px rgba(255, 45, 120, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-pink) 25%, transparent);
 }
 
 .slider-price__inputs {
@@ -275,7 +275,7 @@ function onMaxTyped(event: Event) {
 
 .slider-price__field:focus-within {
   border-color: var(--accent-pink);
-  box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+  box-shadow: var(--focus-ring);
 }
 
 .slider-price__currency {

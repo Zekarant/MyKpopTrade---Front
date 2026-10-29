@@ -144,7 +144,7 @@ async function confirmAction() {
   &:hover:not(:disabled),
   &--active {
     background: var(--danger);
-    color: white;
+    color: var(--text-on-accent);
   }
 
   &:disabled {
@@ -154,7 +154,7 @@ async function confirmAction() {
 }
 
 .block-confirm {
-  background: var(--bg-card, white);
+  background: var(--bg-card);
   border-radius: var(--radius-lg, 12px);
   box-shadow: var(--shadow-xl, 0 10px 30px rgba(0, 0, 0, 0.2));
   width: 92%;
@@ -192,7 +192,7 @@ async function confirmAction() {
 
   &--confirm {
     background: var(--danger);
-    color: white;
+    color: var(--text-on-accent);
   }
 
   &:disabled {

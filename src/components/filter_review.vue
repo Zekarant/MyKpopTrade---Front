@@ -99,7 +99,7 @@ const resetFilters = () => {
   border-radius: 6px;
   font-size: 13px;
   color: var(--text-primary);
-  background-color: white;
+  background-color: var(--bg-card);
   cursor: pointer;
   transition: all 0.3s ease;
 
@@ -110,7 +110,7 @@ const resetFilters = () => {
   &:focus {
     outline: none;
     border-color: var(--text-primary);
-    box-shadow: 0 0 0 2px rgba(23, 32, 42, 0.1);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-primary) 10%, transparent);
   }
 }
 
@@ -130,7 +130,7 @@ const resetFilters = () => {
   white-space: nowrap;
 
   &:hover {
-    background-color: rgba(183, 58, 78, 0.1);
+    background-color: var(--danger-light);
   }
 
   i {

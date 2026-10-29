@@ -172,7 +172,7 @@ const reset = async () => {
   align-items: center;
   justify-content: center;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 800;
   font-size: 1.4rem;
   border-radius: var(--radius-md);

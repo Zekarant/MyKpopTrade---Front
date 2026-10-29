@@ -440,7 +440,7 @@ function logout() {
   align-items: center;
   justify-content: center;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 800;
   font-size: 1.1rem;
   border-radius: var(--radius-sm);
@@ -481,7 +481,7 @@ function logout() {
   &--active,
   &--active:hover {
     color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.08);
+    background: color-mix(in srgb, var(--accent-pink) 8%, transparent);
   }
 
   i {
@@ -497,18 +497,18 @@ function logout() {
   padding: 10px 20px;
   margin-left: auto;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-full);
   font-weight: 600;
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: 0 2px 12px rgba(255, 45, 120, 0.3);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent-pink) 30%, transparent);
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(255, 45, 120, 0.4);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--accent-pink) 40%, transparent);
   }
 
   i {
@@ -543,7 +543,7 @@ function logout() {
   &:hover {
     color: var(--accent-pink);
     border-color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.05);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
   }
 }
 
@@ -555,7 +555,7 @@ function logout() {
   height: 18px;
   padding: 0 4px;
   background: var(--danger);
-  color: white;
+  color: var(--text-on-accent);
   font-size: 0.65rem;
   font-weight: 700;
   border-radius: var(--radius-full);
@@ -610,7 +610,7 @@ function logout() {
   padding: 4px 8px;
   border-radius: var(--radius-sm);
 
-  &:hover { background: rgba(255, 45, 120, 0.05); }
+  &:hover { background: color-mix(in srgb, var(--accent-pink) 5%, transparent); }
 }
 
 .navbar__notif-list {
@@ -642,7 +642,7 @@ function logout() {
   &:hover { background: var(--surface-hover); }
 
   &--unread {
-    background: rgba(255, 45, 120, 0.03);
+    background: color-mix(in srgb, var(--accent-pink) 3%, transparent);
 
     .navbar__notif-text { font-weight: 600; }
   }
@@ -888,7 +888,7 @@ function logout() {
     color: var(--accent-pink);
     font-weight: 600;
     &:hover {
-      background: rgba(255, 45, 120, 0.08);
+      background: color-mix(in srgb, var(--accent-pink) 8%, transparent);
       color: var(--accent-pink);
     }
   }
@@ -997,7 +997,7 @@ function logout() {
 
   &--active {
     color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.08);
+    background: color-mix(in srgb, var(--accent-pink) 8%, transparent);
   }
 
   &--danger {

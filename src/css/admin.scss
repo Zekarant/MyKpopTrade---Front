@@ -243,14 +243,14 @@ $sidebar-breakpoint: 1024px;
     border-radius: var(--radius-sm);
     font-size: 1rem;
     color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.09);
+    background: color-mix(in srgb, var(--accent-pink) 9%, transparent);
   }
 
   &--success > i { color: var(--success); background: var(--success-light); }
   &--warning > i { color: var(--warning); background: var(--warning-light); }
   &--danger > i { color: var(--danger); background: var(--danger-light); }
   &--info > i { color: var(--info); background: var(--info-light); }
-  &--accent > i { color: var(--accent-purple); background: rgba(168, 85, 247, 0.12); }
+  &--accent > i { color: var(--accent-purple); background: color-mix(in srgb, var(--accent-purple) 12%, transparent); }
 }
 
 .admin__kpi-body {
@@ -391,7 +391,7 @@ $sidebar-breakpoint: 1024px;
   &:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.12);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-pink) 12%, transparent);
   }
 }
 
@@ -613,7 +613,7 @@ $sidebar-breakpoint: 1024px;
   &--success { background: var(--success-light); color: var(--success-text); }
   &--warning { background: var(--warning-light); color: var(--warning-text); }
   &--danger { background: var(--danger-light); color: var(--danger-text); }
-  &--accent { background: rgba(168, 85, 247, 0.12); color: var(--accent-purple); }
+  &--accent { background: color-mix(in srgb, var(--accent-purple) 12%, transparent); color: var(--accent-purple); }
 }
 
 .admin__badge-group {
@@ -818,7 +818,7 @@ $sidebar-breakpoint: 1024px;
   align-items: flex-start;
   justify-content: center;
   padding: 12vh var(--space-md) var(--space-md);
-  background: rgba(15, 15, 20, 0.55);
+  background: color-mix(in srgb, var(--text-primary) 55%, transparent);
   backdrop-filter: blur(3px);
 }
 

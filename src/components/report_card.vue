@@ -210,7 +210,7 @@ import { vDismiss } from '@/composables/vDismiss'
 
     &.active {
         border-color: var(--danger);
-        background: rgba(239, 68, 68, 0.05);
+        background: color-mix(in srgb, var(--danger) 5%, transparent);
 
         i {
             color: var(--danger);
@@ -233,7 +233,7 @@ import { vDismiss } from '@/composables/vDismiss'
     &:focus {
         outline: none;
         border-color: var(--accent-pink);
-        box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+        box-shadow: var(--focus-ring);
     }
 
     &::placeholder {
@@ -273,7 +273,7 @@ import { vDismiss } from '@/composables/vDismiss'
 
     &--submit {
         background: var(--danger);
-        color: white;
+        color: var(--text-on-accent);
 
         &:hover:not(:disabled) {
             background: var(--danger);

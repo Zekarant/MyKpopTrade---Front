@@ -111,9 +111,9 @@
   &--active {
     background: var(--accent-pink);
     border-color: var(--accent-pink);
-    color: white;
+    color: var(--text-on-accent);
 
-    &:hover { color: white; }
+    &:hover { color: var(--text-on-accent); }
   }
 }
 

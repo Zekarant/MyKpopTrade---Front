@@ -86,16 +86,16 @@ label {
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background-color: rgba(108, 117, 125, 0.02);
+  background-color: color-mix(in srgb, var(--text-secondary) 2%, transparent);
 
   &:hover {
     border-color: var(--text-primary);
-    background-color: rgba(23, 32, 42, 0.02);
+    background-color: color-mix(in srgb, var(--text-primary) 2%, transparent);
   }
 
   &.dragging {
     border-color: var(--text-primary);
-    background-color: rgba(23, 32, 42, 0.1);
+    background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
     transform: scale(1.02);
   }
 
@@ -169,11 +169,11 @@ label {
       cursor: pointer;
       transition: all 0.3s ease;
       padding: 0;
-      color: white;
+      color: var(--text-on-accent);
       font-size: 16px;
 
       &:hover {
-        background: rgba(183, 58, 78, 0.9);
+        background: color-mix(in srgb, var(--danger) 90%, transparent);
         transform: scale(1.1);
       }
     }
@@ -182,7 +182,7 @@ label {
 
 .image-error {
   padding: 10px;
-  background-color: rgba(183, 58, 78, 0.1);
+  background-color: var(--danger-light);
   border: 1px solid var(--danger);
   border-radius: 6px;
   color: var(--danger-text);

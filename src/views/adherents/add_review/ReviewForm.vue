@@ -168,7 +168,7 @@ async function submitReview() {
   &:focus {
     outline: none;
     border-color: var(--text-primary);
-    box-shadow: 0 0 0 3px rgba(23, 32, 42, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 10%, transparent);
   }
 
   &::placeholder {
@@ -184,7 +184,7 @@ async function submitReview() {
 
 .error-message {
   padding: 12px;
-  background-color: rgba(183, 58, 78, 0.1);
+  background-color: var(--danger-light);
   border: 1px solid var(--danger);
   border-radius: 8px;
   color: var(--danger-text);
@@ -193,7 +193,7 @@ async function submitReview() {
 
 .success-message {
   padding: 12px;
-  background-color: rgba(61, 204, 106, 0.1);
+  background-color: var(--success-light);
   border: 1px solid var(--success);
   border-radius: 8px;
   color: var(--success-text);
@@ -222,12 +222,12 @@ async function submitReview() {
 
 .btn-submit {
   background-color: var(--text-primary);
-  color: white;
+  color: var(--text-on-accent);
 
   &:hover:not(:disabled) {
     // Fond très sombre : on l'éclaircit au survol.
     filter: brightness(1.6);
-    box-shadow: 0 4px 8px rgba(23, 32, 42, 0.3);
+    box-shadow: 0 4px 8px color-mix(in srgb, var(--text-primary) 30%, transparent);
   }
 
   &:disabled {

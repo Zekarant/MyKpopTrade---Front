@@ -178,7 +178,7 @@ const submitOffer = async () => {
   width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
@@ -243,7 +243,7 @@ const submitOffer = async () => {
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid white;
+  border: 2px solid var(--bg-card);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -302,13 +302,13 @@ const submitOffer = async () => {
   font-size: 16px;
   font-weight: 600;
   transition: all 0.2s;
-  background: white;
+  background: var(--bg-card);
   box-sizing: border-box;
 }
 
 .form-group input[type="number"]:focus {
   border-color: var(--info);
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  box-shadow: 0 0 0 3px var(--info-light);
   outline: none;
 }
 
@@ -321,13 +321,13 @@ const submitOffer = async () => {
   font-family: inherit;
   resize: vertical;
   transition: all 0.2s;
-  background: white;
+  background: var(--bg-card);
   box-sizing: border-box;
 }
 
 .form-group textarea:focus {
   border-color: var(--info);
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  box-shadow: 0 0 0 3px var(--info-light);
   outline: none;
 }
 

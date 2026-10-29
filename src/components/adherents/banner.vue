@@ -102,7 +102,7 @@ const isOwnProfile = computed(() => route.params.id === 'me');
   position: absolute;
   top: 20px;
   right: 0;
-  background: white;
+  background: var(--bg-card);
   border: 1px solid var(--surface-border);
   border-radius: 4px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
