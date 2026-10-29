@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { withoutComments } from './withoutComments'
 
 /**
  * Cascade lisible : les styles vivent dans les feuilles de style (pas dans des
@@ -46,7 +47,7 @@ describe('cascade CSS', () => {
     const counts = Object.fromEntries(
       files(SRC, /\.(scss|vue)$/)
         .map((file) => {
-          const code = readFileSync(file, 'utf8').replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, '')
+          const code = withoutComments(readFileSync(file, 'utf8'))
           return [rel(file), (code.match(/!important/g) ?? []).length] as const
         })
         .filter(([, count]) => count > 0)
