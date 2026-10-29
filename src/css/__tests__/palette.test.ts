@@ -50,8 +50,9 @@ describe('palette', () => {
     const offenders = styleFiles(SRC).flatMap((file) => {
       const name = relative(SRC, file).split('\\').join('/')
       if (ALLOWED[name]?.includes('*')) return []
-      // Les valeurs de propriétés seules : pas les noms de classes ni les variables (`--x: …`).
-      const values = [...styles(file).matchAll(/(?:^|[;{\s])(?!--)[\w-]+\s*:\s*([^;{}\n]*)/g)].map((m) => m[1])
+      // Les valeurs de propriétés seules, jusqu'au `;` (valeurs sur plusieurs lignes comprises) :
+      // pas les noms de classes ni les variables (`--x: …`).
+      const values = [...styles(file).matchAll(/(?:^|[;{\s])(?!--)[\w-]+\s*:\s*([^;{}]*)/g)].map((m) => m[1])
       return values.flatMap((value) => [
         ...(value.match(/(?<![\w-])(white|black)(?![\w-])/gi) ?? []),
         ...(value.match(/rgba?\([^)]*\)/g) ?? []).filter(
