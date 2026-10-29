@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import { vDismiss } from '../vDismiss'
 import { DISCARD_TEXT_QUESTION } from '../useDialogFocus'
@@ -22,6 +22,12 @@ function mountDialog() {
   return { close, overlay: wrapper.find('.overlay'), box: wrapper.find('.box'), field }
 }
 
+/** Clic souris : appui puis relâchement au même endroit. */
+async function clickOn(target: DOMWrapper<Element>) {
+  await target.trigger('mousedown')
+  await target.trigger('click')
+}
+
 /** Saisie au clavier : la valeur change et le champ émet `input`. */
 function typeInto(field: HTMLTextAreaElement, value: string) {
   field.value = value
@@ -37,10 +43,19 @@ describe('vDismiss', () => {
   it('ferme sur un clic sur le fond, pas sur un clic dans la boîte', async () => {
     const { close, overlay, box } = mountDialog()
 
-    await box.trigger('click')
-    await overlay.trigger('click')
+    await clickOn(box)
+    await clickOn(overlay)
 
     expect(close).toHaveBeenCalledOnce()
+  })
+
+  it('ne ferme pas sur une sélection de texte partie de la boîte et relâchée sur le fond', async () => {
+    const { close, overlay, box } = mountDialog()
+
+    await box.trigger('mousedown')
+    await overlay.trigger('click')
+
+    expect(close).not.toHaveBeenCalled()
   })
 
   it('demande confirmation avant de perdre un texte tapé, et garde la boîte si on refuse', async () => {
@@ -48,10 +63,10 @@ describe('vDismiss', () => {
     const { close, overlay, field } = mountDialog()
 
     typeInto(field, 'Annonce frauduleuse')
-    await overlay.trigger('click')
+    await clickOn(overlay)
     expect(close).not.toHaveBeenCalled()
 
-    await overlay.trigger('click')
+    await clickOn(overlay)
     expect(confirmSpy).toHaveBeenCalledWith(DISCARD_TEXT_QUESTION)
     expect(close).toHaveBeenCalledOnce()
   })
@@ -61,7 +76,7 @@ describe('vDismiss', () => {
     const { close, overlay, field } = mountDialog()
 
     field.value = 'Réponse déjà publiée'
-    await overlay.trigger('click')
+    await clickOn(overlay)
 
     expect(confirmSpy).not.toHaveBeenCalled()
     expect(close).toHaveBeenCalledOnce()

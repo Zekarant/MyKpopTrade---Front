@@ -3,6 +3,10 @@ import { confirmDiscard } from './useDialogFocus'
 
 interface DismissState {
   close: () => void
+  // Le clic a-t-il commencé sur le fond ? Une sélection de texte partie de la
+  // boîte et relâchée sur le fond produit un `click` sur le fond.
+  pressedOnBackdrop: boolean
+  onMousedown: (event: MouseEvent) => void
   onClick: (event: MouseEvent) => void
 }
 
@@ -19,11 +23,16 @@ export const vDismiss: Directive<HTMLElement, () => void> = {
   mounted(el, { value }) {
     const state: DismissState = {
       close: value,
+      pressedOnBackdrop: false,
+      onMousedown(event) {
+        state.pressedOnBackdrop = event.target === el
+      },
       onClick(event) {
-        if (event.target === el && confirmDiscard(el)) state.close()
+        if (event.target === el && state.pressedOnBackdrop && confirmDiscard(el)) state.close()
       }
     }
     states.set(el, state)
+    el.addEventListener('mousedown', state.onMousedown)
     el.addEventListener('click', state.onClick)
   },
   updated(el, { value }) {
@@ -32,7 +41,10 @@ export const vDismiss: Directive<HTMLElement, () => void> = {
   },
   unmounted(el) {
     const state = states.get(el)
-    if (state) el.removeEventListener('click', state.onClick)
+    if (state) {
+      el.removeEventListener('mousedown', state.onMousedown)
+      el.removeEventListener('click', state.onClick)
+    }
     states.delete(el)
   }
 }
