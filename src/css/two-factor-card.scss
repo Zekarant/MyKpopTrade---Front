@@ -82,8 +82,7 @@
 .twofa-qr {
   display: block;
   margin: 0 auto var(--space-md);
-  // Fond blanc explicite : un QR code sombre sur fond sombre est illisible.
-  background: #fff;
+  background: var(--bg-card);
   padding: var(--space-xs);
   border-radius: var(--radius-sm);
 }

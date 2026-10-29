@@ -3,9 +3,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 /**
- * Palette : les couleurs passent par les tokens de _variables.scss, qui
- * suivent le thème clair / sombre. Restent en dur les seules couleurs qui ne
- * doivent pas changer avec le thème.
+ * Palette : les couleurs passent par les tokens de _variables.scss. Restent en
+ * dur les seules couleurs imposées de l'extérieur (marques).
  */
 
 const SRC = join(__dirname, '..', '..')
@@ -13,10 +12,6 @@ const SRC = join(__dirname, '..', '..')
 const ALLOWED: Record<string, string[]> = {
   // Définition des tokens.
   'css/_variables.scss': ['*'],
-  // QR code de la double authentification : fond blanc dans les deux thèmes, sinon illisible.
-  'css/two-factor-card.scss': ['#fff'],
-  // Texte du point « retourné » : sombre sur l'ambre de --warning, dans les deux thèmes.
-  'css/payments.scss': ['#1f1f1f'],
   // Couleurs des marques Google et Discord.
   'views/auth/OAuthButtons.vue': ['#5865f2'],
   'css/settings.scss': ['#4285f4', '#5865f2'],

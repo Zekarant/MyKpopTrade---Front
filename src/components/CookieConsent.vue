@@ -309,7 +309,7 @@ function saveChoice() {
 // refuser soit aussi simple qu'accepter.
 .cookie-consent__btn--accept {
   background: var(--accent-pink);
-  color: var(--text-inverse);
+  color: var(--text-on-accent);
 
   &:hover {
     filter: brightness(1.08);

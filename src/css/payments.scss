@@ -171,7 +171,7 @@
   padding-left: var(--space-md);
   &--delivered .timeline-dot { background: var(--success); color: white; }
   &--exception .timeline-dot { background: var(--danger); color: white; }
-  &--returned .timeline-dot { background: var(--warning); color: #1f1f1f; }
+  &--returned .timeline-dot { background: var(--warning); color: var(--text-primary); }
 }
 .timeline-dot {
   position: absolute;
