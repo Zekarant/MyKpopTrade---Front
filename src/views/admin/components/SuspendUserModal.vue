@@ -1,5 +1,5 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="admin__modal-overlay">
     <div ref="dialogEl" class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="suspend-title">
       <div class="admin__modal-header">
         <h3 id="suspend-title">Suspendre {{ user.username }}</h3>
@@ -71,6 +71,7 @@ import { func } from '@/function';
 import { apiErrorMessage } from '../adminFormat';
 import { SUSPENSION_REASONS } from '../adminPresets';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 const MIN_REASON_LENGTH = 5;
 const MAX_REASON_LENGTH = 500;

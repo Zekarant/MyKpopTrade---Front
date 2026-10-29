@@ -18,7 +18,7 @@
         </button>
     </div>
     <Teleport to="body">
-      <DialogFrame v-if="openedPost" class="post-overlay" :aria-label="openedPost.title" @close="closePost" @click.self="closePost">
+      <DialogFrame v-if="openedPost" v-dismiss="closePost" class="post-overlay" :aria-label="openedPost.title" @close="closePost">
           <post :key="openedPost._id" :id-post="openedPost._id" :my-profile="admin" :data-user="dataUser" @close-post="closePost" @sold="closePost" />
       </DialogFrame>
     </Teleport>
@@ -34,6 +34,7 @@ import type { Post } from '@/types/post.types';
 import { hasMorePages, type ListPagination, type PostSeller } from '@/components/post/types';
 import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 import { usePostOverlay } from '@/components/post/usePostOverlay';
+import { vDismiss } from '@/composables/vDismiss';
 
 defineOptions({ name: 'ProductGrid', inheritAttrs: false });
 

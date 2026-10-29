@@ -1,5 +1,5 @@
 <template>
-  <div class="checkout-overlay" @click.self="cancel" @mousedown.stop>
+  <div v-dismiss="cancel" class="checkout-overlay" @mousedown.stop>
     <div
       ref="dialog"
       class="checkout-modal"
@@ -94,6 +94,7 @@ import CheckoutAddressForm from './CheckoutAddressForm.vue';
 import { availableShippingChoices, resolveShippingCost, type ShippingOptionsLike } from './checkoutShipping';
 import { sumAmounts } from '@/utils/money';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 interface PaypalLikeResult {
   success: boolean;

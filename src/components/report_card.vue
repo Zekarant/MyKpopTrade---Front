@@ -1,5 +1,5 @@
 <template>
-    <div class="report-overlay" @click="close">
+    <div v-dismiss="close" class="report-overlay">
         <div ref="dialogEl" class="report-modal" role="dialog" aria-modal="true" :aria-label="title" @click="$event.stopPropagation()">
             <div class="report-modal__header">
                 <div class="report-modal__icon">
@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import { vDismiss } from '@/composables/vDismiss'
     import { computed, ref, useId } from 'vue';
     import { func } from '@/function';
     import reportService, { type ReportTargetType } from '@/services/report.service';

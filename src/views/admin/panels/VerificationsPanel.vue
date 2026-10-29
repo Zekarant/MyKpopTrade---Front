@@ -73,7 +73,7 @@
       </table>
     </div>
 
-    <div v-if="documentUrl" class="admin__modal-overlay" @click.self="closeDocument">
+    <div v-if="documentUrl" v-dismiss="closeDocument" class="admin__modal-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="verification-doc-title" @close="closeDocument">
         <div class="admin__modal-header">
           <h3 id="verification-doc-title">Document de {{ documentOwner }}</h3>
@@ -112,6 +112,7 @@ import { VERIFICATION_REJECTION_REASONS } from '../adminPresets';
 import { apiErrorMessage, formatAge, formatDate, getInitial } from '../adminFormat';
 import type { AdminVerification } from '../types';
 import DialogFrame from '@/components/DialogFrame.vue';
+import { vDismiss } from '@/composables/vDismiss';
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   id_card: 'Carte d\'identité',

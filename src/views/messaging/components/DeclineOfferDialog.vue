@@ -1,5 +1,5 @@
 <template>
-  <div class="popup-overlay">
+  <div v-dismiss="() => emit('cancel')" class="popup-overlay">
     <div ref="dialogEl" class="popup-content" role="dialog" aria-modal="true" aria-labelledby="decline-offer-title">
       <h3 id="decline-offer-title" class="popup-title">Refuser l'offre</h3>
       <p class="popup-message">Êtes-vous sûr de vouloir refuser cette offre ?</p>
@@ -21,6 +21,7 @@
 /** Confirmation du refus d'une offre, avec un message facultatif pour l'acheteur. */
 import { ref } from 'vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { vDismiss } from '@/composables/vDismiss'
 
 const emit = defineEmits<{
   confirm: [message: string]

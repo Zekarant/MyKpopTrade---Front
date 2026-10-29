@@ -1,5 +1,5 @@
 <template>
-    <div class="msg-modal-overlay" @click.self="closePopup">
+    <div v-dismiss="closePopup" class="msg-modal-overlay">
         <div ref="dialog" class="msg-modal" role="dialog" aria-modal="true" :aria-labelledby="titleId">
             <div class="msg-modal__header">
                 <h2 :id="titleId" class="msg-modal__title"><i class="bi bi-chat-dots" aria-hidden="true"></i> Nouvelle conversation</h2>
@@ -91,6 +91,7 @@ import { useDialogFocus } from '@/composables/useDialogFocus';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
 import UserAvatar from '@/components/UserAvatar.vue';
 import type { Conversation } from '@/types/messaging.types';
+import { vDismiss } from '@/composables/vDismiss';
 
 interface Member {
     _id?: string;

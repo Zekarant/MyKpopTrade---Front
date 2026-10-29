@@ -11,6 +11,29 @@ const DRAFT_FIELDS = [
   .join(', ');
 export const DISCARD_TEXT_QUESTION = 'Abandonner le texte saisi ?';
 
+// Champs où l'utilisateur a tapé : un pré-remplissage par le code (montant, adresse
+// du profil chargée après l'ouverture) n'émet pas d'`input` et n'est pas une saisie.
+const typedFields = new WeakSet<Element>();
+document.addEventListener(
+  'input',
+  (event) => {
+    if (event.target instanceof Element && event.target.matches(DRAFT_FIELDS)) typedFields.add(event.target);
+  },
+  true
+);
+
+/**
+ * Peut-on fermer `container` ? Oui si rien n'y a été tapé ; sinon l'utilisateur
+ * confirme qu'il abandonne sa saisie. Escape (ci-dessous) et le clic sur le fond
+ * (`v-dismiss`) suivent cette même règle.
+ */
+export function confirmDiscard(container: HTMLElement): boolean {
+  const unsent = [...container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(DRAFT_FIELDS)].some(
+    (field) => typedFields.has(field) && field.value.trim() !== ''
+  );
+  return !unsent || confirm(DISCARD_TEXT_QUESTION);
+}
+
 /** Boîtes ouvertes, la plus récente en dernier : seule elle réagit au clavier. */
 const openDialogs: symbol[] = [];
 
@@ -36,28 +59,13 @@ export function useDialogFocus(
 ): void {
   const id = Symbol('dialog');
   let opener: HTMLElement | null = null;
-  // Champs modifiés au clavier : un pré-remplissage par le code (montant, adresse
-  // du profil chargée après l'ouverture) n'émet pas d'`input` et n'est pas une saisie.
-  const typedFields = new Set<HTMLInputElement | HTMLTextAreaElement>();
-
-  function onInput(event: Event) {
-    const field = event.target;
-    if (field instanceof HTMLElement && field.matches(DRAFT_FIELDS) && dialog.value?.contains(field)) {
-      typedFields.add(field as HTMLInputElement | HTMLTextAreaElement);
-    }
-  }
-
-  function hasUnsentText(container: HTMLElement): boolean {
-    return [...typedFields].some((field) => container.contains(field) && field.value.trim() !== '');
-  }
 
   function onKeydown(event: KeyboardEvent) {
     if (openDialogs[openDialogs.length - 1] !== id || !dialog.value) return;
 
     if (event.key === 'Escape' && onEscape) {
       event.preventDefault();
-      if (hasUnsentText(dialog.value) && !confirm(DISCARD_TEXT_QUESTION)) return;
-      onEscape();
+      if (confirmDiscard(dialog.value)) onEscape();
       return;
     }
 
@@ -84,7 +92,6 @@ export function useDialogFocus(
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     openDialogs.push(id);
     document.addEventListener('keydown', onKeydown);
-    document.addEventListener('input', onInput, true);
     await nextTick();
     const target = initialFocus?.value ?? dialog.value?.querySelector<HTMLElement>(FOCUSABLE) ?? dialog.value;
     target?.focus();
@@ -92,7 +99,6 @@ export function useDialogFocus(
 
   onBeforeUnmount(() => {
     document.removeEventListener('keydown', onKeydown);
-    document.removeEventListener('input', onInput, true);
     openDialogs.splice(openDialogs.indexOf(id), 1);
     opener?.focus();
   });
