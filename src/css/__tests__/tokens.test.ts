@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { withoutComments } from './withoutComments'
 
 /**
  * Tokens : chaque `var(--x)` des styles renvoie à une variable définie quelque
@@ -20,7 +21,7 @@ function files(dir: string): string[] {
 
 describe('tokens CSS', () => {
   it('aucune variable CSS utilisée sans être définie', () => {
-    const sources = files(SRC).map((file) => ({ name: relative(SRC, file).split('\\').join('/'), code: readFileSync(file, 'utf8') }))
+    const sources = files(SRC).map((file) => ({ name: relative(SRC, file).split('\\').join('/'), code: withoutComments(readFileSync(file, 'utf8')) }))
     // Définitions : `--x:` en CSS, ou `'--x':` / `--x` posé depuis le code (style lié, setProperty).
     const defined = new Set(sources.flatMap(({ code }) => [...code.matchAll(/(--[\w-]+)['"]?\s*:/g)].map((m) => m[1])))
 
