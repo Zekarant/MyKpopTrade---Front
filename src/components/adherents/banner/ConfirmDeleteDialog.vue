@@ -1,5 +1,5 @@
 <template>
-  <div class="popup-overlay" @click="emit('cancel')" @keydown.esc="emit('cancel')">
+  <div v-dismiss="() => emit('cancel')" class="popup-overlay" @keydown.esc="emit('cancel')">
     <div
       ref="dialog"
       class="popup-content"
@@ -21,6 +21,7 @@
 /** Confirmation de suppression de la bannière ou de la photo de profil. */
 import { ref, useId } from 'vue';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 const emit = defineEmits<{ cancel: []; confirm: [] }>();
 

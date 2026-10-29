@@ -1,5 +1,5 @@
 <template>
-  <div class="popup-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="popup-overlay">
     <div ref="dialogEl" class="popup-content attachment-viewer" role="dialog" aria-modal="true" aria-label="Pièces jointes">
       <button type="button" class="close-btn" aria-label="Fermer" @click="emit('close')">&times;</button>
       <ImageCarousel class="screen" :predefined-index="index" :images="images" />
@@ -12,6 +12,7 @@ import { ref } from 'vue'
 /** Visionneuse plein écran des images d'un message ou d'une conversation. */
 import ImageCarousel from '@/components/ImageCarousel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { vDismiss } from '@/composables/vDismiss'
 
 defineProps<{ images: string[]; index: number }>()
 

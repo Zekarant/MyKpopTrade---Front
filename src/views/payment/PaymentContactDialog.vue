@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="modal-overlay">
     <div
       ref="dialog"
       class="modal-card"
@@ -49,6 +49,7 @@
 import { ref, useId } from 'vue';
 import { contactErrorMessage, sendContactMessage } from '@/services/contact.service';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 const emit = defineEmits<{ close: [] }>();
 

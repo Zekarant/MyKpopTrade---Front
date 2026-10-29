@@ -73,7 +73,7 @@
 
     <AdminPagination :page="state.page" :pages="pagination.pages" @change="(p) => commit({ page: p })" />
 
-    <div v-if="activeDispute" class="admin__modal-overlay" @click.self="activeDispute = null">
+    <div v-if="activeDispute" v-dismiss="() => (activeDispute = null)" class="admin__modal-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="dispute-resolution-title" @close="activeDispute = null">
         <div class="admin__modal-header">
           <h3 id="dispute-resolution-title">Trancher le litige</h3>
@@ -152,6 +152,7 @@ import {
   formatDate
 } from '../adminFormat';
 import DialogFrame from '@/components/DialogFrame.vue';
+import { vDismiss } from '@/composables/vDismiss';
 
 const PAGE_SIZE = 20;
 const PENDING_STATUSES = ['opened', 'under_review'];

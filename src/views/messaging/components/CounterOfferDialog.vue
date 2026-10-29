@@ -1,5 +1,5 @@
 <template>
-  <div class="counter-popup-overlay" @click.self="emit('cancel')">
+  <div v-dismiss="() => emit('cancel')" class="counter-popup-overlay">
     <div ref="dialogEl" class="counter-popup-content" role="dialog" aria-modal="true" aria-labelledby="counter-offer-title">
       <button type="button" class="counter-close-btn" aria-label="Fermer" @click="emit('cancel')">
         <i class="bi bi-x-lg"></i>
@@ -38,6 +38,7 @@
 /** Contre-offre du vendeur : montant obligatoire, message facultatif. */
 import { ref } from 'vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { vDismiss } from '@/composables/vDismiss'
 
 defineProps<{
   submitting: boolean

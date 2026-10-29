@@ -31,7 +31,7 @@
    </div>
   </div>
   <Teleport to="body">
-    <DialogFrame v-if="openedPost" class="post-overlay" :aria-label="openedPost.title" @close="closePost" @click.self="closePost">
+    <DialogFrame v-if="openedPost" v-dismiss="closePost" class="post-overlay" :aria-label="openedPost.title" @close="closePost">
         <post :key="openedPost._id" :id-post="openedPost._id" @close-post="closePost" />
     </DialogFrame>
   </Teleport>
@@ -51,6 +51,7 @@ import type { Post } from '@/types/post.types';
 import { useFavoriteRemoval } from '@/composables/useFavoriteRemoval';
 import { usePostOverlay } from '@/components/post/usePostOverlay';
 import { hasMorePages, type ListPagination } from '@/components/post/types';
+import { vDismiss } from '@/composables/vDismiss';
 
 const props = withDefaults(defineProps<{
     dataList?: Post[];

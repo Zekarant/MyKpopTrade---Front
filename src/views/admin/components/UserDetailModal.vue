@@ -1,5 +1,5 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="admin__modal-overlay">
     <div ref="dialogEl" class="admin__modal admin__modal--wide" role="dialog" aria-modal="true" aria-labelledby="user-detail-title">
       <div class="admin__modal-header">
         <h3 id="user-detail-title">{{ detail?.user?.username || 'Fiche de modération' }}</h3>
@@ -184,6 +184,7 @@ import {
 } from '../adminFormat';
 import type { AdminNote, AdminUser, AdminUserDetail } from '../types';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 const NOTE_MAX_LENGTH = 2000;
 

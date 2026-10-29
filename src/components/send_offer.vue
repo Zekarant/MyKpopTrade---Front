@@ -1,5 +1,5 @@
 <template>
-<div class="popup-overlay" @click.self="$emit('close')">
+<div v-dismiss="() => $emit('close')" class="popup-overlay">
   <div ref="dialogEl" class="popup-content offer-modal" role="dialog" aria-modal="true" aria-labelledby="offer-modal-title" @click.stop>
     <div class="popup-header">
       <h3 id="offer-modal-title">Faire une offre</h3>
@@ -87,6 +87,7 @@
 import { computed, ref } from 'vue';
 import { API_URL } from '@/config/api';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 import {
   formatAmount,
   offerBounds,

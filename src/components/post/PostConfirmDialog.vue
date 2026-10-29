@@ -1,5 +1,5 @@
 <template>
-    <div class="post-modal__confirm-overlay" @click.self="emit('cancel')" @keydown.esc="emit('cancel')">
+    <div v-dismiss="() => emit('cancel')" class="post-modal__confirm-overlay" @keydown.esc="emit('cancel')">
         <div
             ref="dialog"
             class="post-modal__confirm"
@@ -25,6 +25,7 @@
 /** Confirmation d'une action du vendeur sur sa fiche (vendu, remise en vente, suppression). */
 import { ref, useId } from 'vue';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 defineProps<{
     title: string;

@@ -1,5 +1,5 @@
 <template>
-  <div class="admin__modal-overlay" @click.self="emit('cancel')">
+  <div v-dismiss="() => emit('cancel')" class="admin__modal-overlay">
     <div ref="dialogEl" class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="reason-title">
       <div class="admin__modal-header">
         <h3 id="reason-title">{{ title }}</h3>
@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 const minLength = 5;
 

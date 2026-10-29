@@ -92,6 +92,23 @@ test.describe('profil — rendu de référence', () => {
     expect(questions).toEqual(['Abandonner le texte saisi ?', 'Abandonner le texte saisi ?'])
   })
 
+  test('mon profil : un clic sur le fond demande aussi confirmation', async ({ page }) => {
+    await openProfile(page, 'me')
+    await openTab(page, 'Avis')
+    await page.locator('.review-item__respond-btn').click()
+    const popup = page.locator('.response-popup')
+    await popup.locator('textarea').fill('Merci beaucoup !')
+    const backdrop = page.locator('.response-popup-overlay')
+
+    page.once('dialog', (dialog) => dialog.dismiss())
+    await backdrop.click({ position: { x: 5, y: 5 } })
+    await expect(popup.locator('textarea')).toHaveValue('Merci beaucoup !')
+
+    page.once('dialog', (dialog) => dialog.accept())
+    await backdrop.click({ position: { x: 5, y: 5 } })
+    await expect(popup).toHaveCount(0)
+  })
+
   test('mon profil : abonnés', async ({ page }) => {
     await openProfile(page, 'me')
     await openTab(page, 'Abonnés')

@@ -160,7 +160,7 @@ v-else
       </div>
     </template>
 
-    <div v-if="showGroupForm" class="admin__modal-overlay" @click.self="showGroupForm = false">
+    <div v-if="showGroupForm" v-dismiss="() => (showGroupForm = false)" class="admin__modal-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="kpop-group-title" @close="showGroupForm = false">
         <div class="admin__modal-header">
           <h3 id="kpop-group-title">{{ editing ? 'Modifier le groupe' : 'Nouveau groupe' }}</h3>
@@ -198,7 +198,7 @@ v-else
       </DialogFrame>
     </div>
 
-    <div v-if="showAlbumForm" class="admin__modal-overlay" @click.self="showAlbumForm = false">
+    <div v-if="showAlbumForm" v-dismiss="() => (showAlbumForm = false)" class="admin__modal-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="kpop-album-title" @close="showAlbumForm = false">
         <div class="admin__modal-header">
           <h3 id="kpop-album-title">{{ editing ? 'Modifier l\'album' : 'Nouvel album' }}</h3>
@@ -243,7 +243,7 @@ v-else
       </DialogFrame>
     </div>
 
-    <div v-if="followersGroup" class="admin__modal-overlay" @click.self="followersGroup = null">
+    <div v-if="followersGroup" v-dismiss="() => (followersGroup = null)" class="admin__modal-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="kpop-followers-title" @close="followersGroup = null">
         <div class="admin__modal-header">
           <h3 id="kpop-followers-title">Followers de {{ followersGroup.name }}</h3>
@@ -285,6 +285,7 @@ import {
 } from '../kpopForms';
 import type { CatalogEntity } from '../types';
 import DialogFrame from '@/components/DialogFrame.vue';
+import { vDismiss } from '@/composables/vDismiss';
 
 const CATALOG_LIMIT = 2000;
 const SEARCH_DEBOUNCE_MS = 300;

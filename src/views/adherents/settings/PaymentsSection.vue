@@ -135,7 +135,7 @@
   <!-- Popup de pré-remplissage PayPal : on confirme l'identité du vendeur
        avant de générer le lien d'onboarding, pour que PayPal réconcilie
        un compte existant plutôt que d'en créer un doublon. -->
-  <div v-if="paypalInfoModalOpen" class="modal-overlay" @click.self="closePaypalInfoModal">
+  <div v-if="paypalInfoModalOpen" v-dismiss="closePaypalInfoModal" class="modal-overlay">
     <DialogFrame class="modal-card" aria-labelledby="paypal-info-title" @close="closePaypalInfoModal">
       <h2 id="paypal-info-title">Vérifiez vos informations</h2>
 
@@ -183,6 +183,7 @@ import { apiMessage } from './shared';
 import type { BillingAddress, SectionProps, SettingsProfile } from './shared';
 import type { PaypalAccount } from './usePaypalAccount';
 import DialogFrame from '@/components/DialogFrame.vue';
+import { vDismiss } from '@/composables/vDismiss';
 
 const props = defineProps<SectionProps & { paypal: PaypalAccount }>();
 const emit = defineEmits<{ patch: [changes: Partial<SettingsProfile>] }>();

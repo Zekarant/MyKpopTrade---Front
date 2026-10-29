@@ -1,5 +1,5 @@
 <template>
-  <div class="cart-shipping__overlay" @click.self="emit('cancel')">
+  <div v-dismiss="() => emit('cancel')" class="cart-shipping__overlay">
     <div
       ref="dialog"
       class="cart-shipping"
@@ -68,6 +68,7 @@ import { formatPrice } from '@/utils/format';
 import { sumAmounts } from '@/utils/money';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { cartShipping, sumCartItems } from './cartPricing';
+import { vDismiss } from '@/composables/vDismiss';
 
 export type CartCheckoutPayload = Parameters<typeof cartService.checkout>[0];
 

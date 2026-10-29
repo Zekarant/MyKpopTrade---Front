@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="modal-overlay">
     <div ref="dialog" class="modal-card" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="subtitleId">
       <h2 :id="titleId"><i :class="icon"></i> {{ title }}</h2>
       <p :id="subtitleId" class="modal-subtitle">{{ subtitle }}</p>
@@ -21,6 +21,7 @@
  */
 import { ref, useId } from 'vue';
 import { useDialogFocus } from '@/composables/useDialogFocus';
+import { vDismiss } from '@/composables/vDismiss';
 
 defineProps<{
   title: string;

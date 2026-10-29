@@ -42,7 +42,7 @@
 
     <!-- Popup réponse avis -->
     <Transition name="fade">
-      <div v-if="responding" class="response-popup-overlay" @click.self="closeResponsePopup">
+      <div v-if="responding" v-dismiss="closeResponsePopup" class="response-popup-overlay">
         <DialogFrame class="response-popup" aria-labelledby="review-response-title" @close="closeResponsePopup">
           <div class="response-popup__header">
             <h3 id="review-response-title"><i class="bi bi-reply"></i> Répondre à l'avis</h3>
@@ -75,6 +75,7 @@ import Filter_review from '@/components/filter_review.vue'
 import Review_card from '@/components/review_card.vue'
 import reviewService from '@/services/review.service'
 import DialogFrame from '@/components/DialogFrame.vue'
+import { vDismiss } from '@/composables/vDismiss'
 
 const props = defineProps<{ profileUserId: string; isOwnProfile: boolean }>()
 

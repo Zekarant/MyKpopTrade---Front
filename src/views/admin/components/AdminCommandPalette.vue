@@ -1,5 +1,5 @@
 <template>
-  <div class="admin__palette-overlay" @click.self="emit('close')">
+  <div v-dismiss="() => emit('close')" class="admin__palette-overlay">
     <div class="admin__palette" role="dialog" aria-modal="true" aria-label="Recherche globale">
       <div class="admin__palette-input">
         <i class="bi bi-search"></i>
@@ -48,6 +48,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import adminService from '@/services/admin.service';
 import { ADMIN_NAV } from '../adminSections';
 import type { AdminSearchResult } from '../types';
+import { vDismiss } from '@/composables/vDismiss';
 
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_QUERY_LENGTH = 2;

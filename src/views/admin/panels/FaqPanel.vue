@@ -69,7 +69,7 @@ v-model="search"
       </template>
     </template>
 
-    <div v-if="showForm" class="admin__modal-overlay" @click.self="showForm = false">
+    <div v-if="showForm" v-dismiss="() => (showForm = false)" class="admin__modal-overlay">
       <DialogFrame class="admin__modal admin__modal--wide" aria-labelledby="faq-form-title" @close="showForm = false">
         <div class="admin__modal-header">
           <h3 id="faq-form-title">{{ editing ? 'Modifier la FAQ' : 'Nouvelle FAQ' }}</h3>
@@ -146,6 +146,7 @@ import faqService, { type Faq } from '@/services/faq.service';
 import { func } from '@/function';
 import { apiErrorMessage } from '../adminFormat';
 import DialogFrame from '@/components/DialogFrame.vue';
+import { vDismiss } from '@/composables/vDismiss';
 
 const DEFAULT_CATEGORY = 'general';
 const emptyForm = () => ({ question: '', answer: '', category: DEFAULT_CATEGORY, order: 0, isPublished: true });

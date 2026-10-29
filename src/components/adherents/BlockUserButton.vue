@@ -13,7 +13,7 @@
 
   <!-- Téléporté : un parent transformé (panneau latéral mobile) casserait le position: fixed. -->
   <Teleport to="body">
-    <div v-if="confirming" class="block-confirm-overlay" @click.self="closeConfirm" @keydown.esc="closeConfirm">
+    <div v-if="confirming" v-dismiss="closeConfirm" class="block-confirm-overlay" @keydown.esc="closeConfirm">
       <div
         class="block-confirm"
         role="dialog"
@@ -47,6 +47,7 @@ import { computed, nextTick, ref, useId, watch } from 'vue'
 import { func } from '@/function'
 import blockService, { type BlockStatus } from '@/services/block.service'
 import { apiErrorMessage } from '@/services/apiError'
+import { vDismiss } from '@/composables/vDismiss'
 
 const props = defineProps<{
   userId: string
