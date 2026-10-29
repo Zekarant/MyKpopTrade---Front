@@ -74,7 +74,7 @@ onMounted(async () => {
 .add-review-container {
   min-height: calc(100vh - 60px);
   padding: 40px 20px;
-  background: linear-gradient(135deg, var(--light-color) 0%, white 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, white 100%);
 }
 
 .add-review-content {
@@ -88,7 +88,7 @@ onMounted(async () => {
   h1 {
     font-size: 28px;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--text-primary);
     margin-bottom: 30px;
     text-align: center;
   }
@@ -99,7 +99,7 @@ onMounted(async () => {
   gap: 20px;
   margin-bottom: 40px;
   padding-bottom: 30px;
-  border-bottom: 1px solid var(--secondary-color-tint);
+  border-bottom: 1px solid var(--surface-border);
 
   .product-image {
     flex-shrink: 0;
@@ -107,7 +107,7 @@ onMounted(async () => {
     height: 120px;
     border-radius: 8px;
     overflow: hidden;
-    background-color: var(--light-color);
+    background-color: var(--bg-secondary);
 
     img {
       width: 100%;
@@ -136,13 +136,13 @@ onMounted(async () => {
     h2 {
       font-size: 16px;
       font-weight: 600;
-      color: var(--primary-color);
+      color: var(--text-primary);
       max-height: 2.8em;
     }
 
     .product-description {
       font-size: 13px;
-      color: var(--secondary-color);
+      color: var(--text-secondary);
       max-height: 2.6em;
     }
 
@@ -155,13 +155,13 @@ onMounted(async () => {
       .price {
         font-size: 14px;
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--text-primary);
       }
 
       .condition {
         font-size: 12px;
         color: white;
-        background-color: var(--secondary-color);
+        background-color: var(--text-secondary);
         padding: 2px 8px;
         border-radius: 4px;
       }
@@ -173,7 +173,7 @@ onMounted(async () => {
   text-align: center;
   padding: 40px;
   font-size: 16px;
-  color: var(--secondary-color);
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {

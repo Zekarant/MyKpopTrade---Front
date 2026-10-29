@@ -95,7 +95,7 @@ async function confirmDeletion() {
 
 <style lang="scss" scoped>
 .background {
-  background: var(--primary-color);
+  background: var(--text-primary);
   width: 100%;
   max-width: 100%;
   height: 160px;
@@ -109,7 +109,7 @@ async function confirmDeletion() {
 .picture {
   height: 130px;
   width: 130px;
-  background: var(--primary-color);
+  background: var(--text-primary);
   border-radius: 4px;
   border: 4px solid white;
   position: absolute;

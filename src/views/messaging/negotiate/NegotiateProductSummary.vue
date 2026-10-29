@@ -114,7 +114,7 @@ defineProps<{
   .price {
     font-size: 20px;
     font-weight: bold;
-    color: var(--primary-color);
+    color: var(--text-primary);
   }
 }
 

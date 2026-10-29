@@ -74,7 +74,7 @@ const resetFilters = () => {
   gap: 15px;
   align-items: center;
   padding: 15px;
-  background: var(--light-color);
+  background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 15px;
   flex-wrap: wrap;
@@ -88,28 +88,28 @@ const resetFilters = () => {
   label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--text-primary);
     white-space: nowrap;
   }
 }
 
 .filter-select {
   padding: 6px 10px;
-  border: 1px solid var(--secondary-color-tint);
+  border: 1px solid var(--surface-border);
   border-radius: 6px;
   font-size: 13px;
-  color: var(--primary-color);
+  color: var(--text-primary);
   background-color: white;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
   }
 
   &:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
     box-shadow: 0 0 0 2px rgba(23, 32, 42, 0.1);
   }
 }
@@ -117,7 +117,7 @@ const resetFilters = () => {
 .btn-reset {
   padding: 6px 12px;
   background-color: transparent;
-  border: 1px solid var(--danger-color);
+  border: 1px solid var(--danger);
   border-radius: 6px;
   color: var(--danger-text);
   font-size: 12px;

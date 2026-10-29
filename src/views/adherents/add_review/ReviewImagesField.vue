@@ -76,11 +76,11 @@ const { isDragging, fileInput, openFilePicker, onDragOver, onDragLeave, onDrop, 
 label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .drop-zone {
-  border: 2px dashed var(--secondary-color-tint);
+  border: 2px dashed var(--surface-border);
   border-radius: 8px;
   padding: 40px 20px;
   text-align: center;
@@ -89,12 +89,12 @@ label {
   background-color: rgba(108, 117, 125, 0.02);
 
   &:hover {
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
     background-color: rgba(23, 32, 42, 0.02);
   }
 
   &.dragging {
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
     background-color: rgba(23, 32, 42, 0.1);
     transform: scale(1.02);
   }
@@ -112,24 +112,24 @@ label {
 
     i {
       font-size: 40px;
-      color: var(--primary-color);
+      color: var(--text-primary);
     }
 
     p {
       font-size: 14px;
-      color: var(--primary-color);
+      color: var(--text-primary);
       margin: 0;
       font-weight: 500;
 
       .link {
-        color: var(--secondary-color);
+        color: var(--text-secondary);
         text-decoration: underline;
       }
     }
 
     .file-hint {
       font-size: 12px;
-      color: var(--secondary-color);
+      color: var(--text-secondary);
       margin: 0;
     }
   }
@@ -145,7 +145,7 @@ label {
     position: relative;
     border-radius: 8px;
     overflow: hidden;
-    background-color: var(--light-color);
+    background-color: var(--bg-secondary);
     aspect-ratio: 1;
 
     img {
@@ -183,7 +183,7 @@ label {
 .image-error {
   padding: 10px;
   background-color: rgba(183, 58, 78, 0.1);
-  border: 1px solid var(--danger-color);
+  border: 1px solid var(--danger);
   border-radius: 6px;
   color: var(--danger-text);
   font-size: 12px;

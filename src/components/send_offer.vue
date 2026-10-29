@@ -377,20 +377,20 @@ const submitOffer = async () => {
   display: none;
 }
 .form-check-input {
-  accent-color: var(--primary-color); /* Pour la plupart des navigateurs modernes */
+  accent-color: var(--text-primary); /* Pour la plupart des navigateurs modernes */
   width: 1.2em;
   height: 1.2em;
 }
 
 /* Pour un style plus personnalisé si besoin */
 .form-check-input:checked {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 
 .terms-link {
-  color: var(--primary-color);
+  color: var(--text-primary);
   text-decoration: none;
 }
 

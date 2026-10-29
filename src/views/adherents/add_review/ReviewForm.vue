@@ -150,12 +150,12 @@ async function submitReview() {
   label {
     font-size: 14px;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--text-primary);
   }
 }
 
 .review-textarea {
-  border: 1px solid var(--secondary-color-tint);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   padding: 12px;
   font-size: 14px;
@@ -163,29 +163,29 @@ async function submitReview() {
   resize: vertical;
   min-height: 150px;
   transition: border-color 0.3s ease;
-  color: var(--text-color);
+  color: var(--text-primary);
 
   &:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
     box-shadow: 0 0 0 3px rgba(23, 32, 42, 0.1);
   }
 
   &::placeholder {
-    color: var(--secondary-color);
+    color: var(--text-secondary);
   }
 }
 
 .char-count {
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--text-secondary);
   text-align: right;
 }
 
 .error-message {
   padding: 12px;
   background-color: rgba(183, 58, 78, 0.1);
-  border: 1px solid var(--danger-color);
+  border: 1px solid var(--danger);
   border-radius: 8px;
   color: var(--danger-text);
   font-size: 14px;
@@ -194,9 +194,9 @@ async function submitReview() {
 .success-message {
   padding: 12px;
   background-color: rgba(61, 204, 106, 0.1);
-  border: 1px solid var(--success-color);
+  border: 1px solid var(--success);
   border-radius: 8px;
-  color: var(--success-color);
+  color: var(--success-text);
   font-size: 14px;
 }
 
@@ -221,28 +221,29 @@ async function submitReview() {
 }
 
 .btn-submit {
-  background-color: var(--primary-color);
+  background-color: var(--text-primary);
   color: white;
 
   &:hover:not(:disabled) {
-    background-color: var(--primary-color-ligh);
+    // Fond très sombre : on l'éclaircit au survol.
+    filter: brightness(1.6);
     box-shadow: 0 4px 8px rgba(23, 32, 42, 0.3);
   }
 
   &:disabled {
-    background-color: var(--secondary-color-tint);
+    background-color: var(--bg-tertiary);
     cursor: not-allowed;
-    color: var(--secondary-color);
+    color: var(--text-secondary);
   }
 }
 
 .btn-cancel {
-  background-color: var(--light-color);
-  color: var(--primary-color);
-  border: 1px solid var(--secondary-color-tint);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-border);
 
   &:hover {
-    background-color: var(--secondary-color-tint);
+    background-color: var(--bg-tertiary);
   }
 }
 

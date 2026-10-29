@@ -81,9 +81,9 @@
 }
 
 .tab.active {
-  color: var(--blue);
+  color: var(--info-text);
   background: var(--info-light);
-  border-bottom: 3px solid var(--blue);
+  border-bottom: 3px solid var(--accent-blue);
 }
 
 .tab i {
@@ -99,7 +99,7 @@
 }
 
 .tab-count {
-  background: var(--danger-color);
+  background: var(--danger);
   color: white;
   font-size: 10px;
   padding: 2px 6px;
@@ -113,7 +113,7 @@
 }
 
 .tab.active .tab-count {
-  background: var(--blue);
+  background: var(--accent-blue);
 }
 
 .messages-list {
@@ -157,7 +157,7 @@
 }
 
 .search-input input:focus {
-  border-color: var(--blue);
+  border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
 
@@ -231,7 +231,7 @@
 
 .conversation-item.active {
   background: var(--info-light);
-  border-left: 4px solid var(--blue);
+  border-left: 4px solid var(--accent-blue);
   padding-left: 12px;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .conversation-item.favorite.active {
-  border-left: 4px solid var(--blue);
+  border-left: 4px solid var(--accent-blue);
 }
 
 .conversation-avatar {
@@ -343,7 +343,7 @@
 }
 
 .badge {
-  background: var(--danger-color);
+  background: var(--danger);
   color: white;
   font-size: 11px;
   padding: 3px 7px;
@@ -507,7 +507,7 @@
 }
 
 .message-input textarea:focus {
-  border-color: var(--blue);
+  border-color: var(--accent-blue);
   background: white;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
@@ -583,7 +583,7 @@
 .btn-secondary:focus,
 .btn-outline:focus,
 .btn-success:focus {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
 }
 

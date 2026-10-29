@@ -66,7 +66,7 @@ const isOwnProfile = computed(() => route.params.id === 'me');
 .content {
   min-height: 320px;
   position: relative;
-  border-bottom: 0.5px solid var(--secondary-color-tint);
+  border-bottom: 0.5px solid var(--surface-border);
 }
 .profil {
   min-height: 140px;
@@ -126,11 +126,11 @@ const isOwnProfile = computed(() => route.params.id === 'me');
   text-align: left;
   cursor: pointer;
   font-size: 12px;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .dropdown-menu button:hover {
-  background-color: var(--secondary-color-tint);
+  background-color: var(--bg-tertiary);
 }
 
 @media (max-width: 768px) {

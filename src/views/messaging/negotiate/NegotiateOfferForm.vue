@@ -193,9 +193,9 @@ async function submitOffer() {
   }
 
   &.active {
-    background: var(--primary-color);
+    background: var(--text-primary);
     color: var(--bg-card);
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
   }
 }
 
@@ -209,7 +209,7 @@ async function submitOffer() {
   font-family: inherit;
 
   &:focus {
-    border-color: var(--primary-color);
+    border-color: var(--text-primary);
   }
 }
 
