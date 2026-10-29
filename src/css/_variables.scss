@@ -1,6 +1,5 @@
 ﻿// ============================================
 // MyKpopTrade Design System - Variables
-// Light mode by default, Dark mode opt-in
 // ============================================
 
 :root {
@@ -12,7 +11,7 @@
   --bg-elevated: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.85);
   --bg-glass-light: rgba(0, 0, 0, 0.02);
-  // Fond des photos en grand (fiche annonce) : sombre dans les deux thèmes, pour faire ressortir les images.
+  // Fond des photos en grand (fiche annonce) : sombre, pour faire ressortir les images.
   --bg-media: #0a0a0a;
 
   // Surface colors
@@ -24,8 +23,7 @@
   --text-primary: #1a1a2e;
   --text-secondary: #6c757d;
   --text-muted: #adb5bd;
-  --text-inverse: #ffffff;
-  // Texte posé sur l'accent (rose, dégradé) : reste blanc en mode sombre, contrairement à --text-inverse.
+  // Texte posé sur l'accent ou une couleur de statut (rose, dégradé, rouge...).
   --text-on-accent: #ffffff;
 
   // Accent colors (K-pop vibrant)
@@ -57,7 +55,7 @@
   // Bordure des messages de statut : un cran plus marquée que leur fond (`*-light`).
   --success-border: rgba(16, 185, 129, 0.2);
   --danger-border: rgba(239, 68, 68, 0.2);
-  // Charte du bouton PayPal : identique en mode sombre, l'acheteur doit le reconnaître.
+  // Charte du bouton PayPal : l'acheteur doit le reconnaître.
   --paypal-gold: #ffc439;
   --paypal-blue: #003087;
 
@@ -151,45 +149,3 @@
   --text-color: #1a1a2e;
 }
 
-// === Dark Mode (opt-in) ===
-[data-theme="dark"] {
-  --bg-primary: #0f0f14;
-  --bg-secondary: #1a1a24;
-  --bg-tertiary: #222233;
-  --bg-card: #1e1e2e;
-  --bg-elevated: #262638;
-  --bg-glass: rgba(30, 30, 46, 0.85);
-  --bg-glass-light: rgba(255, 255, 255, 0.03);
-
-  --surface-hover: rgba(255, 255, 255, 0.05);
-  --surface-active: rgba(255, 255, 255, 0.08);
-  --surface-border: rgba(255, 255, 255, 0.1);
-
-  --text-primary: #f0f0f5;
-  --text-secondary: #a0a0b5;
-  --text-muted: #6b6b80;
-  --text-inverse: #0f0f14;
-
-  --success-text: #34d399;
-  --warning-text: #fbbf24;
-  --danger-text: #f87171;
-  --info-text: #60a5fa;
-
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-glow-pink: 0 0 30px rgba(255, 45, 120, 0.25);
-  --shadow-glow-purple: 0 0 30px rgba(168, 85, 247, 0.25);
-
-  --primary-color: #f0f0f5;
-  --primary-color-ligh: #c0c0d0;
-  --secondary-color: #a0a0b5;
-  --secondary-color-tint: rgba(255, 255, 255, 0.1);
-  --secondary-color-shade: #6b6b80;
-  --light-color: #1a1a24;
-  --blue: #60a5fa;
-  --bg-color: #0f0f14;
-  --text-color: #f0f0f5;
-}
