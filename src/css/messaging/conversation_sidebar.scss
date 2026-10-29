@@ -438,7 +438,11 @@
   font-size: 13px;
 }
 
-.conversation-dropdown .dropdown-item:hover, .conversation-dropdown .dropdown-item.favorite {
+.conversation-dropdown .dropdown-item:hover {
+  background: var(--bg-secondary);
+}
+
+.conversation-dropdown .dropdown-item.favorite {
   color: var(--warning-text);
 }
 
