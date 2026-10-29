@@ -214,7 +214,7 @@ import twoFactorService, {
   type TwoFactorSetup
 } from '@/services/twoFactor.service';
 import { func } from '@/function';
-import { formatDate as formatSharedDate } from '@/utils/format';
+import { formatDate as formatSharedDate, formatDateTime } from '@/utils/format';
 
 type Step = 'idle' | 'setup' | 'codes' | 'disable' | 'regenerate';
 
@@ -325,7 +325,7 @@ function codesAsText(): string {
   return [
     'Codes de secours MyKpopTrade',
     'Chaque code ne peut servir qu\'une seule fois.',
-    `Générés le ${new Date().toLocaleString('fr-FR')}`,
+    `Générés le ${formatDateTime(new Date())}`,
     '',
     ...recoveryCodes.value
   ].join('\n');

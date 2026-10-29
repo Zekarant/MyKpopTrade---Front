@@ -9,7 +9,7 @@
         </div>
     </dl>
 
-    <div v-if="post.shippingOptions" :title="`${post.shippingPrice} €`" class="post-modal__shipping">
+    <div v-if="post.shippingOptions" :title="formatPrice(post.shippingPrice, post.currency)" class="post-modal__shipping">
         <span class="post-modal__detail-label">Livraison</span>
         <div class="post-modal__shipping-tags">
             <span v-if="post.shippingOptions.worldwide" class="post-modal__tag">
@@ -34,6 +34,7 @@
 import { computed } from 'vue';
 import type { RouteLocationRaw } from 'vue-router';
 import type { ProductDetail } from '@/types/post.types';
+import { formatPrice } from '@/utils/format';
 
 const props = defineProps<{ post: ProductDetail }>();
 

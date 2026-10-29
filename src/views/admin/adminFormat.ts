@@ -1,7 +1,11 @@
 import { formatDistanceToNowStrict } from 'date-fns';
 import { apiErrorBody } from '@/services/apiError';
 import { fr } from 'date-fns/locale';
-import { formatDate as sharedFormatDate, formatPrice as sharedFormatPrice } from '@/utils/format';
+import {
+  formatDate as sharedFormatDate,
+  formatDateTime as sharedFormatDateTime,
+  formatPrice as sharedFormatPrice
+} from '@/utils/format';
 
 export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   photocard: 'Photocard',
@@ -84,15 +88,7 @@ export const ROLE_LABELS: Record<string, string> = {
 // Formatage partagé avec le reste du site ; l'admin affiche « — » pour une valeur absente.
 export const formatDate = (value?: string | Date | null): string => sharedFormatDate(value) || '—';
 
-export const formatDateTime = (value?: string | Date | null): string => {
-  if (!value) return '—';
-  return new Date(value).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+export const formatDateTime = (value?: string | Date | null): string => sharedFormatDateTime(value) || '—';
 
 export const formatAge = (value?: string | Date | null): string => {
   if (!value) return '—';

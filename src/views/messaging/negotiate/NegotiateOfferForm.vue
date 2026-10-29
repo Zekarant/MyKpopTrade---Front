@@ -16,7 +16,7 @@
           class="form-control price-input"
           @input="validateOffer"
         />
-        <span class="currency">€</span>
+        <span class="currency">{{ currencySymbol(product.currency) }}</span>
       </div>
 
       <!-- Les pourcentages du prix n'ont pas de sens pour un prix libre, borné par sa fourchette. -->
@@ -50,7 +50,7 @@
       ></textarea>
     </div>
 
-    <NegotiateOfferSummary :amount="offerAmount" :price="product.price" />
+    <NegotiateOfferSummary :amount="offerAmount" :price="product.price" :currency="product.currency" />
 
     <div class="form-actions">
       <button type="button" class="btn-secondary" @click="emit('cancel')">
@@ -71,6 +71,7 @@ import { useMessagingStore } from '@/store/messaging.store';
 import type { ProductDetail } from '@/types/post.types';
 import { validateOfferAmount, type OfferBounds } from '@/components/offerRules';
 import NegotiateOfferSummary from './NegotiateOfferSummary.vue';
+import { currencySymbol } from '@/utils/format';
 
 const OFFER_PERCENTAGES = [50, 60, 70, 80, 90];
 
@@ -91,13 +92,13 @@ const offerError = ref('');
 const submitting = ref(false);
 
 const canSubmit = computed(() =>
-  validateOfferAmount(offerAmount.value, props.product) === null &&
+  validateOfferAmount(offerAmount.value, props.product, props.product.currency) === null &&
   !offerError.value &&
   !submitting.value
 );
 
 function validateOffer() {
-  offerError.value = validateOfferAmount(offerAmount.value, props.product) ?? '';
+  offerError.value = validateOfferAmount(offerAmount.value, props.product, props.product.currency) ?? '';
 }
 
 function setOfferPercentage(percentage: number) {

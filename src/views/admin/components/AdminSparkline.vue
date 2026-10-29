@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, useId } from 'vue';
+import { formatDate, formatPrice } from '@/utils/format';
 
 const VIEWBOX_WIDTH = 300;
 const VIEWBOX_HEIGHT = 72;
@@ -109,11 +110,10 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
 
 const formattedTotal = computed(() => {
   const value = props.total ?? props.values.reduce((sum, entry) => sum + entry, 0);
-  return props.isCurrency ? `${value.toFixed(2)} €` : String(value);
+  return props.isCurrency ? formatPrice(value) : String(value);
 });
 
-const shortDay = (isoDate?: string): string =>
-  !isoDate ? '' : new Date(isoDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+const shortDay = (isoDate?: string): string => formatDate(isoDate, 'dayMonth');
 
 const firstLabel = computed(() => shortDay(props.labels[0]));
 const lastLabel = computed(() => shortDay(props.labels[props.labels.length - 1]));

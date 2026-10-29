@@ -61,7 +61,7 @@ test.describe('prix libre — rendu de référence', () => {
   test('fenêtre d\'offre : montant hors fourchette', async ({ page }) => {
     await openOfferWindow(page)
     await page.locator('#offerAmount').fill('2')
-    await expect(page.locator('.offer-error')).toHaveText('Le prix libre commence à 5 €.')
+    await expect(page.locator('.offer-error')).toHaveText(/^Le prix libre commence à 5,00\s€\.$/)
     await expect(page).toHaveScreenshot('offer-out-of-range.png')
   })
 })

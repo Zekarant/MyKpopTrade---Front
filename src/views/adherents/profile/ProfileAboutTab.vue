@@ -101,6 +101,7 @@
 import { computed, ref, watch } from 'vue'
 import userService, { type VerificationStats } from '@/services/user.service'
 import { profileIdOf, type ProfileInfo } from './types'
+import { formatDate } from '@/utils/format'
 
 const props = defineProps<{ profile: ProfileInfo; isOwnProfile: boolean }>()
 
@@ -126,9 +127,5 @@ const hasSocialLinks = computed(() =>
   Boolean(links.value.instagram || links.value.twitter || links.value.discord)
 )
 
-const memberSince = computed(() =>
-  props.profile.createdAt
-    ? new Date(props.profile.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
-    : ''
-)
+const memberSince = computed(() => formatDate(props.profile.createdAt, 'long'))
 </script>

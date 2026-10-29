@@ -86,7 +86,7 @@
             v-model:album-label="albumLabel"
             :is-member-required="isMemberRequired"
           />
-          <PostShippingStep v-show="currentStep === 4" v-model:form="formData" v-model:pwyw="pwyw" :currency-symbol="currencySymbol" />
+          <PostShippingStep v-show="currentStep === 4" v-model:form="formData" v-model:pwyw="pwyw" :currency-symbol="priceSymbol" />
           <PostRecapStep
             v-show="currentStep === 5"
             :form="formData"
@@ -95,7 +95,6 @@
             :group-label="groupLabel"
             :album-label="albumLabel"
             :pwyw="pwyw"
-            :currency-symbol="currencySymbol"
             :issues="allBlockingIssues"
             @go-to-step="goToStep"
           />
@@ -139,6 +138,7 @@ import { useImageUpload } from '@/composables/useImageUpload';
 import { SELL_STEPS, usePostFormValidation } from '@/composables/usePostFormValidation';
 import { usePostSave } from '@/composables/usePostSave';
 import { useSellerPaymentStatus } from '@/composables/useSellerPaymentStatus';
+import { currencySymbol } from '@/utils/format';
 import { MAX_POST_IMAGES, emptyPostForm, formFromEditedPost, parseEditedPost, type PwywSettings } from './add_post/postForm';
 import PostPhotosStep from './add_post/PostPhotosStep.vue';
 import PostInfoStep from './add_post/PostInfoStep.vue';
@@ -170,7 +170,7 @@ const { images, error: imageError, addFiles, addExistingImages, removeImage, mar
 });
 if (editedPost) addExistingImages(editedPost.images);
 
-const currencySymbol = computed(() => (formData.value.currency === 'USD' ? '$' : '€'));
+const priceSymbol = computed(() => currencySymbol(formData.value.currency || 'EUR'));
 
 const { isMemberRequired, blockingIssuesForStep, allBlockingIssues } = usePostFormValidation({
   form: formData,

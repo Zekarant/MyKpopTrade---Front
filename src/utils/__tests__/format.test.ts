@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('@/config/api', () => ({ API_URL: 'https://api.test' }))
 
-import { formatDate, formatDateTime, formatPrice, formatRelative, mediaUrl } from '../format'
+import { currencySymbol, formatDate, formatDateTime, formatPrice, formatRelative, mediaUrl } from '../format'
 
 /** Intl sépare milliers et devise par des espaces insécables : on les normalise. */
 const plain = (value: string) => value.replace(/\s/g, ' ')
@@ -82,6 +82,37 @@ describe('formatRelative', () => {
 
   it('rend une chaîne vide sans date', () => {
     expect(formatRelative('', now)).toBe('')
+  })
+
+  it('en phrase (`ago`) : « il y a … », sauf « À l\'instant » et la date', () => {
+    expect(formatRelative(ago(5 * MIN), now, { ago: true })).toBe('il y a 5 min')
+    expect(formatRelative(ago(2 * DAY), now, { ago: true })).toBe('il y a 2j')
+    expect(formatRelative(ago(10_000), now, { ago: true })).toBe("À l'instant")
+    expect(formatRelative('2025-03-01T12:00:00Z', now, { ago: true })).toBe('1 mars')
+  })
+})
+
+describe('formatPrice et formatDate — cas ajoutés', () => {
+  const plain = (text: string) => text.replace(/\s/g, ' ')
+
+  it('une devise absente ou vide retombe sur l\'euro', () => {
+    expect(plain(formatPrice(12.5, ''))).toBe('12,50 €')
+    expect(plain(formatPrice(12.5, null))).toBe('12,50 €')
+  })
+
+  it('formatDate « dayMonth » : jour et mois abrégé, sans année', () => {
+    expect(formatDate('2026-10-09T12:00:00Z', 'dayMonth')).toBe('09 oct.')
+  })
+})
+
+describe('currencySymbol', () => {
+  it('donne le symbole d\'une devise connue, le code sinon', () => {
+    expect(currencySymbol('EUR')).toBe('€')
+    expect(currencySymbol('USD')).toBe('$')
+    expect(currencySymbol()).toBe('€')
+    expect(currencySymbol('CHF')).toBe('CHF')
+    expect(currencySymbol('')).toBe('€')
+    expect(currencySymbol(null)).toBe('€')
   })
 })
 

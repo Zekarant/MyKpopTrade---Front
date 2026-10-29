@@ -2,22 +2,24 @@
   <div class="offer-summary">
     <div class="summary-row">
       <span>Votre offre :</span>
-      <strong>{{ amount || 0 }} €</strong>
+      <strong>{{ formatPrice(amount || 0, currency) }}</strong>
     </div>
     <div v-if="savings > 0" class="summary-row">
       <span>Économie :</span>
-      <strong class="savings">{{ savings }} € ({{ savingsPercentage }}%)</strong>
+      <strong class="savings">{{ formatPrice(savings, currency) }} ({{ savingsPercentage }} %)</strong>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { formatPrice } from '@/utils/format';
 
 const props = defineProps<{
   /** Montant saisi : `v-model.number` laisse la chaîne vide quand le champ est effacé. */
   amount: number | '';
   price: number;
+  currency?: string;
 }>();
 
 const savings = computed(() =>

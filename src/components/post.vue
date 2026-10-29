@@ -119,7 +119,6 @@ const props = withDefaults(defineProps<{
 /** `sold` : l'annonce a changé d'état (vendue, remise en vente, supprimée). */
 const emit = defineEmits<{ closePost: []; sold: [] }>();
 
-const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };
 
 const myId = currentUserId();
 const router = useRouter();
@@ -144,7 +143,7 @@ const isOwner = computed(() => props.myProfile || Boolean(sellerId.value && sell
 const isPurchasable = computed(() => !dataPost.value.isSold && dataPost.value.isAvailable !== false);
 const canMakeOffer = computed(() => acceptsOffers(dataPost.value));
 const pwywLabel = computed(() =>
-    pwywRangeLabel(dataPost.value.pwywMinPrice, dataPost.value.pwywMaxPrice, CURRENCY_SYMBOLS[dataPost.value.currency] || '€')
+    pwywRangeLabel(dataPost.value.pwywMinPrice, dataPost.value.pwywMaxPrice, dataPost.value.currency || 'EUR')
 );
 
 onMounted(async () => {

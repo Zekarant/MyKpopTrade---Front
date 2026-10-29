@@ -72,7 +72,6 @@ const props = defineProps<{
   groupLabel: string;
   albumLabel: string;
   pwyw: PwywSettings;
-  currencySymbol: string;
   issues: BlockingIssue[];
 }>();
 
@@ -103,6 +102,6 @@ const shippingLabel = computed(() => {
 });
 
 const pwywRecap = computed(() =>
-  pwywRangeLabel(optionalAmount(props.pwyw.min), optionalAmount(props.pwyw.max), props.currencySymbol)
+  pwywRangeLabel(optionalAmount(props.pwyw.min), optionalAmount(props.pwyw.max), props.form.currency || 'EUR')
 );
 </script>

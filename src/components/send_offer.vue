@@ -15,14 +15,14 @@
       <div class="product-details">
         <h4>{{ title }}</h4>
         <div class="original-price">
-          Prix initial: <span class="price-value">{{ price }}€</span>
+          Prix initial : <span class="price-value">{{ formatPrice(price, currency) }}</span>
         </div>
       </div>
     </div>
 
     <form class="offer-form" novalidate @submit.prevent="submitOffer">
       <div class="form-group">
-        <label for="offerAmount">Votre offre (€)</label>
+        <label for="offerAmount">Votre offre ({{ currencySymbol(currency) }})</label>
         <input
           id="offerAmount"
           v-model.number="offerAmount"
@@ -40,7 +40,7 @@
         <div v-if="offerError" class="offer-error" role="alert">{{ offerError }}</div>
         <div class="price-info">
           <span v-if="!offerError && typeof offerAmount === 'number' && offerAmount > 0 && offerAmount < price" class="savings">
-            Économie: {{ (price - offerAmount).toFixed(2) }}€
+            Économie : {{ formatPrice(price - offerAmount, currency) }}
           </span>
         </div>
       </div>
@@ -89,7 +89,6 @@ import { API_URL } from '@/config/api';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { vDismiss } from '@/composables/vDismiss';
 import {
-  formatAmount,
   offerBounds,
   pwywRangeLabel,
   validateOfferAmount,
@@ -98,6 +97,7 @@ import {
   type OfferProduct,
   type OfferSentPayload
 } from './offerRules';
+import { currencySymbol, formatPrice } from '@/utils/format';
 
 defineOptions({ name: 'SendOffer' });
 
@@ -115,6 +115,7 @@ const domain_api = API_URL;
 
 const target = computed<OfferProduct | null>(() => props.product ?? props.conversation?.productId ?? null)
 const price = computed(() => target.value?.price ?? 0)
+const currency = computed(() => target.value?.currency)
 const title = computed(() => target.value?.title ?? '')
 const images = computed(() => target.value?.images ?? [])
 
@@ -125,9 +126,9 @@ const bounds = computed(() => offerBounds(pricing.value))
 const ruleLabel = computed(() => {
   const current = bounds.value
   if (current.mode === 'pwyw') {
-    return `Prix libre : ${pwywRangeLabel(current.min, current.max)}`
+    return `Prix libre : ${pwywRangeLabel(current.min, current.max, currency.value)}`
   }
-  return `Offre minimum : ${formatAmount(current.min)} (${current.minPercentage} % du prix)`
+  return `Offre minimum : ${formatPrice(current.min, currency.value)} (${current.minPercentage} % du prix)`
 })
 
 const inputMin = computed(() => Math.max(bounds.value.min, 0.01))
@@ -135,7 +136,7 @@ const inputMax = computed(() => bounds.value.mode === 'pwyw' ? bounds.value.max 
 
 // Rien à signaler tant que le champ est vide : le bouton reste simplement désactivé.
 const offerError = computed(() =>
-  offerAmount.value === '' ? null : validateOfferAmount(offerAmount.value, pricing.value)
+  offerAmount.value === '' ? null : validateOfferAmount(offerAmount.value, pricing.value, currency.value)
 )
 
 const submitOffer = async () => {

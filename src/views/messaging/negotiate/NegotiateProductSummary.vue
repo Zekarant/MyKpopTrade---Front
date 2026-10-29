@@ -16,16 +16,16 @@
       <div class="price-info">
         <div class="current-price">
           <span class="label">Prix demandé</span>
-          <span class="price">{{ product.price }} €</span>
+          <span class="price">{{ formatPrice(product.price, product.currency) }}</span>
         </div>
 
         <div v-if="bounds.mode === 'pwyw'" class="min-offer">
           <span class="label">Prix libre</span>
-          <span class="price">{{ pwywRangeLabel(product.pwywMinPrice, product.pwywMaxPrice) }}</span>
+          <span class="price">{{ pwywRangeLabel(product.pwywMinPrice, product.pwywMaxPrice, product.currency) }}</span>
         </div>
         <div v-else class="min-offer">
           <span class="label">Offre minimum acceptée</span>
-          <span class="price">{{ bounds.min }} € ({{ bounds.minPercentage }}%)</span>
+          <span class="price">{{ formatPrice(bounds.min, product.currency) }} ({{ bounds.minPercentage }} %)</span>
         </div>
       </div>
 
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { mediaUrl } from '@/utils/format';
+import { formatPrice, mediaUrl } from '@/utils/format';
 import type { ProductDetail } from '@/types/post.types';
 import { pwywRangeLabel, type OfferBounds } from '@/components/offerRules';
 

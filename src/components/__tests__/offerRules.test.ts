@@ -29,8 +29,8 @@ describe('offerRules — prix libre', () => {
   it('accepte les bornes et refuse ce qui sort de la fourchette', () => {
     expect(validateOfferAmount(5, pwyw)).toBeNull()
     expect(validateOfferAmount(30, pwyw)).toBeNull()
-    expect(plain(validateOfferAmount(4.99, pwyw))).toBe('Le prix libre commence à 5 €.')
-    expect(plain(validateOfferAmount(30.5, pwyw))).toBe('Le prix libre ne dépasse pas 30 €.')
+    expect(plain(validateOfferAmount(4.99, pwyw))).toBe('Le prix libre commence à 5,00 €.')
+    expect(plain(validateOfferAmount(30.5, pwyw))).toBe('Le prix libre ne dépasse pas 30,00 €.')
   })
 
   it('autorise une offre au-dessus du prix affiché si la fourchette le permet', () => {
@@ -43,9 +43,9 @@ describe('offerRules — prix libre', () => {
   })
 
   it('formule la fourchette affichée sur la fiche', () => {
-    expect(plain(pwywRangeLabel(5, null))).toBe('à partir de 5 €')
-    expect(plain(pwywRangeLabel(5, 12.5))).toBe('entre 5 € et 12,5 €')
-    expect(plain(pwywRangeLabel(0, undefined, '$'))).toBe('à partir de 0 $')
+    expect(plain(pwywRangeLabel(5, null))).toBe('à partir de 5,00 €')
+    expect(plain(pwywRangeLabel(5, 12.5))).toBe('entre 5,00 € et 12,50 €')
+    expect(plain(pwywRangeLabel(0, undefined, 'USD'))).toBe('à partir de 0,00 $US')
   })
 })
 
@@ -62,7 +62,7 @@ describe('offerRules — négociation classique', () => {
   })
 
   it('refuse une offre sous le seuil ou au prix demandé', () => {
-    expect(plain(validateOfferAmount(9, product))).toBe('L\'offre minimum est de 10 € (50 % du prix).')
+    expect(plain(validateOfferAmount(9, product))).toBe('L\'offre minimum est de 10,00 € (50 % du prix).')
     expect(validateOfferAmount(19.99, product)).toBe('L\'offre doit être inférieure au prix demandé.')
   })
 })
