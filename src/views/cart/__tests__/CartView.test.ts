@@ -121,7 +121,7 @@ describe('CartView', () => {
     expect(dialog.attributes('aria-modal')).toBe('true')
     expect(document.activeElement).toBe(dialog.element)
 
-    await wrapper.find('.cart-shipping__overlay').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.popup-overlay').trigger('keydown', { key: 'Escape' })
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     wrapper.unmount()

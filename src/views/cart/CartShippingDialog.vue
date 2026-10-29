@@ -1,5 +1,5 @@
 <template>
-  <div v-dismiss="() => emit('cancel')" class="cart-shipping__overlay">
+  <div v-dismiss="() => emit('cancel')" class="popup-overlay">
     <div
       ref="dialog"
       class="cart-shipping"
@@ -131,11 +131,6 @@ function confirm() {
   max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
 
   &:focus { outline: none; }
-
-  &__overlay {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: var(--z-modal);
-    display: flex; align-items: center; justify-content: center;
-  }
 
   &__title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; }
 

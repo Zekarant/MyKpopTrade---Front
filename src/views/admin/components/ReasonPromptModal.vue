@@ -1,5 +1,5 @@
 <template>
-  <div v-dismiss="() => emit('cancel')" class="admin__modal-overlay">
+  <div v-dismiss="() => emit('cancel')" class="popup-overlay">
     <div ref="dialogEl" class="admin__modal" role="dialog" aria-modal="true" aria-labelledby="reason-title">
       <div class="admin__modal-header">
         <h3 id="reason-title">{{ title }}</h3>

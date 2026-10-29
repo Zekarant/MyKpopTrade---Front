@@ -1,5 +1,5 @@
 <template>
-    <div v-dismiss="close" class="report-overlay">
+    <div v-dismiss="close" class="popup-overlay">
         <div ref="dialogEl" class="report-modal" role="dialog" aria-modal="true" :aria-label="title" @click="$event.stopPropagation()">
             <div class="report-modal__header">
                 <div class="report-modal__icon">
@@ -115,17 +115,6 @@ import { vDismiss } from '@/composables/vDismiss'
 </script>
 
 <style lang="scss" scoped>
-.report-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: var(--z-modal);
-}
-
 .report-modal {
     background: var(--bg-card);
     border-radius: var(--radius-lg);

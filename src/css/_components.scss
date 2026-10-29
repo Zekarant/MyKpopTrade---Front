@@ -357,11 +357,14 @@
 }
 
 // === MODAL / POPUP ===
-// Deux noms pour la même fenêtre : les pages ne stylent que son contenu.
+// Fond commun à toutes les boîtes de dialogue (deux noms pour le même fond) :
+// les composants ne stylent que leur boîte.
 .popup-overlay,
 .modal-overlay {
   position: fixed;
   inset: 0;
+  // La boîte ne touche jamais les bords de l'écran.
+  padding: var(--space-md);
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   display: flex;

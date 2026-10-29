@@ -77,7 +77,7 @@ describe('BlockUserButton', () => {
     const wrapper = await mountButton()
 
     await trigger(wrapper).trigger('click')
-    await wrapper.find('.block-confirm-overlay').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.popup-overlay').trigger('keydown', { key: 'Escape' })
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(blockApi.block).not.toHaveBeenCalled()

@@ -1,5 +1,5 @@
 <template>
-  <div v-dismiss="cancel" class="checkout-overlay" @mousedown.stop>
+  <div v-dismiss="cancel" class="popup-overlay" @mousedown.stop>
     <div
       ref="dialog"
       class="checkout-modal"
@@ -205,19 +205,6 @@ function cancel() {
 </script>
 
 <style scoped lang="scss">
-.checkout-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-lg);
-  animation: fadeIn 0.15s ease;
-}
-
 .checkout-modal {
   background: var(--bg-card);
   border: 1px solid var(--surface-border);

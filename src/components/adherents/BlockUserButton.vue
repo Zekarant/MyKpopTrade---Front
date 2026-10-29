@@ -13,7 +13,7 @@
 
   <!-- Téléporté : un parent transformé (panneau latéral mobile) casserait le position: fixed. -->
   <Teleport to="body">
-    <div v-if="confirming" v-dismiss="closeConfirm" class="block-confirm-overlay" @keydown.esc="closeConfirm">
+    <div v-if="confirming" v-dismiss="closeConfirm" class="popup-overlay" @keydown.esc="closeConfirm">
       <div
         class="block-confirm"
         role="dialog"
@@ -151,16 +151,6 @@ async function confirmAction() {
     opacity: 0.6;
     cursor: not-allowed;
   }
-}
-
-.block-confirm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
 }
 
 .block-confirm {
