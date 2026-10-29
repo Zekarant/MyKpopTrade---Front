@@ -69,7 +69,7 @@ describe('CheckoutDialog', () => {
     opener.focus()
     const wrapper = mountDialog()
 
-    await wrapper.find('.checkout-overlay').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.popup-overlay').trigger('keydown', { key: 'Escape' })
     expect(wrapper.emitted('cancel')).toHaveLength(1)
 
     wrapper.unmount()

@@ -1,5 +1,5 @@
 <template>
-  <div v-dismiss="() => emit('cancel')" class="counter-popup-overlay">
+  <div v-dismiss="() => emit('cancel')" class="popup-overlay">
     <div ref="dialogEl" class="counter-popup-content" role="dialog" aria-modal="true" aria-labelledby="counter-offer-title">
       <button type="button" class="counter-close-btn" aria-label="Fermer" @click="emit('cancel')">
         <i class="bi bi-x-lg"></i>

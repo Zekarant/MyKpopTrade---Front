@@ -1,5 +1,5 @@
 <template>
-    <div v-dismiss="() => emit('cancel')" class="post-modal__confirm-overlay" @keydown.esc="emit('cancel')">
+    <div v-dismiss="() => emit('cancel')" class="popup-overlay" @keydown.esc="emit('cancel')">
         <div
             ref="dialog"
             class="post-modal__confirm"

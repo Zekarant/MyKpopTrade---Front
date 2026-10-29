@@ -1,23 +1,6 @@
 /* Contre-offre du vendeur (CounterOfferDialog.vue) */
 @use 'outline_button';
 
-.counter-popup-overlay {
-  background: rgba(30,34,44,0.55);
-  backdrop-filter: blur(3px);
-  position: fixed;
-  z-index: var(--z-modal);
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: counter-fade-in 0.20s;
-}
-
-@keyframes counter-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .counter-popup-content {
   background: var(--bg-card);
   border-radius: 18px;

@@ -657,18 +657,6 @@ $sidebar-breakpoint: 1024px;
   }
 }
 
-.admin__modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-md);
-  background: rgba(15, 15, 20, 0.55);
-  backdrop-filter: blur(3px);
-}
-
 .admin__modal {
   width: 100%;
   max-width: 560px;

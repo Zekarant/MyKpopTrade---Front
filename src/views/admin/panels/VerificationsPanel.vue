@@ -73,7 +73,7 @@
       </table>
     </div>
 
-    <div v-if="documentUrl" v-dismiss="closeDocument" class="admin__modal-overlay">
+    <div v-if="documentUrl" v-dismiss="closeDocument" class="popup-overlay">
       <DialogFrame class="admin__modal" aria-labelledby="verification-doc-title" @close="closeDocument">
         <div class="admin__modal-header">
           <h3 id="verification-doc-title">Document de {{ documentOwner }}</h3>

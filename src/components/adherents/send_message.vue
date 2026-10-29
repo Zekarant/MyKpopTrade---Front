@@ -1,5 +1,5 @@
 <template>
-    <div v-dismiss="closePopup" class="msg-modal-overlay">
+    <div v-dismiss="closePopup" class="popup-overlay">
         <div ref="dialog" class="msg-modal" role="dialog" aria-modal="true" :aria-labelledby="titleId">
             <div class="msg-modal__header">
                 <h2 :id="titleId" class="msg-modal__title"><i class="bi bi-chat-dots" aria-hidden="true"></i> Nouvelle conversation</h2>
@@ -207,19 +207,6 @@ function sendMessage() {
 </script>
 
 <style lang="scss" scoped>
-.msg-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-lg);
-  animation: fadeIn 0.15s ease;
-}
-
 .msg-modal {
   background: var(--bg-card);
   border: 1px solid var(--surface-border);

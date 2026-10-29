@@ -98,7 +98,7 @@ test.describe('profil — rendu de référence', () => {
     await page.locator('.review-item__respond-btn').click()
     const popup = page.locator('.response-popup')
     await popup.locator('textarea').fill('Merci beaucoup !')
-    const backdrop = page.locator('.response-popup-overlay')
+    const backdrop = page.locator('.popup-overlay')
 
     page.once('dialog', (dialog) => dialog.dismiss())
     await backdrop.click({ position: { x: 5, y: 5 } })

@@ -69,7 +69,7 @@ v-model="search"
       </template>
     </template>
 
-    <div v-if="showForm" v-dismiss="() => (showForm = false)" class="admin__modal-overlay">
+    <div v-if="showForm" v-dismiss="() => (showForm = false)" class="popup-overlay">
       <DialogFrame class="admin__modal admin__modal--wide" aria-labelledby="faq-form-title" @close="showForm = false">
         <div class="admin__modal-header">
           <h3 id="faq-form-title">{{ editing ? 'Modifier la FAQ' : 'Nouvelle FAQ' }}</h3>

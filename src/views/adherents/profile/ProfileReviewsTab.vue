@@ -42,7 +42,7 @@
 
     <!-- Popup réponse avis -->
     <Transition name="fade">
-      <div v-if="responding" v-dismiss="closeResponsePopup" class="response-popup-overlay">
+      <div v-if="responding" v-dismiss="closeResponsePopup" class="popup-overlay">
         <DialogFrame class="response-popup" aria-labelledby="review-response-title" @close="closeResponsePopup">
           <div class="response-popup__header">
             <h3 id="review-response-title"><i class="bi bi-reply"></i> Répondre à l'avis</h3>
