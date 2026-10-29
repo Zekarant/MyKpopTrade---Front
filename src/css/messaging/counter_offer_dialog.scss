@@ -1,6 +1,4 @@
 /* Contre-offre du vendeur (CounterOfferDialog.vue) */
-@use 'outline_button';
-
 .counter-popup-content {
   background: var(--bg-card);
   border-radius: 18px;
@@ -74,30 +72,10 @@
   gap: 16px;
 }
 
+// Couleurs et géométrie : variantes globales (_components.scss).
 .btn-outline.btn-wide,
 .btn-danger.btn-wide {
   min-width: 120px;
-  border-radius: 10px;
-  font-size: 16px;
-  padding: 11px;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-  box-shadow: 0 1px 8px rgba(13,110,253,0.04);
-}
-
-.btn-outline.btn-wide:hover {
-  background: var(--info-light);
-  color: var(--info-text);
-  border-color: var(--info);
-}
-
-.btn-danger.btn-wide {
-  background: var(--danger);
-  border: none;
-  color: var(--text-on-accent);
-}
-
-.btn-danger.btn-wide:hover {
-  filter: brightness(0.9);
 }
 
 @media (max-width: 480px) {
@@ -109,6 +87,5 @@
   .btn-outline.btn-wide,
   .btn-danger.btn-wide {
     min-width: 100px;
-    font-size: 15px;
   }
 }
