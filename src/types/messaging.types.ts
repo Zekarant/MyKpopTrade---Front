@@ -1,6 +1,7 @@
 
 import type { IUserParticipant } from './user.types';
 import type { Pagination } from './pagination.types';
+import type { OfferSettings, ProductShippingOptions as ListingShippingOptions } from './post.types';
 
 export type { IUserParticipant } from './user.types';
 
@@ -34,17 +35,10 @@ export interface Message {
   preview?: string;
 }
 
-/** Modes de livraison d'une annonce (renvoyés avec le détail d'une conversation). */
-export interface ProductShippingOptions {
-  worldwide?: boolean;
-  nationalOnly?: boolean;
-  localPickup?: boolean;
-  nationalCost?: number | null;
-  worldwideCost?: number | null;
-  shippingCost?: number | null;
-}
+/** Modes de livraison d'une annonce (renvoyés avec le détail d'une conversation, champs facultatifs). */
+export type ProductShippingOptions = Partial<ListingShippingOptions>;
 
-export interface ProductReference {
+export interface ProductReference extends OfferSettings {
   _id: string;
   shippingOptions?: ProductShippingOptions;
   title: string;
@@ -57,12 +51,6 @@ export interface ProductReference {
   category?: string;
   kpopGroup?: string;
   kpopMember?: string;
-  allowOffers?: boolean;
-  minOfferPercentage?: number;
-  /** Prix libre : la fourchette remplace allowOffers / minOfferPercentage. */
-  isPayWhatYouWant?: boolean;
-  pwywMinPrice?: number | null;
-  pwywMaxPrice?: number | null;
 }
 
 export interface NegotiationStatus {

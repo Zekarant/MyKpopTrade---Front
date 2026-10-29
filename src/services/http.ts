@@ -9,7 +9,6 @@ import { setSessionCookies, clearSessionCookies, hasSession } from '@/services/s
 import { notifySessionEnded } from '@/services/sessionEvents';
 import { toApiError } from '@/services/apiError';
 
-export { hasSession };
 
 /**
  * Client HTTP partagé et renouvellement de session.

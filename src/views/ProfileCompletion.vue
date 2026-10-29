@@ -112,7 +112,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { func } from '@/function';
-import { hasSession } from '@/services/http';
+import { hasSession } from '@/services/session.cookies';
 import accountService from '@/services/account.service';
 import { apiErrorMessage } from '@/services/apiError';
 
