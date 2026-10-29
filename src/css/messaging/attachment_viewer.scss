@@ -1,9 +1,5 @@
 /* Visionneuse des pièces jointes (AttachmentViewer.vue).
    Le cadre .popup-overlay / .popup-content vient de css/_components.scss. */
-.popup-content:hover {
-  background: var(--bg-secondary);
-}
-
 /* Boîte agrandie à toute la hauteur ; repère de la croix de fermeture. */
 .attachment-viewer {
   height: 100%;

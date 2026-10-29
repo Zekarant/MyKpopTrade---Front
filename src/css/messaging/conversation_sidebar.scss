@@ -438,11 +438,7 @@
   font-size: 13px;
 }
 
-.conversation-dropdown .dropdown-item:hover, .popup-content:hover {
-  background: var(--bg-secondary);
-}
-
-.conversation-dropdown .dropdown-item.favorite {
+.conversation-dropdown .dropdown-item:hover, .conversation-dropdown .dropdown-item.favorite {
   color: var(--warning-text);
 }
 
@@ -573,17 +569,5 @@
 .search-results::-webkit-scrollbar-thumb:hover,
 .right-sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
-}
-
-/* Focus states for accessibility */
-.tab:focus,
-.action-btn:focus,
-.send-btn:focus,
-.btn-primary:focus,
-.btn-secondary:focus,
-.btn-outline:focus,
-.btn-success:focus {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
 }
 
