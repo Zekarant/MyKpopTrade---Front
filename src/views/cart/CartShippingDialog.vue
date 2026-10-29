@@ -24,7 +24,7 @@
           <input v-model="address.postalCode" type="text" placeholder="Code postal" aria-label="Code postal" class="cart-shipping__input" />
           <input v-model="address.city" type="text" placeholder="Ville" aria-label="Ville" class="cart-shipping__input" />
         </div>
-        <input v-model="address.country" type="text" placeholder="Pays" aria-label="Pays" class="cart-shipping__input" />
+        <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" aria-label="Pays (code à deux lettres)" class="cart-shipping__input" />
         <input v-model="address.phone" type="text" placeholder="Téléphone (optionnel)" aria-label="Téléphone (optionnel)" class="cart-shipping__input" />
       </div>
 
@@ -102,7 +102,8 @@ const address = reactive({
   streetLine2: '',
   postalCode: '',
   city: '',
-  country: '',
+  // Code ISO à deux lettres, comme au paiement d'une annonce : le back refuse un nom de pays.
+  country: 'FR',
   phone: ''
 });
 
@@ -118,7 +119,7 @@ function confirm() {
   }
   emit('confirm', {
     shippingMethod: shippingMethod.value,
-    shippingAddress: needsAddress ? { ...address } : undefined
+    shippingAddress: needsAddress ? { ...address, country: (address.country || 'FR').toUpperCase() } : undefined
   });
 }
 </script>
