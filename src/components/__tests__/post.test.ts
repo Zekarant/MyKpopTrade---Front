@@ -17,7 +17,10 @@ vi.mock('js-cookie', () => ({ default: cookies }))
 vi.mock('@/function', () => ({ func }))
 vi.mock('@/services/post.service', () => ({ default: postService }))
 vi.mock('@/services/cart.service', () => ({ default: cartService }))
-vi.mock('@/services/http', () => ({ hasSession: () => Boolean(cookies.get('id_user')) }))
+vi.mock('@/services/session.cookies', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/session.cookies')>()),
+  hasSession: () => Boolean(cookies.get('id_user'))
+}))
 vi.mock('@/services/payment.service', () => ({ default: {} }))
 vi.mock('@/services/messaging.service', () => ({ default: {} }))
 vi.mock('@/components/ImageCarousel.vue', () => ({ default: { template: '<div />' } }))

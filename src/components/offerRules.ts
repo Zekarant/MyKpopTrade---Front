@@ -5,14 +5,10 @@
  */
 
 import { formatPrice } from '@/utils/format';
+import type { OfferSettings } from '@/types/post.types';
 
-export interface OfferPricing {
+export interface OfferPricing extends OfferSettings {
   price: number;
-  allowOffers?: boolean;
-  minOfferPercentage?: number | null;
-  isPayWhatYouWant?: boolean;
-  pwywMinPrice?: number | null;
-  pwywMaxPrice?: number | null;
 }
 
 /** Annonce visée par une offre : fiche produit, ou produit peuplé d'une conversation. */

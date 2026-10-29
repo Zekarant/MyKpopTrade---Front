@@ -44,7 +44,19 @@ export interface PostData {
   };
 }
 
-export interface Post {
+/**
+ * Règles d'offre d'une annonce (alignées sur le back) : négociation à partir de
+ * minOfferPercentage % du prix, ou prix libre borné par [pwywMinPrice, pwywMaxPrice].
+ */
+export interface OfferSettings {
+  allowOffers?: boolean;
+  minOfferPercentage?: number | null;
+  isPayWhatYouWant?: boolean;
+  pwywMinPrice?: number | null;
+  pwywMaxPrice?: number | null;
+}
+
+export interface Post extends OfferSettings {
   _id: string;
   id: string;
   title: string;
@@ -68,10 +80,6 @@ export interface Post {
   /** Favoris uniquement : annonce vendue ou retirée, qui ne s'ouvre plus. */
   unavailableReason?: 'sold' | 'withdrawn' | null;
   state?: string;
-  allowOffers?: boolean;
-  isPayWhatYouWant?: boolean;
-  pwywMinPrice?: number | null;
-  pwywMaxPrice?: number | null;
 }
 
 /** Modes et frais de livraison d'une annonce, tels que stockés par l'API. */
@@ -94,7 +102,7 @@ export interface ProductSeller {
 }
 
 /** Annonce renvoyée par GET /api/products/:id : noms K-pop résolus et frais de port calculés. */
-export interface ProductDetail {
+export interface ProductDetail extends OfferSettings {
   _id: string;
   seller: ProductSeller;
   title: string;
@@ -123,10 +131,6 @@ export interface ProductDetail {
   isSold?: boolean;
   allowOffers: boolean;
   minOfferPercentage?: number;
-  /** Prix libre : les offres sont bornées par [pwywMinPrice, pwywMaxPrice]. */
-  isPayWhatYouWant?: boolean;
-  pwywMinPrice?: number | null;
-  pwywMaxPrice?: number | null;
   shippingOptions: ProductShippingOptions;
   shippingPrice?: number | null;
   views?: number;

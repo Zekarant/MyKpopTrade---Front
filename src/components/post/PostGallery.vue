@@ -25,7 +25,7 @@
 /** Photos de l'annonce, badge d'état et bouton favori. */
 import ImageCarousel from '@/components/ImageCarousel.vue';
 import postService from '@/services/post.service';
-import { hasSession } from '@/services/http';
+import { hasSession } from '@/services/session.cookies';
 import { func } from '@/function';
 import type { ProductDetail } from '@/types/post.types';
 import { useRequireSession } from './useRequireSession';
