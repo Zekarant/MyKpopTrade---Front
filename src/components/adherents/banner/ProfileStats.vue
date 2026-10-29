@@ -21,12 +21,12 @@ defineProps<{
 }
 .subscription {
   font-family: "Sora", serif;
-  color: var(--secondary-color-shade);
+  color: var(--text-primary);
   font-size: small;
   text-align: left;
 }
 .subscription .bold {
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {

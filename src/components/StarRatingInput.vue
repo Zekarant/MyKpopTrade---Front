@@ -72,20 +72,20 @@ function step(delta: number) {
     border: none;
     cursor: pointer;
     font-size: 32px;
-    color: var(--secondary-color-tint);
+    color: var(--text-secondary);
     transition: all 0.3s ease;
     padding: 0;
 
     &:hover,
     &.active {
-      color: var(--primary-color);
+      color: var(--text-primary);
       transform: scale(1.2);
     }
   }
 
   .rating-text {
     font-size: 14px;
-    color: var(--secondary-color);
+    color: var(--text-secondary);
   }
 }
 

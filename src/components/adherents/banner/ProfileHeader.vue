@@ -76,7 +76,7 @@ const { isFollowing, followersCount, followingCount, toggleFollow } = useFollow(
 .nickname_text_field {
   font-weight: 700;
   font-family: "Sora", serif;
-  color: var(--primary-color);
+  color: var(--text-primary);
   font-size: large;
   margin-right: 2px;
 }
@@ -87,7 +87,7 @@ const { isFollowing, followersCount, followingCount, toggleFollow } = useFollow(
   line-height: 12.6px;
   text-align: left;
   text-decoration-skip-ink: none;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 @media (max-width: 768px) {
   .profil_main {

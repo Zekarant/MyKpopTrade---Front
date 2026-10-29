@@ -128,7 +128,7 @@ onMounted(loadProduct);
   // Surcharge du `.spinner` global (_animations.scss) : plus grand, aux couleurs de la page.
   .spinner {
     border: 3px solid var(--surface-border);
-    border-top: 3px solid var(--primary-color);
+    border-top: 3px solid var(--text-primary);
     border-radius: 50%;
     width: 40px;
     height: 40px;

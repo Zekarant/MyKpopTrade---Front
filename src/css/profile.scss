@@ -796,7 +796,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--surface-secondary);
+  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
   &:hover { background: var(--surface-hover); }
@@ -856,8 +856,8 @@
 }
 .followers-section__load-btn {
   padding: 8px 24px;
-  background: var(--surface-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--font-size-sm);

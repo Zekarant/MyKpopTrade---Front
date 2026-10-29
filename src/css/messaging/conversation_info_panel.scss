@@ -1,5 +1,5 @@
 .badge {
-  background: var(--danger-color);
+  background: var(--danger);
   color: white;
   font-size: 11px;
   padding: 3px 7px;
@@ -255,7 +255,7 @@
 }
 
 .message-input textarea:focus {
-  border-color: var(--blue);
+  border-color: var(--accent-blue);
   background: white;
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }

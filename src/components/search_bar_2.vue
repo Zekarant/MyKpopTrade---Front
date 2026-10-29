@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 .search-bar-wrapper {
   display: flex;
   align-items: center;
-  background-color: var(--light-color);
+  background-color: var(--bg-secondary);
   border-radius: var(--radius-sm);
   padding: 12px 12px;
   max-width: 990px;

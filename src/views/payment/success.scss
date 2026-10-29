@@ -6,7 +6,7 @@
   align-items: center;
   min-height: 80vh;
   padding: 20px;
-  background: linear-gradient(135deg, var(--bg-color) 0%, var(--secondary-color-tint) 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -276,7 +276,7 @@ h1 {
 
 // Error state styles
 .error-state {
-  background: linear-gradient(135deg, var(--bg-color) 0%, var(--danger-light) 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--danger-light) 100%);
 }
 
 .error-details {

@@ -58,11 +58,11 @@
 }
 .segment-tab:hover{
     border-bottom: 2px solid;
-    border-color: var(--blue);
+    border-color: var(--accent-blue);
 }
 .segment-tab.clicked{
     border-bottom: 2px solid;
-    border-color: var(--blue);
+    border-color: var(--accent-blue);
 }
 
 @media (max-width: 768px) {
@@ -73,13 +73,13 @@
         -webkit-overflow-scrolling: touch;
         padding-bottom: 6px;
         scrollbar-width: thin;
-        scrollbar-color: var(--accent-pink) var(--secondary-color-tint);
+        scrollbar-color: var(--accent-pink) var(--surface-border);
     }
     .segment-tabs::-webkit-scrollbar{
         height: 4px;
     }
     .segment-tabs::-webkit-scrollbar-track{
-        background: var(--secondary-color-tint);
+        background: var(--bg-tertiary);
         border-radius: 4px;
     }
     .segment-tabs::-webkit-scrollbar-thumb{
