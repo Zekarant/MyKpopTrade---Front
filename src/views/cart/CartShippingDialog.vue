@@ -21,7 +21,7 @@
         <input v-model="address.streetLine1" type="text" placeholder="Adresse ligne 1" aria-label="Adresse ligne 1" class="cart-shipping__input" />
         <input v-model="address.streetLine2" type="text" placeholder="Adresse ligne 2 (optionnel)" aria-label="Adresse ligne 2 (optionnel)" class="cart-shipping__input" />
         <div class="cart-shipping__input-row">
-          <input v-model="address.postalCode" type="text" placeholder="Code postal" aria-label="Code postal" class="cart-shipping__input" />
+          <input v-model="address.postalCode" type="text" :maxlength="POSTAL_CODE_MAX_LENGTH" placeholder="Code postal" aria-label="Code postal" class="cart-shipping__input" />
           <input v-model="address.city" type="text" placeholder="Ville" aria-label="Ville" class="cart-shipping__input" />
         </div>
         <input v-model.trim="address.country" type="text" maxlength="2" placeholder="FR" aria-label="Pays (code à deux lettres)" class="cart-shipping__input" />
@@ -66,6 +66,7 @@ import type { ShippingMethod } from '@/services/payment.service';
 import { func } from '@/function';
 import { formatPrice } from '@/utils/format';
 import { sumAmounts } from '@/utils/money';
+import { POSTAL_CODE_MAX_LENGTH, isShippingAddressComplete, toShippingAddressPayload } from '@/utils/address';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { cartShipping, sumCartItems } from './cartPricing';
 import { vDismiss } from '@/composables/vDismiss';
@@ -113,13 +114,13 @@ const total = computed(() => sumAmounts([itemsTotal.value, shipping.value.amount
 
 function confirm() {
   const needsAddress = shippingMethod.value !== 'localPickup';
-  if (needsAddress && (!address.recipientName || !address.streetLine1 || !address.postalCode || !address.city)) {
+  if (needsAddress && !isShippingAddressComplete(address)) {
     func.showToastError('Veuillez remplir les champs d\'adresse obligatoires.');
     return;
   }
   emit('confirm', {
     shippingMethod: shippingMethod.value,
-    shippingAddress: needsAddress ? { ...address, country: (address.country || 'FR').toUpperCase() } : undefined
+    shippingAddress: needsAddress ? toShippingAddressPayload(address) : undefined
   });
 }
 </script>

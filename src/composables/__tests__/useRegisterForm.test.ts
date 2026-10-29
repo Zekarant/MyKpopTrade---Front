@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const authService = vi.hoisted(() => ({ register: vi.fn() }))
 vi.mock('@/services/authentification.service', () => ({ default: authService }))
 
-import { passwordRuleError, useRegisterForm, validateRegistration } from '../useRegisterForm'
+import { passwordRuleError, useRegisterForm, usernameRuleError, validateRegistration } from '../useRegisterForm'
 
 const VALID = {
   username: 'jimin_fan-95',
@@ -28,6 +28,21 @@ function filledForm(overrides: Partial<typeof VALID & { acceptMarketing: boolean
   form.acceptMarketing.value = values.acceptMarketing
   return form
 }
+
+describe('usernameRuleError', () => {
+  it.each([
+    ['', 'Le pseudo est obligatoire.'],
+    ['ab', 'Le pseudo doit comporter au moins 3 caractères.'],
+    ['a'.repeat(31), 'Le pseudo ne peut pas dépasser 30 caractères.'],
+    ['jimin fan', 'Caractères autorisés pour le pseudo : lettres, chiffres, « _ » et « - ».']
+  ])('« %s » → %s', (username, message) => {
+    expect(usernameRuleError(username)).toBe(message)
+  })
+
+  it('accepte un pseudo conforme', () => {
+    expect(usernameRuleError('jk-_3')).toBe('')
+  })
+})
 
 describe('validateRegistration', () => {
   it('accepte un formulaire conforme aux règles de l\'API', () => {

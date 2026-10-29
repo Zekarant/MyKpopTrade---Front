@@ -93,6 +93,7 @@ import { formatPrice } from '@/utils/format';
 import CheckoutAddressForm from './CheckoutAddressForm.vue';
 import { availableShippingChoices, resolveShippingCost, type ShippingOptionsLike } from './checkoutShipping';
 import { sumAmounts } from '@/utils/money';
+import { isShippingAddressComplete, toShippingAddressPayload } from '@/utils/address';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { vDismiss } from '@/composables/vDismiss';
 
@@ -153,10 +154,7 @@ const totalAmount = computed(() => sumAmounts([props.productPrice, shippingCost.
 const formatAmount = (amount: number) => formatPrice(amount, props.currency);
 const formatCost = (cost: number) => (cost === 0 ? 'Gratuit' : formatAmount(cost));
 
-const isAddressFilled = computed(() => {
-  const a = address.value;
-  return Boolean(a.recipientName?.trim() && a.streetLine1?.trim() && a.postalCode?.trim() && a.city?.trim() && a.country?.trim());
-});
+const isAddressFilled = computed(() => isShippingAddressComplete(address.value));
 
 const canSubmit = computed(() => {
   if (!selectedMethod.value) return false;
@@ -166,16 +164,7 @@ const canSubmit = computed(() => {
 function buildPayload(method: ShippingMethod): InitPayPalPayload {
   const payload: InitPayPalPayload = { productId: props.productId, shippingMethod: method };
   if (method !== 'localPickup') {
-    const a = address.value;
-    payload.shippingAddress = {
-      recipientName: a.recipientName.trim(),
-      streetLine1: a.streetLine1.trim(),
-      streetLine2: a.streetLine2?.trim() || undefined,
-      postalCode: a.postalCode.trim(),
-      city: a.city.trim(),
-      country: (a.country || 'FR').trim().toUpperCase(),
-      phone: a.phone?.trim() || undefined
-    };
+    payload.shippingAddress = toShippingAddressPayload(address.value);
   }
   return payload;
 }

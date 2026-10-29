@@ -44,6 +44,19 @@ export interface RegisterValidationError {
   message: string;
 }
 
+/**
+ * Première règle du pseudo non respectée (miroir de `validateUsername` côté
+ * API : 3 à 30 caractères, lettres, chiffres, « _ » ou « - »), sinon chaîne vide.
+ * Partagée par l'inscription, la fin d'inscription et les paramètres du profil.
+ */
+export function usernameRuleError(value: string): string {
+  if (!value) return 'Le pseudo est obligatoire.';
+  if (value.length < 3) return 'Le pseudo doit comporter au moins 3 caractères.';
+  if (value.length > 30) return 'Le pseudo ne peut pas dépasser 30 caractères.';
+  if (!USERNAME_PATTERN.test(value)) return 'Caractères autorisés pour le pseudo : lettres, chiffres, « _ » et « - ».';
+  return '';
+}
+
 /** Première règle du mot de passe non respectée, sinon chaîne vide. */
 export function passwordRuleError(value: string): string {
   if (value.length < 8) return 'Le mot de passe doit faire au moins 8 caractères.';
@@ -58,11 +71,9 @@ export function passwordRuleError(value: string): string {
 
 /** Première erreur du formulaire, dans l'ordre d'affichage des champs, sinon `null`. */
 export function validateRegistration(values: RegisterFormValues): RegisterValidationError | null {
-  if (!USERNAME_PATTERN.test(values.username.trim())) {
-    return {
-      field: 'username',
-      message: 'Le pseudo doit contenir entre 3 et 30 caractères : lettres, chiffres, « _ » ou « - ».'
-    };
+  const usernameError = usernameRuleError(values.username.trim());
+  if (usernameError) {
+    return { field: 'username', message: usernameError };
   }
   const email = values.email.trim();
   if (email.length > EMAIL_MAX_LENGTH || !EMAIL_PATTERN.test(email)) {
