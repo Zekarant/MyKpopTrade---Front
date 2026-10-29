@@ -177,8 +177,7 @@ const {
   searchQuery,
   filtered: filteredConversations,
   counts: tabCounts,
-  initialConversation,
-  addCreated: addCreatedConversation
+  initialConversation
 } = useConversationList(messagingStore, currentUserId)
 
 async function scrollToBottom(): Promise<void> {
@@ -266,8 +265,9 @@ function openViewer(images: string[], index: number): void {
   viewer.value = { images: [...images], index }
 }
 
+/** Le store l'a déjà rangée dans la liste (ou rend celle qui existait). */
 function onNewConversationCreated(created: ViewConversation): void {
-  void selectConversation(addCreatedConversation(created))
+  void selectConversation(created)
   newConversationOpen.value = false
 }
 

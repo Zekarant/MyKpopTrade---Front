@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-/** Stores de session : profil, panier, notifications, et leur remise à zéro à la déconnexion. */
+/** Stores de session : profil, panier, notifications, conversations, et leur remise à zéro à la déconnexion. */
 
 const session = vi.hoisted(() => ({ currentUserId: vi.fn<() => string | null>(() => 'u1') }))
 const users = vi.hoisted(() => ({ getMyInformation: vi.fn() }))
@@ -12,18 +12,20 @@ const notifications = vi.hoisted(() => ({
   markAllAsRead: vi.fn(async () => undefined),
   deleteNotification: vi.fn()
 }))
+const messaging = vi.hoisted(() => ({ startConversation: vi.fn() }))
 
 vi.mock('@/services/session.cookies', () => session)
 vi.mock('@/services/user.service', () => ({ default: users }))
 vi.mock('@/services/cart.service', () => ({ default: carts }))
 vi.mock('@/services/notification.service', () => ({ default: notifications }))
-vi.mock('@/services/messaging.service', () => ({ default: {} }))
+vi.mock('@/services/messaging.service', () => ({ default: messaging }))
 
 import { useUserStore } from '../user.store'
 import { useCartStore } from '../cart.store'
 import { useNotificationStore } from '../notification.store'
 import { useMessagingStore } from '../messaging.store'
 import { resetSessionStores } from '../resetSessionStores'
+import type { Conversation } from '@/types/messaging.types'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -170,6 +172,38 @@ describe('useNotificationStore', () => {
 
     expect(store.notifications).toHaveLength(2)
     expect(store.unreadCount).toBe(2)
+  })
+})
+
+describe('useMessagingStore.startConversation', () => {
+  const conversation = (id: string, otherId: string, productId?: string) =>
+    ({ _id: id, participants: [{ _id: 'u1' }, { _id: otherId }], productId }) as unknown as Conversation
+
+  it('ajoute une nouvelle conversation en tête de liste', async () => {
+    const store = useMessagingStore()
+    store.conversations = [conversation('c1', 'u2')]
+    messaging.startConversation.mockResolvedValue({ conversation: conversation('c2', 'u3') })
+
+    const response = await store.startConversation('u3', undefined, 'Coucou')
+
+    expect(messaging.startConversation).toHaveBeenCalledWith({ recipientId: 'u3', productId: undefined, initialMessage: 'Coucou' })
+    expect(store.conversations.map((c) => c._id)).toEqual(['c2', 'c1'])
+    expect(response.conversation._id).toBe('c2')
+  })
+
+  it.each([
+    ['même identifiant', conversation('c1', 'u2', 'p1')],
+    ['même interlocuteur et même annonce', conversation('autre-id', 'u2', 'p1')]
+  ])('n\'ajoute pas de doublon (%s) et rend la conversation déjà listée', async (_, returned) => {
+    const store = useMessagingStore()
+    const listed = conversation('c1', 'u2', 'p1')
+    store.conversations = [listed]
+    messaging.startConversation.mockResolvedValue({ conversation: returned })
+
+    const response = await store.startConversation('u2', 'p1', 'Toujours dispo ?')
+
+    expect(store.conversations).toHaveLength(1)
+    expect(response.conversation).toBe(store.conversations[0])
   })
 })
 

@@ -86,6 +86,7 @@
 /** Nouvelle conversation : vers un membre donné (profil, annonce) ou cherché par son pseudo. */
 import { computed, ref, useId } from 'vue';
 import messagingService from '@/services/messaging.service';
+import { useMessagingStore } from '@/store/messaging.store';
 import { func } from '@/function';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import VerifiedBadge from '@/components/VerifiedBadge.vue';
@@ -120,6 +121,8 @@ const emit = defineEmits<{
     closeSendMessage: [];
     newConversationCreated: [conversation: Conversation];
 }>();
+
+const messagingStore = useMessagingStore();
 
 const dialog = ref<HTMLElement | null>(null);
 const searchInput = ref<HTMLElement | null>(null);
@@ -191,11 +194,8 @@ function sendMessage() {
         return;
     }
 
-    messagingService.startConversation({
-        recipientId,
-        initialMessage: textMessage.value,
-        productId: props.idPost ?? undefined,
-    }).then((response) => {
+    // Le store range la conversation dans la liste, sans doublon.
+    messagingStore.startConversation(recipientId, props.idPost ?? undefined, textMessage.value).then((response) => {
         func.showToastSuccess('Message envoyé avec succès');
         emit('newConversationCreated', response.conversation);
         closePopup();

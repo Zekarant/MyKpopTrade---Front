@@ -5,8 +5,6 @@ import type { ViewConversation, ViewMessage } from '../../types'
 
 /** Réponse d'une action sur une offre : elle ne s'applique qu'à la conversation encore ouverte. */
 
-vi.mock('@/services/messaging.service', () => ({ default: { initiateNegotiation: vi.fn() } }))
-
 const conversation = (id: string) => ({ _id: id }) as unknown as ViewConversation
 
 function setup() {
