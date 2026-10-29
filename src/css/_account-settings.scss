@@ -13,7 +13,7 @@
   overflow: hidden;
 
   &--danger {
-    border-color: rgba(220, 53, 69, 0.3);
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   }
 }
 
@@ -64,10 +64,10 @@
   &--primary {
     background: var(--accent-gradient);
     border-color: transparent;
-    color: white;
+    color: var(--text-on-accent);
     &:hover {
       background: var(--accent-gradient);
-      box-shadow: 0 4px 12px rgba(255, 45, 120, 0.3);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-pink) 30%, transparent);
     }
   }
 
@@ -81,7 +81,7 @@
   &--danger {
     background: var(--danger);
     border-color: transparent;
-    color: white;
+    color: var(--text-on-accent);
     &:hover { filter: brightness(0.9); }
   }
 

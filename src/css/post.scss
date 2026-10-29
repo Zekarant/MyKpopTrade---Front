@@ -472,7 +472,7 @@
     color: var(--text-on-accent);
 
     &:hover {
-      background: color-mix(in srgb, var(--danger) 85%, black);
+      background: color-mix(in srgb, var(--danger) 85%, var(--bg-media));
       transform: translateY(-1px);
     }
   }

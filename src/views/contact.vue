@@ -222,7 +222,7 @@ const goBack = () => router.back();
 
   &:hover {
     color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.05);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
   }
 }
 
@@ -267,7 +267,7 @@ const goBack = () => router.back();
 
   &:focus-within {
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.08);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-pink) 8%, transparent);
   }
 
   &.textarea-group {
@@ -319,18 +319,18 @@ select.form-control {
   margin-top: var(--space-sm);
   padding: 14px 24px;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: 0 4px 16px rgba(255, 45, 120, 0.25);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-pink) 25%, transparent);
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.35);
+    box-shadow: 0 6px 24px color-mix(in srgb, var(--accent-pink) 35%, transparent);
   }
 
   &:disabled {

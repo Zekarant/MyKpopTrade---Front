@@ -111,7 +111,7 @@ async function confirmDeletion() {
   width: 130px;
   background: var(--text-primary);
   border-radius: 4px;
-  border: 4px solid white;
+  border: 4px solid var(--bg-card);
   position: absolute;
   top: 95px;
   left: 30px;
@@ -131,7 +131,7 @@ async function confirmDeletion() {
 }
 .empty-profile i {
   font-size: 3rem;
-  color: white;
+  color: var(--text-on-accent);
 }
 
 // Icône corbeille dans l'angle de l'image (ex-styles en ligne de l'icône).
@@ -140,7 +140,7 @@ async function confirmDeletion() {
   bottom: 0;
   padding: 0;
   border: none;
-  color: white;
+  color: var(--text-on-accent);
   background: #0000005c;
   border-radius: 4px;
   font-size: inherit;

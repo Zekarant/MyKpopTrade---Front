@@ -252,7 +252,7 @@ function skip() {
 .auth-brand { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-xl); }
 .auth-brand__logo {
   width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-gradient); color: white; font-weight: 800; font-size: 1.4rem;
+  background: var(--accent-gradient); color: var(--text-on-accent); font-weight: 800; font-size: 1.4rem;
   border-radius: var(--radius-md);
 }
 .auth-brand__title { font-size: var(--font-size-xl); font-weight: 800; letter-spacing: 0.05em; margin: 0; }

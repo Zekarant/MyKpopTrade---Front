@@ -184,8 +184,8 @@
   justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
-  background: rgba(220, 53, 69, 0.08);
-  border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-bottom: 1px solid var(--danger-border);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
 
@@ -203,7 +203,7 @@
     gap: 6px;
     padding: 6px 14px;
     background: var(--danger);
-    color: white;
+    color: var(--text-on-accent);
     border: none;
     border-radius: var(--radius-full);
     font-weight: 600;
@@ -244,7 +244,7 @@
   }
 
   &:hover {
-    border-color: rgba(255, 45, 120, 0.3);
+    border-color: color-mix(in srgb, var(--accent-pink) 30%, transparent);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 

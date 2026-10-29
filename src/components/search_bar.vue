@@ -53,7 +53,7 @@
 
     &:focus-within {
       border-color: var(--accent-pink);
-      box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1), var(--shadow-md);
+      box-shadow: var(--focus-ring), var(--shadow-md);
       background: var(--bg-secondary);
     }
   }
@@ -88,7 +88,7 @@
     background: var(--accent-gradient);
     border: none;
     border-radius: var(--radius-full);
-    color: white;
+    color: var(--text-on-accent);
     font-size: 1.1rem;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -96,7 +96,7 @@
 
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 16px rgba(255, 45, 120, 0.4);
+      box-shadow: 0 0 16px color-mix(in srgb, var(--accent-pink) 40%, transparent);
     }
   }
 

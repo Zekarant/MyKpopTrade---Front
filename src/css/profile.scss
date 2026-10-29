@@ -79,7 +79,7 @@
   background: var(--accent-gradient);
   border: none;
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 600;
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -103,7 +103,7 @@
   background: var(--accent-gradient);
   border: none;
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 600;
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -359,7 +359,7 @@
   &:hover {
     border-color: var(--accent-pink);
     color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.05);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
   }
 }
 
@@ -425,7 +425,7 @@
   &:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(255, 45, 120, 0.1);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -459,7 +459,7 @@
   &--primary {
     background: var(--accent-gradient);
     border: none;
-    color: white;
+    color: var(--text-on-accent);
 
     &:hover { opacity: 0.9; transform: translateY(-1px); }
     &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -522,7 +522,7 @@
   height: 36px;
   border-radius: 50%;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 700;
   font-size: 14px;
   display: flex;
@@ -559,7 +559,7 @@
 .post-create__btn {
   padding: 6px 16px;
   background: var(--accent-pink);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -599,7 +599,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 700;
   font-size: 13px;
   display: flex;
@@ -683,7 +683,7 @@
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
 
-  &:hover { color: var(--accent-pink); background: rgba(255, 45, 120, 0.05); }
+  &:hover { color: var(--accent-pink); background: color-mix(in srgb, var(--accent-pink) 5%, transparent); }
 
   .bi-heart-fill { color: var(--accent-pink); }
 }
@@ -755,7 +755,7 @@
 .feed-reply__send {
   padding: 6px 10px;
   background: var(--accent-pink);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -803,7 +803,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -836,7 +836,7 @@
   padding: 6px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
-  &:hover { color: var(--danger); background: rgba(255, 59, 48, 0.1); }
+  &:hover { color: var(--danger); background: var(--danger-light); }
 }
 .followers-section__more {
   text-align: center;

@@ -162,8 +162,8 @@ onMounted(fetchDispute);
   background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; color: var(--text-secondary);
 }
-.msg--admin .msg__avatar { background: var(--accent-pink); color: white; }
-.msg--seller .msg__avatar { background: rgba(33,150,243,.2); color: var(--info-text); }
+.msg--admin .msg__avatar { background: var(--accent-pink); color: var(--text-on-accent); }
+.msg--seller .msg__avatar { background: color-mix(in srgb, var(--info) 20%, transparent); color: var(--info-text); }
 .msg__body {
   flex: 1; background: var(--bg-card); border: 1px solid var(--surface-border);
   border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md);

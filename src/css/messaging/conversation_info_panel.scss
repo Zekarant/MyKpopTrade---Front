@@ -1,6 +1,6 @@
 .badge {
   background: var(--danger);
-  color: white;
+  color: var(--text-on-accent);
   font-size: 11px;
   padding: 3px 7px;
   border-radius: 12px;
@@ -20,7 +20,7 @@
 /* Right Sidebar */
 .right-sidebar {
   width: 320px;
-  background: white;
+  background: var(--bg-card);
   border-left: 1px solid var(--surface-border);
   overflow-y: auto;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
@@ -256,8 +256,8 @@
 
 .message-input textarea:focus {
   border-color: var(--accent-blue);
-  background: white;
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--info-light);
 }
 
 /* Loading and animations */
@@ -369,7 +369,7 @@
         border-radius: 12px;
 
         .media-count {
-          color: white;
+          color: var(--text-on-accent);
           font-size: 18px;
           font-weight: bold;
         }

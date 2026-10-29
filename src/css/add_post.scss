@@ -113,7 +113,7 @@
 
       &:hover, &.drag-over {
         border-color: var(--accent-pink);
-        background: rgba(255, 45, 120, 0.03);
+        background: color-mix(in srgb, var(--accent-pink) 3%, transparent);
       }
     }
 
@@ -193,7 +193,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
+      color: var(--text-on-accent);
       font-size: 0.8rem;
       cursor: pointer;
       transition: transform var(--transition-fast);
@@ -286,7 +286,7 @@
 
       &.active {
         border-color: var(--accent-pink);
-        background: rgba(255, 45, 120, 0.04);
+        background: color-mix(in srgb, var(--accent-pink) 4%, transparent);
 
         i {
           color: var(--accent-pink);
@@ -376,7 +376,7 @@
 
       &:checked::after {
         content: '✔';
-        color: white;
+        color: var(--text-on-accent);
         font-size: 12px;
         position: absolute;
         top: 50%;
@@ -839,7 +839,7 @@
   gap: var(--space-sm);
   margin: 0;
   padding: var(--space-md);
-  background: var(--success-light, rgba(34, 197, 94, 0.1));
+  background: var(--success-light);
   border: 1px solid var(--success);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);

@@ -238,7 +238,7 @@ function reopenCookieSettings() {
   &:hover {
     color: var(--accent-pink);
     border-color: var(--accent-pink);
-    background: rgba(255, 45, 120, 0.05);
+    background: color-mix(in srgb, var(--accent-pink) 5%, transparent);
   }
 
   &:focus-visible {

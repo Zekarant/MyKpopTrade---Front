@@ -130,7 +130,7 @@
     &--fallback::after {
         content: '\F4DA';
         font-family: 'bootstrap-icons';
-        color: white;
+        color: var(--text-on-accent);
         font-size: 1.2rem;
     }
 }

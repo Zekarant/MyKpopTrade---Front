@@ -5,7 +5,7 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--surface-border);
-  background: white;
+  background: var(--bg-card);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -107,7 +107,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: var(--bg-card);
   border: 1px solid var(--surface-border);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);

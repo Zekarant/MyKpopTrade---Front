@@ -74,13 +74,13 @@ onMounted(async () => {
 .add-review-container {
   min-height: calc(100vh - 60px);
   padding: 40px 20px;
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, white 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
 }
 
 .add-review-content {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 40px;
@@ -160,7 +160,7 @@ onMounted(async () => {
 
       .condition {
         font-size: 12px;
-        color: white;
+        color: var(--text-on-accent);
         background-color: var(--text-secondary);
         padding: 2px 8px;
         border-radius: 4px;
