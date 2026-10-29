@@ -72,7 +72,7 @@ function step(delta: number) {
     border: none;
     cursor: pointer;
     font-size: 32px;
-    color: var(--text-secondary);
+    color: var(--surface-border);
     transition: all 0.3s ease;
     padding: 0;
 

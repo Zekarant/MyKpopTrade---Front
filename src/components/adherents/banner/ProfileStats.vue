@@ -21,7 +21,7 @@ defineProps<{
 }
 .subscription {
   font-family: "Sora", serif;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: small;
   text-align: left;
 }
