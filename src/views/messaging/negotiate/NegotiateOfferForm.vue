@@ -16,7 +16,7 @@
           class="form-control price-input"
           @input="validateOffer"
         />
-        <span class="currency">€</span>
+        <span class="currency">{{ currencySymbol(product.currency) }}</span>
       </div>
 
       <!-- Les pourcentages du prix n'ont pas de sens pour un prix libre, borné par sa fourchette. -->
@@ -71,6 +71,7 @@ import { useMessagingStore } from '@/store/messaging.store';
 import type { ProductDetail } from '@/types/post.types';
 import { validateOfferAmount, type OfferBounds } from '@/components/offerRules';
 import NegotiateOfferSummary from './NegotiateOfferSummary.vue';
+import { currencySymbol } from '@/utils/format';
 
 const OFFER_PERCENTAGES = [50, 60, 70, 80, 90];
 

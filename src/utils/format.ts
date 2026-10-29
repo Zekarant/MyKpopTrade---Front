@@ -45,8 +45,9 @@ export function formatPrice(amount: number | null | undefined, currencyCode?: st
 
 const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', KRW: '₩', JPY: '¥', GBP: '£' };
 
-/** Symbole d'une devise, à côté d'un champ de prix ; le code lui-même si la devise est inconnue. */
-export function currencySymbol(currency = 'EUR'): string {
+/** Symbole d'une devise (EUR si absente ou vide), à côté d'un champ de prix ; le code lui-même si la devise est inconnue. */
+export function currencySymbol(currencyCode?: string | null): string {
+  const currency = currencyCode || 'EUR';
   return CURRENCY_SYMBOLS[currency] ?? currency;
 }
 

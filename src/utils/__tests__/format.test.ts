@@ -111,6 +111,8 @@ describe('currencySymbol', () => {
     expect(currencySymbol('USD')).toBe('$')
     expect(currencySymbol()).toBe('€')
     expect(currencySymbol('CHF')).toBe('CHF')
+    expect(currencySymbol('')).toBe('€')
+    expect(currencySymbol(null)).toBe('€')
   })
 })
 

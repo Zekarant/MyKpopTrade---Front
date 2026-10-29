@@ -22,7 +22,7 @@
 
     <form class="offer-form" novalidate @submit.prevent="submitOffer">
       <div class="form-group">
-        <label for="offerAmount">Votre offre (€)</label>
+        <label for="offerAmount">Votre offre ({{ currencySymbol(currency) }})</label>
         <input
           id="offerAmount"
           v-model.number="offerAmount"
@@ -97,7 +97,7 @@ import {
   type OfferProduct,
   type OfferSentPayload
 } from './offerRules';
-import { formatPrice } from '@/utils/format';
+import { currencySymbol, formatPrice } from '@/utils/format';
 
 defineOptions({ name: 'SendOffer' });
 
